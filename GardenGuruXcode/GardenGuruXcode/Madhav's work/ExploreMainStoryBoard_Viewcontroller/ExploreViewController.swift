@@ -9,15 +9,13 @@ import UIKit
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
     
-    @IBOutlet var exploreSegmentedControl: UISegmentedControl!
+   
     
     @IBOutlet weak var collectionView: UICollectionView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.titleView = exploreSegmentedControl
-        exploreSegmentedControl.widthAnchor.constraint(equalToConstant: 300).isActive = true
-               navigationController?.navigationBar.prefersLargeTitles = true
+
 
                // Create a UISearchController
                let searchController = UISearchController(searchResultsController: nil)
@@ -144,7 +142,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
     
     func generateSection1Layout()-> NSCollectionLayoutSection{
-        let spacing: CGFloat = 10
+        let spacing: CGFloat = 5
         
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
@@ -180,10 +178,11 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         return section
     }
     func generateSection3Layout()-> NSCollectionLayoutSection{
+        let spacing: CGFloat = 5
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .absolute(300), heightDimension: .absolute(190))
+        let groupsize = NSCollectionLayoutSize(widthDimension: .absolute(340), heightDimension: .absolute(240))
         
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupsize, subitems: [item])
         
@@ -191,6 +190,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
         
         let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = spacing
         section.orthogonalScrollingBehavior = .groupPaging
         return section
     }
