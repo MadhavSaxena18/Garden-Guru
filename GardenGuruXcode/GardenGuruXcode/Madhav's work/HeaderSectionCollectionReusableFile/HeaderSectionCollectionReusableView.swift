@@ -29,15 +29,15 @@ class HeaderSectionCollectionReusableView: UICollectionReusableView {
          addSubview(headerLabel)
          addSubview(button)
          
-         NSLayoutConstraint.activate([headerLabel.topAnchor.constraint(equalTo: topAnchor),
+         NSLayoutConstraint.activate([headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 10),
                                       headerLabel.bottomAnchor.constraint(equalTo: bottomAnchor),
                                       headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
                                       //headerLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
                                       
-                                      button.topAnchor.constraint(equalTo: topAnchor),
+                                      button.topAnchor.constraint(equalTo: topAnchor, constant: 10),
                                       button.bottomAnchor.constraint(equalTo: bottomAnchor),
-                                      //button.leadingAnchor.constraint(equalTo: leadingAnchor),
-                                      button.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -200),
+                                      button.leadingAnchor.constraint(equalTo: headerLabel.trailingAnchor , constant: 15),
+//                                      button.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -200),
                                      ])
          
      }
