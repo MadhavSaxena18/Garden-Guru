@@ -145,10 +145,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WUC5X4DK59;
+				DEVELOPMENT_TEAM = 2TWN3DD56C;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "“Garden Guru” would like to access the camera";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -174,10 +173,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WUC5X4DK59;
+				DEVELOPMENT_TEAM = 2TWN3DD56C;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "“Garden Guru” would like to access the camera";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
