@@ -9,31 +9,34 @@ import UIKit
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
     
-   
+   var identifier = 0
     
     @IBOutlet weak var collectionView: UICollectionView!
+    // Segmented control instance
+   
+    @IBOutlet weak var segmentControlOnExplore: UISegmentedControl!
+    private var currentData: [[Any]] = []
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
 
                // Create a UISearchController
-               let searchController = UISearchController(searchResultsController: nil)
-               searchController.searchResultsUpdater = self
-               searchController.obscuresBackgroundDuringPresentation = false
-               searchController.searchBar.placeholder = "Search here..."
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search here..."
 
-               // Add the search controller to the navigation item
-               navigationItem.searchController = searchController
+        // Add the search controller to the navigation item
+        navigationItem.searchController = searchController
 
-               // Ensure the search bar doesn't persist on navigation
-               definesPresentationContext = true
+        // Ensure the search bar doesn't persist on navigation
+        definesPresentationContext = true
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
 
-               
-        
-        
-        
+        updateSegmentedControlTitles(firstTitle: "Discover", secondTitle: "Fo My Plants")
+        setupSegmentedControl()
         //connecting first nib flie i.e topWinterCollectionViewCell to main explore screen
         
         let firstNib = UINib(nibName: "TopWinterCollectionViewCell", bundle: nil)
@@ -42,13 +45,58 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         collectionView.register(firstNib, forCellWithReuseIdentifier: "first")
         collectionView.register(secondNib, forCellWithReuseIdentifier: "second")
         collectionView.register(thirdNib, forCellWithReuseIdentifier: "third")
+
+        let fourthNib = UINib(nibName: "Section1InForMyPlantSegmentCollectionViewCell", bundle: nil)
+        let fifththNib = UINib(nibName: "Section2InForMyPlantCollectionViewCell", bundle: nil)
+        let sixthNib = UINib(nibName: "Section3InForMyPlantCollectionViewCell", bundle: nil)
+        collectionView.register(fourthNib, forCellWithReuseIdentifier: "FirstForMyPlant")
+        collectionView.register(fifththNib, forCellWithReuseIdentifier: "SecondForMyPlant")
+        collectionView.register(sixthNib, forCellWithReuseIdentifier: "ThirdForMyPlant")
+        
         collectionView.setCollectionViewLayout(generateLayout(), animated: true)
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(HeaderSectionCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "HeaderSectionCollectionReusableView")
+        
+        updateDataForSelectedSegment()
 
     }
+    override func viewWillAppear(_ animated: Bool) {
+        updateDataForSelectedSegment()
+    }
     
+    func updateSegmentedControlTitles(firstTitle: String, secondTitle: String) {
+        segmentControlOnExplore.setTitle(firstTitle, forSegmentAt: 0)
+        segmentControlOnExplore.setTitle(secondTitle, forSegmentAt: 1)
+    }
+    
+    
+    func setupSegmentedControl() {
+            // Optionally customize the segmented control
+        segmentControlOnExplore.addTarget(self, action: #selector(segmentChanged(_:)), for: .valueChanged)
+        }
+       
+    @objc func segmentChanged(_ sender: UISegmentedControl) {
+           updateDataForSelectedSegment()
+       }
+
+       func updateDataForSelectedSegment() {
+           switch  segmentControlOnExplore.selectedSegmentIndex {
+           case 0: // "Discover"
+               print("Hey")
+               identifier = 0
+               print("Identifer: \(identifier)")
+               currentData = [ExploreScreen.dataOfSection1InDiscoverSegment, ExploreScreen.dataOfSection2InDiscoverSegment, ExploreScreen.dataOfSection3InDiscoverSegment]
+           case 1: // "For You"
+               identifier = 1
+               print("Identifer: \(identifier)")
+               print("bbb")
+               currentData = [ExploreScreen.dataOfSection1InforMyPlantSection, ExploreScreen.dataOfSection2InforMyPlantSection, ExploreScreen.dataOfSection3InforMyPlantSection] // Replace with data for "For You" section
+           default:
+               currentData = []
+           }
+           collectionView.reloadData()
+       }
     
     func updateSearchResults(for searchController: UISearchController) {
             guard let searchText = searchController.searchBar.text else { return }
@@ -67,10 +115,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        ExploreScreen.headerData.count
-    }
+            return currentData.count
+        }
     
-    
+  /*
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         switch section{
         case 0:
@@ -81,47 +129,96 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             ExploreScreen.dataOfSection3.count
         default: 0
         }
-    }
+    }*/
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+           return currentData[section].count
+       }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        switch indexPath.section{
-        case 0:
-            print("Section 1")
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
-            cell.updateDataOfSection1(with: indexPath)
-            cell.layer.cornerRadius = 11
-            return cell
-        case 1:
-            print("section2")
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
-            cell.updateDataOfSection2(with: indexPath)
-            cell.layer.cornerRadius = 11
-            return cell
-        case 2:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! Section3CollectionViewCell
-            cell.updateDataOfSection3(with: indexPath)
-            cell.layer.cornerRadius = 25
-            return cell
-        default:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
-            //cell.updateDataOfSection1(with: indexPath)
-            return cell
-        }
+                switch indexPath.section{
+                case 0:
+                    if(identifier == 0){
+                        print("Section 1 In Discover")
+                        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
+                        cell.updateDataOfSection1(with: indexPath)
+                        cell.layer.cornerRadius = 11
+                        return cell
+                    }else{
+                        print("Section 1 in For my plants")
+                        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
+                        cell.updateDataOfSection1InForMyPlantSegment(with: indexPath)
+                        cell.layer.cornerRadius = 25
+                        return cell
+                    }
+                   
+                case 1:
+                    if(identifier == 0){
+                        print("mm")
+                        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
+                        cell.updateDataOfSection2(with: indexPath)
+                        cell.layer.cornerRadius = 11
+                        return cell
+                    }else{
+                        print("ttttt")
+                        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
+                        cell.updateDataOfSection2InForMyPlantSegment(with: indexPath)
+                        cell.layer.cornerRadius = 25
+                        return cell
+                    }
+                  
+                    
+                case 2:
+                    if identifier == 0{
+                        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! Section3CollectionViewCell
+                        cell.updateDataOfSection3(with: indexPath)
+                        cell.layer.cornerRadius = 25
+                        return cell
+                    }else{
+                        print("ababaaaaaaa")
+                        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ThirdForMyPlant", for: indexPath) as! Section3InForMyPlantCollectionViewCell
+                        cell.updateDataOfSection3InForMyPlantSegment(with: indexPath)
+                        cell.layer.cornerRadius = 25
+                        return cell
+                    }
+                    
+                default:
+                    let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
+                    //cell.updateDataOfSection1(with: indexPath)
+                    return cell
+                }
+        
+       
     }
     
     
     func generateLayout()-> UICollectionViewCompositionalLayout{
         let layout = UICollectionViewCompositionalLayout
-        {
+        { [self]
             (sectionIndex, environment) -> NSCollectionLayoutSection? in let section: NSCollectionLayoutSection
             switch sectionIndex{
             case 0:
-                section = self.generateSection1Layout()
+                if identifier == 0{
+                    section = self.generateSection1Layout()
+                }else{
+                    section = self.generateSection1LayoutInForMyPlants()
+                }
+                
                 
             case 1:
-                section = self.generateSection2Layout()
+                if identifier == 0 {
+                    section = self.generateSection2Layout()
+                }
+                else{
+                    section = self.generateSection1LayoutInForMyPlants()
+                }
+                
             case 2:
-                section = self.generateSection3Layout()
+                if identifier == 0{
+                    section = self.generateSection3Layout()
+                }else{
+                    section = self.generateSection1LayoutInForMyPlants()
+                }
+                
             default :
                 print("Invalid Section")
                 return nil
@@ -196,19 +293,55 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
     
     
+    
+    func generateSection1LayoutInForMyPlants()-> NSCollectionLayoutSection{
+        let spacing: CGFloat = 5
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupsize = NSCollectionLayoutSize(widthDimension: .absolute(300), heightDimension: .absolute(214))
+        
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupsize, subitems: [item])
+        
+        
+        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
+        
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = spacing
+        section.orthogonalScrollingBehavior = .groupPaging
+        return section
+        
+    }
+    
+    
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader{
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
-            header.headerLabel.text = ExploreScreen.headerData[indexPath.section]
-            header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-            header.headerLabel.textColor = UIColor(hex: "284329")
-            header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
-            header.button.tintColor = UIColor(hex: "284329")
-            header.button.tag = indexPath.section
-            header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
-            
-            //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
-            return header
+            if identifier == 0{
+                header.headerLabel.text = ExploreScreen.headerData[indexPath.section]
+                header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+                header.headerLabel.textColor = UIColor(hex: "284329")
+                header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+                header.button.tintColor = UIColor(hex: "284329")
+                header.button.tag = indexPath.section
+                header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
+                
+                //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
+                return header
+
+            }else{
+                header.headerLabel.text = ExploreScreen.headerForInMyPlantSegment[indexPath.section]
+                header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+                header.headerLabel.textColor = UIColor(hex: "284329")
+                header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+                header.button.tintColor = UIColor(hex: "284329")
+                header.button.tag = indexPath.section
+                header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
+                
+                //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
+                return header
+
+            }
         }
         
        print("Supplementary item is not a error")
