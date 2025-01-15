@@ -25,14 +25,14 @@ struct DataOfSection3 {
 }
 
 class ExploreScreen{
-    static var dataOfSection1: [DataOfSection1] = [DataOfSection1(image: UIImage(named: "image1")!, plantName: "String of pearls", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
+    static var dataOfSection1: [DataOfSection1] = [DataOfSection1(image: UIImage(named: "image1")!, plantName: "String of pearls", plantDescription: "The unique and striking foliage of these plants  are aaaaabbbaaaaaaaaabbbbbbbbbbbb"),
                                                    DataOfSection1(image:  UIImage(named: "image2")!, plantName: "Parlor Palm", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
                                                    DataOfSection1(image:  UIImage(named: "image3")!, plantName: "Rose Plant", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
                                                    DataOfSection1(image: UIImage(named: "image4")!, plantName: "Hibiscus", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
                                                    ]
     
-    static var dataOfSection2: [DataOfSection2] = [DataOfSection2(image: UIImage(named: "image2")!, plantName: "String of pearls", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
-                                                   DataOfSection2(image:  UIImage(named: "image2")!, plantName: "Parlor Palm", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
+    static var dataOfSection2: [DataOfSection2] = [DataOfSection2(image: UIImage(named: "image2")!, plantName: "String of pearls", plantDescription: "The unique and striking foliage of these plants  are aaaaabbbaaaaabbbaaaaaaaaaaaaaaaabbbbbbbbbbb"),
+                                                   DataOfSection2(image:  UIImage(named: "image2")!, plantName: "Parlor Palm", plantDescription: "The unique and striking foliage of these plants  are aaaaabbbaaaaaaaaaaaaaaaabbbbbbbbbbb"),
                                                    DataOfSection2(image:  UIImage(named: "image3")!, plantName: "Rose Plant", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
                                                    DataOfSection2(image: UIImage(named: "image1")!, plantName: "Hibiscus", plantDescription: "The unique and striking foliage of these plants  are aaaaabbb"),
                                                    ]

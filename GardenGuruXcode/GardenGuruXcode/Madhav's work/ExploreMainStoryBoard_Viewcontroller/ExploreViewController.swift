@@ -9,24 +9,27 @@ import UIKit
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
     
+    @IBOutlet var exploreSegmentedControl: UISegmentedControl!
     
     @IBOutlet weak var collectionView: UICollectionView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//               navigationController?.navigationBar.prefersLargeTitles = true
-//
-//               // Create a UISearchController
-//               let searchController = UISearchController(searchResultsController: nil)
-//               searchController.searchResultsUpdater = self
-//               searchController.obscuresBackgroundDuringPresentation = false
-//               searchController.searchBar.placeholder = "Search here..."
-//
-//               // Add the search controller to the navigation item
-//               navigationItem.searchController = searchController
-//
-//               // Ensure the search bar doesn't persist on navigation
-//               definesPresentationContext = true
+        navigationItem.titleView = exploreSegmentedControl
+        exploreSegmentedControl.widthAnchor.constraint(equalToConstant: 300).isActive = true
+               navigationController?.navigationBar.prefersLargeTitles = true
+
+               // Create a UISearchController
+               let searchController = UISearchController(searchResultsController: nil)
+               searchController.searchResultsUpdater = self
+               searchController.obscuresBackgroundDuringPresentation = false
+               searchController.searchBar.placeholder = "Search here..."
+
+               // Add the search controller to the navigation item
+               navigationItem.searchController = searchController
+
+               // Ensure the search bar doesn't persist on navigation
+               definesPresentationContext = true
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
 
                
