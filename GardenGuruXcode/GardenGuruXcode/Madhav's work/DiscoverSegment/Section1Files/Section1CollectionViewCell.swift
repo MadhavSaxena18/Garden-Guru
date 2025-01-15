@@ -16,11 +16,11 @@ class Section1CollectionViewCell: UICollectionViewCell {
     
     @IBOutlet weak var plantDescriptionLabel: UILabel!
     func updateDataOfSection1(with indexPath: IndexPath){
-        plantImage.image = ExploreScreen.dataOfSection1[indexPath.row].image
+        plantImage.image = ExploreScreen.dataOfSection1InDiscoverSegment[indexPath.row].image
         
-        plantNameLabel.text = ExploreScreen.dataOfSection1[indexPath.row].plantName
+        plantNameLabel.text = ExploreScreen.dataOfSection1InDiscoverSegment[indexPath.row].plantName
         
-        plantDescriptionLabel.text = ExploreScreen.dataOfSection1[indexPath.row].plantDescription
+        plantDescriptionLabel.text = ExploreScreen.dataOfSection1InDiscoverSegment[indexPath.row].plantDescription
         
     }
     
