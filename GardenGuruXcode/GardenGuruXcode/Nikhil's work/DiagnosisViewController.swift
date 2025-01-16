@@ -18,6 +18,17 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private let tableView = UITableView()
     private let startCaringButton = UIButton()
 
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.tabBarController?.tabBar.isHidden = true
+        
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.tabBarController?.tabBar.isHidden = false
+    }
     // Data
     private let sections = ["Cure and Treatment", "Preventive Measures", "Symptoms", "Vitamins Required", "Related Images", "Video Solution"]
     private var expandedSections: Set<Int> = []
@@ -32,7 +43,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     private func setupUI() {
         // Plant Image
-        plantImageView.image = UIImage(named: "parlor_palm") // Replace with your image name
+        plantImageView.image = UIImage(named: "image2") // Replace with your image name
         plantImageView.contentMode = .scaleAspectFill
         plantImageView.clipsToBounds = true
         view.addSubview(plantImageView)
@@ -76,7 +87,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
-        tableView.isScrollEnabled = false
+        tableView.isScrollEnabled = true
         view.addSubview(tableView)
 
         // Start Caring Button
@@ -102,7 +113,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             plantImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             plantImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             plantImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            plantImageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.33),
+            plantImageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.25),
 
             // Overlay
             overlayView.leadingAnchor.constraint(equalTo: plantImageView.leadingAnchor),
@@ -116,7 +127,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
             // Diagnosis Label
             diagnosisLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-            diagnosisLabel.topAnchor.constraint(equalTo: plantNameLabel.bottomAnchor, constant: 4),
+            diagnosisLabel.topAnchor.constraint(equalTo: plantNameLabel.bottomAnchor, constant: 0),
 
             // Details StackView
             detailsStackView.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 16),

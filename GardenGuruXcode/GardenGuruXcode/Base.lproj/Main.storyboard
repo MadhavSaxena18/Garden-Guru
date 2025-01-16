@@ -43,7 +43,7 @@
         <scene sceneID="vwW-V2-wmh">
             <objects>
                 <viewControllerPlaceholder storyboardName="scanAndDiagnoseTab" id="XD5-aF-xam" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="9S8-YL-adn"/>
+                    <tabBarItem key="tabBarItem" title="Item" image="camera" catalog="system" id="9S8-YL-adn"/>
                 </viewControllerPlaceholder>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="v5S-Rl-RCk" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -60,4 +60,7 @@
             <point key="canvasLocation" x="1137" y="-75"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="camera" catalog="system" width="128" height="93"/>
+    </resources>
 </document>
