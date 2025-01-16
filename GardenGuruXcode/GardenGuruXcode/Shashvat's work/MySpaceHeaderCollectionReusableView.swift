@@ -8,9 +8,9 @@
 import UIKit
 
 class MySpaceHeaderCollectionReusableView: UICollectionReusableView {
-    class HeaderSectionCollectionReusableView: UICollectionReusableView {
+   
         var headerLabel = UILabel()
-        var button = UIButton(type: .system)
+        var totalPlantLabel = UILabel()
         
         override init(frame: CGRect){
             super.init(frame: frame)
@@ -25,23 +25,23 @@ class MySpaceHeaderCollectionReusableView: UICollectionReusableView {
         
         func updateSectionHeader(){
             headerLabel.translatesAutoresizingMaskIntoConstraints = false
-            button.translatesAutoresizingMaskIntoConstraints = false
-            
+            totalPlantLabel.translatesAutoresizingMaskIntoConstraints = false
             addSubview(headerLabel)
-            addSubview(button)
+            addSubview(totalPlantLabel)
+         
             
             NSLayoutConstraint.activate([headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 10),
                                          headerLabel.bottomAnchor.constraint(equalTo: bottomAnchor),
                                          headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
                                          //headerLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
                                          
-                                         button.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-                                         button.bottomAnchor.constraint(equalTo: bottomAnchor),
-                                         button.leadingAnchor.constraint(equalTo: headerLabel.trailingAnchor , constant: 15),
-                                         // button.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -200),
+            
+                                         
+                                         totalPlantLabel.bottomAnchor.constraint(equalTo: headerLabel.topAnchor , constant: 13),
+                                         totalPlantLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -15)
                                         ])
             
         }
         
     }
-}
+

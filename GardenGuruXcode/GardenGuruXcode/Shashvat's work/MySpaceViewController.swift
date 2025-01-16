@@ -13,32 +13,44 @@ class MySpaceViewController:  UIViewController, UICollectionViewDataSource, UICo
         print("Searching for \(text)")
     }
     
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        MySpaceScreen.sectionHeaderNames.count
+    }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        SectionData.plants.count
+       switch section{
+       case 0:
+           MySpaceScreen.mySpaceSection1Data.count
+       case 1:
+           MySpaceScreen.mySpaceSection2Data.count
+       case 2:
+           MySpaceScreen.mySpaceSection3Data.count
+       default:
+           0
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         switch indexPath.section{
         case 0:
             print("Section 1")
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewCell
-            cell.updatesectionData(with: indexPath)
-            cell.layer.cornerRadius = 11
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewSection1Cell
+            cell.updatesection1Data(with: indexPath)
+            cell.layer.cornerRadius = 25
             return cell
         case 1:
             print("section2")
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewCell
-            cell.updatesectionData(with: indexPath)
-            cell.layer.cornerRadius = 11
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! MySpaceSection2CollectionViewCell
+            cell.updatesection2Data(with: indexPath)
+            cell.layer.cornerRadius = 25
             return cell
         case 2:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewCell
-            cell.updatesectionData(with: indexPath)
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! MySpaceSection3CollectionViewCell
+            cell.updatesection3Data(with: indexPath)
             cell.layer.cornerRadius = 25
             return cell
         default:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewSection1Cell
             //cell.updateDataOfSection1(with: indexPath)
             return cell
         }
@@ -79,7 +91,7 @@ class MySpaceViewController:  UIViewController, UICollectionViewDataSource, UICo
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.6), heightDimension: .absolute(290))
+        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(290))
         
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitems: [item])
        
@@ -92,17 +104,56 @@ class MySpaceViewController:  UIViewController, UICollectionViewDataSource, UICo
        
     }
     
+    func generateSection2Layout()-> NSCollectionLayoutSection{
+        let spacing: CGFloat = 5
+        
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(290))
+        
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitems: [item])
+       
+        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
+        group.interItemSpacing = .fixed(15)
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = spacing
+        section.orthogonalScrollingBehavior = .groupPaging
+        return section
+       
+    }
+    
+    func generateSection3Layout()-> NSCollectionLayoutSection{
+        let spacing: CGFloat = 5
+        
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(290))
+        
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitems: [item])
+       
+        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
+        group.interItemSpacing = .fixed(15)
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = spacing
+        section.orthogonalScrollingBehavior = .groupPaging
+        return section
+       
+    }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader{
-            let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
-            header.headerLabel.text = ExploreScreen.headerData[indexPath.section]
+            let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "MySpaceHeaderCollectionReusableView", for: indexPath) as! MySpaceHeaderCollectionReusableView
+            header.headerLabel.text = MySpaceScreen.sectionHeaderNames[indexPath.section]
             header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
             header.headerLabel.textColor = UIColor(hex: "284329")
-            header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
-            header.button.tintColor = UIColor(hex: "284329")
-            header.button.tag = indexPath.section
-            header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
+            header.totalPlantLabel.text = "Total Plant: 50"
+            header.totalPlantLabel.textColor = UIColor(hex: "284329")
+//            header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+//            header.button.tintColor = UIColor(hex: "284329")
+//            header.button.tag = indexPath.section
+//            header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
             
             //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
             return header
@@ -124,11 +175,20 @@ class MySpaceViewController:  UIViewController, UICollectionViewDataSource, UICo
         super.viewDidLoad()
         
         let searchController = UISearchController(searchResultsController: nil)
-        searchController.searchBar.placeholder = "Search"   
+        searchController.searchBar.placeholder = "Search"
+        navigationItem.searchController = searchController
+       
         
-        let nib = UINib(nibName: "MySpaceCollectionViewCell", bundle: nil)
-        mySpaceCollectionView.register(nib, forCellWithReuseIdentifier: "first")
-        mySpaceCollectionView.register(HeaderSectionCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "MySpaceHeaderSectionReusableView")
+        let nib1 = UINib(nibName: "MySpaceCollectionViewSection1Cell", bundle: nil)
+        let nib2 = UINib(nibName: "MySpaceSection2CollectionViewCell", bundle: nil)
+        let nib3 = UINib(nibName: "MySpaceSection3CollectionViewCell", bundle: nil)
+        
+        mySpaceCollectionView.register(nib1, forCellWithReuseIdentifier: "first")
+        mySpaceCollectionView.register(nib2, forCellWithReuseIdentifier: "second")
+        mySpaceCollectionView.register(nib3, forCellWithReuseIdentifier: "third")
+        mySpaceCollectionView.register(MySpaceHeaderCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "MySpaceHeaderCollectionReusableView")
+        
+        mySpaceCollectionView.setCollectionViewLayout(generateLayout(), animated: true)
         
         mySpaceCollectionView.dataSource = self
         mySpaceCollectionView.delegate = self

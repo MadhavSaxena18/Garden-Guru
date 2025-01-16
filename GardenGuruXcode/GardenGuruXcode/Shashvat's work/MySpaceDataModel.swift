@@ -8,7 +8,28 @@
 
 import Foundation
 import UIKit
-struct Plant {
+struct MySpaceSection1Data {
+//    let id = UUID()
+    let name: String
+    let nickName: String
+    let imageURL: String
+  
+}
+struct MySpaceSection2Data {
+//    let id = UUID()
+    let name: String
+    let nickName: String
+    let imageURL: String
+  
+}
+struct MySpaceSection3Data {
+//    let id = UUID()
+    let name: String
+    let nickName: String
+    let imageURL: String
+  
+}
+struct MySpaceSection4Data {
 //    let id = UUID()
     let name: String
     let nickName: String
@@ -16,29 +37,59 @@ struct Plant {
   
 }
 
-struct Reminder {
-//    let id = UUID()
-    let plantID: UUID
-    let type: String
-    let dateTime: Date
-    let isCompleted: Bool
-}
+//struct Reminder {
+////    let id = UUID()
+//    let plantID: UUID
+//    let type: String
+//    let dateTime: Date
+//    let isCompleted: Bool
+//}
 
-struct User {
-    let id = UUID()
-    var plants: [Plant]
-    var reminders: [Reminder]
-}
-class SectionData {
-    static  var  plants: [Plant] = [
-        Plant(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
-        Plant(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
-        Plant(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
-        Plant(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
-        Plant(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
-        Plant(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
-        Plant(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
-        Plant(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant")
+//struct User {
+//    let id = UUID()
+//    var plants: [Plant]
+//    var reminders: [Reminder]
+//}
+class MySpaceScreen {
+    static  var  mySpaceSection1Data: [MySpaceSection1Data] = [
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant")
+    ]
+    static  var  mySpaceSection2Data: [MySpaceSection1Data] = [
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant")
+    ]
+    static  var  mySpaceSection3Data: [MySpaceSection1Data] = [
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant")
+    ]
+    static  var  mySpaceSection4Data: [MySpaceSection1Data] = [
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant"),
+        MySpaceSection1Data(name: "Parlor Palm", nickName: "Near Sofa", imageURL: "parlor_palm" ),
+        MySpaceSection1Data(name: "Snake Plant", nickName: "On the Roof", imageURL: "snake_plant")
     ]
     static var sectionHeaderNames:[String] = [
         "Parlor Palm",
