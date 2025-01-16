@@ -17,9 +17,9 @@ class Section3CollectionViewCell: UICollectionViewCell {
     }
     
     func updateDataOfSection3(with indexPath: IndexPath){
-        designImageView.image = ExploreScreen.dataOfSection3[indexPath.row].designImage
+        designImageView.image = ExploreScreen.dataOfSection3InDiscoverSegment[indexPath.row].designImage
         
-        designDescriptionLabel.text = ExploreScreen.dataOfSection3[indexPath.row].designName
+        designDescriptionLabel.text = ExploreScreen.dataOfSection3InDiscoverSegment[indexPath.row].designName
     }
 
 }
