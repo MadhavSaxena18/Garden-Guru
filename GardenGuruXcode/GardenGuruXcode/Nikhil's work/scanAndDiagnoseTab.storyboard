@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Y6W-OH-hqX">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Lz3-IH-grc">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
@@ -8,19 +8,19 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--Item-->
+        <!--Scan And Diagnose View Controller-->
         <scene sceneID="s0d-6b-0kx">
             <objects>
-                <viewController id="Y6W-OH-hqX" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="scanAndDiagnoseViewController" modalPresentationStyle="fullScreen" id="Y6W-OH-hqX" customClass="scanAndDiagnoseViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="BFQ-N3-Pce">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="pq5-4c-8ZT">
-                                <rect key="frame" x="0.0" y="0.0" width="393" height="695.66666666666663"/>
+                                <rect key="frame" x="0.0" y="63" width="393" height="632.66666666666663"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c0D-JT-51d">
-                                        <rect key="frame" x="0.0" y="575" width="393" height="87"/>
+                                        <rect key="frame" x="0.0" y="512" width="393" height="87"/>
                                         <color key="backgroundColor" white="0.66666666669999997" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="87" id="n61-Bg-LuU"/>
@@ -29,15 +29,8 @@
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="iR5-t3-BLb">
-                                        <rect key="frame" x="7" y="67" width="77" height="35"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <color key="tintColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <state key="normal" title="Button"/>
-                                        <buttonConfiguration key="configuration" style="plain" title="Cancel"/>
-                                    </button>
                                     <stackView opaque="NO" contentMode="scaleAspectFit" distribution="fillEqually" spacing="42" translatesAutoresizingMaskIntoConstraints="NO" id="iji-hS-Elo">
-                                        <rect key="frame" x="71.666666666666686" y="502" width="250" height="65"/>
+                                        <rect key="frame" x="71.666666666666686" y="439" width="250" height="65"/>
                                         <subviews>
                                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="leaf.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="hDf-Kd-R7S">
                                                 <rect key="frame" x="0.0" y="1.6666666666666679" width="55.333333333333336" height="62.333333333333329"/>
@@ -102,6 +95,9 @@
                                         <integer key="value" value="50"/>
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
+                                <connections>
+                                    <action selector="captureImage:" destination="Y6W-OH-hqX" eventType="touchUpInside" id="QbS-rK-nZ1"/>
+                                </connections>
                             </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="BIW-MA-2fi"/>
@@ -111,18 +107,74 @@
                             <constraint firstItem="pq5-4c-8ZT" firstAttribute="leading" secondItem="BIW-MA-2fi" secondAttribute="leading" id="VPU-lj-wbL"/>
                             <constraint firstAttribute="bottom" secondItem="vuu-no-bwt" secondAttribute="bottom" constant="27" id="VyI-ps-Ug9"/>
                             <constraint firstItem="pq5-4c-8ZT" firstAttribute="centerX" secondItem="vuu-no-bwt" secondAttribute="centerX" id="X4j-KB-3lF"/>
-                            <constraint firstItem="pq5-4c-8ZT" firstAttribute="top" secondItem="BFQ-N3-Pce" secondAttribute="topMargin" constant="-59" id="mS6-vY-rBb"/>
+                            <constraint firstItem="pq5-4c-8ZT" firstAttribute="top" secondItem="BFQ-N3-Pce" secondAttribute="topMargin" constant="-40" id="mS6-vY-rBb"/>
                             <constraint firstItem="vuu-no-bwt" firstAttribute="top" secondItem="pq5-4c-8ZT" secondAttribute="bottom" constant="33" id="vaZ-TH-yNc"/>
                         </constraints>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Item" id="o2A-83-cCb"/>
+                    <navigationItem key="navigationItem" id="e3Y-Cx-t4X">
+                        <barButtonItem key="leftBarButtonItem" style="plain" id="vRZ-y2-aJM">
+                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="iR5-t3-BLb">
+                                <rect key="frame" x="16" y="5" width="76.666666666666671" height="34.333333333333336"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="tintColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Cancel"/>
+                                <connections>
+                                    <segue destination="we1-5Q-KFU" kind="unwind" unwindAction="unwindToExploreViewControllerWithSegue:" id="32Y-Va-xZv"/>
+                                </connections>
+                            </button>
+                        </barButtonItem>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="cameraView" destination="pq5-4c-8ZT" id="shn-xM-tPt"/>
+                        <outlet property="instructionLabel" destination="c0D-JT-51d" id="jLJ-d7-c5b"/>
+                        <outlet property="snapImage1" destination="hDf-Kd-R7S" id="lQz-DY-TBe"/>
+                        <outlet property="snapImage2" destination="yfx-z4-tF0" id="SLU-EU-rUR"/>
+                        <outlet property="snapImage3" destination="Q9E-JT-1kM" id="hF4-Am-Yam"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+                <exit id="we1-5Q-KFU" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
-            <point key="canvasLocation" x="973.28244274809151" y="-2.1126760563380285"/>
+            <point key="canvasLocation" x="4680.1526717557254" y="-2.1126760563380285"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="ihq-yA-wbp">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="3bM-04-HP9" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="jQJ-c1-nVF">
+                        <rect key="frame" x="0.0" y="59" width="393" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Eqp-1T-BJg" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1900" y="-2.1126760563380285"/>
+        </scene>
+        <!--Scan And Diagnose-->
+        <scene sceneID="7vN-bs-SCv">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Lz3-IH-grc" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Scan And Diagnose" image="camera" catalog="system" id="p5P-M2-05W"/>
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="r1J-RO-xAT">
+                        <rect key="frame" x="0.0" y="59" width="393" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="Y6W-OH-hqX" kind="relationship" relationship="rootViewController" id="HGg-6c-BnW"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="nXW-fw-2m4" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3753.4351145038167" y="-2.1126760563380285"/>
         </scene>
     </scenes>
     <resources>
+        <image name="camera" catalog="system" width="128" height="93"/>
         <image name="circle" catalog="system" width="128" height="123"/>
         <image name="leaf.fill" catalog="system" width="128" height="109"/>
         <systemColor name="systemBackgroundColor">
