@@ -37,11 +37,6 @@
                             <constraint firstAttribute="bottom" secondItem="3gM-jV-ZeN" secondAttribute="bottom" constant="18" id="pst-j4-nJh"/>
                             <constraint firstItem="3gM-jV-ZeN" firstAttribute="leading" secondItem="fg9-vL-F51" secondAttribute="leading" constant="8" id="vAv-Q2-Cbk"/>
                         </constraints>
-                        <userDefinedRuntimeAttributes>
-                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
-                                <integer key="value" value="25"/>
-                            </userDefinedRuntimeAttribute>
-                        </userDefinedRuntimeAttributes>
                     </view>
                     <view alpha="0.65000000000000002" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="f0K-Im-Le8">
                         <rect key="frame" x="257" y="7" width="36" height="36"/>
