@@ -37,11 +37,6 @@
                             <constraint firstAttribute="height" constant="58" id="ZtE-4N-z3S"/>
                             <constraint firstItem="9Vh-wc-TaZ" firstAttribute="leading" secondItem="38K-nj-mZd" secondAttribute="leading" constant="9" id="nfD-qA-XII"/>
                         </constraints>
-                        <userDefinedRuntimeAttributes>
-                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
-                                <integer key="value" value="25"/>
-                            </userDefinedRuntimeAttribute>
-                        </userDefinedRuntimeAttributes>
                     </view>
                 </subviews>
             </view>
