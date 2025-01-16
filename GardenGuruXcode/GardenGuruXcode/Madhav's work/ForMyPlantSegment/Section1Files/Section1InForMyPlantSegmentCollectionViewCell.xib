@@ -37,11 +37,6 @@
                             <constraint firstItem="qll-hZ-WeQ" firstAttribute="top" secondItem="5Ps-GC-7Pb" secondAttribute="top" constant="19" id="dfz-VW-brt"/>
                             <constraint firstAttribute="height" constant="58" id="lpP-n7-8fa"/>
                         </constraints>
-                        <userDefinedRuntimeAttributes>
-                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
-                                <integer key="value" value="25"/>
-                            </userDefinedRuntimeAttribute>
-                        </userDefinedRuntimeAttributes>
                     </view>
                 </subviews>
             </view>

@@ -25,6 +25,26 @@ class scanAndDiagnoseViewController: UIViewController , AVCapturePhotoCaptureDel
         super.viewDidLoad()
         setupCamera()
         instructionLabel.text = instruction[0]
+        
+    }
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.tabBarController?.tabBar.isHidden = true
+        resetState()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.tabBarController?.tabBar.isHidden = false
+    }
+    func resetState() {
+        counter = 0
+        instructionLabel.text = instruction[0]
+        snapImage1.image = nil
+        snapImage2.image = nil
+        snapImage3.image = nil
     }
     
     func setupCamera() {
@@ -46,11 +66,11 @@ class scanAndDiagnoseViewController: UIViewController , AVCapturePhotoCaptureDel
             }
             
             photoOutput = AVCapturePhotoOutput()
-                        if captureSession.canAddOutput(photoOutput) {
-                            captureSession.addOutput(photoOutput)
-                        } else {
-                            fatalError("Unable to add photo output.")
-                        }
+            if captureSession.canAddOutput(photoOutput) {
+                captureSession.addOutput(photoOutput)
+            } else {
+                fatalError("Unable to add photo output.")
+            }
             
             // Add the preview layer to the cameraView
             previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
@@ -92,21 +112,58 @@ class scanAndDiagnoseViewController: UIViewController , AVCapturePhotoCaptureDel
             print("Captured Image: \(capturedImage)")
             // Display the image in the imageView (optional)
             if(counter == 0){
+                print("FirstCount :\(counter)")
                 snapImage1.image = capturedImage
                 instructionLabel.text = instruction[counter+1]
             }
             else if(counter == 1){
+                print("2ndCount :\(counter)")
                 snapImage2.image = capturedImage
                 instructionLabel.text = instruction[counter+1]
             }
-            else if(counter >= 2){
+            else if(counter == 2){
+                print("3rdCount :\(counter)")
                 snapImage3.image = capturedImage
                 instructionLabel.text = "3 image done"
             }
             
+//            else if(counter == 3){
+            else{
+                print("hello")
+                navigateToDiagnosisView()
+            }
+//            print("Count :\(counter)")
             counter+=1
             
         }
+        
     }
-}
+    func navigateToDiagnosisView() {
+        print("inside the function")
+        // Load the storyboard containing the DiagnosisViewController
+        let storyboard = UIStoryboard(name: "Diagnosis", bundle: nil)
+        print("storyboard")
+//
+//        // Instantiate the DiagnosisViewController by its Storyboard ID
+        guard let diagnosisVC = storyboard.instantiateViewController(withIdentifier: "Diagnosis") as? DiagnosisViewController else {
+            print("Error: DiagnosisViewController could not be instantiated.")
+            return
+        }
+       print("Guard condition true")
+        
+        // Option 1: Push to Navigation Controller
 
+        if let currentNavController = self.navigationController {
+            print("Navigation controller embedded")
+            currentNavController.pushViewController(diagnosisVC, animated: true)
+        
+        } else {
+            // Option 2: Present Modally
+            self.show(diagnosisVC , sender: self)
+        }
+  }
+
+    
+   
+    
+}
