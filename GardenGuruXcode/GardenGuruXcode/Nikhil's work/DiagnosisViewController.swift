@@ -1,14 +1,7 @@
-//
-//  DiagnosisViewController.swift
-//  GardenGuruXcode
-//
-//  Created by Nikhil Gupta on 15/01/25.
-//
 
 import UIKit
 
 class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
-
     // UI Elements
     private let plantImageView = UIImageView()
     private let overlayView = UIView()
@@ -18,48 +11,65 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private let tableView = UITableView()
     private let startCaringButton = UIButton()
 
-    
+    // Data
+    var selectedPlant: DiagnosisDataModel?
+    private var expandedSections: Set<Int> = []
+    private var sectionTitles: [String] {
+        return selectedPlant?.sectionDetails.keys.sorted() ?? []
+    }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.tabBarController?.tabBar.isHidden = true
-        
     }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.tabBarController?.tabBar.isHidden = false
     }
-    // Data
-    private let sections = ["Cure and Treatment", "Preventive Measures", "Symptoms", "Vitamins Required", "Related Images", "Video Solution"]
-    private var expandedSections: Set<Int> = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
         view.backgroundColor = .white
         setupUI()
         setupConstraints()
+        navigationItem.title = "Diagnosis"
+       
     }
 
     private func setupUI() {
         // Plant Image
-        plantImageView.image = UIImage(named: "image2") // Replace with your image name
+        plantImageView.image = UIImage(named: "image2") // Replace with your actual image
         plantImageView.contentMode = .scaleAspectFill
         plantImageView.clipsToBounds = true
         view.addSubview(plantImageView)
 
         // Overlay View
-        overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        overlayView.backgroundColor = UIColor.red.withAlphaComponent(0.3)
+       // overlayView.layer.cornerRadius = 16
+//        let gradientLayer = CAGradientLayer()
+//        gradientLayer.colors = [
+//            UIColor.red.withAlphaComponent(0.3).cgColor, // Semi-transparent at the bottom
+//            UIColor.clear.cgColor                         // Fully transparent at the top
+//        ]
+//        gradientLayer.startPoint = CGPoint(x: 0.5, y: 1)
+//        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
+//        gradientLayer.frame = overlayView.bounds
+//        overlayView.layer.insertSublayer(gradientLayer, at: 0)
+
+        // Constraints to ensure overlay covers only a portion of the image view without stretching it
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+
         plantImageView.addSubview(overlayView)
 
         // Plant Name Label
-        plantNameLabel.text = "Parlor Palm"
+        plantNameLabel.text = selectedPlant?.plantName
         plantNameLabel.textColor = .white
         plantNameLabel.font = UIFont.boldSystemFont(ofSize: 24)
         overlayView.addSubview(plantNameLabel)
 
         // Diagnosis Label
-        diagnosisLabel.text = "UnderWatered"
+        diagnosisLabel.text = selectedPlant?.diagnosis
         diagnosisLabel.textColor = .white
         diagnosisLabel.font = UIFont.systemFont(ofSize: 16)
         overlayView.addSubview(diagnosisLabel)
@@ -70,23 +80,26 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         detailsStackView.spacing = 8
         view.addSubview(detailsStackView)
 
-        let details = [
-            "Also Known as: Good Luck Palm, neanthe Bella Palm",
-            "Botanical Garden: Chamaedorea",
-            "Nick Name: Near Sofa"
-        ]
-        details.forEach { text in
-            let label = UILabel()
-            label.text = text
-            label.font = UIFont.systemFont(ofSize: 16)
-            label.numberOfLines = 0
-            detailsStackView.addArrangedSubview(label)
+        if let plant = selectedPlant {
+            let generalDetails = [
+                "Also Known as: \(plant.alsoKnownAs)",
+                "Botanical Name: \(plant.botanicalName)",
+                "Nick Name: \(plant.nickName)"
+            ]
+
+            generalDetails.forEach { text in
+                let label = UILabel()
+                label.text = text
+                label.font = UIFont.systemFont(ofSize: 16)
+                label.numberOfLines = 0
+                detailsStackView.addArrangedSubview(label)
+            }
         }
 
         // TableView
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DiagnosisCell")
         tableView.isScrollEnabled = true
         view.addSubview(tableView)
 
@@ -136,46 +149,74 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
             // TableView
             tableView.topAnchor.constraint(equalTo: detailsStackView.bottomAnchor, constant: 16),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            tableView.heightAnchor.constraint(equalToConstant: CGFloat(sections.count * 50)),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
+            
 
             // Start Caring Button
-            startCaringButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
             startCaringButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             startCaringButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            startCaringButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             startCaringButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
 
     // MARK: - UITableViewDataSource
     func numberOfSections(in tableView: UITableView) -> Int {
-        return sections.count
+        return sectionTitles.count
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return expandedSections.contains(section) ? 1 : 0
+        return expandedSections.contains(section) ? selectedPlant?.sectionDetails[sectionTitles[section]]?.count ?? 0 : 0
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.textLabel?.text = "\(sections[indexPath.section]) Details..."
-        cell.textLabel?.numberOfLines = 0
+        let cell = tableView.dequeueReusableCell(withIdentifier: "DiagnosisCell", for: indexPath)
+        if let sectionData = selectedPlant?.sectionDetails[sectionTitles[indexPath.section]] {
+            cell.textLabel?.text = sectionData[indexPath.row]
+            cell.textLabel?.numberOfLines = 0
+        }
         return cell
     }
 
     // MARK: - UITableViewDelegate
+
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerButton = UIButton()
-        headerButton.setTitle(sections[section], for: .normal)
+        let headerView = UIView()
+        headerView.backgroundColor = .systemGray6 // Customize this color as needed
+        headerView.layer.cornerRadius = 10
+        let headerButton = UIButton(type: .system)
+        headerButton.setTitle(sectionTitles[section], for: .normal)
         headerButton.setTitleColor(.black, for: .normal)
         headerButton.tag = section
         headerButton.addTarget(self, action: #selector(handleExpandCollapse(_:)), for: .touchUpInside)
         headerButton.contentHorizontalAlignment = .left
-        headerButton.backgroundColor = UIColor.systemGray6
         headerButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
-        return headerButton
+       // headerButton.layer.cornerRadius = 50
+
+        // Add Chevron Indicator
+        let chevronImage = UIImage(systemName: "chevron.down")
+        let chevronImageView = UIImageView(image: chevronImage)
+        chevronImageView.tintColor = .gray
+        chevronImageView.translatesAutoresizingMaskIntoConstraints = false
+        headerButton.addSubview(chevronImageView)
+        chevronImageView.centerYAnchor.constraint(equalTo: headerButton.centerYAnchor).isActive = true
+        chevronImageView.trailingAnchor.constraint(equalTo: headerButton.trailingAnchor, constant: -16).isActive = true
+
+        headerView.addSubview(headerButton)
+
+        headerButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            headerButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            headerButton.topAnchor.constraint(equalTo: headerView.topAnchor),
+            headerButton.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
+            headerButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16)
+        ])
+
+        return headerView
     }
+
 
     @objc func handleExpandCollapse(_ sender: UIButton) {
         let section = sender.tag
@@ -188,7 +229,176 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 50.0
+        return 44
     }
+@objc private func startCaringTapped() {
+    print("Start Caring button tapped!")
 }
 
+
+
+}
+
+//import UIKit
+//
+//class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+//    // UI Elements
+//    private let plantImageView = UIImageView()
+//    private let plantNameLabel = UILabel()
+//    private let diagnosisLabel = UILabel()
+//    private let tableView = UITableView()
+//    private let startCaringButton = UIButton()
+//
+//    // Data
+//    var selectedPlant: DiagnosisDataModel? // Injected data for the selected plant
+//    private var expandedSections: Set<Int> = [] // Tracks expanded sections
+//    private var sectionTitles: [String] {
+//        return selectedPlant?.sectionDetails.keys.sorted() ?? []
+//    }
+//
+//    override func viewDidLoad() {
+//        super.viewDidLoad()
+//        view.backgroundColor = .white
+//        setupUI()
+//        setupConstraints()
+//        loadData()
+//    }
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//        self.tabBarController?.tabBar.isHidden = true
+//       
+//    }
+//    
+//    override func viewWillDisappear(_ animated: Bool) {
+//        super.viewWillDisappear(animated)
+//        self.tabBarController?.tabBar.isHidden = false
+//    }
+//
+//    private func setupUI() {
+//        // Plant Image
+//        plantImageView.image = UIImage(named: "plantPlaceholder") // Replace with your placeholder image
+//        plantImageView.contentMode = .scaleAspectFill
+//        plantImageView.clipsToBounds = true
+//        view.addSubview(plantImageView)
+//
+//        // Plant Name Label
+//        plantNameLabel.font = UIFont.boldSystemFont(ofSize: 24)
+//        plantNameLabel.textAlignment = .center
+//        view.addSubview(plantNameLabel)
+//
+//        // Diagnosis Label
+//        diagnosisLabel.font = UIFont.systemFont(ofSize: 16)
+//        diagnosisLabel.textColor = .darkGray
+//        diagnosisLabel.textAlignment = .center
+//        view.addSubview(diagnosisLabel)
+//
+//        // TableView
+//        tableView.delegate = self
+//        tableView.dataSource = self
+//        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DiagnosisCell")
+//        view.addSubview(tableView)
+//
+//        // Start Caring Button
+//        startCaringButton.setTitle("Start Caring", for: .normal)
+//        startCaringButton.backgroundColor = .systemGreen
+//        startCaringButton.layer.cornerRadius = 10
+//        startCaringButton.addTarget(self, action: #selector(startCaringTapped), for: .touchUpInside)
+//        view.addSubview(startCaringButton)
+//    }
+//
+//    private func setupConstraints() {
+//        // Enable Auto Layout
+//        plantImageView.translatesAutoresizingMaskIntoConstraints = false
+//        plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
+//        diagnosisLabel.translatesAutoresizingMaskIntoConstraints = false
+//        tableView.translatesAutoresizingMaskIntoConstraints = false
+//        startCaringButton.translatesAutoresizingMaskIntoConstraints = false
+//
+//        NSLayoutConstraint.activate([
+//            // Plant Image
+//            plantImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+//            plantImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+//            plantImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+//            plantImageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.3),
+//
+//            // Plant Name Label
+//            plantNameLabel.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 8),
+//            plantNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            plantNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//
+//            // Diagnosis Label
+//            diagnosisLabel.topAnchor.constraint(equalTo: plantNameLabel.bottomAnchor, constant: 4),
+//            diagnosisLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            diagnosisLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//
+//            // TableView
+//            tableView.topAnchor.constraint(equalTo: diagnosisLabel.bottomAnchor, constant: 16),
+//            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+//            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+//            tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
+//
+//            // Start Caring Button
+//            startCaringButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            startCaringButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            startCaringButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+//            startCaringButton.heightAnchor.constraint(equalToConstant: 50)
+//        ])
+//    }
+//
+//    private func loadData() {
+//        guard let plant = selectedPlant else { return }
+//        plantImageView.image = UIImage(named: "image2")
+//        plantNameLabel.text = plant.plantName
+//        diagnosisLabel.text = "Diagnosis: \(plant.diagnosis)"
+//        tableView.reloadData()
+//    }
+//
+//    // MARK: - TableView Data Source
+//    func numberOfSections(in tableView: UITableView) -> Int {
+//        return sectionTitles.count
+//    }
+//
+//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        let sectionKey = sectionTitles[section]
+//        return expandedSections.contains(section) ? (selectedPlant?.sectionDetails[sectionKey]?.count ?? 0) : 0
+//    }
+//
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        let cell = tableView.dequeueReusableCell(withIdentifier: "DiagnosisCell", for: indexPath)
+//        let sectionKey = sectionTitles[indexPath.section]
+//        if let content = selectedPlant?.sectionDetails[sectionKey] {
+//            cell.textLabel?.text = content[indexPath.row]
+//            cell.textLabel?.numberOfLines = 0
+//        }
+//        return cell
+//    }
+//
+//    // MARK: - TableView Delegate
+//    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+//        let headerButton = UIButton()
+//        headerButton.setTitle(sectionTitles[section], for: .normal)
+//        headerButton.setTitleColor(.black, for: .normal)
+//        headerButton.tag = section
+//        headerButton.addTarget(self, action: #selector(toggleSection), for: .touchUpInside)
+//        headerButton.backgroundColor = UIColor.systemGray6
+//        return headerButton
+//    }
+//
+//    @objc private func toggleSection(_ sender: UIButton) {
+//        let section = sender.tag
+//        if expandedSections.contains(section) {
+//            expandedSections.remove(section)
+//        } else {
+//            expandedSections.insert(section)
+//        }
+//        tableView.reloadSections(IndexSet(integer: section), with: .automatic)
+//    }
+//
+//    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+//        return 44
+//    }
+//
+//    @objc private func startCaringTapped() {
+//        print("Start Caring button tapped!")
+//    }
+//}

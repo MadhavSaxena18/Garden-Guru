@@ -21,6 +21,7 @@ class scanAndDiagnoseViewController: UIViewController , AVCapturePhotoCaptureDel
     @IBOutlet weak var snapImage3: UIImageView!
     
     var counter : Int = 0
+    var capturedImages: [UIImage] = []
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCamera()
@@ -125,14 +126,21 @@ class scanAndDiagnoseViewController: UIViewController , AVCapturePhotoCaptureDel
                 print("3rdCount :\(counter)")
                 snapImage3.image = capturedImage
                 instructionLabel.text = "3 image done"
+               
+                    let plant = DiagnosisScreen.diagnosisData[0] // Fetch the first plant as an example
+                    let diagnosisVC = DiagnosisViewController()
+                    diagnosisVC.selectedPlant = plant
+                   // present(diagnosisVC, animated: true, completion: nil)
+                    show(diagnosisVC, sender: nil)
+                   
+               // navigateToDiagnosisView()
+                
             }
-            
-//            else if(counter == 3){
             else{
                 print("hello")
-                navigateToDiagnosisView()
             }
-//            print("Count :\(counter)")
+
+            capturedImages.append(capturedImage)
             counter+=1
             
         }
@@ -143,22 +151,23 @@ class scanAndDiagnoseViewController: UIViewController , AVCapturePhotoCaptureDel
         // Load the storyboard containing the DiagnosisViewController
         let storyboard = UIStoryboard(name: "Diagnosis", bundle: nil)
         print("storyboard")
-//
-//        // Instantiate the DiagnosisViewController by its Storyboard ID
+
+//        Instantiate the DiagnosisViewController by its Storyboard ID
         guard let diagnosisVC = storyboard.instantiateViewController(withIdentifier: "Diagnosis") as? DiagnosisViewController else {
             print("Error: DiagnosisViewController could not be instantiated.")
             return
         }
        print("Guard condition true")
         
-        // Option 1: Push to Navigation Controller
+//        Option 1: Push to Navigation Controller
 
         if let currentNavController = self.navigationController {
             print("Navigation controller embedded")
             currentNavController.pushViewController(diagnosisVC, animated: true)
+            print ("Hiii")
         
         } else {
-            // Option 2: Present Modally
+          
             self.show(diagnosisVC , sender: self)
         }
   }
