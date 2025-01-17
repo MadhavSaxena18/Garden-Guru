@@ -33,7 +33,7 @@ class MySpaceHeaderCollectionReusableView: UICollectionReusableView {
             NSLayoutConstraint.activate([headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 10),
                                          headerLabel.bottomAnchor.constraint(equalTo: bottomAnchor),
                                          headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-                                         //headerLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
+                                        
                                          
             
                                          
@@ -42,6 +42,6 @@ class MySpaceHeaderCollectionReusableView: UICollectionReusableView {
                                         ])
             
         }
-        
+
     }
 
