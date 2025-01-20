@@ -30,7 +30,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(hex: "#EBF4EB")
         setupUI()
         setupConstraints()
         navigationItem.title = "Diagnosis"
@@ -78,6 +78,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         detailsStackView.axis = .vertical
         detailsStackView.alignment = .leading
         detailsStackView.spacing = 8
+//        detailsStackView.font = UIColor(hex: "#005E2C")
         view.addSubview(detailsStackView)
 
         if let plant = selectedPlant {
@@ -90,7 +91,9 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             generalDetails.forEach { text in
                 let label = UILabel()
                 label.text = text
-                label.font = UIFont.systemFont(ofSize: 16)
+                label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+                label.textColor = UIColor(hex: "#005E2C")
+             //   label.tintColor = UIColor(hex: "#005E2C")
                 label.numberOfLines = 0
                 detailsStackView.addArrangedSubview(label)
             }
@@ -101,6 +104,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DiagnosisCell")
         tableView.isScrollEnabled = true
+        tableView.backgroundColor = UIColor(hex: "#EBF4EB")
         view.addSubview(tableView)
 
         // Start Caring Button
@@ -109,6 +113,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         startCaringButton.backgroundColor = .systemGreen
         startCaringButton.layer.cornerRadius = 10
         view.addSubview(startCaringButton)
+        startCaringButton.addTarget(self, action: #selector(startCaringTapped), for: .touchUpInside)
+
     }
 
     private func setupConstraints() {
@@ -174,17 +180,40 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "DiagnosisCell", for: indexPath)
         if let sectionData = selectedPlant?.sectionDetails[sectionTitles[indexPath.section]] {
-            cell.textLabel?.text = sectionData[indexPath.row]
+            let text = sectionData[indexPath.row] // Extract the text
+            cell.textLabel?.text = text
             cell.textLabel?.numberOfLines = 0
+           // cell.textLabel?.textColor = .systemGreen
+            // Check if the text is a URL
+            if text.starts(with: "http") {
+                cell.textLabel?.textColor = .systemBlue
+                cell.textLabel?.isUserInteractionEnabled = true
+              //  let regularTextColor = UIColor(hex: "#004E05")
+
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openLink(_:)))
+                cell.textLabel?.addGestureRecognizer(tapGesture)
+            } else {
+                cell.textLabel?.textColor = UIColor(hex: "#004E05") // Regular text color for non-URLs
+                cell.textLabel?.isUserInteractionEnabled = false
+            }
         }
         return cell
+    }
+
+    @objc func openLink(_ sender: UITapGestureRecognizer) {
+        guard let label = sender.view as? UILabel,
+              let text = label.text,
+              let url = URL(string: text) else { return }
+
+        // Open the URL
+        UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 
     // MARK: - UITableViewDelegate
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
-        headerView.backgroundColor = .systemGray6 // Customize this color as needed
+        headerView.backgroundColor = .systemGray5 // Customize this color as needed
         headerView.layer.cornerRadius = 10
         let headerButton = UIButton(type: .system)
         headerButton.setTitle(sectionTitles[section], for: .normal)
@@ -231,174 +260,17 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 44
     }
-@objc private func startCaringTapped() {
+    
+   @objc  func startCaringTapped() {
     print("Start Caring button tapped!")
+    
+       let newController = setReminderViewController()
+       print(newController)
+       present(newController,animated: true)
+//       performSegue(withIdentifier: "s1", sender: self)
 }
 
 
 
 }
 
-//import UIKit
-//
-//class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
-//    // UI Elements
-//    private let plantImageView = UIImageView()
-//    private let plantNameLabel = UILabel()
-//    private let diagnosisLabel = UILabel()
-//    private let tableView = UITableView()
-//    private let startCaringButton = UIButton()
-//
-//    // Data
-//    var selectedPlant: DiagnosisDataModel? // Injected data for the selected plant
-//    private var expandedSections: Set<Int> = [] // Tracks expanded sections
-//    private var sectionTitles: [String] {
-//        return selectedPlant?.sectionDetails.keys.sorted() ?? []
-//    }
-//
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//        view.backgroundColor = .white
-//        setupUI()
-//        setupConstraints()
-//        loadData()
-//    }
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//        self.tabBarController?.tabBar.isHidden = true
-//       
-//    }
-//    
-//    override func viewWillDisappear(_ animated: Bool) {
-//        super.viewWillDisappear(animated)
-//        self.tabBarController?.tabBar.isHidden = false
-//    }
-//
-//    private func setupUI() {
-//        // Plant Image
-//        plantImageView.image = UIImage(named: "plantPlaceholder") // Replace with your placeholder image
-//        plantImageView.contentMode = .scaleAspectFill
-//        plantImageView.clipsToBounds = true
-//        view.addSubview(plantImageView)
-//
-//        // Plant Name Label
-//        plantNameLabel.font = UIFont.boldSystemFont(ofSize: 24)
-//        plantNameLabel.textAlignment = .center
-//        view.addSubview(plantNameLabel)
-//
-//        // Diagnosis Label
-//        diagnosisLabel.font = UIFont.systemFont(ofSize: 16)
-//        diagnosisLabel.textColor = .darkGray
-//        diagnosisLabel.textAlignment = .center
-//        view.addSubview(diagnosisLabel)
-//
-//        // TableView
-//        tableView.delegate = self
-//        tableView.dataSource = self
-//        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DiagnosisCell")
-//        view.addSubview(tableView)
-//
-//        // Start Caring Button
-//        startCaringButton.setTitle("Start Caring", for: .normal)
-//        startCaringButton.backgroundColor = .systemGreen
-//        startCaringButton.layer.cornerRadius = 10
-//        startCaringButton.addTarget(self, action: #selector(startCaringTapped), for: .touchUpInside)
-//        view.addSubview(startCaringButton)
-//    }
-//
-//    private func setupConstraints() {
-//        // Enable Auto Layout
-//        plantImageView.translatesAutoresizingMaskIntoConstraints = false
-//        plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
-//        diagnosisLabel.translatesAutoresizingMaskIntoConstraints = false
-//        tableView.translatesAutoresizingMaskIntoConstraints = false
-//        startCaringButton.translatesAutoresizingMaskIntoConstraints = false
-//
-//        NSLayoutConstraint.activate([
-//            // Plant Image
-//            plantImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-//            plantImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            plantImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            plantImageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.3),
-//
-//            // Plant Name Label
-//            plantNameLabel.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 8),
-//            plantNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            plantNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//
-//            // Diagnosis Label
-//            diagnosisLabel.topAnchor.constraint(equalTo: plantNameLabel.bottomAnchor, constant: 4),
-//            diagnosisLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            diagnosisLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//
-//            // TableView
-//            tableView.topAnchor.constraint(equalTo: diagnosisLabel.bottomAnchor, constant: 16),
-//            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
-//
-//            // Start Caring Button
-//            startCaringButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            startCaringButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            startCaringButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-//            startCaringButton.heightAnchor.constraint(equalToConstant: 50)
-//        ])
-//    }
-//
-//    private func loadData() {
-//        guard let plant = selectedPlant else { return }
-//        plantImageView.image = UIImage(named: "image2")
-//        plantNameLabel.text = plant.plantName
-//        diagnosisLabel.text = "Diagnosis: \(plant.diagnosis)"
-//        tableView.reloadData()
-//    }
-//
-//    // MARK: - TableView Data Source
-//    func numberOfSections(in tableView: UITableView) -> Int {
-//        return sectionTitles.count
-//    }
-//
-//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        let sectionKey = sectionTitles[section]
-//        return expandedSections.contains(section) ? (selectedPlant?.sectionDetails[sectionKey]?.count ?? 0) : 0
-//    }
-//
-//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        let cell = tableView.dequeueReusableCell(withIdentifier: "DiagnosisCell", for: indexPath)
-//        let sectionKey = sectionTitles[indexPath.section]
-//        if let content = selectedPlant?.sectionDetails[sectionKey] {
-//            cell.textLabel?.text = content[indexPath.row]
-//            cell.textLabel?.numberOfLines = 0
-//        }
-//        return cell
-//    }
-//
-//    // MARK: - TableView Delegate
-//    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-//        let headerButton = UIButton()
-//        headerButton.setTitle(sectionTitles[section], for: .normal)
-//        headerButton.setTitleColor(.black, for: .normal)
-//        headerButton.tag = section
-//        headerButton.addTarget(self, action: #selector(toggleSection), for: .touchUpInside)
-//        headerButton.backgroundColor = UIColor.systemGray6
-//        return headerButton
-//    }
-//
-//    @objc private func toggleSection(_ sender: UIButton) {
-//        let section = sender.tag
-//        if expandedSections.contains(section) {
-//            expandedSections.remove(section)
-//        } else {
-//            expandedSections.insert(section)
-//        }
-//        tableView.reloadSections(IndexSet(integer: section), with: .automatic)
-//    }
-//
-//    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-//        return 44
-//    }
-//
-//    @objc private func startCaringTapped() {
-//        print("Start Caring button tapped!")
-//    }
-//}
