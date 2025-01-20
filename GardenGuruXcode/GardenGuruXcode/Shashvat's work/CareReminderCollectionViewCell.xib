@@ -18,7 +18,7 @@
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="al5-gu-947">
-                        <rect key="frame" x="192" y="30" width="52" height="32"/>
+                        <rect key="frame" x="185" y="20" width="52" height="26.333333333333329"/>
                         <fontDescription key="fontDescription" style="UICTFontTextStyleTitle2"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
@@ -32,7 +32,7 @@
                         </connections>
                     </button>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="252" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TJ6-gu-upZ">
-                        <rect key="frame" x="192" y="77" width="38" height="18"/>
+                        <rect key="frame" x="185" y="51.333333333333336" width="38" height="18.000000000000007"/>
                         <fontDescription key="fontDescription" style="UICTFontTextStyleSubhead"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
@@ -48,26 +48,34 @@
                             </userDefinedRuntimeAttribute>
                         </userDefinedRuntimeAttributes>
                     </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ap9-2O-tp3">
+                        <rect key="frame" x="185" y="79.333333333333329" width="42" height="21"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
                 </subviews>
             </view>
             <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <constraints>
-                <constraint firstAttribute="bottom" secondItem="TJ6-gu-upZ" secondAttribute="bottom" constant="35" id="147-bj-nEF"/>
                 <constraint firstAttribute="trailing" secondItem="qhU-PM-WnM" secondAttribute="trailing" constant="5" id="Arb-JC-2L1"/>
-                <constraint firstItem="TJ6-gu-upZ" firstAttribute="top" secondItem="al5-gu-947" secondAttribute="bottom" constant="15" id="P7f-aF-bN2"/>
-                <constraint firstItem="al5-gu-947" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="22" id="Q3b-Z5-vbh"/>
-                <constraint firstItem="al5-gu-947" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="30" id="RLZ-Kq-vFD"/>
+                <constraint firstItem="TJ6-gu-upZ" firstAttribute="top" secondItem="al5-gu-947" secondAttribute="bottom" constant="5" id="P7f-aF-bN2"/>
+                <constraint firstItem="al5-gu-947" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="Q3b-Z5-vbh"/>
+                <constraint firstItem="al5-gu-947" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="20" id="RLZ-Kq-vFD"/>
+                <constraint firstItem="ap9-2O-tp3" firstAttribute="top" secondItem="TJ6-gu-upZ" secondAttribute="bottom" constant="10" id="TQ9-B6-iMc"/>
                 <constraint firstItem="qhU-PM-WnM" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="ZrX-Ks-5bR"/>
                 <constraint firstItem="Btb-ST-reA" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="7" id="b5U-cc-Cjk"/>
                 <constraint firstItem="Btb-ST-reA" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="9" id="e3p-Ps-pa2"/>
-                <constraint firstItem="TJ6-gu-upZ" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="22" id="gnm-lV-0UM"/>
+                <constraint firstItem="TJ6-gu-upZ" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="gnm-lV-0UM"/>
+                <constraint firstItem="ap9-2O-tp3" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="mFt-7Q-ber"/>
                 <constraint firstAttribute="bottom" secondItem="Btb-ST-reA" secondAttribute="bottom" constant="9" id="uSv-Lo-rjK"/>
             </constraints>
             <size key="customSize" width="325" height="130"/>
             <connections>
                 <outlet property="careReminderPlantImageView" destination="Btb-ST-reA" id="hPr-X5-zR6"/>
                 <outlet property="checkBoxCareReminderButton" destination="qhU-PM-WnM" id="N80-S8-U1r"/>
+                <outlet property="dueDateCareReminder" destination="ap9-2O-tp3" id="gQ8-jr-uzq"/>
                 <outlet property="nickNameCareReminderLabel" destination="TJ6-gu-upZ" id="pMX-IQ-Nsh"/>
                 <outlet property="plantNameCareReminderLabel" destination="al5-gu-947" id="4P5-Xa-C66"/>
             </connections>
