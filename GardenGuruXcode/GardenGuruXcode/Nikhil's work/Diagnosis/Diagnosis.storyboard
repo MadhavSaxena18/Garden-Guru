@@ -18,10 +18,23 @@
                         <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                     </view>
                     <navigationItem key="navigationItem" title="Diagnosis" id="t35-r3-5TP"/>
+                    <connections>
+                        <segue destination="8I2-PH-82T" kind="show" identifier="s1" id="69r-Ye-W5n"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1987.0229007633586" y="3.5211267605633805"/>
+        </scene>
+        <!--setRemainder-->
+        <scene sceneID="hMQ-5J-oec">
+            <objects>
+                <viewControllerPlaceholder storyboardName="setRemainder" id="8I2-PH-82T" sceneMemberID="viewController">
+                    <navigationItem key="navigationItem" id="QxI-gl-FZM"/>
+                </viewControllerPlaceholder>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="bDV-8Q-Vxk" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2693" y="-196"/>
         </scene>
     </scenes>
 </document>
