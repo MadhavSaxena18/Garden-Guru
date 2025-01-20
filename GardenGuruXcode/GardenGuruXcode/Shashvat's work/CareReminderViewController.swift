@@ -61,7 +61,7 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
                    self.careReminderCollectionView.reloadData() // Reload the collection view
                }
            }
-           
+        cell.layer.cornerRadius = 18
            return cell
     }
     
@@ -73,9 +73,9 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader{
-            let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "MySpaceHeaderCollectionReusableView", for: indexPath) as! CareReminderCollectionReusableView
+            let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "CareReminderCollectionReusableView", for: indexPath) as! CareReminderCollectionReusableView
             header.headerLabel.text = CareReminderData.careReminderSectionHeaderNames[indexPath.section]
-            header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+            header.headerLabel.font = UIFont.systemFont(ofSize: 25, weight: .bold)
             header.headerLabel.textColor = UIColor(hex: "284329")
             
         
@@ -103,7 +103,7 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
                 return nil
                 
             }
-            let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(20))
+            let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(70))
             
             let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
                        
@@ -122,18 +122,18 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
     func generateSection1Layout()-> NSCollectionLayoutSection{
         let spacing: CGFloat = 5
         
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.95), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(290))
+        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(0.2))
         
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitems: [item])
        
         group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
-        group.interItemSpacing = .fixed(15)
+        group.interItemSpacing = .fixed(50)
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = spacing
-        section.orthogonalScrollingBehavior = .groupPaging
+        
         return section
        
     }

@@ -26,12 +26,12 @@ struct CareReminder {
 // Dummy data
 class CareReminderData{
     static  var reminders: [CareReminder] = [
-        CareReminder( plantName: "Snake Plant", nickname: "Near Dining Table", plantImageName: "snake_plant", type: .watering, isCompleted: true),
+        CareReminder( plantName: "Snake Plant", nickname: "Near Dining Table", plantImageName: "snake_plant", type: .watering, isCompleted: false),
         CareReminder( plantName: "Parlor Palm", nickname: "Near Sofa", plantImageName: "parlor_palm", type: .watering,  isCompleted: false),
-        CareReminder( plantName: "Aloe Vera", nickname: "By the Window", plantImageName: "snake_plant", type: .fertilizing,  isCompleted: false),
-        CareReminder( plantName: "Monstera", nickname: "In the Living Room", plantImageName: "parlor_palm", type: .fertilizing,  isCompleted: false)
+        CareReminder( plantName: "Parlor Palm", nickname: "near Window", plantImageName: "snake_plant", type: .fertilizing,  isCompleted: false),
+        CareReminder( plantName: "Snake Plant", nickname: "In Living Room", plantImageName: "parlor_palm", type: .fertilizing,  isCompleted: false)
     ]
     static var careReminderSectionHeaderNames: [String] = [
-        "watering","fertilizing"
+        "Watering","Fertilization"
     ]
 }

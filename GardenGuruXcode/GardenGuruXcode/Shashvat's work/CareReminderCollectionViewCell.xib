@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
-    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <device id="retina6_12" orientation="landscape" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
@@ -17,44 +17,52 @@
                 <rect key="frame" x="0.0" y="0.0" width="360" height="130"/>
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
-                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Btb-ST-reA">
-                        <rect key="frame" x="0.0" y="0.0" width="177" height="130"/>
-                    </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="al5-gu-947">
-                        <rect key="frame" x="192" y="40" width="52" height="27"/>
+                        <rect key="frame" x="192" y="30" width="52" height="32"/>
                         <fontDescription key="fontDescription" style="UICTFontTextStyleTitle2"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qhU-PM-WnM">
-                        <rect key="frame" x="280" y="47.666666666666657" width="75" height="35"/>
+                        <rect key="frame" x="331" y="58" width="24" height="14"/>
                         <state key="normal" title="Button"/>
-                        <buttonConfiguration key="configuration" style="plain" title="Button"/>
+                        <buttonConfiguration key="configuration" style="plain" title=""/>
                         <connections>
                             <action selector="checkBoxCareReminderButtonTapped:" destination="gTV-IL-0wX" eventType="touchUpInside" id="h0A-hI-xLi"/>
                         </connections>
                     </button>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TJ6-gu-upZ">
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="252" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TJ6-gu-upZ">
                         <rect key="frame" x="192" y="77" width="38" height="18"/>
                         <fontDescription key="fontDescription" style="UICTFontTextStyleSubhead"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Btb-ST-reA">
+                        <rect key="frame" x="7" y="9" width="163" height="112"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="163" id="cs4-Ft-jCQ"/>
+                        </constraints>
+                        <userDefinedRuntimeAttributes>
+                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                <integer key="value" value="15"/>
+                            </userDefinedRuntimeAttribute>
+                        </userDefinedRuntimeAttributes>
+                    </imageView>
                 </subviews>
             </view>
             <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <constraints>
-                <constraint firstAttribute="bottom" secondItem="Btb-ST-reA" secondAttribute="bottom" id="0rO-Sn-o6b"/>
-                <constraint firstItem="Btb-ST-reA" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="7dH-hT-cV8"/>
-                <constraint firstItem="qhU-PM-WnM" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="JPh-7i-gKw"/>
-                <constraint firstItem="al5-gu-947" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="Q46-ul-2WW"/>
-                <constraint firstItem="TJ6-gu-upZ" firstAttribute="top" secondItem="al5-gu-947" secondAttribute="bottom" constant="10" id="V5f-Fa-g8p"/>
-                <constraint firstAttribute="trailing" secondItem="qhU-PM-WnM" secondAttribute="trailing" constant="5" id="bAY-2S-rAo"/>
-                <constraint firstItem="Btb-ST-reA" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="gu3-by-1JR"/>
-                <constraint firstItem="Btb-ST-reA" firstAttribute="centerY" secondItem="qhU-PM-WnM" secondAttribute="centerY" id="p5W-PW-uny"/>
-                <constraint firstItem="TJ6-gu-upZ" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="p7v-H2-B2s"/>
-                <constraint firstItem="al5-gu-947" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="40" id="vKs-CZ-Kn7"/>
-                <constraint firstItem="qhU-PM-WnM" firstAttribute="leading" secondItem="al5-gu-947" secondAttribute="trailing" constant="36" id="yUc-ge-RJV"/>
+                <constraint firstAttribute="bottom" secondItem="TJ6-gu-upZ" secondAttribute="bottom" constant="35" id="147-bj-nEF"/>
+                <constraint firstAttribute="trailing" secondItem="qhU-PM-WnM" secondAttribute="trailing" constant="5" id="Arb-JC-2L1"/>
+                <constraint firstItem="TJ6-gu-upZ" firstAttribute="top" secondItem="al5-gu-947" secondAttribute="bottom" constant="15" id="P7f-aF-bN2"/>
+                <constraint firstItem="al5-gu-947" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="22" id="Q3b-Z5-vbh"/>
+                <constraint firstItem="al5-gu-947" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="30" id="RLZ-Kq-vFD"/>
+                <constraint firstItem="qhU-PM-WnM" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="ZrX-Ks-5bR"/>
+                <constraint firstItem="Btb-ST-reA" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="7" id="b5U-cc-Cjk"/>
+                <constraint firstItem="Btb-ST-reA" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="9" id="e3p-Ps-pa2"/>
+                <constraint firstItem="TJ6-gu-upZ" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="22" id="gnm-lV-0UM"/>
+                <constraint firstAttribute="bottom" secondItem="Btb-ST-reA" secondAttribute="bottom" constant="9" id="uSv-Lo-rjK"/>
             </constraints>
             <size key="customSize" width="325" height="130"/>
             <connections>
@@ -63,7 +71,7 @@
                 <outlet property="nickNameCareReminderLabel" destination="TJ6-gu-upZ" id="pMX-IQ-Nsh"/>
                 <outlet property="plantNameCareReminderLabel" destination="al5-gu-947" id="4P5-Xa-C66"/>
             </connections>
-            <point key="canvasLocation" x="343.51145038167937" y="35.91549295774648"/>
+            <point key="canvasLocation" x="342.95774647887328" y="35.114503816793892"/>
         </collectionViewCell>
     </objects>
 </document>
