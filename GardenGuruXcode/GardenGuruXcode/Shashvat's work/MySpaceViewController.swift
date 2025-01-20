@@ -62,9 +62,9 @@ class MySpaceViewController:  UIViewController, UICollectionViewDataSource, UICo
             case 0:
                 section = self.generateSection1Layout()
             case 1:
-                section = self.generateSection1Layout()
+                section = self.generateSection2Layout()
             case 2:
-                section = self.generateSection1Layout()
+                section = self.generateSection3Layout()
             default:
                 print("error")
                 return nil
@@ -150,12 +150,8 @@ class MySpaceViewController:  UIViewController, UICollectionViewDataSource, UICo
             header.headerLabel.textColor = UIColor(hex: "284329")
             header.totalPlantLabel.text = "Total Plant: 50"
             header.totalPlantLabel.textColor = UIColor(hex: "284329")
-//            header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
-//            header.button.tintColor = UIColor(hex: "284329")
-//            header.button.tag = indexPath.section
-//            header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
-            
-            //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
+        
+
             return header
         }
         
@@ -166,8 +162,7 @@ class MySpaceViewController:  UIViewController, UICollectionViewDataSource, UICo
     
     
   
-//    var plants: [Plant] = []
-//    var reminders: [Reminder] = []
+
 
     @IBOutlet weak var mySpaceCollectionView: UICollectionView!
     

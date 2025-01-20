@@ -96,6 +96,7 @@ class MySpaceScreen {
         "Snake Plants",
         "String of Pearls"
     ]
+    static var totalPlants:Int?
     
 //    var  reminders = [
 //        Reminder(plantID: plants[0].id, type: "Watering", dateTime: Date(), isCompleted: false),

@@ -49,7 +49,11 @@
                     </view>
                     <navigationItem key="navigationItem" title="My Space" id="0I0-Mu-EWD">
                         <barButtonItem key="leftBarButtonItem" title="Add Plant" id="eBA-lk-xvm"/>
-                        <barButtonItem key="rightBarButtonItem" image="bell" catalog="system" id="O89-ab-oVq"/>
+                        <barButtonItem key="rightBarButtonItem" image="bell" catalog="system" id="O89-ab-oVq">
+                            <connections>
+                                <segue destination="vbq-4U-rY8" kind="show" id="5js-Hq-I1w"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="mySpaceCollectionView" destination="X4Q-MF-1Ro" id="Wxh-P9-Nnq"/>
@@ -58,6 +62,66 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1921.3740458015266" y="3.5211267605633805"/>
+        </scene>
+        <!--Care Reminder-->
+        <scene sceneID="hH4-UZ-RWl">
+            <objects>
+                <viewController id="vbq-4U-rY8" customClass="CareReminderViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="dcT-3l-yMx">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="yft-zO-ZKL">
+                                <rect key="frame" x="22" y="112" width="349" height="32"/>
+                                <segments>
+                                    <segment title="Today"/>
+                                    <segment title="Upcoming"/>
+                                </segments>
+                            </segmentedControl>
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="T0h-k5-Cqx">
+                                <rect key="frame" x="0.0" y="158" width="393" height="660"/>
+                                <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="eEr-xW-lwS">
+                                    <size key="itemSize" width="128" height="128"/>
+                                    <size key="headerReferenceSize" width="0.0" height="0.0"/>
+                                    <size key="footerReferenceSize" width="0.0" height="0.0"/>
+                                    <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+                                </collectionViewFlowLayout>
+                                <cells>
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="" id="cVk-6T-Bb6">
+                                        <rect key="frame" x="0.0" y="0.0" width="127.99999999999997" height="128"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="EQy-4N-7FQ">
+                                            <rect key="frame" x="0.0" y="0.0" width="127.99999999999997" height="128"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </collectionViewCellContentView>
+                                    </collectionViewCell>
+                                </cells>
+                            </collectionView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="r90-z3-yNO"/>
+                        <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="yft-zO-ZKL" firstAttribute="leading" secondItem="r90-z3-yNO" secondAttribute="leading" constant="22" id="1ml-T1-bKI"/>
+                            <constraint firstItem="r90-z3-yNO" firstAttribute="bottom" secondItem="T0h-k5-Cqx" secondAttribute="bottom" id="ChD-Ta-gAh"/>
+                            <constraint firstItem="r90-z3-yNO" firstAttribute="trailing" secondItem="T0h-k5-Cqx" secondAttribute="trailing" id="Kku-hx-nMm"/>
+                            <constraint firstItem="T0h-k5-Cqx" firstAttribute="top" secondItem="yft-zO-ZKL" secondAttribute="bottom" constant="15" id="PFP-9x-Nik"/>
+                            <constraint firstItem="r90-z3-yNO" firstAttribute="trailing" secondItem="yft-zO-ZKL" secondAttribute="trailing" constant="22" id="VCn-Ob-emk"/>
+                            <constraint firstItem="T0h-k5-Cqx" firstAttribute="leading" secondItem="r90-z3-yNO" secondAttribute="leading" id="VeK-Ke-14c"/>
+                            <constraint firstItem="yft-zO-ZKL" firstAttribute="top" secondItem="r90-z3-yNO" secondAttribute="top" constant="9" id="sYY-kc-9Nc"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" title="Care Reminder" id="xgh-Gw-2QK">
+                        <barButtonItem key="rightBarButtonItem" systemItem="edit" id="I0z-yB-zK8"/>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="careReminderCollectionView" destination="T0h-k5-Cqx" id="gCG-Pc-xMV"/>
+                        <outlet property="careReminderSegmentedControl" destination="yft-zO-ZKL" id="wNj-79-xYI"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="5n8-0t-mOd" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2749" y="4"/>
         </scene>
         <!--My Space-->
         <scene sceneID="bS2-hP-6cx">
