@@ -8,7 +8,8 @@
 import UIKit
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
-    
+    let PlantCarAI = UIImageView()
+
     var identifier = 0
     
     @IBOutlet weak var collectionView: UICollectionView!
@@ -32,13 +33,32 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         // Ensure the search bar doesn't persist on navigation
         definesPresentationContext = true
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
-        updateSegmentedControlTitles(firstTitle: "Discover", secondTitle: "Fo My Plants")
+        updateSegmentedControlTitles(firstTitle: "Discover", secondTitle: "For My Plants")
         setupSegmentedControl()
         updateDataForSelectedSegment()
         setUpcollectionView()
-        
-        
-        
+        PlantCarAI.image = UIImage(named: "PlantCarAI") // Replace with your image name
+        PlantCarAI.contentMode = .scaleAspectFit
+        PlantCarAI.backgroundColor = .white
+        PlantCarAI.layer.cornerRadius = 15
+        PlantCarAI.frame = CGRect(x: 0, y: 0, width: 50, height: 50) // Adjust size
+        view.addSubview(PlantCarAI)
+               
+        // Position the image at the bottom-left
+        PlantCarAI.frame.origin = CGPoint(
+            x: 320,
+            y: view.frame.height - PlantCarAI.frame.height - 120
+        )
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+               
+        // Reposition image for different screen sizes
+        PlantCarAI.frame.origin = CGPoint(
+            x: 320,
+            y: view.frame.height - PlantCarAI.frame.height - 120
+        )
     }
     
     func setUpcollectionView(){
@@ -352,9 +372,42 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let storyBoard = UIStoryboard(name: "exploreTab", bundle: nil)
         let VC = storyBoard.instantiateViewController(withIdentifier: "SectionWiseDetailViewController") as! SectionWiseDetailViewController
         
-        VC.sectionNumber = sender.tag
+        VC.sectionNumber = sender.tag // Pass the section number
+        VC.selectedSegmentIndex = segmentControlOnExplore.selectedSegmentIndex // Pass the selected segment index (if needed)
+        
+        if segmentControlOnExplore.selectedSegmentIndex == 0 {
+                VC.headerData = ExploreScreen.headerData
+            } else {
+                VC.headerData = ExploreScreen.headerForInMyPlantSegment
+            }
         navigationController?.pushViewController(VC, animated: true)
+        
     }
+    
+//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//        // Determine the selected segment
+//        let selectedSegment = segmentControlOnExplore.selectedSegmentIndex
+//        let selectedSection = indexPath.section
+//        let selectedItem = indexPath.item
+//        
+//        // Prepare data to pass
+//        let selectedCardData: Any
+//        if selectedSegment == 0 { // "Discover" Segment
+//            selectedCardData = currentData[selectedSection][selectedItem]
+//        } else { // "For My Plants" Segment
+//            selectedCardData = currentData[selectedSection][selectedItem]
+//        }
+//        
+//        // Navigate to CardsDetailViewController
+//        let storyboard = UIStoryboard(name: "Main", bundle: nil) // Replace "Main" with your storyboard name if different
+//        let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as! CardsDetailViewController
+//        
+//        // Pass data to CardsDetailViewController
+//        // Assuming you have a property in CardsDetailViewController to accept the selected data
+//        detailVC.selectedCardData = selectedCardData
+//        
+//        navigationController?.pushViewController(detailVC, animated: true)
+//    }
     
     
 }
