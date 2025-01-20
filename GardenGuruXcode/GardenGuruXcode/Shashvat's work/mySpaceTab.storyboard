@@ -48,8 +48,14 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="My Space" id="0I0-Mu-EWD">
-                        <barButtonItem key="leftBarButtonItem" title="Add Plant" id="eBA-lk-xvm"/>
+                        <barButtonItem key="leftBarButtonItem" title="Add Plant" id="eBA-lk-xvm">
+                            <color key="tintColor" red="0.0" green="0.30588235294117649" blue="0.019607843137254902" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                            <connections>
+                                <segue destination="mqh-fK-l9V" kind="show" id="pao-hH-iNR"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" image="bell" catalog="system" id="O89-ab-oVq">
+                            <color key="tintColor" red="0.0" green="0.30588235294117649" blue="0.019607843137254902" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                             <connections>
                                 <segue destination="vbq-4U-rY8" kind="show" id="5js-Hq-I1w"/>
                             </connections>
@@ -61,7 +67,63 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1921.3740458015266" y="3.5211267605633805"/>
+            <point key="canvasLocation" x="1744" y="-157"/>
+        </scene>
+        <!--Add Plant-->
+        <scene sceneID="aVL-Uu-o6e">
+            <objects>
+                <viewController id="mqh-fK-l9V" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="NgV-sH-Qoy">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="OR" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Sob-fy-5HK">
+                                <rect key="frame" x="177" y="409" width="39" height="34"/>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lGc-gO-F5t">
+                                <rect key="frame" x="124.66666666666669" y="493" width="144" height="120"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" image="camera.circle.fill" catalog="system" title="">
+                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="80"/>
+                                </buttonConfiguration>
+                            </button>
+                            <searchBar contentMode="redraw" searchBarStyle="minimal" placeholder="Search Plants" translatesAutoresizingMaskIntoConstraints="NO" id="d95-7P-oeP">
+                                <rect key="frame" x="12" y="303" width="370" height="56"/>
+                                <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="370" id="C0V-vM-rja"/>
+                                </constraints>
+                                <color key="barTintColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="words" keyboardAppearance="alert" returnKeyType="search" textContentType="name"/>
+                                <scopeButtonTitles>
+                                    <string>Title</string>
+                                    <string>Title</string>
+                                </scopeButtonTitles>
+                                <connections>
+                                    <outlet property="delegate" destination="mqh-fK-l9V" id="r8m-GK-zS6"/>
+                                </connections>
+                            </searchBar>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="oFJ-s2-lw2"/>
+                        <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="d95-7P-oeP" firstAttribute="centerX" secondItem="NgV-sH-Qoy" secondAttribute="centerX" id="CHc-dh-1Of"/>
+                            <constraint firstItem="lGc-gO-F5t" firstAttribute="top" secondItem="Sob-fy-5HK" secondAttribute="bottom" constant="50" id="E5B-qP-YPR"/>
+                            <constraint firstItem="Sob-fy-5HK" firstAttribute="centerX" secondItem="NgV-sH-Qoy" secondAttribute="centerX" id="TeJ-5k-sSo"/>
+                            <constraint firstItem="lGc-gO-F5t" firstAttribute="centerX" secondItem="NgV-sH-Qoy" secondAttribute="centerX" id="ck4-ag-4UJ"/>
+                            <constraint firstItem="Sob-fy-5HK" firstAttribute="centerY" secondItem="NgV-sH-Qoy" secondAttribute="centerY" id="qjI-OD-vve"/>
+                            <constraint firstItem="Sob-fy-5HK" firstAttribute="top" secondItem="d95-7P-oeP" secondAttribute="bottom" constant="50" id="rQz-Ym-1Aa"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" title="Add Plant" id="jaB-5g-QHY"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="68I-J0-6CM" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2646.5648854961833" y="-50"/>
         </scene>
         <!--Care Reminder-->
         <scene sceneID="hH4-UZ-RWl">
@@ -77,6 +139,9 @@
                                     <segment title="Today"/>
                                     <segment title="Upcoming"/>
                                 </segments>
+                                <connections>
+                                    <action selector="didChangeSegmentCareReminder:" destination="vbq-4U-rY8" eventType="valueChanged" id="rVk-Gb-hny"/>
+                                </connections>
                             </segmentedControl>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="T0h-k5-Cqx">
                                 <rect key="frame" x="0.0" y="158" width="393" height="660"/>
@@ -112,7 +177,12 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Care Reminder" id="xgh-Gw-2QK">
-                        <barButtonItem key="rightBarButtonItem" systemItem="edit" id="I0z-yB-zK8"/>
+                        <barButtonItem key="rightBarButtonItem" systemItem="edit" id="I0z-yB-zK8">
+                            <color key="tintColor" red="0.0" green="0.30588235294117649" blue="0.019607843137254902" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                            <connections>
+                                <action selector="editButtonCareReminderTapped:" destination="vbq-4U-rY8" id="WMg-zK-QBg"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="careReminderCollectionView" destination="T0h-k5-Cqx" id="gCG-Pc-xMV"/>
@@ -121,7 +191,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="5n8-0t-mOd" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2749" y="4"/>
+            <point key="canvasLocation" x="2569" y="-796"/>
         </scene>
         <!--My Space-->
         <scene sceneID="bS2-hP-6cx">
@@ -145,6 +215,7 @@
     </scenes>
     <resources>
         <image name="bell" catalog="system" width="125" height="128"/>
+        <image name="camera.circle.fill" catalog="system" width="128" height="123"/>
         <image name="fan.fill" catalog="system" width="128" height="116"/>
     </resources>
 </document>

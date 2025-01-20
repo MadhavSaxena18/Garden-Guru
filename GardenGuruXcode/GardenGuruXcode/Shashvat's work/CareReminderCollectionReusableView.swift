@@ -9,7 +9,7 @@ import UIKit
 
 class CareReminderCollectionReusableView: UICollectionReusableView {
     var headerLabel = UILabel()
-
+//    var headerCheckBox: UIButton
     
     override init(frame: CGRect){
         super.init(frame: frame)
@@ -26,7 +26,7 @@ class CareReminderCollectionReusableView: UICollectionReusableView {
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
       
         addSubview(headerLabel)
-        
+      
      
         
         NSLayoutConstraint.activate([headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 10),

@@ -13,6 +13,7 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var plantNameCareReminderLabel: UILabel!
     @IBOutlet weak var nickNameCareReminderLabel: UILabel!
   
+    @IBOutlet weak var dueDateCareReminder: UILabel!
     @IBOutlet weak var checkBoxCareReminderButton: UIButton!
     
     var onCheckboxToggle: (() -> Void)?
@@ -24,6 +25,14 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         nickNameCareReminderLabel.text = reminder.nickname
         
         checkBoxCareReminderButton.setImage(UIImage(systemName: reminder.isCompleted ? "checkmark.square.fill" : "square"), for: .normal)
+//        if isUpcoming {
+//                   let formatter = DateFormatter()
+//                   formatter.dateStyle = .medium
+//            dueDateCareReminder.text = "Due: \(formatter.string(from: reminder.dueDate))"
+//            dueDateCareReminder.isHidden = false
+//               } else {
+//                   dueDateCareReminder.isHidden = true
+//               }
         
         
         
@@ -32,6 +41,7 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
+        
     }
     @IBAction func checkBoxCareReminderButtonTapped(_ sender: Any) {
         onCheckboxToggle?()
