@@ -264,6 +264,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
    @objc  func startCaringTapped() {
     print("Start Caring button tapped!")
     
+
        let newController = SetReminderViewController()
        print(newController)
        present(newController,animated: true)
@@ -272,6 +273,10 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 //       window?.rootViewController = navigationController
 //
 //       navigationController.pushViewController(SetReminderViewController(), animated: true)
+
+
+     
+//       performSegue(withIdentifier: "s1", sender: self)
 
 }
 

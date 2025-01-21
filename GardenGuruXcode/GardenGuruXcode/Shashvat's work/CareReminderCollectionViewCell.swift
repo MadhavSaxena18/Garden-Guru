@@ -19,12 +19,13 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     var onCheckboxToggle: (() -> Void)?
     
     
-    func configure(with reminder: CareReminder) {
-        careReminderPlantImageView.image = UIImage(named: reminder.plantImageName)
-        plantNameCareReminderLabel.text = reminder.plantName
-        nickNameCareReminderLabel.text = reminder.nickname
-        
-        checkBoxCareReminderButton.setImage(UIImage(systemName: reminder.isCompleted ? "checkmark.square.fill" : "square"), for: .normal)
+    func configure(with reminderData: CareReminder) {
+        careReminderPlantImageView.image = UIImage(named: reminderData.plantImageName)
+        plantNameCareReminderLabel.text = reminderData.plantName
+        nickNameCareReminderLabel.text = reminderData.nickname
+        let checkBoxImage = reminderData.isCompleted ? UIImage(systemName: "checkmark.square.fill") : UIImage(systemName: "square")
+        checkBoxCareReminderButton.setImage(checkBoxImage, for: .normal)
+        dueDateCareReminder.isHidden = !reminderData.isCompleted
 //        if isUpcoming {
 //                   let formatter = DateFormatter()
 //                   formatter.dateStyle = .medium

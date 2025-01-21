@@ -25,7 +25,7 @@ class MySpaceHeaderCollectionReusableView: UICollectionReusableView {
         
         func updateSectionHeader(){
             headerLabel.translatesAutoresizingMaskIntoConstraints = false
-            totalPlantLabel.translatesAutoresizingMaskIntoConstraints = false
+            //totalPlantLabel.translatesAutoresizingMaskIntoConstraints = false
             addSubview(headerLabel)
             addSubview(totalPlantLabel)
          
