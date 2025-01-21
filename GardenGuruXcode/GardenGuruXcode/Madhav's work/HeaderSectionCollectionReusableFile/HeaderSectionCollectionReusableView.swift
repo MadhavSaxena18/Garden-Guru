@@ -34,7 +34,7 @@ class HeaderSectionCollectionReusableView: UICollectionReusableView {
                                       headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
                                       //headerLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
                                       
-                                      button.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+                                      button.topAnchor.constraint(equalTo: topAnchor, constant: -2),
                                       button.bottomAnchor.constraint(equalTo: bottomAnchor),
                                       button.leadingAnchor.constraint(equalTo: headerLabel.trailingAnchor , constant: 15),
 //                                      button.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -200),

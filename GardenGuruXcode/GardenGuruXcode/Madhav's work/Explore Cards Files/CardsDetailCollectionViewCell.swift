@@ -8,7 +8,7 @@
 import UIKit
 
 class CardsDetailCollectionViewCell: UICollectionViewCell {
-
+    var detailData : ExploreScreen?
     @IBOutlet var plantImageOutlet: UIImageView!
     @IBOutlet var infoImage1Outlet: UIImageView!
     @IBOutlet var infoImage2Outlet: UIImageView!
@@ -19,7 +19,9 @@ class CardsDetailCollectionViewCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
+       
     }
+    
 
     func update(with indexPath : IndexPath){
         plantImageOutlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfPlant
@@ -29,7 +31,5 @@ class CardsDetailCollectionViewCell: UICollectionViewCell {
         infoLabel1Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info1
         infoLabel2Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info2
         infoLabel3Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info3
-        
     }
-
 }

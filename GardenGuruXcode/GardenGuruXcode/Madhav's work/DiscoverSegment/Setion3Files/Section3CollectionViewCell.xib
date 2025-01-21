@@ -77,6 +77,11 @@
                 <constraint firstItem="99S-8l-oJM" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="wuZ-HO-hlX"/>
                 <constraint firstAttribute="trailing" secondItem="fg9-vL-F51" secondAttribute="trailing" id="yjV-08-yeW"/>
             </constraints>
+            <userDefinedRuntimeAttributes>
+                <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                    <integer key="value" value="18"/>
+                </userDefinedRuntimeAttribute>
+            </userDefinedRuntimeAttributes>
             <connections>
                 <outlet property="designDescriptionLabel" destination="3gM-jV-ZeN" id="t6g-Lo-hgc"/>
                 <outlet property="designImageView" destination="99S-8l-oJM" id="WGv-Do-CGO"/>

@@ -8,7 +8,7 @@
 import UIKit
 
 class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UICollectionViewDataSource{
-
+    var detailData: [Any]?
     @IBOutlet weak var cardDetailCollectionView: UICollectionView!
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,16 +50,22 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         switch indexPath.section {
         case 0:
+            print("heyyyyyyyyyyyy")
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardsDetailCollectionViewCell
+//                detailData = [ExploreScreen.cardDetailSection1, ExploreScreen.cardDetailSection2, ExploreScreen.cardDetailSection3]
             cell.update(with: indexPath)
             return cell
         case 1:
+            print("bbbbbbbbbyyyyyyyyyy")
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! CardsDetailSection2CollectionViewCell
             cell.updateCardSection2(with: indexPath)
             return cell
         case 2:
+            print("1")
+            print("vvvvvvvvvvv")
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! CardDetailsSection3CollectionViewCell
             cell.updateCardSection3(with: indexPath)
+            cell.layer.cornerRadius = 15
             return cell
         default:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardsDetailCollectionViewCell
@@ -129,7 +135,7 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
         
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupsize, subitems: [item])
         
-        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 9, bottom: 8, trailing: 0)
+        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 9, bottom: 8, trailing: 0)
         
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .groupPaging
