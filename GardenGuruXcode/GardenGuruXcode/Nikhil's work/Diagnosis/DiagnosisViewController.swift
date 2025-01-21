@@ -264,10 +264,15 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
    @objc  func startCaringTapped() {
     print("Start Caring button tapped!")
     
-       let newController = setReminderViewController()
+       let newController = SetReminderViewController()
        print(newController)
        present(newController,animated: true)
 //       performSegue(withIdentifier: "s1", sender: self)
+//       let navigationController = UINavigationController(rootViewController: SetReminderViewController())
+//       window?.rootViewController = navigationController
+//
+//       navigationController.pushViewController(SetReminderViewController(), animated: true)
+
 }
 
 
