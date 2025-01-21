@@ -37,29 +37,29 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         setupSegmentedControl()
         updateDataForSelectedSegment()
         setUpcollectionView()
-        PlantCarAI.image = UIImage(named: "PlantCarAI") // Replace with your image name
-        PlantCarAI.contentMode = .scaleAspectFit
-        PlantCarAI.backgroundColor = .white
-        PlantCarAI.layer.cornerRadius = 15
-        PlantCarAI.frame = CGRect(x: 0, y: 0, width: 50, height: 50) // Adjust size
-        view.addSubview(PlantCarAI)
+//        PlantCarAI.image = UIImage(named: "PlantCarAI") // Replace with your image name
+//        PlantCarAI.contentMode = .scaleAspectFit
+//        PlantCarAI.backgroundColor = .white
+//        PlantCarAI.layer.cornerRadius = 15
+//        PlantCarAI.frame = CGRect(x: 0, y: 0, width: 50, height: 50) // Adjust size
+//        view.addSubview(PlantCarAI)
                
         // Position the image at the bottom-left
-        PlantCarAI.frame.origin = CGPoint(
-            x: 320,
-            y: view.frame.height - PlantCarAI.frame.height - 120
-        )
+//        PlantCarAI.frame.origin = CGPoint(
+//            x: 320,
+//            y: view.frame.height - PlantCarAI.frame.height - 120
+//        )
     }
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-               
-        // Reposition image for different screen sizes
-        PlantCarAI.frame.origin = CGPoint(
-            x: 320,
-            y: view.frame.height - PlantCarAI.frame.height - 120
-        )
-    }
+//    override func viewDidLayoutSubviews() {
+//        super.viewDidLayoutSubviews()
+//               
+//        // Reposition image for different screen sizes
+//        PlantCarAI.frame.origin = CGPoint(
+//            x: 320,
+//            y: view.frame.height - PlantCarAI.frame.height - 120
+//        )
+//    }
     
     func setUpcollectionView(){
         let firstNib = UINib(nibName: "TopWinterCollectionViewCell", bundle: nil)
@@ -189,7 +189,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             if identifier == 0{
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! Section3CollectionViewCell
                 cell.updateDataOfSection3(with: indexPath)
-                cell.layer.cornerRadius = 25
+                cell.layer.cornerRadius = 18
                 return cell
             }else{
                 print("ababaaaaaaa")
@@ -266,7 +266,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitems: [item])
         
-        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
+        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 20, bottom: 10, trailing: 0)
         group.interItemSpacing = .fixed(15)
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = spacing
@@ -284,7 +284,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .absolute(150))
         
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitems: [item])
-        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
+        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 20, bottom: 10, trailing: 0)
         
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = spacing
@@ -297,12 +297,12 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .absolute(340), heightDimension: .absolute(240))
+        let groupsize = NSCollectionLayoutSize(widthDimension: .absolute(340), heightDimension: .absolute(260))
         
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupsize, subitems: [item])
         
         
-        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
+        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 20, bottom: 10, trailing: 0)
         
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = spacing
@@ -322,7 +322,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupsize, subitems: [item])
         
         
-        group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
+        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 20, bottom: 10, trailing: 0)
         
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = spacing
@@ -342,7 +342,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
                 header.button.tintColor = UIColor(hex: "284329")
                 header.button.tag = indexPath.section
-                header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
+                header.button.imageEdgeInsets = UIEdgeInsets(top: 9, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
                 header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
                 //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
                 return header
@@ -355,7 +355,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 header.button.tintColor = UIColor(hex: "284329")
                 header.button.tag = indexPath.section
                 header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
-                header.button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
+                header.button.imageEdgeInsets = UIEdgeInsets(top:9, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
                 
                 //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
                 return header
@@ -384,6 +384,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
     }
     
+    
+    
 //    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 //        // Determine the selected segment
 //        let selectedSegment = segmentControlOnExplore.selectedSegmentIndex
@@ -410,4 +412,118 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 //    }
     
     
-}
+    
+    
+//    var cardDetailSection1 = [ExploreScreen.cardDetailSection1] // Example data for section 1
+//    var cardDetailSection2 = [ExploreScreen.cardDetailSection2] // Example data for section 2
+//    var cardDetailSection3 = [ExploreScreen.cardDetailSection3] // Example data for section 3
+//    // Prepare for the segue when a card is selected
+//      override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+//          if let indexPath = collectionView.indexPathsForSelectedItems?.first {
+//              if let destinationVC = segue.destination as? CardsDetailViewController {
+//                  // Determine which segment is selected and pass the appropriate data
+//                  switch segmentControl.selectedSegmentIndex {
+//                  case 0: // Segment 1
+//                      switch indexPath.section {
+//                      case 0:
+//                          destinationVC.cardDetails = cardDetailSection1 // Pass section 1 data
+//                      case 1:
+//                          destinationVC.cardDetails = cardDetailSection2 // Pass section 2 data
+//                      case 2:
+//                          destinationVC.cardDetails = cardDetailSection3 // Pass section 3 data
+//                      default:
+//                          break
+//                      }
+//                  case 1: // Segment 2
+//                      // Add logic to handle the second segment and pass relevant data
+//                      switch indexPath.section {
+//                      case 0:
+//                          destinationVC.cardDetails = cardDetailSection1 // You can pass different data for segment 2
+//                      case 1:
+//                          destinationVC.cardDetails = cardDetailSection2
+//                      case 2:
+//                          destinationVC.cardDetails = cardDetailSection3
+//                      default:
+//                          break
+//                      }
+//                  default:
+//                      break
+//                  }
+//              }
+//          }
+//      }
+//
+//      // Programmatic navigation to CardsDetailViewController if needed
+//      func navigateToDetail(forItemAt indexPath: IndexPath) {
+//          let destinationVC = CardsDetailViewController()
+//
+//          switch segmentControlOnExplore.selectedSegmentIndex {
+//          case 0: // Segment 1
+//              switch indexPath.section {
+//              case 0:
+//                  destinationVC.cardDetails = cardDetailSection1
+//              case 1:
+//                  destinationVC.cardDetails = cardDetailSection2
+//              case 2:
+//                  destinationVC.cardDetails = cardDetailSection3
+//              default:
+//                  break
+//              }
+//          case 1: // Segment 2
+//              switch indexPath.section {
+//              case 0:
+//                  destinationVC.cardDetails = cardDetailSection1 // Add custom data for segment 2 if necessary
+//              case 1:
+//                  destinationVC.cardDetails = cardDetailSection2
+//              case 2:
+//                  destinationVC.cardDetails = cardDetailSection3
+//              default:
+//                  break
+//              }
+//          default:
+//              break
+//          }
+//
+//          navigationController?.pushViewController(destinationVC, animated: true)
+//      }
+    
+    
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//            let sectionData = currentData[indexPath.section]
+//            let item = sectionData[indexPath.row]
+            
+        let selectedSection = indexPath.section
+        let selectedItemIndex = indexPath.row
+        let storyboard = UIStoryboard(name: "exploreTab", bundle: nil)
+        if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
+            switch selectedSection {
+            case 0:
+                detailVC.detailData = ExploreScreen.cardDetailSection1
+            case 1:
+                detailVC.detailData = ExploreScreen.cardDetailSection2
+            case 2:
+                detailVC.detailData = ExploreScreen.cardDetailSection3
+            default:
+                break
+            }
+            
+            performSegue(withIdentifier: "CardInfo", sender: Any?.self)
+            
+        }
+    }
+    
+//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+//        if segue.identifier == "CardInfo" {
+//            if let destinationVC = segue.destination as? CardsDetailViewController,
+//               let indexPath = collectionView.indexPathsForSelectedItems?.first {
+//                let sectionData = currentData[indexPath.section]
+//                let selectedItem = sectionData[indexPath.row]
+//                destinationVC.detailData = selectedItem // Pass the specific data
+//            }
+//        }
+//    }
+    
+  }
+    
+

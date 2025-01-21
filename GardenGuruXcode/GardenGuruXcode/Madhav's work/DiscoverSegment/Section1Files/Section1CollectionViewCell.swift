@@ -11,6 +11,7 @@ class Section1CollectionViewCell: UICollectionViewCell {
 
     @IBOutlet weak var plantImage: UIImageView!
     
+    @IBOutlet weak var cardView: UIView!
     
     @IBOutlet weak var plantNameLabel: UILabel!
     
@@ -21,6 +22,10 @@ class Section1CollectionViewCell: UICollectionViewCell {
         plantNameLabel.text = ExploreScreen.dataOfSection1InDiscoverSegment[indexPath.row].plantName
         
         plantDescriptionLabel.text = ExploreScreen.dataOfSection1InDiscoverSegment[indexPath.row].plantDescription
+//        cardView.layer.shadowColor = UIColor.black.cgColor
+//        cardView.layer.shadowOpacity = 0.1
+//        cardView.layer.shadowOffset = CGSize(width: 0, height: 2)
+//        cardView.layer.shadowRadius = 4
         
     }
     

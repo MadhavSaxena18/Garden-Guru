@@ -19,7 +19,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="YPO-NK-xBe">
-                                <rect key="frame" x="0.0" y="158" width="393" height="660"/>
+                                <rect key="frame" x="0.0" y="164" width="393" height="654"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="i3B-eO-GI2">
                                     <size key="itemSize" width="128" height="128"/>
@@ -40,23 +40,32 @@
                                 </cells>
                             </collectionView>
                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="YNs-e0-3cd">
-                                <rect key="frame" x="22" y="112" width="349" height="32"/>
+                                <rect key="frame" x="18" y="118" width="357" height="32"/>
                                 <segments>
                                     <segment title="Explore"/>
                                     <segment title="For My Plant"/>
                                 </segments>
                             </segmentedControl>
+                            <imageView clipsSubviews="YES" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Image 1" translatesAutoresizingMaskIntoConstraints="NO" id="5Yh-wQ-yyo">
+                                <rect key="frame" x="321" y="728" width="54" height="45"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="45" id="9LQ-UA-f9g"/>
+                                    <constraint firstAttribute="width" constant="54" id="qsN-zm-ifF"/>
+                                </constraints>
+                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
                         <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                         <constraints>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="YPO-NK-xBe" secondAttribute="trailing" id="8gV-YG-Mgf"/>
-                            <constraint firstItem="YNs-e0-3cd" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="22" id="G36-yw-YDb"/>
+                            <constraint firstItem="YNs-e0-3cd" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="18" id="G36-yw-YDb"/>
+                            <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="5Yh-wQ-yyo" secondAttribute="trailing" constant="18" id="Mbc-Nc-NSf"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="YPO-NK-xBe" secondAttribute="bottom" id="VBk-2v-m4F"/>
                             <constraint firstItem="YPO-NK-xBe" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" id="Zqu-lW-M8y"/>
+                            <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="5Yh-wQ-yyo" secondAttribute="bottom" constant="45" id="bKC-PB-Tls"/>
                             <constraint firstItem="YPO-NK-xBe" firstAttribute="top" secondItem="YNs-e0-3cd" secondAttribute="bottom" constant="15" id="epF-a2-wS7"/>
-                            <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="YNs-e0-3cd" secondAttribute="trailing" constant="22" id="jQB-et-riR"/>
-                            <constraint firstItem="YNs-e0-3cd" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="9" id="rPM-GL-DU1"/>
+                            <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="YNs-e0-3cd" secondAttribute="trailing" constant="18" id="jQB-et-riR"/>
+                            <constraint firstItem="YNs-e0-3cd" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="15" id="rPM-GL-DU1"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Explore" id="Kil-dj-6or">
@@ -76,16 +85,12 @@
                                     <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 </view>
                             </barButtonItem>
-                            <barButtonItem title="." id="HXg-Eb-tE4">
-                                <connections>
-                                    <segue destination="u3z-kL-3Ti" kind="presentation" id="GbB-sl-mKr"/>
-                                </connections>
-                            </barButtonItem>
                         </rightBarButtonItems>
                     </navigationItem>
                     <connections>
                         <outlet property="collectionView" destination="YPO-NK-xBe" id="z2m-cS-b2g"/>
                         <outlet property="segmentControlOnExplore" destination="YNs-e0-3cd" id="bjU-pi-jTX"/>
+                        <segue destination="u3z-kL-3Ti" kind="presentation" identifier="CardInfo" id="Wkq-oF-7jc"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Ief-a0-LHa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -122,12 +127,12 @@
         <!--String of Pearls-->
         <scene sceneID="5cD-7x-17a">
             <objects>
-                <viewController id="WL8-JV-559" customClass="CardsDetailViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="CardsDetailViewController" id="WL8-JV-559" customClass="CardsDetailViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Yeq-MM-e9T">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="842"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="eNT-LF-u8U">
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="eNT-LF-u8U">
                                 <rect key="frame" x="16" y="72" width="361" height="754"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="q6f-jV-NJW">
@@ -178,7 +183,7 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="2zJ-l5-xZp" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
                 <exit id="tn9-ca-hUa" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
-            <point key="canvasLocation" x="3837.4045801526718" y="276.76056338028172"/>
+            <point key="canvasLocation" x="3778" y="193"/>
         </scene>
         <!--Profile-->
         <scene sceneID="qXx-xt-iY4">
@@ -441,6 +446,10 @@
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="l4Z-Vm-tAW">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="56"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <navigationBarAppearance key="standardAppearance"/>
+                        <navigationBarAppearance key="compactAppearance"/>
+                        <navigationBarAppearance key="scrollEdgeAppearance"/>
+                        <navigationBarAppearance key="compactScrollEdgeAppearance"/>
                     </navigationBar>
                     <nil name="viewControllers"/>
                     <connections>
@@ -450,6 +459,21 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="FKX-yh-cfy" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="2912" y="-1157"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="QdI-fj-Abx">
+            <objects>
+                <viewController id="FxG-Qr-Hlh" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Kyv-BQ-QUS">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="rUZ-Xq-it8"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="37n-ip-Qy5" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2911" y="861"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="5xf-sl-GRb">
@@ -471,10 +495,11 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OuH-qY-nCK" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2910.6870229007632" y="276.76056338028172"/>
+            <point key="canvasLocation" x="2911" y="193"/>
         </scene>
     </scenes>
     <resources>
+        <image name="Image 1" width="90" height="88"/>
         <image name="image3" width="366" height="318"/>
         <image name="person.circle.fill" catalog="system" width="128" height="123"/>
         <image name="safari" catalog="system" width="128" height="123"/>
