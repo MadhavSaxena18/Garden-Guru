@@ -179,6 +179,8 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
     override func viewDidLoad() {
         super.viewDidLoad()
         let nib1 = UINib(nibName: "CareReminderCollectionViewCell", bundle: nil)
+//        print(careReminderCollectionView == nil ? "careReminderCollectionView is nil" : "careReminderCollectionView is initialized")
+        
         careReminderCollectionView.register(nib1, forCellWithReuseIdentifier: "CareReminderCell")
         careReminderCollectionView.register(CareReminderCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "CareReminderCollectionReusableView")
         careReminderCollectionView.setCollectionViewLayout(generateLayout(), animated: true)

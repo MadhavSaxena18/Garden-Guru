@@ -3,6 +3,7 @@
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -17,20 +18,20 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="pq5-4c-8ZT">
-                                <rect key="frame" x="0.0" y="63" width="393" height="632.66666666666663"/>
+                                <rect key="frame" x="0.0" y="52" width="393" height="643.66666666666663"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="c0D-JT-51d">
-                                        <rect key="frame" x="0.0" y="512" width="393" height="87"/>
+                                        <rect key="frame" x="0.0" y="545" width="393" height="65"/>
                                         <color key="backgroundColor" white="0.66666666669999997" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <constraints>
-                                            <constraint firstAttribute="height" constant="87" id="n61-Bg-LuU"/>
+                                            <constraint firstAttribute="height" constant="65" id="n61-Bg-LuU"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <stackView opaque="NO" contentMode="scaleAspectFit" distribution="fillEqually" spacing="42" translatesAutoresizingMaskIntoConstraints="NO" id="iji-hS-Elo">
-                                        <rect key="frame" x="71.666666666666686" y="439" width="250" height="65"/>
+                                        <rect key="frame" x="71.666666666666686" y="472" width="250" height="65"/>
                                         <subviews>
                                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="leaf.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="hDf-Kd-R7S">
                                                 <rect key="frame" x="0.0" y="1.6666666666666679" width="55.333333333333336" height="62.333333333333329"/>
@@ -107,22 +108,17 @@
                             <constraint firstItem="pq5-4c-8ZT" firstAttribute="leading" secondItem="BIW-MA-2fi" secondAttribute="leading" id="VPU-lj-wbL"/>
                             <constraint firstAttribute="bottom" secondItem="vuu-no-bwt" secondAttribute="bottom" constant="27" id="VyI-ps-Ug9"/>
                             <constraint firstItem="pq5-4c-8ZT" firstAttribute="centerX" secondItem="vuu-no-bwt" secondAttribute="centerX" id="X4j-KB-3lF"/>
-                            <constraint firstItem="pq5-4c-8ZT" firstAttribute="top" secondItem="BFQ-N3-Pce" secondAttribute="topMargin" constant="-40" id="mS6-vY-rBb"/>
+                            <constraint firstItem="pq5-4c-8ZT" firstAttribute="top" secondItem="BFQ-N3-Pce" secondAttribute="topMargin" constant="-103" id="mS6-vY-rBb"/>
                             <constraint firstItem="vuu-no-bwt" firstAttribute="top" secondItem="pq5-4c-8ZT" secondAttribute="bottom" constant="33" id="vaZ-TH-yNc"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="e3Y-Cx-t4X">
                         <barButtonItem key="leftBarButtonItem" style="plain" id="vRZ-y2-aJM">
-                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="iR5-t3-BLb">
-                                <rect key="frame" x="16" y="5" width="76.666666666666671" height="34.333333333333336"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="tintColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Cancel"/>
-                                <connections>
-                                    <segue destination="we1-5Q-KFU" kind="unwind" unwindAction="unwindToExploreViewControllerWithSegue:" id="32Y-Va-xZv"/>
-                                </connections>
-                            </button>
+                            <imageReference key="image" image="xmark.square.fill" catalog="system" symbolScale="large" variableValue="0.0"/>
+                            <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <connections>
+                                <segue destination="we1-5Q-KFU" kind="unwind" unwindAction="unwindToExploreViewControllerWithSegue:" id="VNZ-YY-o0t"/>
+                            </connections>
                         </barButtonItem>
                     </navigationItem>
                     <connections>
@@ -159,8 +155,8 @@
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Lz3-IH-grc" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Scan And Diagnose" image="camera" catalog="system" id="p5P-M2-05W"/>
                     <toolbarItems/>
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="r1J-RO-xAT">
-                        <rect key="frame" x="0.0" y="59" width="393" height="44"/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" largeTitles="YES" id="r1J-RO-xAT">
+                        <rect key="frame" x="0.0" y="59" width="393" height="96"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <nil name="viewControllers"/>
@@ -177,11 +173,12 @@
         <image name="camera" catalog="system" width="128" height="93"/>
         <image name="circle" catalog="system" width="128" height="123"/>
         <image name="leaf.fill" catalog="system" width="128" height="109"/>
+        <image name="xmark.square.fill" catalog="system" width="128" height="114"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemGray2Color">
-            <color red="0.68235294117647061" green="0.68235294117647061" blue="0.69803921568627447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.68235294120000001" green="0.68235294120000001" blue="0.69803921570000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>
