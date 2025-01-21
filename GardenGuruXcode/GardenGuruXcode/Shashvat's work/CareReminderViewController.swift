@@ -3,7 +3,6 @@ import UIKit
 
 class CareReminderViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
     
-    
     // MARK: - Properties
     var filteredReminders: [CareReminder] = []
     @IBOutlet weak var careReminderCollectionView: UICollectionView!
@@ -20,128 +19,6 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         filterReminders()
     }
     
-
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CareReminderCell", for: indexPath) as? CareReminderCollectionViewCell else {
-               fatalError("Unable to dequeue CareReminderCell")
-           }
-           
-           // Get the reminder type for the current section
-           let type = ReminderType.allCases[indexPath.section]
-           
-           // Manually collect reminders for this type and not completed
-          
-        for reminder in CareReminderData.reminders {
-               if reminder.type == type && !reminder.isCompleted {
-                   filteredReminders.append(reminder)
-               }
-           }
-           
-           // Get the reminder for the current item
-          let reminder = filteredReminders[indexPath.item]
-      
-           // Configure the cell with the reminder
-           cell.configure(with: reminder)
-           
-           // Handle checkbox toggle action
-           cell.onCheckboxToggle = { [weak self] in
-               guard let self = self else { return }
-               
-               // Find the index of the reminder in the original array
-               if let index = CareReminderData.reminders.firstIndex(where: { $0.id == reminder.id }) {
-                   CareReminderData.reminders[index].isCompleted = true // Mark as completed
-                   self.careReminderCollectionView.reloadData() // Reload the collection view
-               }
-           }
-        cell.layer.cornerRadius = 18
-           return cell
-
-    // MARK: - Setup Methods
-    private func setupCollectionView() {
-        let nib = UINib(nibName: "CareReminderCollectionViewCell", bundle: nil)
-        careReminderCollectionView.register(nib, forCellWithReuseIdentifier: "CareReminderCell")
-
-        
-        careReminderCollectionView.register(
-            CareReminderCollectionReusableView.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: "CareReminderCollectionReusableView"
-        )
-        
-        careReminderCollectionView.setCollectionViewLayout(generateLayout(), animated: true)
-        careReminderCollectionView.dataSource = self
-        careReminderCollectionView.delegate = self
-    }
-    
-    private func setupSegmentedControl() {
-        careReminderSegmentedControl.selectedSegmentIndex = 0
-    }
-    
-    // MARK: - Filtering Logic
-    private func filterReminders() {
-        switch careReminderSegmentedControl.selectedSegmentIndex {
-        case 0: // Today's Reminders
-            filteredReminders = CareReminderData.reminders.filter {
-                Calendar.current.isDateInToday($0.dueDate)
-            }
-        case 1: // Upcoming Reminders
-            filteredReminders = CareReminderData.reminders.filter {
-                $0.dueDate > Date() 
-            }
-        default:
-            filteredReminders = []
-            break
-        }
-        careReminderCollectionView.reloadData()
-    }
-    
-    // MARK: - Segmented Control Action
-    @IBAction func didChangeSegmentCareReminder(_ sender: UISegmentedControl) {
-        filterReminders()
-    }
-    
-    // MARK: - Edit Button Action
-    @IBAction func editButtonCareReminderTapped(_ sender: UIBarButtonItem) {
-        let alert = UIAlertController(title: "Edit", message: "Choose an action", preferredStyle: .actionSheet)
-        
-        alert.addAction(UIAlertAction(title: "Mark All as Completed", style: .default, handler: { _ in
-            self.markAllAsCompleted()
-        }))
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        
-        present(alert, animated: true, completion: nil)
-    }
-    
-    private func markAllAsCompleted() {
-//        for index in CareReminderData.reminders.indices {
-//            CareReminderData.reminders[index].isCompleted = true
-//        }
-//        filterReminders()
-        
-//        switch careReminderSegmentedControl.selectedSegmentIndex {
-//           case 0: // Today's Reminders
-//               CareReminderData.reminders = CareReminderData.reminders.map {
-//                   if Calendar.current.isDateInToday($0.dueDate) {
-//                       var updatedReminder = $0
-//                       updatedReminder.isCompleted = true
-//                       return updatedReminder
-//                   }
-//                   return $0
-//               }
-//           case 1: // Upcoming Reminders
-//               CareReminderData.reminders = CareReminderData.reminders.map {
-//                   if $0.dueDate > Date() {
-//                       var updatedReminder = $0
-//                       updatedReminder.isCompleted = true
-//                       return updatedReminder
-//                   }
-//                   return $0
-//               }
-//           default:
-//               break
-//           }
-
     // MARK: - Setup Methods
     private func setupCollectionView() {
         let nib = UINib(nibName: "CareReminderCollectionViewCell", bundle: nil)
@@ -199,42 +76,33 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
     }
     
     private func markAllAsCompleted() {
-        //        for index in CareReminderData.reminders.indices {
-        //            CareReminderData.reminders[index].isCompleted = true
-        //        }
-        //        filterReminders()
+//        for index in CareReminderData.reminders.indices {
+//            CareReminderData.reminders[index].isCompleted = true
+//        }
+//        filterReminders()
         
-        //        switch careReminderSegmentedControl.selectedSegmentIndex {
-        //           case 0: // Today's Reminders
-        //               CareReminderData.reminders = CareReminderData.reminders.map {
-        //                   if Calendar.current.isDateInToday($0.dueDate) {
-        //                       var updatedReminder = $0
-        //                       updatedReminder.isCompleted = true
-        //                       return updatedReminder
-        //                   }
-        //                   return $0
-        //               }
-        //           case 1: // Upcoming Reminders
-        //               CareReminderData.reminders = CareReminderData.reminders.map {
-        //                   if $0.dueDate > Date() {
-        //                       var updatedReminder = $0
-        //                       updatedReminder.isCompleted = true
-        //                       return updatedReminder
-        //                   }
-        //                   return $0
-        //               }
-        //           default:
-        //               break
-        //           }
-        for reminder in filteredReminders {
-            if let index = CareReminderData.reminders.firstIndex(where: { $0.id == reminder.id }) {
-                CareReminderData.reminders[index].isCompleted = true
-            }
-        }
-        
-        // Refresh the filtered reminders and update the collection view
-        filterReminders()
-
+//        switch careReminderSegmentedControl.selectedSegmentIndex {
+//           case 0: // Today's Reminders
+//               CareReminderData.reminders = CareReminderData.reminders.map {
+//                   if Calendar.current.isDateInToday($0.dueDate) {
+//                       var updatedReminder = $0
+//                       updatedReminder.isCompleted = true
+//                       return updatedReminder
+//                   }
+//                   return $0
+//               }
+//           case 1: // Upcoming Reminders
+//               CareReminderData.reminders = CareReminderData.reminders.map {
+//                   if $0.dueDate > Date() {
+//                       var updatedReminder = $0
+//                       updatedReminder.isCompleted = true
+//                       return updatedReminder
+//                   }
+//                   return $0
+//               }
+//           default:
+//               break
+//           }
         for reminder in filteredReminders {
                 if let index = CareReminderData.reminders.firstIndex(where: { $0.id == reminder.id }) {
                     CareReminderData.reminders[index].isCompleted = true
@@ -243,7 +111,6 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
            
            // Refresh the filtered reminders and update the collection view
            filterReminders()
-
     }
     
     // MARK: - Collection View Data Source
@@ -256,7 +123,6 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         return filteredReminders.filter { $0.type == type }.count
     }
     
-
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(
             withReuseIdentifier: "CareReminderCell",
@@ -265,13 +131,11 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
             fatalError("Unable to dequeue CareReminderCell")
         }
         
-
-        //         Get the reminders for the current section
+//         Get the reminders for the current section
         let type = ReminderType.allCases[indexPath.section]
         let remindersForType = filteredReminders.filter { $0.type == type }
         let reminder = remindersForType[indexPath.item]
-        //        let reminder = filteredReminders[indexPath.item]
-
+//        let reminder = filteredReminders[indexPath.item]
         // Configure the cell
         cell.configure(with: reminder)
         
@@ -289,7 +153,6 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         cell.layer.cornerRadius = 18
         return cell
     }
-
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader {
@@ -330,9 +193,7 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         }
     }
     
-
-    
-    func generateSection1Layout()-> NSCollectionLayoutSection{
+    private func generateSectionLayout() -> NSCollectionLayoutSection {
         let spacing: CGFloat = 5
         
         let itemSize = NSCollectionLayoutSize(
@@ -354,224 +215,5 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         section.interGroupSpacing = spacing
         return section
     }
-
-    
-//    func deleteCompletedReminders() {
-//        CareReminderData.reminders.removeAll { $0.isCompleted }
-//        careReminderCollectionView.reloadData()
-//    }
-
-//    func markAllAsCompleted() {
-//        for index in CareReminderData.reminders.indices {
-//            CareReminderData.reminders[index].isCompleted = true
-//        }
-//        careReminderCollectionView.reloadData()
-//    }
-
-    
-    
-    
-
-//    @IBOutlet weak var careReminderCollectionView: UICollectionView!
-//    @IBOutlet weak var careReminderSegmentedControl: UISegmentedControl!
-//    
-//   
-//    
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//        let nib1 = UINib(nibName: "CareReminderCollectionViewCell", bundle: nil)
-////        print(careReminderCollectionView == nil ? "careReminderCollectionView is nil" : "careReminderCollectionView is initialized")
-//        
-//        careReminderCollectionView.register(nib1, forCellWithReuseIdentifier: "CareReminderCell")
-//        careReminderCollectionView.register(CareReminderCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "CareReminderCollectionReusableView")
-//        careReminderCollectionView.setCollectionViewLayout(generateLayout(), animated: true)
-//        careReminderCollectionView.dataSource = self
-//        careReminderCollectionView.delegate = self
-//       
-//        careReminderSegmentedControl.selectedSegmentIndex = 0
-//        filteredReminders = CareReminderData.reminders.filter {
-//            Calendar.current.isDateInToday($0.dueDate) && !$0.isCompleted
-//         
-//        }
-//        
-//
-//      
-//    }
-//    
-//
-//    @IBAction func editButtonCareReminderTapped(_ sender: UIBarButtonItem) {
-//        
-//        let alert = UIAlertController(title: "Edit", message: "Choose an action", preferredStyle: .actionSheet)
-//            
-////            // Option 1: Delete all completed reminders
-////            alert.addAction(UIAlertAction(title: "Delete Completed Reminders", style: .destructive, handler: { _ in
-////                self.deleteCompletedReminders()
-////            }))
-//            
-//            // Option 2: Mark all reminders as completed
-//            alert.addAction(UIAlertAction(title: "Mark All as Completed", style: .default, handler: { _ in
-//                self.markAllAsCompleted()
-//            }))
-
-            
-            // Option 2: Mark all reminders as completed
-            alert.addAction(UIAlertAction(title: "Mark All as Completed", style: .default, handler: { _ in
-                self.markAllAsCompleted()
-            }))
-            
-            // Cancel option
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-            
-            // Present the alert
-            present(alert, animated: true, completion: nil)
-        
-    }
-    
-    
-    
-    @IBAction func didChangeSegmentCareReminder(_ sender: UISegmentedControl) {
-        
-        switch sender.selectedSegmentIndex {
-            case 0: // Today's Reminders
-                filteredReminders = CareReminderData.reminders.filter {
-                    Calendar.current.isDateInToday($0.dueDate) && !$0.isCompleted
-                }
-            case 1: // Upcoming Reminders
-                filteredReminders = CareReminderData.reminders.filter {
-                    $0.dueDate > Date() && !$0.isCompleted
-                }
-            default:
-                break
-            }
-        careReminderCollectionView.reloadData()
-        
-    }
-    
-
-
-    //    func deleteCompletedReminders() {
-    //        CareReminderData.reminders.removeAll { $0.isCompleted }
-    //        careReminderCollectionView.reloadData()
-    //    }
-    
-    //    func markAllAsCompleted() {
-    //        for index in CareReminderData.reminders.indices {
-    //            CareReminderData.reminders[index].isCompleted = true
-    //        }
-    //        careReminderCollectionView.reloadData()
-    //    }
-    
-    
-    
-    
-    
-    //    @IBOutlet weak var careReminderCollectionView: UICollectionView!
-    //    @IBOutlet weak var careReminderSegmentedControl: UISegmentedControl!
-    //
-    //
-    //
-    //    override func viewDidLoad() {
-    //        super.viewDidLoad()
-    //        let nib1 = UINib(nibName: "CareReminderCollectionViewCell", bundle: nil)
-    ////        print(careReminderCollectionView == nil ? "careReminderCollectionView is nil" : "careReminderCollectionView is initialized")
-    //
-    //        careReminderCollectionView.register(nib1, forCellWithReuseIdentifier: "CareReminderCell")
-    //        careReminderCollectionView.register(CareReminderCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "CareReminderCollectionReusableView")
-    //        careReminderCollectionView.setCollectionViewLayout(generateLayout(), animated: true)
-    //        careReminderCollectionView.dataSource = self
-    //        careReminderCollectionView.delegate = self
-    //
-    //        careReminderSegmentedControl.selectedSegmentIndex = 0
-    //        filteredReminders = CareReminderData.reminders.filter {
-    //            Calendar.current.isDateInToday($0.dueDate) && !$0.isCompleted
-    //
-    //        }
-    //
-    //
-    //
-    //    }
-    //
-    //
-    //    @IBAction func editButtonCareReminderTapped(_ sender: UIBarButtonItem) {
-    //
-    //        let alert = UIAlertController(title: "Edit", message: "Choose an action", preferredStyle: .actionSheet)
-    //
-    ////            // Option 1: Delete all completed reminders
-    ////            alert.addAction(UIAlertAction(title: "Delete Completed Reminders", style: .destructive, handler: { _ in
-    ////                self.deleteCompletedReminders()
-    ////            }))
-    //
-    //            // Option 2: Mark all reminders as completed
-    //            alert.addAction(UIAlertAction(title: "Mark All as Completed", style: .default, handler: { _ in
-    //                self.markAllAsCompleted()
-    //            }))
-    //
-    //            // Cancel option
-    //            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-    //
-    //            // Present the alert
-    //            present(alert, animated: true, completion: nil)
-    //
-    //    }
-    //
-    //
-    //
-    //    @IBAction func didChangeSegmentCareReminder(_ sender: UISegmentedControl) {
-    //
-    //        switch sender.selectedSegmentIndex {
-    //            case 0: // Today's Reminders
-    //                filteredReminders = CareReminderData.reminders.filter {
-    //                    Calendar.current.isDateInToday($0.dueDate) && !$0.isCompleted
-    //                }
-    //            case 1: // Upcoming Reminders
-    //                filteredReminders = CareReminderData.reminders.filter {
-    //                    $0.dueDate > Date() && !$0.isCompleted
-    //                }
-    //            default:
-    //                break
-    //            }
-    //        careReminderCollectionView.reloadData()
-    //
-    //    }
-    //
-    //
-    //
-    //}
-    //
-
-
-
-//            
-//            // Cancel option
-//            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-//            
-//            // Present the alert
-//            present(alert, animated: true, completion: nil)
-//        
-//    }
-//    
-//    
-//    
-//    @IBAction func didChangeSegmentCareReminder(_ sender: UISegmentedControl) {
-//        
-//        switch sender.selectedSegmentIndex {
-//            case 0: // Today's Reminders
-//                filteredReminders = CareReminderData.reminders.filter {
-//                    Calendar.current.isDateInToday($0.dueDate) && !$0.isCompleted
-//                }
-//            case 1: // Upcoming Reminders
-//                filteredReminders = CareReminderData.reminders.filter {
-//                    $0.dueDate > Date() && !$0.isCompleted
-//                }
-//            default:
-//                break
-//            }
-//        careReminderCollectionView.reloadData()
-//        
-//    }
-//    
-//
-//
-//}
-//
+}
 
