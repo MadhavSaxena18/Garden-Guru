@@ -1,199 +1,11 @@
 
-////
-////  SetReminderViewController.swift
-////  GardenGuruXcode
-////
-////  Created by Nikhil Gupta on 17/01/25.
-////
 //
-//import UIKit
+//  SetReminderViewController.swift
+//  GardenGuruXcode
 //
-//class SetReminderViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
-//    
-//    // TableView
-//    private let tableView = UITableView(frame: .zero, style: .grouped)
-//    
-//    // Data for the rows
-//    private let reminders = [
-//        ("Watering", "Every week", "drop.fill", false),
-//        ("Fertiliser", "Once in a month", "leaf", false),
-//        ("Repotting", "Every year", "arrow.triangle.2.circlepath", false),
-//        ("Set Time", "Default time: 5:00 pm", "clock", true)
-//    ]
-//    
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//        
-//        view.backgroundColor = UIColor(hex: "#E8F3E9") // Background for overall view
-//        setupNavigationBar()
-//        setupTableView()
-//    }
-//    
-//    // Navigation Bar Setup
-//    private func setupNavigationBar() {
-//        title = "Set Reminder"
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(
-//            title: "Cancel",
-//            style: .plain,
-//            target: self,
-//            action: #selector(didTapCancel)
-//        )
-//    }
-//    
-//    // TableView Setup
-//    private func setupTableView() {
-//        tableView.delegate = self
-//        tableView.dataSource = self
-//        tableView.separatorStyle = .none
-//        tableView.backgroundColor = UIColor.clear
-//        tableView.translatesAutoresizingMaskIntoConstraints = false
-//        tableView.register(ReminderCardCell.self, forCellReuseIdentifier: "ReminderCardCell")
-//        
-//        view.addSubview(tableView)
-//        
-//        NSLayoutConstraint.activate([
-//            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-//            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
-//        ])
-//    }
-//    
-//    // Cancel Button Action
-//    @objc private func didTapCancel() {
-//        dismiss(animated: true, completion: nil)
-//    }
-//    
-//    // MARK: - UITableViewDataSource
-//    func numberOfSections(in tableView: UITableView) -> Int {
-//        return 1
-//    }
-//    
-//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        return reminders.count
-//    }
-//    
-//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        let cell = tableView.dequeueReusableCell(withIdentifier: "ReminderCardCell", for: indexPath) as! ReminderCardCell
-//        let reminder = reminders[indexPath.row]
-//        cell.configure(title: reminder.0, subtitle: reminder.1, iconName: reminder.2, isTimePicker: reminder.3)
-//        return cell
-//    }
-//    
-//    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-//        return 120 // Card height
-//    }
-//    
-//    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        tableView.deselectRow(at: indexPath, animated: true)
-//    }
-//}
+//  Created by Nikhil Gupta on 17/01/25.
 //
-//// MARK: - Custom UITableViewCell
-//class ReminderCardCell: UITableViewCell {
-//    
-//    private let cardView = UIView()
-//    private let iconImageView = UIImageView()
-//    private let titleLabel = UILabel()
-//    private let subtitleLabel = UILabel()
-//    private let toggleSwitch = UISwitch()
-//    private let timePicker = UIDatePicker()
-//    
-//    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-//        super.init(style: style, reuseIdentifier: reuseIdentifier)
-//        setupCell()
-//    }
-//    
-//    required init?(coder: NSCoder) {
-//        fatalError("init(coder:) has not been implemented")
-//    }
-//    
-//    private func setupCell() {
-//        backgroundColor = .clear // Ensure the background is clear
-//        selectionStyle = .none
-//        
-//        // Card View
-//        cardView.backgroundColor = .white
-//        cardView.layer.cornerRadius = 12
-//        cardView.layer.shadowColor = UIColor.black.cgColor
-//        cardView.layer.shadowOpacity = 0.1
-//        cardView.layer.shadowOffset = CGSize(width: 0, height: 2)
-//        cardView.layer.shadowRadius = 4
-//        cardView.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Icon
-//        iconImageView.contentMode = .scaleAspectFit
-//        iconImageView.tintColor = .systemGreen
-//        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Title Label
-//        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-//        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Subtitle Label
-//        subtitleLabel.font = UIFont.systemFont(ofSize: 14)
-//        subtitleLabel.textColor = .gray
-//        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Toggle Switch
-//        toggleSwitch.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Time Picker
-//        timePicker.datePickerMode = .time
-//        timePicker.translatesAutoresizingMaskIntoConstraints = false
-//        timePicker.isHidden = true // Default hidden
-//        
-//        // Add Subviews
-//        contentView.addSubview(cardView)
-//        cardView.addSubview(iconImageView)
-//        cardView.addSubview(titleLabel)
-//        cardView.addSubview(subtitleLabel)
-//        cardView.addSubview(toggleSwitch)
-//        cardView.addSubview(timePicker)
-//        
-//        // Layout Constraints
-//        NSLayoutConstraint.activate([
-//            // Card View Constraints
-//            cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-//            cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-//            cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-//            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
-//            
-//            // Icon Constraints
-//            iconImageView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
-//            iconImageView.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
-//            iconImageView.widthAnchor.constraint(equalToConstant: 40),
-//            iconImageView.heightAnchor.constraint(equalToConstant: 40),
-//            
-//            // Title Label Constraints
-//            titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 16),
-//            titleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
-//            
-//            // Subtitle Label Constraints
-//            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-//            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-//            
-//            // Toggle Switch Constraints
-//            toggleSwitch.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
-//            toggleSwitch.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
-//            
-//            // Time Picker Constraints
-//            timePicker.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
-//            timePicker.centerYAnchor.constraint(equalTo: cardView.centerYAnchor)
-//        ])
-//    }
-//    
-//    func configure(title: String, subtitle: String, iconName: String, isTimePicker: Bool) {
-//        titleLabel.text = title
-//        subtitleLabel.text = subtitle
-//        iconImageView.image = UIImage(systemName: iconName)
-//        
-//        // Toggle visibility of switch and time picker
-//        toggleSwitch.isHidden = isTimePicker
-//        timePicker.isHidden = !isTimePicker
-//    }
-//}
-//
+
 import UIKit
 
 class SetReminderViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
@@ -228,7 +40,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(SetReminderViewController.self, action: #selector(didTapSetReminder), for: .touchUpInside)
+        button.addTarget(self, action: #selector(setReminderButtonTapped), for: .touchUpInside)
         return button
     }()
     
@@ -246,13 +58,44 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         view.backgroundColor = UIColor(hex: "#EBF4EB") // Background for overall view
         setupNavigationBar()
         setupViews()
+           if navigationController == nil {
+               print("Navigation controller is not embedded!")
+           }
     }
     
     // Navigation Bar Setup
+//    private func setupNavigationBar() {
+//        title = "Set Reminder"
+//
+//        navigationItem.rightBarButtonItem = UIBarButtonItem(
+//            title: "Cancel",
+//            style: .plain,
+//            target: self,
+//            action: #selector(didTapCancel)
+//        )
+//    }
     private func setupNavigationBar() {
+        // Set the title
         title = "Set Reminder"
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
+        
+        // Configure the navigation bar appearance
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barTintColor = UIColor.systemGreen
+        navigationController?.navigationBar.tintColor = .white
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        
+        // Add a custom "Cancel" button to the right side
+        let cancelButton = UIBarButtonItem(
             title: "Cancel",
+            style: .plain,
+            target: self,
+            action: #selector(didTapCancel)
+        )
+        navigationItem.rightBarButtonItem = cancelButton
+        
+        // Optionally, you can customize the back button if you want to show a custom icon or text
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "Back",
             style: .plain,
             target: self,
             action: #selector(didTapCancel)
@@ -278,7 +121,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         // Layout Constraints
         NSLayoutConstraint.activate([
             // Plant Name Label
-            plantNameLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            plantNameLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
             plantNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             
             // Location Label
@@ -286,7 +129,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             locationLabel.leadingAnchor.constraint(equalTo: plantNameLabel.leadingAnchor),
             
             // TableView
-            tableView.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 20),
+            tableView.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 30),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: setReminderButton.topAnchor, constant: -16),
@@ -305,11 +148,46 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     }
     
     // Set Reminder Button Action
-    @objc private func didTapSetReminder() {
+//    @objc private func setReminderButtonTapped() {
+//        print("Set Reminder button tapped!")
+////        performSegue(withIdentifier: "ShowCareReminder", sender: self)
+//        let reminderController = CareReminderViewController()
+//       
+//        let navigationController = UINavigationController(rootViewController: reminderController)
+//        navigationController.pushViewController(reminderController, animated: true)
+//        self.show(reminderController, sender: self)
+//        
+//       
+//        print("set reminder")
+//        
+//        
+//    }
+    @objc private func setReminderButtonTapped() {
         print("Set Reminder button tapped!")
-      
+        
+        // Create the CareReminderViewController instance
+        let reminderController = CareReminderViewController()
+        
+        // Navigate to the CareReminderViewController
+        if let navigationController = self.navigationController {
+            // Use the existing navigation controller to push the view controller
+            navigationController.pushViewController(reminderController, animated: true)
+        } else {
+            // If there's no navigation controller, present it modally
+            self.present(reminderController, animated: true, completion: nil)
+        }
+        
+        print("Set reminder")
     }
-    
+
+//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+//            if segue.identifier == "ShowCareReminder" {
+//                // You can pass data here if needed:
+//                let destinationVC = segue.destination as! CareReminderViewController
+//                destinationVC.title = "Care Reminders"
+//            }
+//        }
+//    
     // MARK: - UITableViewDataSource
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1

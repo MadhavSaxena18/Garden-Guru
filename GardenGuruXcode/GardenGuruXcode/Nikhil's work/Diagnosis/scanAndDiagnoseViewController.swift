@@ -146,31 +146,31 @@ class scanAndDiagnoseViewController: UIViewController , AVCapturePhotoCaptureDel
         }
         
     }
-    func navigateToDiagnosisView() {
-        print("inside the function")
-        // Load the storyboard containing the DiagnosisViewController
-        let storyboard = UIStoryboard(name: "Diagnosis", bundle: nil)
-        print("storyboard")
-
-//        Instantiate the DiagnosisViewController by its Storyboard ID
-        guard let diagnosisVC = storyboard.instantiateViewController(withIdentifier: "Diagnosis") as? DiagnosisViewController else {
-            print("Error: DiagnosisViewController could not be instantiated.")
-            return
-        }
-       print("Guard condition true")
-        
-//        Option 1: Push to Navigation Controller
-
-        if let currentNavController = self.navigationController {
-            print("Navigation controller embedded")
-            currentNavController.pushViewController(diagnosisVC, animated: true)
-            print ("Hiii")
-        
-        } else {
-          
-            self.show(diagnosisVC , sender: self)
-        }
-  }
+//    func navigateToDiagnosisView() {
+//        print("inside the function")
+//        // Load the storyboard containing the DiagnosisViewController
+//        let storyboard = UIStoryboard(name: "Diagnosis", bundle: nil)
+//        print("storyboard")
+//
+////        Instantiate the DiagnosisViewController by its Storyboard ID
+//        guard let diagnosisVC = storyboard.instantiateViewController(withIdentifier: "Diagnosis") as? DiagnosisViewController else {
+//            print("Error: DiagnosisViewController could not be instantiated.")
+//            return
+//        }
+//       print("Guard condition true")
+//        
+////        Option 1: Push to Navigation Controller
+//
+//        if let currentNavController = self.navigationController {
+//            print("Navigation controller embedded")
+//            currentNavController.pushViewController(diagnosisVC, animated: true)
+//            print ("Hiii")
+//        
+//        } else {
+//          
+//            self.show(diagnosisVC , sender: self)
+//        }
+//  }
 
     
    
