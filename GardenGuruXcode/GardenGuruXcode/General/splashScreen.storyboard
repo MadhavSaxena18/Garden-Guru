@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Y6W-OH-hqX">
-    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <device id="retina6_3" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
@@ -12,26 +12,24 @@
             <objects>
                 <viewController id="Y6W-OH-hqX" customClass="SplashViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="5EZ-qb-Rvc">
-                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <rect key="frame" x="0.0" y="0.0" width="402" height="874"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="GG2" translatesAutoresizingMaskIntoConstraints="NO" id="TpB-Vv-AJs">
-                                <rect key="frame" x="162" y="282" width="140" height="70"/>
+                                <rect key="frame" x="166" y="340" width="70" height="70"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="70" id="cJw-2H-qiQ"/>
-                                    <constraint firstAttribute="width" constant="70" id="mhu-uu-r2m"/>
+                                    <constraint firstAttribute="width" constant="70" id="TdP-x6-09d"/>
+                                    <constraint firstAttribute="height" constant="70" id="gPX-4r-d6l"/>
                                 </constraints>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Garden Guru" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="E6D-nz-2gT">
-                                <rect key="frame" x="16" y="364" width="361" height="41"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Garden Guru" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="E6D-nz-2gT">
+                                <rect key="frame" x="92" y="415" width="218" height="44"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="37"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Plant Care Guide" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uqe-Kg-ceS">
-                                <rect key="frame" x="135" y="413" width="128" height="21"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="P l a n t  C a r e  G u i d e" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uqe-Kg-ceS">
+                                <rect key="frame" x="108.66666666666667" y="458" width="184.66666666666663" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
@@ -40,9 +38,12 @@
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
                         <color key="backgroundColor" red="0.63137254901960782" green="0.83529411764705885" blue="0.63529411764705879" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="TpB-Vv-AJs" secondAttribute="trailing" constant="162" id="GHX-XU-hw9"/>
-                            <constraint firstItem="TpB-Vv-AJs" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="223" id="LMB-nr-xsc"/>
-                            <constraint firstItem="TpB-Vv-AJs" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" constant="162" id="Z1i-vg-e4u"/>
+                            <constraint firstItem="E6D-nz-2gT" firstAttribute="top" secondItem="TpB-Vv-AJs" secondAttribute="bottom" constant="5" id="3T6-jh-yPl"/>
+                            <constraint firstItem="E6D-nz-2gT" firstAttribute="centerY" secondItem="5EZ-qb-Rvc" secondAttribute="centerY" id="5aZ-65-Cgr"/>
+                            <constraint firstItem="E6D-nz-2gT" firstAttribute="centerX" secondItem="5EZ-qb-Rvc" secondAttribute="centerX" id="Qeb-GY-g7A"/>
+                            <constraint firstItem="Uqe-Kg-ceS" firstAttribute="centerX" secondItem="5EZ-qb-Rvc" secondAttribute="centerX" id="Soh-gU-78B"/>
+                            <constraint firstItem="TpB-Vv-AJs" firstAttribute="centerX" secondItem="5EZ-qb-Rvc" secondAttribute="centerX" id="VKF-4d-Xo8"/>
+                            <constraint firstItem="Uqe-Kg-ceS" firstAttribute="top" secondItem="TpB-Vv-AJs" secondAttribute="bottom" constant="48" id="cD7-sn-9oV"/>
                         </constraints>
                     </view>
                 </viewController>

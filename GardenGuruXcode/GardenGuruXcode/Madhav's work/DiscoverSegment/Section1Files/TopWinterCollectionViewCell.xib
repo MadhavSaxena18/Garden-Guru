@@ -31,7 +31,7 @@
                                 </userDefinedRuntimeAttributes>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Y0e-cu-SaC">
-                                <rect key="frame" x="9" y="225" width="384" height="30.333333333333343"/>
+                                <rect key="frame" x="9" y="225" width="375" height="30.333333333333343"/>
                                 <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="13"/>
                                 <color key="textColor" red="0.21568627450980393" green="0.21568627450980393" blue="0.21568627450980393" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
@@ -48,7 +48,7 @@
                             <constraint firstAttribute="trailing" secondItem="7FQ-7O-x14" secondAttribute="trailing" constant="9" id="4bh-li-sxS"/>
                             <constraint firstItem="Y0e-cu-SaC" firstAttribute="leading" secondItem="K6d-8W-zTA" secondAttribute="leading" constant="9" id="5cL-m2-HUL"/>
                             <constraint firstItem="2g5-ee-6YW" firstAttribute="leading" secondItem="K6d-8W-zTA" secondAttribute="leading" constant="9" id="EBr-kZ-XB6"/>
-                            <constraint firstAttribute="trailing" secondItem="Y0e-cu-SaC" secondAttribute="trailing" id="EEc-vC-bCH"/>
+                            <constraint firstAttribute="trailing" secondItem="Y0e-cu-SaC" secondAttribute="trailing" constant="9" id="EEc-vC-bCH"/>
                             <constraint firstItem="Y0e-cu-SaC" firstAttribute="top" secondItem="2g5-ee-6YW" secondAttribute="bottom" constant="7" id="F9N-G3-Uup"/>
                             <constraint firstItem="7FQ-7O-x14" firstAttribute="top" secondItem="K6d-8W-zTA" secondAttribute="top" constant="9" id="Nig-W8-JXS"/>
                             <constraint firstItem="2g5-ee-6YW" firstAttribute="top" secondItem="7FQ-7O-x14" secondAttribute="bottom" constant="10" id="iDG-Vf-cvY"/>

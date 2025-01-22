@@ -72,8 +72,8 @@ class ExploreScreen{
                                                                                      DataOfSection2InDiscoverSegment(image:  UIImage(named: "black spots in rose")!, diseaseName: "Black Spots", plantName: "Rose", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
                                                                                      DataOfSection2InDiscoverSegment(image: UIImage(named: "bud drop in hiobiscus")!, diseaseName: "Bud Drop", plantName: "Hibiscus", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
                                                    ]
-    static var dataOfSection3InDiscoverSegment: [DataOfSection3InDicoverSegment] = [DataOfSection3InDicoverSegment(designImage: UIImage(named: "design1")!, designName: "The Art of Nature🌸"),
-                                                   DataOfSection3InDicoverSegment(designImage: UIImage(named: "design2")!, designName: "The Art of Nature🌸"),
+    static var dataOfSection3InDiscoverSegment: [DataOfSection3InDicoverSegment] = [DataOfSection3InDicoverSegment(designImage: UIImage(named: "design2")!, designName: "The Art of Nature🌸"),
+                                                   DataOfSection3InDicoverSegment(designImage: UIImage(named: "design1")!, designName: "The Art of Nature🌸"),
                                                                                     DataOfSection3InDicoverSegment(designImage: UIImage(named: "design3")!, designName: "The Art of Nature🌸"),
                                                                                     DataOfSection3InDicoverSegment(designImage: UIImage(named: "design4")!, designName: "The Art of Nature🌸"),
     ]
@@ -84,24 +84,24 @@ class ExploreScreen{
     
     // "For My plant" segment
     
-    static var dataOfSection1InforMyPlantSection: [DataOfSection1InforMyPlantSegment] = [DataOfSection1InforMyPlantSegment(image: UIImage(named: "image1")!, discription: "Black Spots: A Call for Help"),
-                                                                                         DataOfSection1InforMyPlantSegment(image: UIImage(named: "image2")!, discription: "Root Rot: The Silent Threat"),
-                                                                                         DataOfSection1InforMyPlantSegment(image: UIImage(named: "image3")!, discription: "AAAA"),
-                                                                                         DataOfSection1InforMyPlantSegment(image: UIImage(named: "image4")!, discription: "Root Rot: The Silent Threat")
+    static var dataOfSection1InforMyPlantSection: [DataOfSection1InforMyPlantSegment] = [DataOfSection1InforMyPlantSegment(image: UIImage(named: "black spots in rose")!, discription: "Black Spots: A Call for Help"),
+                                                                                         DataOfSection1InforMyPlantSegment(image: UIImage(named: "root rot in string of pearls")!, discription: "Root Rot: The Silent Threat"),
+                                                                                         DataOfSection1InforMyPlantSegment(image: UIImage(named: "black spots in rose")!, discription: "Black Spots: A Call for Help"),
+                                                                                                                                                                              DataOfSection1InforMyPlantSegment(image: UIImage(named: "root rot in string of pearls")!, discription: "Root Rot: The Silent Threat"),
     ]
     
     
-    static var dataOfSection2InforMyPlantSection: [DataOfSection2InforMyPlantSegment] = [DataOfSection2InforMyPlantSegment(image: UIImage(named: "image2")!, discription: "Osmocote Smart-Release Plant: Balanced nutrient"),
-                                                                                         DataOfSection2InforMyPlantSegment(image: UIImage(named: "image2")!, discription: "Root Rot: The Silent Threat"),
+    static var dataOfSection2InforMyPlantSection: [DataOfSection2InforMyPlantSegment] = [DataOfSection2InforMyPlantSegment(image: UIImage(named: "f2")!, discription: "Osmocote Smart-Release Plant: Balanced nutrient"),
+                                                                                         DataOfSection2InforMyPlantSegment(image: UIImage(named: "f1")!, discription: "Root Rot: The Silent Threat"),
     ]
     
     static var dataOfSection3InforMyPlantSection: [DataOfSection3InforMyPlantSegment] = [
-        DataOfSection3InforMyPlantSegment(image: UIImage(named: "image1")!),
-        DataOfSection3InforMyPlantSegment(image: UIImage(named: "image2")!),
+        DataOfSection3InforMyPlantSegment(image: UIImage(named: "design3")!),
+        DataOfSection3InforMyPlantSegment(image: UIImage(named: "design4")!),
                                                                                         
     ]
     
-    static var headerForInMyPlantSegment: [String] = ["Common Issues for Parlor Palm", "Common fertilizer for Parlor Palm", "Aesthetic Design Idea"]
+    static var headerForInMyPlantSegment: [String] = ["Common Issues in Rose Plant", "Common fertilizer for Parlor Palm", "Aesthetic Design Idea"]
     
     static var cardDetailSection1: [CardDetailsSection1] = [CardDetailsSection1(imageOfPlant: UIImage(named: "parlor palm")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
                                                            ]

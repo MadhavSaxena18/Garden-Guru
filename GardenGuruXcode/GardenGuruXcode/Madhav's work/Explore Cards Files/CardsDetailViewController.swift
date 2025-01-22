@@ -52,7 +52,6 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
         case 0:
             print("heyyyyyyyyyyyy")
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardsDetailCollectionViewCell
-//                detailData = [ExploreScreen.cardDetailSection1, ExploreScreen.cardDetailSection2, ExploreScreen.cardDetailSection3]
             cell.update(with: indexPath)
             return cell
         case 1:

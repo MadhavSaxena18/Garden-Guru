@@ -35,7 +35,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbb" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="4" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ZpI-aG-vZF">
-                        <rect key="frame" x="173" y="40" width="200" height="62.333333333333343"/>
+                        <rect key="frame" x="173" y="40" width="211" height="62.333333333333343"/>
                         <fontDescription key="fontDescription" type="system" pointSize="13"/>
                         <color key="textColor" red="0.21568627450980393" green="0.21568627450980393" blue="0.21568627450980393" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
@@ -48,7 +48,7 @@
                 <constraint firstItem="ZpI-aG-vZF" firstAttribute="leading" secondItem="rAo-xl-5xy" secondAttribute="trailing" constant="10" id="1vh-DJ-jWh"/>
                 <constraint firstItem="cJp-TN-rTD" firstAttribute="leading" secondItem="rAo-xl-5xy" secondAttribute="trailing" constant="10" id="GVe-a5-oNq"/>
                 <constraint firstItem="ZpI-aG-vZF" firstAttribute="top" secondItem="cJp-TN-rTD" secondAttribute="bottom" constant="7" id="Vue-83-SeG"/>
-                <constraint firstAttribute="trailing" secondItem="ZpI-aG-vZF" secondAttribute="trailing" constant="20" id="XlY-vc-Njy"/>
+                <constraint firstAttribute="trailing" secondItem="ZpI-aG-vZF" secondAttribute="trailing" constant="9" id="XlY-vc-Njy"/>
                 <constraint firstAttribute="bottom" secondItem="rAo-xl-5xy" secondAttribute="bottom" constant="9" id="aec-iC-9W5"/>
                 <constraint firstItem="rAo-xl-5xy" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="9" id="fGl-zF-oTc"/>
                 <constraint firstItem="ZpI-aG-vZF" firstAttribute="top" secondItem="cJp-TN-rTD" secondAttribute="bottom" constant="7" id="jXI-Ww-tEV"/>

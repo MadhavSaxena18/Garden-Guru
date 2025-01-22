@@ -12,6 +12,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
     var identifier = 0
     
+    @IBOutlet weak var plantCarAI: UIImageView!
+    
     @IBOutlet weak var collectionView: UICollectionView!
     // Segmented control instance
     
@@ -32,34 +34,22 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         // Ensure the search bar doesn't persist on navigation
         definesPresentationContext = true
+        plantCarAI.isUserInteractionEnabled = true
+            
+        // Create a tap gesture recognizer
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
+            
+        // Add the gesture recognizer to the image view
+        plantCarAI.addGestureRecognizer(tapGesture)
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
         updateSegmentedControlTitles(firstTitle: "Discover", secondTitle: "For My Plants")
         setupSegmentedControl()
         updateDataForSelectedSegment()
         setUpcollectionView()
-//        PlantCarAI.image = UIImage(named: "PlantCarAI") // Replace with your image name
-//        PlantCarAI.contentMode = .scaleAspectFit
-//        PlantCarAI.backgroundColor = .white
-//        PlantCarAI.layer.cornerRadius = 15
-//        PlantCarAI.frame = CGRect(x: 0, y: 0, width: 50, height: 50) // Adjust size
-//        view.addSubview(PlantCarAI)
-               
-        // Position the image at the bottom-left
-//        PlantCarAI.frame.origin = CGPoint(
-//            x: 320,
-//            y: view.frame.height - PlantCarAI.frame.height - 120
-//        )
+        
     }
 
-//    override func viewDidLayoutSubviews() {
-//        super.viewDidLayoutSubviews()
-//               
-//        // Reposition image for different screen sizes
-//        PlantCarAI.frame.origin = CGPoint(
-//            x: 320,
-//            y: view.frame.height - PlantCarAI.frame.height - 120
-//        )
-//    }
+
     
     func setUpcollectionView(){
         let firstNib = UINib(nibName: "TopWinterCollectionViewCell", bundle: nil)
@@ -317,7 +307,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .absolute(300), heightDimension: .absolute(214))
+        let groupsize = NSCollectionLayoutSize(widthDimension: .absolute(320), heightDimension: .absolute(225))
         
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupsize, subitems: [item])
         
@@ -386,107 +376,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     
-//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        // Determine the selected segment
-//        let selectedSegment = segmentControlOnExplore.selectedSegmentIndex
-//        let selectedSection = indexPath.section
-//        let selectedItem = indexPath.item
-//        
-//        // Prepare data to pass
-//        let selectedCardData: Any
-//        if selectedSegment == 0 { // "Discover" Segment
-//            selectedCardData = currentData[selectedSection][selectedItem]
-//        } else { // "For My Plants" Segment
-//            selectedCardData = currentData[selectedSection][selectedItem]
-//        }
-//        
-//        // Navigate to CardsDetailViewController
-//        let storyboard = UIStoryboard(name: "Main", bundle: nil) // Replace "Main" with your storyboard name if different
-//        let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as! CardsDetailViewController
-//        
-//        // Pass data to CardsDetailViewController
-//        // Assuming you have a property in CardsDetailViewController to accept the selected data
-//        detailVC.selectedCardData = selectedCardData
-//        
-//        navigationController?.pushViewController(detailVC, animated: true)
-//    }
-    
-    
-    
-    
-//    var cardDetailSection1 = [ExploreScreen.cardDetailSection1] // Example data for section 1
-//    var cardDetailSection2 = [ExploreScreen.cardDetailSection2] // Example data for section 2
-//    var cardDetailSection3 = [ExploreScreen.cardDetailSection3] // Example data for section 3
-//    // Prepare for the segue when a card is selected
-//      override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-//          if let indexPath = collectionView.indexPathsForSelectedItems?.first {
-//              if let destinationVC = segue.destination as? CardsDetailViewController {
-//                  // Determine which segment is selected and pass the appropriate data
-//                  switch segmentControl.selectedSegmentIndex {
-//                  case 0: // Segment 1
-//                      switch indexPath.section {
-//                      case 0:
-//                          destinationVC.cardDetails = cardDetailSection1 // Pass section 1 data
-//                      case 1:
-//                          destinationVC.cardDetails = cardDetailSection2 // Pass section 2 data
-//                      case 2:
-//                          destinationVC.cardDetails = cardDetailSection3 // Pass section 3 data
-//                      default:
-//                          break
-//                      }
-//                  case 1: // Segment 2
-//                      // Add logic to handle the second segment and pass relevant data
-//                      switch indexPath.section {
-//                      case 0:
-//                          destinationVC.cardDetails = cardDetailSection1 // You can pass different data for segment 2
-//                      case 1:
-//                          destinationVC.cardDetails = cardDetailSection2
-//                      case 2:
-//                          destinationVC.cardDetails = cardDetailSection3
-//                      default:
-//                          break
-//                      }
-//                  default:
-//                      break
-//                  }
-//              }
-//          }
-//      }
-//
-//      // Programmatic navigation to CardsDetailViewController if needed
-//      func navigateToDetail(forItemAt indexPath: IndexPath) {
-//          let destinationVC = CardsDetailViewController()
-//
-//          switch segmentControlOnExplore.selectedSegmentIndex {
-//          case 0: // Segment 1
-//              switch indexPath.section {
-//              case 0:
-//                  destinationVC.cardDetails = cardDetailSection1
-//              case 1:
-//                  destinationVC.cardDetails = cardDetailSection2
-//              case 2:
-//                  destinationVC.cardDetails = cardDetailSection3
-//              default:
-//                  break
-//              }
-//          case 1: // Segment 2
-//              switch indexPath.section {
-//              case 0:
-//                  destinationVC.cardDetails = cardDetailSection1 // Add custom data for segment 2 if necessary
-//              case 1:
-//                  destinationVC.cardDetails = cardDetailSection2
-//              case 2:
-//                  destinationVC.cardDetails = cardDetailSection3
-//              default:
-//                  break
-//              }
-//          default:
-//              break
-//          }
-//
-//          navigationController?.pushViewController(destinationVC, animated: true)
-//      }
-    
+
     
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -496,6 +386,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let selectedSection = indexPath.section
         let selectedItemIndex = indexPath.row
         let storyboard = UIStoryboard(name: "exploreTab", bundle: nil)
+        
+        
         if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
             switch selectedSection {
             case 0:
@@ -513,16 +405,12 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         }
     }
     
-//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-//        if segue.identifier == "CardInfo" {
-//            if let destinationVC = segue.destination as? CardsDetailViewController,
-//               let indexPath = collectionView.indexPathsForSelectedItems?.first {
-//                let sectionData = currentData[indexPath.section]
-//                let selectedItem = sectionData[indexPath.row]
-//                destinationVC.detailData = selectedItem // Pass the specific data
-//            }
-//        }
-//    }
+
+    
+    @objc func imageTapped() {
+        // Perform the segue when the image view is tapped
+        performSegue(withIdentifier: "plantCarAI", sender: self)
+    }
     
   }
     

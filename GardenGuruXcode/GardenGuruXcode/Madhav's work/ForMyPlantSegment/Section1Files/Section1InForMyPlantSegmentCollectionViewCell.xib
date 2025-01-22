@@ -24,15 +24,15 @@
                         <rect key="frame" x="0.0" y="156" width="300" height="58"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="qll-hZ-WeQ">
-                                <rect key="frame" x="8" y="19" width="38.333333333333336" height="21"/>
-                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="15"/>
+                                <rect key="frame" x="8" y="19" width="43.333333333333336" height="23"/>
+                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstAttribute="bottom" secondItem="qll-hZ-WeQ" secondAttribute="bottom" constant="18" id="BRE-Sc-be2"/>
+                            <constraint firstAttribute="bottom" secondItem="qll-hZ-WeQ" secondAttribute="bottom" constant="16" id="BRE-Sc-be2"/>
                             <constraint firstItem="qll-hZ-WeQ" firstAttribute="leading" secondItem="5Ps-GC-7Pb" secondAttribute="leading" constant="8" id="L14-ta-Vhu"/>
                             <constraint firstItem="qll-hZ-WeQ" firstAttribute="top" secondItem="5Ps-GC-7Pb" secondAttribute="top" constant="19" id="dfz-VW-brt"/>
                             <constraint firstAttribute="height" constant="58" id="lpP-n7-8fa"/>
