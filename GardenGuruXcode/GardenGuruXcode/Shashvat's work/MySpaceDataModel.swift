@@ -13,6 +13,7 @@ struct MySpaceSection1Data {
     let name: String
     let nickName: String
     let imageURL: String
+    //check commit
   
 }
 struct MySpaceSection2Data {
