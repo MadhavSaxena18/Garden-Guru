@@ -33,8 +33,9 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         view.backgroundColor = UIColor(hex: "#EBF4EB")
         setupUI()
         setupConstraints()
+        //navigationItem.title = "Diagnosis"
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.title = "Diagnosis"
-       
     }
 
     private func setupUI() {
@@ -45,7 +46,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         view.addSubview(plantImageView)
 
         // Overlay View
-        overlayView.backgroundColor = UIColor.red.withAlphaComponent(0.3)
+        overlayView.backgroundColor = UIColor.red.withAlphaComponent(0.2)
        // overlayView.layer.cornerRadius = 16
 //        let gradientLayer = CAGradientLayer()
 //        gradientLayer.colors = [
@@ -213,7 +214,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
-        headerView.backgroundColor = .systemGray5 // Customize this color as needed
+        headerView.backgroundColor = UIColor(hex: "747480").withAlphaComponent(0.08)
+// Customize this color as needed
         headerView.layer.cornerRadius = 10
         let headerButton = UIButton(type: .system)
         headerButton.setTitle(sectionTitles[section], for: .normal)

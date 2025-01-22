@@ -3,6 +3,7 @@ import UIKit
 
 class CareReminderViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
     
+    
     // MARK: - Properties
     var filteredReminders: [CareReminder] = []
     @IBOutlet weak var careReminderCollectionView: UICollectionView!
@@ -214,6 +215,10 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = spacing
         return section
+    }
+    
+    @IBAction  func unwindToCareReminder( segue: UIStoryboardSegue) {
+        
     }
 }
 
