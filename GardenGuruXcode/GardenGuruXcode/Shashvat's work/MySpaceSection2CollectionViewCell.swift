@@ -16,8 +16,8 @@ class MySpaceSection2CollectionViewCell: UICollectionViewCell {
         // Initialization code
     }
     func updatesection2Data(with indexPath: IndexPath){
-        section2PlantImageView.image = UIImage(named: MySpaceScreen.mySpaceSection1Data[indexPath.row].imageURL)
-        section2NickNameLabel.text = MySpaceScreen.mySpaceSection1Data[indexPath.row].nickName
+        section2PlantImageView.image = UIImage(named: MySpaceScreen.mySpaceSection2Data[indexPath.row].imageURL)
+        section2NickNameLabel.text = MySpaceScreen.mySpaceSection2Data[indexPath.row].nickName
     }
 
 
