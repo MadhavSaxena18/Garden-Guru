@@ -168,7 +168,9 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
 
     @objc  func setReminderButtonTapped() {
         print("Set Reminder button tapped!")
-        
+        let storyboard = UIStoryboard(name: "mySpaceTab", bundle: nil)
+        let careVC = storyboard.instantiateViewController(withIdentifier: "CareReminderViewController")
+        navigationController?.pushViewController(careVC, animated: true)
      //   performSegue(withIdentifier: "unwindToCareReminder", sender: Any?.self)
         
         
