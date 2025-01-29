@@ -15,6 +15,9 @@
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="tintColor" red="0.15686274510000001" green="0.26274509800000001" blue="0.16078431369999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <color key="selectedImageTintColor" red="0.28114051039999999" green="0.47898145559999999" blue="0.1607843041" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <tabBarAppearance key="scrollEdgeAppearance"/>
                     </tabBar>
                     <connections>
                         <segue destination="oQH-AN-bBh" kind="relationship" relationship="viewControllers" id="Mp9-4V-epG"/>
@@ -40,7 +43,7 @@
         <scene sceneID="vwW-V2-wmh">
             <objects>
                 <viewControllerPlaceholder storyboardName="scanAndDiagnoseTab" id="XD5-aF-xam" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="9S8-YL-adn"/>
+                    <tabBarItem key="tabBarItem" title="Item" image="camera" catalog="system" id="9S8-YL-adn"/>
                 </viewControllerPlaceholder>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="v5S-Rl-RCk" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -57,4 +60,7 @@
             <point key="canvasLocation" x="1137" y="-75"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="camera" catalog="system" width="128" height="93"/>
+    </resources>
 </document>

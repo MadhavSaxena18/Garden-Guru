@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="gTV-IL-0wX" customClass="Section2InForMyPlantCollectionViewCell" customModule="GardenGuruXcode" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="300" height="214"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                <rect key="frame" x="0.0" y="0.0" width="300" height="214"/>
+                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                <subviews>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="dWr-lx-S49">
+                        <rect key="frame" x="0.0" y="0.0" width="300" height="214"/>
+                    </imageView>
+                    <view alpha="0.75" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="38K-nj-mZd">
+                        <rect key="frame" x="0.0" y="156" width="300" height="58"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="9Vh-wc-TaZ">
+                                <rect key="frame" x="9" y="21.666666666666657" width="283" height="20.333333333333329"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="283" id="H1m-V4-Zlc"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstAttribute="bottom" secondItem="9Vh-wc-TaZ" secondAttribute="bottom" constant="16" id="VmP-fT-ySC"/>
+                            <constraint firstAttribute="height" constant="58" id="ZtE-4N-z3S"/>
+                            <constraint firstItem="9Vh-wc-TaZ" firstAttribute="leading" secondItem="38K-nj-mZd" secondAttribute="leading" constant="9" id="nfD-qA-XII"/>
+                        </constraints>
+                    </view>
+                </subviews>
+            </view>
+            <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
+            <constraints>
+                <constraint firstAttribute="bottom" secondItem="38K-nj-mZd" secondAttribute="bottom" id="5Fa-tZ-hTP"/>
+                <constraint firstItem="38K-nj-mZd" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="8Ju-Bb-WRQ"/>
+                <constraint firstItem="dWr-lx-S49" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="B7P-Qe-tJs"/>
+                <constraint firstAttribute="trailing" secondItem="38K-nj-mZd" secondAttribute="trailing" id="Kvf-BQ-hWv"/>
+                <constraint firstItem="dWr-lx-S49" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="hh7-VC-gc2"/>
+                <constraint firstAttribute="bottom" secondItem="dWr-lx-S49" secondAttribute="bottom" id="qc1-g3-NAU"/>
+                <constraint firstAttribute="trailing" secondItem="dWr-lx-S49" secondAttribute="trailing" id="rHJ-K0-dls"/>
+            </constraints>
+            <connections>
+                <outlet property="descriptionOfImageInforMyPlantSegment" destination="9Vh-wc-TaZ" id="R14-kX-yiF"/>
+                <outlet property="imageViewForMyPlantSegment" destination="dWr-lx-S49" id="zdU-MQ-jnD"/>
+            </connections>
+            <point key="canvasLocation" x="15.267175572519083" y="0.0"/>
+        </collectionViewCell>
+    </objects>
+    <resources>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
+</document>
