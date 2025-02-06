@@ -86,7 +86,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             let generalDetails = [
                 "Also Known as: \(plant.alsoKnownAs)",
                 "Botanical Name: \(plant.botanicalName)",
-                "Nick Name: \(plant.nickName)"
+//                "Nick Name: \(plant.nickName)"
             ]
 
             generalDetails.forEach { text in
@@ -267,9 +267,15 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     print("Start Caring button tapped!")
     
 
-       let newController = SetReminderViewController()
+     //  let newController = SetReminderViewController()
+       let newController = addNickNameViewController()
 //       navigationController?.show(newController, sender: self)
        navigationController?.present(newController, animated: true)
+       
+       
+       
+       
+       
        //navigationController?.pushViewController(newController, animated: true)
        
      //  print(newController)
