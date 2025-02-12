@@ -40,13 +40,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     private func setupUI() {
         // Plant Image
-        plantImageView.image = UIImage(named: "image2") // Replace with your actual image
+        plantImageView.image = UIImage(named: "parlor_palm3") // Replace with your actual image
         plantImageView.contentMode = .scaleAspectFill
         plantImageView.clipsToBounds = true
         view.addSubview(plantImageView)
 
         // Overlay View
-        overlayView.backgroundColor = UIColor.red.withAlphaComponent(0.2)
+        overlayView.backgroundColor = UIColor.red.withAlphaComponent(0.3)
        // overlayView.layer.cornerRadius = 16
 //        let gradientLayer = CAGradientLayer()
 //        gradientLayer.colors = [
@@ -86,7 +86,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             let generalDetails = [
                 "Also Known as: \(plant.alsoKnownAs)",
                 "Botanical Name: \(plant.botanicalName)",
-                "Nick Name: \(plant.nickName)"
+//                "Nick Name: \(plant.nickName)"
             ]
 
             generalDetails.forEach { text in
@@ -214,7 +214,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
-        headerView.backgroundColor = UIColor(hex: "747480").withAlphaComponent(0.08)
+        headerView.backgroundColor = UIColor(hex: "747480").withAlphaComponent(0.5)
 // Customize this color as needed
         headerView.layer.cornerRadius = 10
         let headerButton = UIButton(type: .system)
@@ -267,9 +267,19 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     print("Start Caring button tapped!")
     
 
-       let newController = SetReminderViewController()
-       print(newController)
-       present(newController,animated: true)
+     //  let newController = SetReminderViewController()
+       let newController = addNickNameViewController()
+//       navigationController?.show(newController, sender: self)
+       navigationController?.present(newController, animated: true)
+       
+       
+       
+       
+       
+       //navigationController?.pushViewController(newController, animated: true)
+       
+     //  print(newController)
+     //  present(newController,animated: true)
 //       performSegue(withIdentifier: "s1", sender: self)
 //       let navigationController = UINavigationController(rootViewController: SetReminderViewController())
 //       window?.rootViewController = navigationController
