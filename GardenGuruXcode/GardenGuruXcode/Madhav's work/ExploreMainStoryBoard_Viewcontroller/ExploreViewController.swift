@@ -9,8 +9,6 @@ import UIKit
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
     let PlantCarAI = UIImageView()
-
-    var identifier = 0
     
     @IBOutlet weak var plantCarAI: UIImageView!
     
@@ -29,16 +27,16 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search plant, fertilizer..."
         
-        // Add the search controller to the navigation item
+        // Add the search c=ontroller to the navigation item
         navigationItem.searchController = searchController
         
         // Ensure the search bar doesn't persist on navigation
         definesPresentationContext = true
         plantCarAI.isUserInteractionEnabled = true
-            
+        
         // Create a tap gesture recognizer
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
-            
+        
         // Add the gesture recognizer to the image view
         plantCarAI.addGestureRecognizer(tapGesture)
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
@@ -48,8 +46,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         setUpcollectionView()
         
     }
-
-
+    
+    
     
     func setUpcollectionView(){
         let firstNib = UINib(nibName: "TopWinterCollectionViewCell", bundle: nil)
@@ -92,12 +90,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         switch  segmentControlOnExplore.selectedSegmentIndex {
         case 0: // "Discover"
             print("Hey")
-            identifier = 0
-            print("Identifer: \(identifier)")
+            
             currentData = [ExploreScreen.dataOfSection1InDiscoverSegment, ExploreScreen.dataOfSection2InDiscoverSegment, ExploreScreen.dataOfSection3InDiscoverSegment]
         case 1: // "For You"
-            identifier = 1
-            print("Identifer: \(identifier)")
+            
             print("bbb")
             currentData = [ExploreScreen.dataOfSection1InforMyPlantSection, ExploreScreen.dataOfSection2InforMyPlantSection, ExploreScreen.dataOfSection3InforMyPlantSection] // Replace with data for "For You" section
         default:
@@ -145,7 +141,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         switch indexPath.section{
         case 0:
-            if(identifier == 0){
+            /*if(identifier == 0)*/
+            if segmentControlOnExplore.selectedSegmentIndex == 0{
                 print("Section 1 In Discover")
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
                 cell.updateDataOfSection1(with: indexPath)
@@ -160,7 +157,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
             
         case 1:
-            if(identifier == 0){
+            //            if(identifier == 0){
+            if segmentControlOnExplore.selectedSegmentIndex == 0{
                 print("mm")
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
                 cell.updateDataOfSection2(with: indexPath)
@@ -176,7 +174,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             
         case 2:
-            if identifier == 0{
+            //            if identifier == 0{
+            if segmentControlOnExplore.selectedSegmentIndex == 0{
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! Section3CollectionViewCell
                 cell.updateDataOfSection3(with: indexPath)
                 cell.layer.cornerRadius = 18
@@ -205,7 +204,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             (sectionIndex, environment) -> NSCollectionLayoutSection? in let section: NSCollectionLayoutSection
             switch sectionIndex{
             case 0:
-                if identifier == 0{
+                //                if identifier == 0{
+                if segmentControlOnExplore.selectedSegmentIndex == 0{
                     section = self.generateSection1Layout()
                 }else{
                     section = self.generateSection1LayoutInForMyPlants()
@@ -213,7 +213,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 
                 
             case 1:
-                if identifier == 0 {
+                //                if identifier == 0 {
+                if segmentControlOnExplore.selectedSegmentIndex == 0{
                     section = self.generateSection2Layout()
                 }
                 else{
@@ -221,7 +222,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 }
                 
             case 2:
-                if identifier == 0{
+                //                if identifier == 0{
+                if segmentControlOnExplore.selectedSegmentIndex == 0{
                     section = self.generateSection3Layout()
                 }else{
                     section = self.generateSection1LayoutInForMyPlants()
@@ -325,7 +327,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader{
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
-            if identifier == 0{
+            //            if identifier == 0{
+            if segmentControlOnExplore.selectedSegmentIndex == 0{
                 header.headerLabel.text = ExploreScreen.headerData[indexPath.section]
                 header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
                 header.headerLabel.textColor = UIColor(hex: "284329")
@@ -366,52 +369,62 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         VC.selectedSegmentIndex = segmentControlOnExplore.selectedSegmentIndex // Pass the selected segment index (if needed)
         
         if segmentControlOnExplore.selectedSegmentIndex == 0 {
-                VC.headerData = ExploreScreen.headerData
-            } else {
-                VC.headerData = ExploreScreen.headerForInMyPlantSegment
-            }
+            VC.headerData = ExploreScreen.headerData
+        } else {
+            VC.headerData = ExploreScreen.headerForInMyPlantSegment
+        }
         navigationController?.pushViewController(VC, animated: true)
+//        performSegue(withIdentifier: "section_view", sender: "exporeTab")
         
     }
     
     
     
-
+    
     
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//            let sectionData = currentData[indexPath.section]
-//            let item = sectionData[indexPath.row]
-            
+        //            let sectionData = currentData[indexPath.section]
+        //            let item = sectionData[indexPath.row]
+        
         let selectedSection = indexPath.section
         let selectedItemIndex = indexPath.row
         let storyboard = UIStoryboard(name: "exploreTab", bundle: nil)
-        
-        
-        if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
-            switch selectedSection {
-            case 0:
-                detailVC.detailData = ExploreScreen.cardDetailSection1
-            case 1:
-                detailVC.detailData = ExploreScreen.cardDetailSection2
-            case 2:
-                detailVC.detailData = ExploreScreen.cardDetailSection3
-            default:
-                break
+        print(selectedItemIndex)
+        if segmentControlOnExplore.selectedSegmentIndex == 0 {
+            
+            if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewControllerForSegment1") as? CardsDetailForDiscoverSegmentViewController {
+                switch selectedSection {
+                case 0:
+                    CardsDetailForDiscoverSegmentViewController.detailData = ExploreScreen.cardDetailSection1[selectedItemIndex]
+                    //            case 1:
+                    //                CardsDetailViewController.detailData = ExploreScreen.cardDetailSection2
+                    //            case 2:
+                    //                CardsDetailViewController.detailData = ExploreScreen.cardDetailSection3
+                default:
+                    break
+                }
+                
+                performSegue(withIdentifier: "CardInfoForSegment1", sender: Any?.self)
+                
             }
-            
-            performSegue(withIdentifier: "CardInfo", sender: Any?.self)
-            
+        }else{
+            let selectedSection = indexPath.section
+            let selectedItemIndex = indexPath.row
+            let storyboard = UIStoryboard(name: "exploreTab", bundle: nil)
+            if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewControllerForSegment2") as? CardsDetailForUser_sPlantSegmentViewController{
+                
+            }
+            performSegue(withIdentifier: "CardInfoForSegment2", sender: Any?.self)
         }
     }
+        
+        
+        
+        @objc func imageTapped() {
+            // Perform the segue when the image view is tapped
+            performSegue(withIdentifier: "plantCarAI", sender: self)
+        }
     
-
-    
-    @objc func imageTapped() {
-        // Perform the segue when the image view is tapped
-        performSegue(withIdentifier: "plantCarAI", sender: self)
-    }
-    
-  }
-    
+}
 

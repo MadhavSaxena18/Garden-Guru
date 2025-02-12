@@ -17,6 +17,11 @@ class Section1CollectionViewCell: UICollectionViewCell {
     
     @IBOutlet weak var plantDescriptionLabel: UILabel!
     func updateDataOfSection1(with indexPath: IndexPath){
+//        cardView.layer.shadowColor = UIColor.black.cgColor
+//        cardView.layer.shadowOpacity = 0.9
+//        cardView.layer.shadowOffset = CGSize(width: 4, height: 4)
+//        cardView.layer.shadowRadius = 50
+//        cardView.layer.masksToBounds = false
         plantImage.image = ExploreScreen.dataOfSection1InDiscoverSegment[indexPath.row].image
         
         plantNameLabel.text = ExploreScreen.dataOfSection1InDiscoverSegment[indexPath.row].plantName
@@ -28,6 +33,7 @@ class Section1CollectionViewCell: UICollectionViewCell {
 //        cardView.layer.shadowRadius = 4
         
     }
+    
     
 
 }

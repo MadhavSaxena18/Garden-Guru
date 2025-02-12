@@ -103,8 +103,14 @@ class ExploreScreen{
     
     static var headerForInMyPlantSegment: [String] = ["Common Issues in Rose Plant", "Common fertilizer for Parlor Palm", "Aesthetic Design Idea"]
     
-    static var cardDetailSection1: [CardDetailsSection1] = [CardDetailsSection1(imageOfPlant: UIImage(named: "parlor palm")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
-                                                           ]
+    static var cardDetailSection1: [CardDetailsSection1] = [
+        CardDetailsSection1(imageOfPlant: UIImage(named: "parlor palm")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
+        CardDetailsSection1(imageOfPlant: UIImage(named: "string of pearls")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
+        CardDetailsSection1(imageOfPlant: UIImage(named: "string of pearls")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
+        CardDetailsSection1(imageOfPlant: UIImage(named: "string of pearls")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
+        
+        
+        ]
     static var cardDetailSection2: [CardDetailsSection2] = [CardDetailsSection2(plantName: "Parlor Palm" , description: "Parlor Palms (scientifically known as Chamaedorea elegans) are small, elegant indoor plants that are popular for their attractive, feathery foliage and ease of care. Native to the tropical regions of Central America, they thrive in low to medium light conditions, making them perfect for indoor spaces")]
     
     static var cardDetailSection3: [CardDetailsSection3] = [CardDetailsSection3(plantImage: UIImage(named: "parlor palm1")!), CardDetailsSection3(plantImage: UIImage(named: "parlor palm2")!), CardDetailsSection3(plantImage: UIImage(named: "parlor palm")!), CardDetailsSection3(plantImage: UIImage(named: "parlor palm1")!)]

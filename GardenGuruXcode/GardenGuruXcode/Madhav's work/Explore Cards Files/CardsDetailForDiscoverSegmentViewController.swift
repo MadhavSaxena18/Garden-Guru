@@ -7,8 +7,8 @@
 
 import UIKit
 
-class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UICollectionViewDataSource{
-    var detailData: [Any]?
+class CardsDetailForDiscoverSegmentViewController: UIViewController, UICollectionViewDelegate ,UICollectionViewDataSource{
+    static var detailData: CardDetailsSection1?
     @IBOutlet weak var cardDetailCollectionView: UICollectionView!
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,7 +52,7 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
         case 0:
             print("heyyyyyyyyyyyy")
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardsDetailCollectionViewCell
-            cell.update(with: indexPath)
+            cell.update(with: CardsDetailForDiscoverSegmentViewController.detailData!)
             return cell
         case 1:
             print("bbbbbbbbbyyyyyyyyyy")
@@ -68,7 +68,7 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             return cell
         default:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardsDetailCollectionViewCell
-            cell.update(with: indexPath)
+            cell.update(with: CardsDetailForDiscoverSegmentViewController.detailData!)
             return cell
         }
         

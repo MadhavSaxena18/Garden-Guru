@@ -19,3 +19,5 @@ class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
     }
 
 }
+
+
