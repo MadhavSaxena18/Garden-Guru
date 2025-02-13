@@ -84,7 +84,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
         if let plant = selectedPlant {
             let generalDetails = [
-                "Also Known as: \(plant.alsoKnownAs)",
+                "Common Name: \(plant.alsoKnownAs)",
                 "Botanical Name: \(plant.botanicalName)",
 //                "Nick Name: \(plant.nickName)"
             ]
