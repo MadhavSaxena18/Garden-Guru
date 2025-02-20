@@ -220,6 +220,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                      if let plant = item as? Plant {
                          cell?.configure(with: plant)
                      }
+                     //cell?.contentView.layer.cornerRadius = 11
+                     cell?.contentView.layer.masksToBounds = true
+                     
+                     cell?.layer.cornerRadius = 11
                      cell?.layer.shadowColor = UIColor.black.cgColor
                      cell?.layer.shadowOffset = CGSize(width: 0, height: 2)
                      cell?.layer.shadowRadius = 4
@@ -232,6 +236,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                      if let disease = item as? Diseases {
                          cell.configure(with: disease)
                      }
+                     //cell.contentView.layer.cornerRadius = 11
+                     cell.contentView.layer.masksToBounds = true
+                     
+                     cell.layer.cornerRadius = 11
                      cell.layer.shadowColor = UIColor.black.cgColor
                      cell.layer.shadowOffset = CGSize(width: 0, height: 2)
                      cell.layer.shadowRadius = 4
@@ -247,6 +255,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                      if let disease = item as? Diseases {
                          cell.configure(with: disease)
                      }
+                     cell.contentView.layer.cornerRadius = 25
+                     cell.contentView.layer.masksToBounds = true
+                     
                      cell.layer.shadowColor = UIColor.black.cgColor
                      cell.layer.shadowOffset = CGSize(width: 0, height: 2)
                      cell.layer.shadowRadius = 4
@@ -258,6 +269,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                      if let fertilizer = item as? String {
                          cell.configure(with: fertilizer)
                      }
+                     cell.contentView.layer.cornerRadius = 25
+                     cell.contentView.layer.masksToBounds = true
+                    
                      cell.layer.shadowColor = UIColor.black.cgColor
                      cell.layer.shadowOffset = CGSize(width: 0, height: 2)
                      cell.layer.shadowRadius = 4
@@ -396,7 +410,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader{
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
-            if identifier == 0{
+            if segmentControlOnExplore.selectedSegmentIndex == 0{
                 header.headerLabel.text = ExploreScreen.headerData[indexPath.section]
                 header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
                 header.headerLabel.textColor = UIColor(hex: "284329")
@@ -409,7 +423,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 return header
                 
             }else{
-                //header.headerLabel.text = ExploreScreen.headerForInMyPlantSegment[indexPath.section]
+                header.headerLabel.text = ExploreScreen.headerForInMyPlantSegment[indexPath.section]
                 header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
                 header.headerLabel.textColor = UIColor(hex: "284329")
                 header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
@@ -437,13 +451,14 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         VC.selectedSegmentIndex = segmentControlOnExplore.selectedSegmentIndex // Pass the selected segment index (if needed)
         
         if segmentControlOnExplore.selectedSegmentIndex == 0 {
-                VC.headerData = ExploreScreen.headerData
+            VC.headerData = ExploreScreen.headerData
             } else {
                 VC.headerData = ExploreScreen.headerForInMyPlantSegment
             }
         navigationController?.pushViewController(VC, animated: true)
         
     }
+    
     
     
     

@@ -39,7 +39,6 @@ class AllDataCollectionViewCell: UICollectionViewCell {
             plantImageView.contentMode = .scaleAspectFill
             plantImageView.clipsToBounds = true
             plantImageView.layer.cornerRadius = 12
-            plantImageView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner] // Round only top corners
             
             // Setup labels
             nameLabel.font = .systemFont(ofSize: 20, weight: .bold)
