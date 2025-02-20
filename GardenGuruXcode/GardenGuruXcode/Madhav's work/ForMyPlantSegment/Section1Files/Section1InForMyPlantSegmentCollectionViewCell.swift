@@ -17,9 +17,19 @@ class Section1InForMyPlantSegmentCollectionViewCell: UICollectionViewCell {
         // Initialization code
     }
     
-    func updateDataOfSection1InForMyPlantSegment(with indexPath: IndexPath){
-        imageViewForMyPlantSegment.image = ExploreScreen.dataOfSection1InforMyPlantSection[indexPath.row].image
-        descriptionLabelForMyPlantSegment.text = ExploreScreen.dataOfSection1InforMyPlantSection[indexPath.row].discription
-    }
+//    func updateDataOfSection1InForMyPlantSegment(with indexPath: IndexPath){
+//        imageViewForMyPlantSegment.image = ExploreScreen.dataOfSection1InforMyPlantSection[indexPath.row].image
+//        descriptionLabelForMyPlantSegment.text = ExploreScreen.dataOfSection1InforMyPlantSection[indexPath.row].discription
+//    }
+    
+    func configure(with disease: Diseases) {
+//            titleLabel.text = disease.diseaseName
+        if let firstImage = disease.diseaseImage.first {
+                imageViewForMyPlantSegment.image = UIImage(named: firstImage)
+            } else {
+                imageViewForMyPlantSegment.image = UIImage(named: "placeholder") // Default image
+            }
+        descriptionLabelForMyPlantSegment.text = disease.diseaseName
+        }
 
 }

@@ -20,6 +20,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     @IBOutlet weak var segmentControlOnExplore: UISegmentedControl!
     private var currentData: [[Any]] = []
     
+    var discoverCategories: [(title: String, items: [Any])] = []
+    var forMyPlantCategories: [(title: String, items: [Any])] = []
+    var selectedSegment = 0
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,6 +51,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         updateDataForSelectedSegment()
         setUpcollectionView()
         
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        updateDataForSelectedSegment()
     }
 
 
@@ -89,17 +96,25 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
     
     func updateDataForSelectedSegment() {
+        selectedSegment = segmentControlOnExplore.selectedSegmentIndex
         switch  segmentControlOnExplore.selectedSegmentIndex {
         case 0: // "Discover"
             print("Hey")
             identifier = 0
             print("Identifer: \(identifier)")
-            currentData = [ExploreScreen.dataOfSection1InDiscoverSegment, ExploreScreen.dataOfSection2InDiscoverSegment, ExploreScreen.dataOfSection3InDiscoverSegment]
+            discoverCategories = [
+                   ("Top Summer Plants", DataControllerGG().getTopWinterPlants()),
+                   ("Common Issues", DataControllerGG().getCommonIssues())
+               ]
         case 1: // "For You"
             identifier = 1
             print("Identifer: \(identifier)")
             print("bbb")
-            currentData = [ExploreScreen.dataOfSection1InforMyPlantSection, ExploreScreen.dataOfSection2InforMyPlantSection, ExploreScreen.dataOfSection3InforMyPlantSection] // Replace with data for "For You" section
+            forMyPlantCategories = [
+                        ("Common Issues for Rose Plant", DataControllerGG().getCommonIssuesForRose()),
+                        ("Common Fertilizers for Parlor Palm", DataControllerGG().getCommonFertilizersForParlorPalm())
+                    ]
+
         default:
             currentData = []
         }
@@ -123,7 +138,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return currentData.count
+        return selectedSegment == 0 ? discoverCategories.count : forMyPlantCategories.count
     }
     
     /*
@@ -139,62 +154,132 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
      }
      }*/
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return currentData[section].count
+        let categories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
+                return categories[section].items.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        switch indexPath.section{
-        case 0:
-            if(identifier == 0){
-                print("Section 1 In Discover")
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
-                cell.updateDataOfSection1(with: indexPath)
-                cell.layer.cornerRadius = 11
-                return cell
-            }else{
-                print("Section 1 in For my plants")
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
-                cell.updateDataOfSection1InForMyPlantSegment(with: indexPath)
-                cell.layer.cornerRadius = 25
-                return cell
-            }
-            
-        case 1:
-            if(identifier == 0){
-                print("mm")
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
-                cell.updateDataOfSection2(with: indexPath)
-                cell.layer.cornerRadius = 11
-                return cell
-            }else{
-                print("ttttt")
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
-                cell.updateDataOfSection2InForMyPlantSegment(with: indexPath)
-                cell.layer.cornerRadius = 25
-                return cell
-            }
-            
-            
-        case 2:
-            if identifier == 0{
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! Section3CollectionViewCell
-                cell.updateDataOfSection3(with: indexPath)
-                cell.layer.cornerRadius = 18
-                return cell
-            }else{
-                print("ababaaaaaaa")
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ThirdForMyPlant", for: indexPath) as! Section3InForMyPlantCollectionViewCell
-                cell.updateDataOfSection3InForMyPlantSegment(with: indexPath)
-                cell.layer.cornerRadius = 25
-                return cell
-            }
-            
-        default:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
-            //cell.updateDataOfSection1(with: indexPath)
-            return cell
+//        switch indexPath.section{
+//        case 0:
+//            if(identifier == 0){
+//                print("Section 1 In Discover")
+//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
+//                cell.updateDataOfSection1(with: indexPath)
+//                cell.layer.cornerRadius = 11
+//                return cell
+//            }else{
+//                print("Section 1 in For my plants")
+//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
+//                cell.updateDataOfSection1InForMyPlantSegment(with: indexPath)
+//                cell.layer.cornerRadius = 25
+//                return cell
+//            }
+//
+//        case 1:
+//            if(identifier == 0){
+//                print("mm")
+//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
+//                cell.updateDataOfSection2(with: indexPath)
+//                cell.layer.cornerRadius = 11
+//                return cell
+//            }else{
+//                print("ttttt")
+//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
+//                cell.updateDataOfSection2InForMyPlantSegment(with: indexPath)
+//                cell.layer.cornerRadius = 25
+//                return cell
+//            }
+//
+//
+//        case 2:
+//            if identifier == 0{
+//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! Section3CollectionViewCell
+//                cell.updateDataOfSection3(with: indexPath)
+//                cell.layer.cornerRadius = 18
+//                return cell
+//            }else{
+//                print("ababaaaaaaa")
+//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ThirdForMyPlant", for: indexPath) as! Section3InForMyPlantCollectionViewCell
+//                cell.updateDataOfSection3InForMyPlantSegment(with: indexPath)
+//                cell.layer.cornerRadius = 25
+//                return cell
+//            }
+//
+//        default:
+//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
+//            //cell.updateDataOfSection1(with: indexPath)
+//            return cell
+//        }
+             let categories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
+             let category = categories[indexPath.section]
+             let item = category.items[indexPath.row]
+
+             if selectedSegment == 0 { // Discover Segment
+                 if category.title == "Top Summer Plants" {
+                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as? Section1CollectionViewCell
+                     if let plant = item as? Plant {
+                         cell?.configure(with: plant)
+                     }
+                     //cell?.contentView.layer.cornerRadius = 11
+                     cell?.contentView.layer.masksToBounds = true
+                     
+                     cell?.layer.cornerRadius = 11
+                     cell?.layer.shadowColor = UIColor.black.cgColor
+                     cell?.layer.shadowOffset = CGSize(width: 0, height: 2)
+                     cell?.layer.shadowRadius = 4
+                     cell?.layer.shadowOpacity = 0.2
+                     cell?.layer.masksToBounds = false
+                     return cell!
+                 } else { // Common Issues
+                     print("firsssssssss")
+                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
+                     if let disease = item as? Diseases {
+                         cell.configure(with: disease)
+                     }
+                     //cell.contentView.layer.cornerRadius = 11
+                     cell.contentView.layer.masksToBounds = true
+                     
+                     cell.layer.cornerRadius = 11
+                     cell.layer.shadowColor = UIColor.black.cgColor
+                     cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                     cell.layer.shadowRadius = 4
+                     cell.layer.shadowOpacity = 0.2
+                     cell.layer.masksToBounds = false
+                     
+                     return cell
+                 }
+             } else { // For My Plant Segment
+                 if category.title == "Common Issues in Rose Plant" {
+                     print("chhikloooooo")
+                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
+                     if let disease = item as? Diseases {
+                         cell.configure(with: disease)
+                     }
+                     cell.contentView.layer.cornerRadius = 25
+                     cell.contentView.layer.masksToBounds = true
+                     
+                     cell.layer.shadowColor = UIColor.black.cgColor
+                     cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                     cell.layer.shadowRadius = 4
+                     cell.layer.shadowOpacity = 0.2
+                     cell.layer.masksToBounds = false
+                     return cell
+                 } else { // Common Fertile for Parlour Palm
+                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as!Section2InForMyPlantCollectionViewCell
+                     if let fertilizer = item as? String {
+                         cell.configure(with: fertilizer)
+                     }
+                     cell.contentView.layer.cornerRadius = 25
+                     cell.contentView.layer.masksToBounds = true
+                    
+                     cell.layer.shadowColor = UIColor.black.cgColor
+                     cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                     cell.layer.shadowRadius = 4
+                     cell.layer.shadowOpacity = 0.2
+                     cell.layer.masksToBounds = false
+                     return cell
+                 }
         }
-        
         
     }
     
@@ -325,7 +410,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader{
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
-            if identifier == 0{
+            if segmentControlOnExplore.selectedSegmentIndex == 0{
                 header.headerLabel.text = ExploreScreen.headerData[indexPath.section]
                 header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
                 header.headerLabel.textColor = UIColor(hex: "284329")
@@ -334,7 +419,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 header.button.tag = indexPath.section
                 header.button.imageEdgeInsets = UIEdgeInsets(top: 9, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
                 header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
-                //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
+                header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
                 return header
                 
             }else{
@@ -366,7 +451,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         VC.selectedSegmentIndex = segmentControlOnExplore.selectedSegmentIndex // Pass the selected segment index (if needed)
         
         if segmentControlOnExplore.selectedSegmentIndex == 0 {
-                VC.headerData = ExploreScreen.headerData
+            VC.headerData = ExploreScreen.headerData
             } else {
                 VC.headerData = ExploreScreen.headerForInMyPlantSegment
             }
@@ -376,33 +461,31 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     
+    
 
     
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 //            let sectionData = currentData[indexPath.section]
 //            let item = sectionData[indexPath.row]
-            
-        let selectedSection = indexPath.section
-        let selectedItemIndex = indexPath.row
-        let storyboard = UIStoryboard(name: "exploreTab", bundle: nil)
-        
-        
-        if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
-            switch selectedSection {
-            case 0:
-                detailVC.detailData = ExploreScreen.cardDetailSection1
-            case 1:
-                detailVC.detailData = ExploreScreen.cardDetailSection2
-            case 2:
-                detailVC.detailData = ExploreScreen.cardDetailSection3
-            default:
-                break
+        let categories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
+            let selectedCategory = categories[indexPath.section]
+            let selectedItem = selectedCategory.items[indexPath.row]  // Get the clicked item
+
+            let storyboard = UIStoryboard(name: "exploreTab", bundle: nil)
+            if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
+                detailVC.selectedCardData = selectedItem // Pass the selected `Plant` or `Diseases`
+                
+                // Set modal presentation style
+//                detailVC.modalPresentationStyle = .fullScreen
+//                detailVC.modalTransitionStyle = .coverVertical
+                detailVC.navigationItem.title = "hello"
+                present(detailVC, animated: true, completion: nil) // Present modally
+                //navigationController?.pushViewController(detailVC, animated: true)
+                
+                detailVC.navigationItem.title = "hello"
+                //navigationItem.title = "hello"
             }
-            
-            performSegue(withIdentifier: "CardInfo", sender: Any?.self)
-            
-        }
     }
     
 
