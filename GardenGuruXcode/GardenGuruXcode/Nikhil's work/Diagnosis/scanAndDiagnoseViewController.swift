@@ -1,10 +1,10 @@
-
+//
 //
 //  scanAndDiagnoseViewController.swift
 //  GardenGuruXcode
 //
 //  Created by Nikhil Gupta on 17/01/25.
-//
+
 
 
 
@@ -270,3 +270,18 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         previewLayer?.removeFromSuperlayer()
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
