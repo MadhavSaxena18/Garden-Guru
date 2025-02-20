@@ -207,13 +207,13 @@ import Foundation
 
 class DataControllerGG {
 
-    private var plants: [Plant] = []
-    private var diseases: [Diseases] = []
-    private var plantDiseases: [PlantDisease] = []
-    private var user : [userInfo] = []
-    private var userPlant : [UserPlant] = []
-    let currentDate = Date()
-    private var userPlantDisease : [UsersPlantDisease] = []
+//    private var plants: [Plant] = []
+//    private var diseases: [Diseases] = []
+//    private var plantDiseases: [PlantDisease] = []
+//    private var user : [userInfo] = []
+//    private var userPlant : [UserPlant] = []
+//    let currentDate = Date()
+//    private var userPlantDisease : [UsersPlantDisease] = []
 
        private var plants: [Plant] = []
        private var diseases: [Diseases] = []
@@ -656,11 +656,25 @@ class DataControllerGG {
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rust.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john2Plant.userId, diseaseID: rust.diseaseID))
         
-        var reminderofUserPlant1 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 120, to: currentDate)! , isCompleted: true)
+        var reminderofUserPlant1 : CareReminder_ = CareReminder_(
+            upcomingReminderForWater: currentDate,
+            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!,
+            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 120, to: currentDate)!,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
         
-        var reminderOfUserPlant2 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!, isCompleted: true)
+        var reminderOfUserPlant2 : CareReminder_ = CareReminder_(
+            upcomingReminderForWater: currentDate,
+            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!,
+            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
         
-        careReminders.append(contentsOf: [reminderofUserPlant1 , reminderOfUserPlant2])
+        careReminders.append(contentsOf: [reminderofUserPlant1, reminderOfUserPlant2])
         
 //        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
         
