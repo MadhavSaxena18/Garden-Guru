@@ -163,7 +163,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             detailsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
             // TableView
-            tableView.topAnchor.constraint(equalTo: detailsStackView.bottomAnchor, constant: 16),
+            tableView.topAnchor.constraint(equalTo: detailsStackView.bottomAnchor, constant: 10),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
@@ -238,7 +238,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     // MARK: - UITableViewDelegate
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
-        headerView.backgroundColor = UIColor(hex: "747480").withAlphaComponent(0.5)
+        headerView.backgroundColor = UIColor(hex: "E2EAE2").withAlphaComponent(1)
         headerView.layer.cornerRadius = 10
         
         let headerButton = UIButton(type: .system)
