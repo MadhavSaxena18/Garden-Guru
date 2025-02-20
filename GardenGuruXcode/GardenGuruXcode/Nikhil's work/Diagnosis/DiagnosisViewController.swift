@@ -1,4 +1,5 @@
 
+
 import UIKit
 
 class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
@@ -18,50 +19,61 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         return selectedPlant?.sectionDetails.keys.sorted() ?? []
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        self.tabBarController?.tabBar.isHidden = true
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        self.tabBarController?.tabBar.isHidden = false
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(hex: "#EBF4EB")
         setupUI()
         setupConstraints()
-        //navigationItem.title = "Diagnosis"
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.title = "Diagnosis"
+        
+        // Hide tab bar
+        self.tabBarController?.tabBar.isHidden = true
     }
-
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Ensure tab bar stays hidden
+        self.tabBarController?.tabBar.isHidden = true
+        
+        // Add this to handle the back button action
+        navigationController?.navigationBar.backIndicatorImage = UIImage(systemName: "chevron.left")
+        navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage(systemName: "chevron.left")
+        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Double ensure tab bar stays hidden
+        self.tabBarController?.tabBar.isHidden = true
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // Only show tab bar when actually leaving the view
+        if isMovingFromParent {
+            self.tabBarController?.tabBar.isHidden = false
+        }
+    }
+    
+    // Override the back button action
+    override func willMove(toParent parent: UIViewController?) {
+        super.willMove(toParent: parent)
+        if parent == nil { // This means we're being popped
+            showBackAlert()
+        }
+    }
+    
     private func setupUI() {
         // Plant Image
-        plantImageView.image = UIImage(named: "parlor_palm3") // Replace with your actual image
+        plantImageView.image = UIImage(named: "parlor_palm3")
         plantImageView.contentMode = .scaleAspectFill
         plantImageView.clipsToBounds = true
         view.addSubview(plantImageView)
 
         // Overlay View
         overlayView.backgroundColor = UIColor.red.withAlphaComponent(0.3)
-       // overlayView.layer.cornerRadius = 16
-//        let gradientLayer = CAGradientLayer()
-//        gradientLayer.colors = [
-//            UIColor.red.withAlphaComponent(0.3).cgColor, // Semi-transparent at the bottom
-//            UIColor.clear.cgColor                         // Fully transparent at the top
-//        ]
-//        gradientLayer.startPoint = CGPoint(x: 0.5, y: 1)
-//        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.0)
-//        gradientLayer.frame = overlayView.bounds
-//        overlayView.layer.insertSublayer(gradientLayer, at: 0)
-
-        // Constraints to ensure overlay covers only a portion of the image view without stretching it
-        overlayView.translatesAutoresizingMaskIntoConstraints = false
-
-        plantImageView.addSubview(overlayView)
+        view.addSubview(overlayView)
 
         // Plant Name Label
         plantNameLabel.text = selectedPlant?.plantName
@@ -79,14 +91,12 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         detailsStackView.axis = .vertical
         detailsStackView.alignment = .leading
         detailsStackView.spacing = 8
-//        detailsStackView.font = UIColor(hex: "#005E2C")
         view.addSubview(detailsStackView)
 
         if let plant = selectedPlant {
             let generalDetails = [
-                "Common Name: \(plant.alsoKnownAs)",
+                "Also Known as: \(plant.alsoKnownAs)",
                 "Botanical Name: \(plant.botanicalName)",
-//                "Nick Name: \(plant.nickName)"
             ]
 
             generalDetails.forEach { text in
@@ -94,7 +104,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 label.text = text
                 label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
                 label.textColor = UIColor(hex: "#005E2C")
-             //   label.tintColor = UIColor(hex: "#005E2C")
                 label.numberOfLines = 0
                 detailsStackView.addArrangedSubview(label)
             }
@@ -115,9 +124,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         startCaringButton.layer.cornerRadius = 10
         view.addSubview(startCaringButton)
         startCaringButton.addTarget(self, action: #selector(startCaringTapped), for: .touchUpInside)
-
     }
-
+    
     private func setupConstraints() {
         // Enable Auto Layout
         plantImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -159,7 +167,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
-            
 
             // Start Caring Button
             startCaringButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
@@ -167,6 +174,29 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             startCaringButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             startCaringButton.heightAnchor.constraint(equalToConstant: 50)
         ])
+    }
+    
+    private func showBackAlert() {
+        let alert = UIAlertController(
+            title: "Scan Another Plant?",
+            message: "Would you like to scan another plant?",
+            preferredStyle: .alert
+        )
+        
+        let yesAction = UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
+            self?.navigationController?.popToRootViewController(animated: true)
+        }
+        
+        let noAction = UIAlertAction(title: "No", style: .cancel) { [weak self] _ in
+            self?.tabBarController?.tabBar.isHidden = false
+            self?.tabBarController?.selectedIndex = 0
+            self?.navigationController?.popToRootViewController(animated: false)
+        }
+        
+        alert.addAction(yesAction)
+        alert.addAction(noAction)
+        
+        present(alert, animated: true)
     }
 
     // MARK: - UITableViewDataSource
@@ -181,20 +211,17 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "DiagnosisCell", for: indexPath)
         if let sectionData = selectedPlant?.sectionDetails[sectionTitles[indexPath.section]] {
-            let text = sectionData[indexPath.row] // Extract the text
+            let text = sectionData[indexPath.row]
             cell.textLabel?.text = text
             cell.textLabel?.numberOfLines = 0
-           // cell.textLabel?.textColor = .systemGreen
-            // Check if the text is a URL
+            
             if text.starts(with: "http") {
                 cell.textLabel?.textColor = .systemBlue
                 cell.textLabel?.isUserInteractionEnabled = true
-              //  let regularTextColor = UIColor(hex: "#004E05")
-
                 let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openLink(_:)))
                 cell.textLabel?.addGestureRecognizer(tapGesture)
             } else {
-                cell.textLabel?.textColor = UIColor(hex: "#004E05") // Regular text color for non-URLs
+                cell.textLabel?.textColor = UIColor(hex: "#004E05")
                 cell.textLabel?.isUserInteractionEnabled = false
             }
         }
@@ -205,18 +232,15 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         guard let label = sender.view as? UILabel,
               let text = label.text,
               let url = URL(string: text) else { return }
-
-        // Open the URL
         UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 
     // MARK: - UITableViewDelegate
-
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
         headerView.backgroundColor = UIColor(hex: "747480").withAlphaComponent(0.5)
-// Customize this color as needed
         headerView.layer.cornerRadius = 10
+        
         let headerButton = UIButton(type: .system)
         headerButton.setTitle(sectionTitles[section], for: .normal)
         headerButton.setTitleColor(.black, for: .normal)
@@ -224,20 +248,19 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         headerButton.addTarget(self, action: #selector(handleExpandCollapse(_:)), for: .touchUpInside)
         headerButton.contentHorizontalAlignment = .left
         headerButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
-       // headerButton.layer.cornerRadius = 50
 
-        // Add Chevron Indicator
         let chevronImage = UIImage(systemName: "chevron.down")
         let chevronImageView = UIImageView(image: chevronImage)
         chevronImageView.tintColor = .gray
         chevronImageView.translatesAutoresizingMaskIntoConstraints = false
         headerButton.addSubview(chevronImageView)
+        
         chevronImageView.centerYAnchor.constraint(equalTo: headerButton.centerYAnchor).isActive = true
         chevronImageView.trailingAnchor.constraint(equalTo: headerButton.trailingAnchor, constant: -16).isActive = true
 
         headerView.addSubview(headerButton)
-
         headerButton.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             headerButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
             headerButton.topAnchor.constraint(equalTo: headerView.topAnchor),
@@ -247,7 +270,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
         return headerView
     }
-
 
     @objc func handleExpandCollapse(_ sender: UIButton) {
         let section = sender.tag
@@ -263,36 +285,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         return 44
     }
     
-   @objc  func startCaringTapped() {
-    print("Start Caring button tapped!")
-    
-
-     //  let newController = SetReminderViewController()
-       let newController = addNickNameViewController()
-//       navigationController?.show(newController, sender: self)
-       navigationController?.present(newController, animated: true)
-       
-       
-       
-       
-       
-       //navigationController?.pushViewController(newController, animated: true)
-       
-     //  print(newController)
-     //  present(newController,animated: true)
-//       performSegue(withIdentifier: "s1", sender: self)
-//       let navigationController = UINavigationController(rootViewController: SetReminderViewController())
-//       window?.rootViewController = navigationController
-//
-//       navigationController.pushViewController(SetReminderViewController(), animated: true)
-
-
-     
-//       performSegue(withIdentifier: "s1", sender: self)
-
+    @objc func startCaringTapped() {
+        let newController = addNickNameViewController()
+        navigationController?.present(newController, animated: true)
+    }
 }
-
-
-
-}
-
