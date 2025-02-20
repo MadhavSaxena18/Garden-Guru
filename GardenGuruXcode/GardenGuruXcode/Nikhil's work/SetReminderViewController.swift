@@ -159,7 +159,24 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
 //        let careVC = storyboard.instantiateViewController(withIdentifier: "CareReminderViewController")
 //        navigationController?.pushViewController(careVC, animated: true)
         
-        
+        let alert = UIAlertController(
+                title: "Success!",
+                message: "\(plantNameLabel.text ?? "Plant") added successfully",
+                preferredStyle: .alert
+            )
+            
+            let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+                // Dismiss the current view controller
+                self?.dismiss(animated: true) {
+                    // Switch to explore tab (tab 0)
+                    if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
+                        tabBarController.selectedIndex = 0
+                    }
+                }
+            }
+            
+            alert.addAction(okAction)
+            present(alert, animated: true)
         
         
         

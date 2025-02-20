@@ -66,7 +66,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     
     private func setupUI() {
         // Plant Image
-        plantImageView.image = UIImage(named: "parlor_palm3")
+       // plantImageView.image = UIImage(named: "parlor_palm3")
+        plantImageView.image = scanAndDiagnoseViewController.capturedImages[2]
         plantImageView.contentMode = .scaleAspectFill
         plantImageView.clipsToBounds = true
         view.addSubview(plantImageView)
@@ -95,8 +96,9 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
         if let plant = selectedPlant {
             let generalDetails = [
-                "Also Known as: \(plant.alsoKnownAs)",
                 "Botanical Name: \(plant.botanicalName)",
+                "Category: Ornamental",
+                "Favourable Season: Winter"
             ]
 
             generalDetails.forEach { text in

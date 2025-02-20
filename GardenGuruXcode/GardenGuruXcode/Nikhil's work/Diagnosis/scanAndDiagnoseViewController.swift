@@ -25,7 +25,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     var photoOutput: AVCapturePhotoOutput!
     
     var counter: Int = 0
-    var capturedImages: [UIImage] = []
+    static var capturedImages: [UIImage] = []
     
     private var fullScreenScanningView: UIView!
     private var scanningLine: UIView!
@@ -70,7 +70,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     
     func resetState() {
         counter = 0
-        capturedImages.removeAll()
+        scanAndDiagnoseViewController.capturedImages.removeAll()
         instructionLabel.text = instruction[0]
         snapImage1.image = nil
         snapImage2.image = nil
@@ -172,7 +172,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 setupFullScreenScanning()
             }
             
-            capturedImages.append(capturedImage)
+            scanAndDiagnoseViewController.capturedImages.append(capturedImage)
             counter += 1
         }
     }
@@ -242,7 +242,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     
     func resetForNewScan() {
         counter = 0
-        capturedImages.removeAll()
+        scanAndDiagnoseViewController.capturedImages.removeAll()
         instructionLabel.text = instruction[0]
         snapImage1.image = nil
         snapImage2.image = nil
