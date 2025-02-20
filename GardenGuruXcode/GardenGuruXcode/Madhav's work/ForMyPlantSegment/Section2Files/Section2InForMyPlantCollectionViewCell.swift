@@ -18,10 +18,16 @@ class Section2InForMyPlantCollectionViewCell: UICollectionViewCell {
         super.awakeFromNib()
         // Initialization code
     }
-    func updateDataOfSection2InForMyPlantSegment(with indexPath: IndexPath){
-        imageViewForMyPlantSegment.image = ExploreScreen.dataOfSection2InforMyPlantSection[indexPath.row].image
-        descriptionOfImageInforMyPlantSegment.text = ExploreScreen.dataOfSection2InforMyPlantSection[indexPath.row].discription
-    }
+//    func updateDataOfSection2InForMyPlantSegment(with indexPath: IndexPath){
+//        imageViewForMyPlantSegment.image = ExploreScreen.dataOfSection2InforMyPlantSection[indexPath.row].image
+//        descriptionOfImageInforMyPlantSegment.text = ExploreScreen.dataOfSection2InforMyPlantSection[indexPath.row].discription
+//    }
+    
+    func configure(with fertilizer: String) {
+//            titleLabel.text = fertilizer
+        imageViewForMyPlantSegment.image = UIImage(named: fertilizer)
+        descriptionOfImageInforMyPlantSegment.text = fertilizer
+        }
 
     
 

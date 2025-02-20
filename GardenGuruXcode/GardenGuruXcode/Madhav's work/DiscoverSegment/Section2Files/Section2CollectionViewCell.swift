@@ -22,6 +22,17 @@ class Section2CollectionViewCell: UICollectionViewCell {
         plantDescriptionLabel.text = ExploreScreen.dataOfSection2InDiscoverSegment[indexPath.row].plantDescription
         
     }
+    
+    func configure(with disease: Diseases) {
+        
+            if let firstImageName = disease.diseaseImage.first {
+                imageViewLabel.image = UIImage(named: firstImageName) // Load image from name
+            } else {
+                imageViewLabel.image = UIImage(named: "placeholder") // Default placeholder image
+            }
+
+            diseaseNameLabel.text = disease.diseaseName
+    }
    
     
 

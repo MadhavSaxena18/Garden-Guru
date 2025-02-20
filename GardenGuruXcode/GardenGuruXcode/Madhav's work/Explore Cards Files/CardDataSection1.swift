@@ -7,8 +7,8 @@
 
 import UIKit
 
-class CardsDetailCollectionViewCell: UICollectionViewCell {
-    var detailData : ExploreScreen?
+class CardDataSection1: UICollectionViewCell {
+    
     @IBOutlet var plantImageOutlet: UIImageView!
     @IBOutlet var infoImage1Outlet: UIImageView!
     @IBOutlet var infoImage2Outlet: UIImageView!
@@ -23,15 +23,7 @@ class CardsDetailCollectionViewCell: UICollectionViewCell {
     }
     
 
-    func update(with data: CardDetailsSection1){
-        
-        plantImageOutlet.image = data.imageOfPlant
-        infoImage1Outlet.image = data.imageOfLable1
-        infoImage2Outlet.image = data.imageOfLable2
-        infoImage3Outlet.image = data.imageOfLable3
-        infoLabel1Outlet.text = data.info1
-        infoLabel2Outlet.text = data.info2
-        
+//    func update(with indexPath : IndexPath){
 //        plantImageOutlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfPlant
 //        infoImage1Outlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfLable1
 //        infoImage2Outlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfLable2
@@ -39,5 +31,24 @@ class CardsDetailCollectionViewCell: UICollectionViewCell {
 //        infoLabel1Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info1
 //        infoLabel2Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info2
 //        infoLabel3Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info3
-    }
-}
+//    }
+    func update(with data: Any?) {
+            guard let data = data else {
+                resetCell()
+                return
+            }
+
+            if let plant = data as? Plant {
+                plantImageOutlet.image = UIImage(named: plant.plantImage.first ?? "defaultPlantImage")
+                infoLabel1Outlet.text = plant.plantName
+            } else if let disease = data as? Diseases {
+                plantImageOutlet.image = UIImage(named: disease.diseaseImage.first ?? "defaultDiseaseImage")
+                infoLabel1Outlet.text = disease.diseaseName
+            }
+        }
+
+        private func resetCell() {
+            plantImageOutlet.image = UIImage(named: "defaultPlantImage")
+            infoLabel1Outlet.text = "N/A"
+        }
+   }
