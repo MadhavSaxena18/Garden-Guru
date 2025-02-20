@@ -206,25 +206,38 @@ import Foundation
 //    )
 
 class DataControllerGG {
-
-//    private var plants: [Plant] = []
-//    private var diseases: [Diseases] = []
-//    private var plantDiseases: [PlantDisease] = []
-//    private var user : [userInfo] = []
-//    private var userPlant : [UserPlant] = []
-//    let currentDate = Date()
-//    private var userPlantDisease : [UsersPlantDisease] = []
-
-       private var plants: [Plant] = []
-       private var diseases: [Diseases] = []
-       private var plantDiseases: [PlantDisease] = []
-       private var user : [userInfo] = []
-       private var userPlant : [UserPlant] = []
-       let currentDate = Date()
-       private var userPlantDisease : [UsersPlantDisease] = []
-       private var careReminders : [CareReminder_] = []
-       private var reminderOfUserPlant : [CareReminderOfUserPlant] = []
-
+    
+    
+    //    private var plants: [Plant] = []
+    //    private var diseases: [Diseases] = []
+    //    private var plantDiseases: [PlantDisease] = []
+    //    private var user : [userInfo] = []
+    //    private var userPlant : [UserPlant] = []
+    //    let currentDate = Date()
+    //    private var userPlantDisease : [UsersPlantDisease] = []
+    
+    
+    
+    private var plants: [Plant] = []
+    private var diseases: [Diseases] = []
+    private var plantDiseases: [PlantDisease] = []
+    private var user : [userInfo] = []
+    private var userPlant : [UserPlant] = []
+    let currentDate = Date()
+    private var userPlantDisease : [UsersPlantDisease] = []
+    private var careReminders : [CareReminder_] = []
+    private var reminderOfUserPlant : [CareReminderOfUserPlant] = []
+    
+    
+    //    private var plants: [Plant] = []
+    //    private var diseases: [Diseases] = []
+    //    private var plantDiseases: [PlantDisease] = []
+    //    private var user : [userInfo] = []
+    //    private var userPlant : [UserPlant] = []
+    //    let currentDate = Date()
+    //    private var userPlantDisease : [UsersPlantDisease] = []
+    
+    
     
     init() {
         
@@ -236,7 +249,7 @@ class DataControllerGG {
         
         user.append(John)
         
-       
+        
         
         var parlorPalm : Plant =  Plant(
             plantName: "Parlor Palm",
@@ -324,17 +337,17 @@ class DataControllerGG {
             pruningFrequency: 120// Every 4 months
         )
         var rose: Plant = Plant(
-                    plantName: "Rose",
-                    plantImage: ["rose plant"],
-                    plantBotanicalName: "Rosa spp.",
-                    category: .Ornamental,
-                    plantDescription: "A classic choice for any home. Thrives in full sun and well-draining soil.",
-                    favourableSeason: .winter,
-                    waterFrequency: 7,
-                    fertilizerFrequency: 30,
-                    repottingFrequency: 365,
-                    pruningFrequency: 90
-                )
+            plantName: "Rose",
+            plantImage: ["rose plant"],
+            plantBotanicalName: "Rosa spp.",
+            category: .Ornamental,
+            plantDescription: "A classic choice for any home. Thrives in full sun and well-draining soil.",
+            favourableSeason: .winter,
+            waterFrequency: 7,
+            fertilizerFrequency: 30,
+            repottingFrequency: 365,
+            pruningFrequency: 90
+        )
         
         plants.append(contentsOf: [parlorPalm, stringOfPearls ,hibiscus  ,jadePlant , peaceLily , arecaPalm , rose])
         
@@ -656,6 +669,7 @@ class DataControllerGG {
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rust.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john2Plant.userId, diseaseID: rust.diseaseID))
         
+        
         var reminderofUserPlant1 : CareReminder_ = CareReminder_(
             upcomingReminderForWater: currentDate,
             upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!,
@@ -676,12 +690,20 @@ class DataControllerGG {
         
         careReminders.append(contentsOf: [reminderofUserPlant1, reminderOfUserPlant2])
         
-//        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
+        //        var reminderofUserPlant1 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 120, to: currentDate)! , isCompleted: true)
+        //
+        //        var reminderOfUserPlant2 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!, isCompleted: true)
+        //
+        //        careReminders.append(contentsOf: [reminderofUserPlant1 , reminderOfUserPlant2])
+        
+        
+        //        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
         
         
         
     }
-
+    
+    
     func getPlant(by plantID: UUID) -> Plant? {
         return plants.first { $0.plantID == plantID }
     }
@@ -701,6 +723,52 @@ class DataControllerGG {
         return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
     }
     
+    
+    //        func getPlant(by plantID: UUID) -> Plant? {
+    //            return plants.first { $0.plantID == plantID }
+    //        }
+    //
+    //        func getDiseases(for plantID: UUID) -> [Diseases] {
+    //            let diseaseIDs = plantDiseases
+    //                .filter { $0.plantID == plantID }
+    //                .map { $0.diseaseID }
+    //
+    //            return diseases.filter { diseaseIDs.contains($0.diseaseID) }
+    //        }
+    //
+    func getPlantbyName (by name : String) -> Plant? {
+        return plants.first(where: {$0.plantName == name})
+    }
+    //
+    //
+    //        func getTopWinterPlants() -> [Plant] {
+    //            return plants.filter { $0.favourableSeason == .winter }
+    //        }
+    //
+    //        func getCommonIssues() -> [Diseases] {
+    //            return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
+    //        }
+    
+    //    func getPlant(by plantID: UUID) -> Plant? {
+    //        return plants.first { $0.plantID == plantID }
+    //    }
+    //
+    //    func getDiseases(for plantID: UUID) -> [Diseases] {
+    //        let diseaseIDs = plantDiseases
+    //            .filter { $0.plantID == plantID }
+    //            .map { $0.diseaseID }
+    //
+    //        return diseases.filter { diseaseIDs.contains($0.diseaseID) }
+    //    }
+    //    func getTopWinterPlants() -> [Plant] {
+    //        return plants.filter { $0.favourableSeason == .winter }
+    //    }
+    //
+    //    func getCommonIssues() -> [Diseases] {
+    //        return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
+    //    }
+    
+    
     func getCommonIssuesForRose() -> [Diseases] {
         guard let rosePlant = plants.first(where: { $0.plantName == "Rose" }) else { return [] }
         print("hellllllllllllllllloooooooooo")
@@ -716,11 +784,11 @@ class DataControllerGG {
     func getCareReminders(for userId: UUID) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
         let userPlants = userPlant.filter { $0.userId == userId }
         var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
-
+        
         func getPlant(by plantID: UUID) -> Plant? {
             return plants.first { $0.plantID == plantID }
         }
-    
+        
         func getDiseases(for plantID: UUID) -> [Diseases] {
             let diseaseIDs = plantDiseases
                 .filter { $0.plantID == plantID }
@@ -728,20 +796,21 @@ class DataControllerGG {
             
             return diseases.filter { diseaseIDs.contains($0.diseaseID) }
         }
-    
+        
         func getPlantbyName (by name : String) -> Plant? {
-        return plants.first(where: {$0.plantName == name})
-    }
-    
-    
+            return plants.first(where: {$0.plantName == name})
+        }
+        
+        
         func getTopWinterPlants() -> [Plant] {
             return plants.filter { $0.favourableSeason == .winter }
         }
-
+        
         func getCommonIssues() -> [Diseases] {
             return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
         }
-
+        
+        
         
         for userPlant in userPlants {
             if let plant = getPlant(by: userPlant.userplantID) {
@@ -787,7 +856,8 @@ class DataControllerGG {
                 break
             }
         }
-
+        
+        
     }
     
     // Add this function to get users (moved outside of updateCareReminderStatus)
@@ -795,18 +865,25 @@ class DataControllerGG {
         return user
     }
     
-
+    
     func getUserPlants(for userId: UUID) -> [UserPlant] {
-            return userPlant.filter { $0.userId == userId }
-        }
-        
-        
-        func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
-            return careReminders.first { _ in true } 
-        }
-        
-
+        return userPlant.filter { $0.userId == userId }
+    }
+    
+    
+    func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
+        return careReminders.first { _ in true }
+    }
+    
+    
+    
+    
+    
+    // Add this function to get users (moved outside of updateCareReminderStatus)
+    
+    
 }
+
     //if let parlourPalm = dataController.plants.first(where: { $0.plantName == "Parlour Palm" }) {
     //    let diseasesForParlourPalm = dataController.getDiseases(for: parlourPalm.plantID)
     //    print("Diseases for \(parlourPalm.plantName): \(diseasesForParlourPalm.map { $0.diseaseName })")
