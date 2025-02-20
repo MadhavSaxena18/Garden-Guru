@@ -217,13 +217,13 @@ class DataControllerGG {
        private var careReminders : [CareReminder_] = []
        private var reminderOfUserPlant : [CareReminderOfUserPlant] = []
 
-    private var plants: [Plant] = []
-    private var diseases: [Diseases] = []
-    private var plantDiseases: [PlantDisease] = []
-    private var user : [userInfo] = []
-    private var userPlant : [UserPlant] = []
-    let currentDate = Date()
-    private var userPlantDisease : [UsersPlantDisease] = []
+//    private var plants: [Plant] = []
+//    private var diseases: [Diseases] = []
+//    private var plantDiseases: [PlantDisease] = []
+//    private var user : [userInfo] = []
+//    private var userPlant : [UserPlant] = []
+//    let currentDate = Date()
+//    private var userPlantDisease : [UsersPlantDisease] = []
 
     
     init() {
@@ -656,11 +656,11 @@ class DataControllerGG {
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rust.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john2Plant.userId, diseaseID: rust.diseaseID))
         
-        var reminderofUserPlant1 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 120, to: currentDate)! , isCompleted: true)
-        
-        var reminderOfUserPlant2 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!, isCompleted: true)
-        
-        careReminders.append(contentsOf: [reminderofUserPlant1 , reminderOfUserPlant2])
+//        var reminderofUserPlant1 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 120, to: currentDate)! , isCompleted: true)
+//        
+//        var reminderOfUserPlant2 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!, isCompleted: true)
+//        
+//        careReminders.append(contentsOf: [reminderofUserPlant1 , reminderOfUserPlant2])
         
 //        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
         
@@ -693,24 +693,24 @@ class DataControllerGG {
             return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
         }
 
-    func getPlant(by plantID: UUID) -> Plant? {
-        return plants.first { $0.plantID == plantID }
-    }
-    
-    func getDiseases(for plantID: UUID) -> [Diseases] {
-        let diseaseIDs = plantDiseases
-            .filter { $0.plantID == plantID }
-            .map { $0.diseaseID }
-        
-        return diseases.filter { diseaseIDs.contains($0.diseaseID) }
-    }
-    func getTopWinterPlants() -> [Plant] {
-        return plants.filter { $0.favourableSeason == .winter }
-    }
-    
-    func getCommonIssues() -> [Diseases] {
-        return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
-    }
+//    func getPlant(by plantID: UUID) -> Plant? {
+//        return plants.first { $0.plantID == plantID }
+//    }
+//    
+//    func getDiseases(for plantID: UUID) -> [Diseases] {
+//        let diseaseIDs = plantDiseases
+//            .filter { $0.plantID == plantID }
+//            .map { $0.diseaseID }
+//        
+//        return diseases.filter { diseaseIDs.contains($0.diseaseID) }
+//    }
+//    func getTopWinterPlants() -> [Plant] {
+//        return plants.filter { $0.favourableSeason == .winter }
+//    }
+//    
+//    func getCommonIssues() -> [Diseases] {
+//        return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
+//    }
     
     func getCommonIssuesForRose() -> [Diseases] {
         guard let rosePlant = plants.first(where: { $0.plantName == "Rose" }) else { return [] }
