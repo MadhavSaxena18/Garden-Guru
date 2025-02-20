@@ -74,7 +74,7 @@ struct CareReminder_{
     var isCompleted : Bool
 }
 
-struct careReminderOfUserPlant{
+struct CareReminderOfUserPlant{
     var careReminderID : UUID = UUID()
     var userPlantRelationID : UUID  //FK FOR USER PLANT
 }
