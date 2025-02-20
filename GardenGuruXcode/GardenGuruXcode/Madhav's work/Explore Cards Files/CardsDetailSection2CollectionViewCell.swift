@@ -1,10 +1,3 @@
-//
-//  CardsDetailSection2CollectionViewCell.swift
-//  GardenGuruXcode
-//
-//  Created by Madhav Saxena on 20/01/25.
-//
-
 import UIKit
 
 class CardsDetailSection2CollectionViewCell: UICollectionViewCell {
@@ -16,9 +9,30 @@ class CardsDetailSection2CollectionViewCell: UICollectionViewCell {
         // Initialization code
     }
     
-    func updateCardSection2(with indexPath: IndexPath){
-        plantNameLabel.text = ExploreScreen.cardDetailSection2[indexPath.row].plantName
-        plantDescription.text = ExploreScreen.cardDetailSection2[indexPath.row].description
+    func updateCardSection2(with plant: Plant?) {
+        guard let plant = plant else {
+            print("Error: Plant data is nil")
+            resetCell()
+            return
+        }
+
+        plantNameLabel.text = plant.plantName
+        plantDescription.text = plant.plantDescription
+    }
+    func updateCardSection2WithDisease(with disease: Diseases?) {
+            guard let disease = disease else {
+                resetCell()
+                return
+            }
+
+        plantNameLabel.text = disease.diseaseName
+        plantDescription.text = "Symptoms: \(disease.diseaseSymptoms.joined(separator: ", "))\nCure: \(disease.diseaseCure.joined(separator: ", "))"
+        }
+
+
+    private func resetCell() {
+        plantNameLabel.text = "N/A"
+        plantDescription.text = "No description available"
     }
     
 //    func updateCardSection2(at index: Int) {

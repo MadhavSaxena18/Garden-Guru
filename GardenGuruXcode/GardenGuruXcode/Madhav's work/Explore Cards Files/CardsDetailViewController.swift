@@ -8,136 +8,160 @@
 import UIKit
 
 class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UICollectionViewDataSource{
-    var detailData: [Any]?
+    static var detailData: CardDetailsSection1?
     @IBOutlet weak var cardDetailCollectionView: UICollectionView!
+    var selectedCardData: Any? 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let firstNib = UINib(nibName: "CardsDetailCollectionViewCell", bundle: nil)
-        cardDetailCollectionView.register(firstNib, forCellWithReuseIdentifier: "first")
         
-        let secondNib = UINib(nibName: "CardsDetailSection2CollectionViewCell", bundle: nil)
-        cardDetailCollectionView.register(secondNib, forCellWithReuseIdentifier: "second")
-        cardDetailCollectionView.setCollectionViewLayout(generateLayout(), animated: true)
+        // Register nibs
+        cardDetailCollectionView.register(UINib(nibName: "CardsDetailCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "first")
+        cardDetailCollectionView.register(UINib(nibName: "CardsDetailSection2CollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "second")
+        cardDetailCollectionView.register(CardDetailsSection3CollectionViewCell.self, forCellWithReuseIdentifier: "third")
         
-        let thirdNib = UINib(nibName: "CardDetailsSection3CollectionViewCell", bundle: nil)
-        cardDetailCollectionView.register(thirdNib, forCellWithReuseIdentifier: "third")
+        // Set the layout
+        cardDetailCollectionView.setCollectionViewLayout(generateLayout(), animated: false)
         
         cardDetailCollectionView.dataSource = self
         cardDetailCollectionView.delegate = self
-        
     }
     
-//    func numberOfSections(in collectionView: UICollectionView) -> Int {
-//        return 2
-//    }
-
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 3
     }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        switch section{
-        case 0:
-            ExploreScreen.cardDetailSection1.count
-        case 1:
-            ExploreScreen.cardDetailSection2.count
-        case 2:
-            ExploreScreen.cardDetailSection3.count
-        default:
-             0
-        }
+        return 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        switch indexPath.section {
-        case 0:
-            print("heyyyyyyyyyyyy")
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardsDetailCollectionViewCell
-            cell.update(with: indexPath)
-            return cell
-        case 1:
-            print("bbbbbbbbbyyyyyyyyyy")
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! CardsDetailSection2CollectionViewCell
-            cell.updateCardSection2(with: indexPath)
-            return cell
-        case 2:
-            print("1")
-            print("vvvvvvvvvvv")
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! CardDetailsSection3CollectionViewCell
-            cell.updateCardSection3(with: indexPath)
-            cell.layer.cornerRadius = 15
-            return cell
-        default:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardsDetailCollectionViewCell
-            cell.update(with: indexPath)
-            return cell
-        }
+        guard let item = selectedCardData else {
+                print("Error: selectedCardData is nil")
+                return UICollectionViewCell()
+            }
+
+            switch indexPath.section {
+            case 0: // First NIB (Main card details)
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! CardDataSection1
+                cell.update(with: item)
+                cell.layer.shadowColor = UIColor.black.cgColor
+                cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                cell.layer.shadowRadius = 4
+                cell.layer.shadowOpacity = 0.2
+                cell.layer.masksToBounds = false
+                return cell
+                
+            case 1: // Second NIB (Additional info)
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! CardsDetailSection2CollectionViewCell
+                if let plant = item as? Plant {
+                    cell.updateCardSection2(with: plant)
+                } else if let disease = item as? Diseases {
+                    cell.updateCardSection2WithDisease(with: disease)
+                }
+                cell.layer.shadowColor = UIColor.black.cgColor
+                cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                cell.layer.shadowRadius = 4
+                cell.layer.shadowOpacity = 0.2
+                cell.layer.masksToBounds = false
+                return cell
+                
+            case 2: // Third NIB (Fertilizer or extra details)
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! CardDetailsSection3CollectionViewCell
+                if let plant = item as? Plant {
+                    cell.updateWithPlantInfo(plant)
+                } else if let disease = item as? Diseases {
+                    cell.updateWithDiseaseInfo(disease)
+                }
+                cell.layer.shadowColor = UIColor.black.cgColor
+                cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                cell.layer.shadowRadius = 4
+                cell.layer.shadowOpacity = 0.2
+                cell.layer.masksToBounds = false
+                return cell
+                
+            default:
+                print("Error: Unexpected section")
+                return UICollectionViewCell()
+            }
+
         
     }
     
     func generateLayout() -> UICollectionViewCompositionalLayout {
-        let layout = UICollectionViewCompositionalLayout
-        {
-            (sectionIndex, environment) -> NSCollectionLayoutSection? in let section: NSCollectionLayoutSection
-            switch sectionIndex{
+        return UICollectionViewCompositionalLayout { [weak self] sectionIndex, _ -> NSCollectionLayoutSection? in
+            guard let self = self else { return nil }
+            
+            switch sectionIndex {
             case 0:
-                print("heyoooo")
-                section = self.generateSection1Layout()
+                return self.generateMainImageSection()
             case 1:
-                print("hello")
-                section = self.generateSection2Layout()
+                return self.generateDescriptionSection()
             case 2:
-                section = self.generateSection3Layout()
-            default :
-                print("Invalid Section")
+                return self.generateGallerySection()
+            default:
                 return nil
             }
-            
-            return section
         }
-        return layout
-
     }
     
-    func generateSection1Layout() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+    func generateMainImageSection() -> NSCollectionLayoutSection {
+        // Main image section with plant image
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                            heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .absolute(232))
-        
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitem: item, count : 1)
-        
-        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 9, bottom: 9, trailing: 0)
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                             heightDimension: .absolute(220)) // Increased height for main image
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
+                                                     subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-       // section.orthogonalScrollingBehavior = .groupPagingCentered
+        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16,
+                                                       bottom: 0, trailing: 16)
         return section
     }
-    func generateSection2Layout() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+    
+    func generateDescriptionSection() -> NSCollectionLayoutSection {
+        // Description section with care instructions and plant details
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                            heightDimension: .estimated(250))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .absolute(300))
-        
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupsize, subitem: item, count : 1)
-        
-        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 9, bottom: 8, trailing: 9)
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                             heightDimension: .estimated(250))
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
+                                                     subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-       // section.orthogonalScrollingBehavior = .groupPagingCentered
+        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16,
+                                                       bottom: 16, trailing: 16)
         return section
     }
-    func generateSection3Layout() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1.0))
+    
+    func generateGallerySection() -> NSCollectionLayoutSection {
+        // Gallery section with horizontal scrolling images
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalHeight(1.0)
+        )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupsize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .absolute(260))
-        
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupsize, subitems: [item])
-        
-        group.contentInsets = NSDirectionalEdgeInsets(top: 9, leading: 9, bottom: 8, trailing: 0)
+        // Make the group width smaller to show multiple items
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(0.9),
+            heightDimension: .absolute(250)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
+                                                     subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .groupPaging
+        section.orthogonalScrollingBehavior = .groupPagingCentered
+        section.interGroupSpacing = 10
+        section.contentInsets = NSDirectionalEdgeInsets(
+            top: 0,
+            leading: 16,
+            bottom: 16,
+            trailing: 16
+        )
         return section
     }
 }
