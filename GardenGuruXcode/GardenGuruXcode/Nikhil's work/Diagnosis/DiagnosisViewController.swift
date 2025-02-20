@@ -12,6 +12,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private let tableView = UITableView()
     private let startCaringButton = UIButton()
 
+    let dataController : DataControllerGG = DataControllerGG()
     // Data
     var selectedPlant: DiagnosisDataModel?
     private var expandedSections: Set<Int> = []
@@ -100,6 +101,18 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 "Category: Ornamental",
                 "Favourable Season: Winter"
             ]
+        
+//        if let Plant = dataController.plants.first(where: { $0.plantName == "Parlor Palm" }) {
+//            let generalDetails = [
+//                "Botanical Name: \(selectedPlant.plantBotanicalName)",
+//                "Category: \(selectedPlant.category)",
+//                "Favourable Season: \(selectedPlant.favourableSeason)"
+//            ]
+//            
+//            print(generalDetails)
+//        }
+        
+        
 
             generalDetails.forEach { text in
                 let label = UILabel()
