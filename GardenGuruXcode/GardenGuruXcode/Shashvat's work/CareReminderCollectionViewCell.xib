@@ -17,8 +17,8 @@
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="al5-gu-947">
-                        <rect key="frame" x="185" y="25" width="48" height="24"/>
-                        <fontDescription key="fontDescription" style="UICTFontTextStyleTitle3"/>
+                        <rect key="frame" x="185" y="25" width="37.333333333333343" height="18"/>
+                        <fontDescription key="fontDescription" style="UICTFontTextStyleSubhead"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
@@ -31,7 +31,7 @@
                         </connections>
                     </button>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="252" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TJ6-gu-upZ">
-                        <rect key="frame" x="185" y="54" width="31" height="14.333333333333329"/>
+                        <rect key="frame" x="185" y="48" width="31" height="14.333333333333336"/>
                         <fontDescription key="fontDescription" style="UICTFontTextStyleCaption1"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
@@ -48,8 +48,8 @@
                         </userDefinedRuntimeAttributes>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Completed" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ap9-2O-tp3">
-                        <rect key="frame" x="185" y="73.333333333333329" width="96.666666666666686" height="24"/>
-                        <fontDescription key="fontDescription" style="UICTFontTextStyleTitle3"/>
+                        <rect key="frame" x="185" y="72.333333333333329" width="75.333333333333314" height="18"/>
+                        <fontDescription key="fontDescription" style="UICTFontTextStyleSubhead"/>
                         <color key="textColor" red="0.0" green="0.30588235289999999" blue="0.019607843140000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                         <nil key="highlightedColor"/>
                     </label>
@@ -62,7 +62,7 @@
                 <constraint firstItem="TJ6-gu-upZ" firstAttribute="top" secondItem="al5-gu-947" secondAttribute="bottom" constant="5" id="P7f-aF-bN2"/>
                 <constraint firstItem="al5-gu-947" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="Q3b-Z5-vbh"/>
                 <constraint firstItem="al5-gu-947" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="25" id="RLZ-Kq-vFD"/>
-                <constraint firstItem="ap9-2O-tp3" firstAttribute="top" secondItem="TJ6-gu-upZ" secondAttribute="bottom" constant="5" id="TQ9-B6-iMc"/>
+                <constraint firstItem="ap9-2O-tp3" firstAttribute="top" secondItem="TJ6-gu-upZ" secondAttribute="bottom" constant="10" id="TQ9-B6-iMc"/>
                 <constraint firstItem="qhU-PM-WnM" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="ZrX-Ks-5bR"/>
                 <constraint firstItem="Btb-ST-reA" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="7" id="b5U-cc-Cjk"/>
                 <constraint firstItem="Btb-ST-reA" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="9" id="e3p-Ps-pa2"/>
