@@ -9,14 +9,10 @@ import UIKit
 import Foundation
 class MySpaceCollectionViewSection1Cell: UICollectionViewCell {
     @IBOutlet weak var section1PlantImageView: UIImageView!
-   
+    @IBOutlet var section1NickNameLabel: UILabel!
     
-    
-    @IBOutlet var  section1NickNameLabel: UILabel!
-    
-    func updatesection1Data(with indexPath: IndexPath){
-        section1PlantImageView.image = UIImage(named: MySpaceScreen.mySpaceSection1Data[indexPath.row].imageURL)
-        section1NickNameLabel.text = MySpaceScreen.mySpaceSection1Data[indexPath.row].nickName
+    func configure(with userPlant: UserPlant, plant: Plant) {
+        section1PlantImageView.image = UIImage(named: plant.plantImage[0])
+        section1NickNameLabel.text = userPlant.userPlantNickName
     }
-
 }

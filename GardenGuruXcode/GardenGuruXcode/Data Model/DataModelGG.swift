@@ -57,6 +57,9 @@ struct UserPlant {
     var lastWatered : Date
     var lastFertilized : Date
     var lastRepotted : Date
+    var isWateringCompleted: Bool = false
+    var isFertilizingCompleted: Bool = false
+    var isRepottingCompleted: Bool = false
 }
 
 struct UsersPlantDisease {
@@ -67,11 +70,13 @@ struct UsersPlantDisease {
 }
 
 
-struct CareReminder_{
-    var upcomingReminderForWater : Date
-    var upcomingReminderForFertilizers : Date
-    var upcomingReminderForRepotted : Date
-    var isCompleted : Bool
+struct CareReminder_ {
+    var upcomingReminderForWater: Date
+    var upcomingReminderForFertilizers: Date
+    var upcomingReminderForRepotted: Date
+    var isWateringCompleted: Bool = false
+    var isFertilizingCompleted: Bool = false
+    var isRepottingCompleted: Bool = false
 }
 
 struct CareReminderOfUserPlant{
