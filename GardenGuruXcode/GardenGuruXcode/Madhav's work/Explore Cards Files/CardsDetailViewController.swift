@@ -164,4 +164,7 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
         )
         return section
     }
+    @IBAction func doneButtonTapped(_ sender: UIBarButtonItem) {
+        dismiss(animated: true, completion: nil)
+    }
 }

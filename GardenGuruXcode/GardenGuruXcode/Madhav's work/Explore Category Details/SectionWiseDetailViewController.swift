@@ -149,12 +149,13 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 detailVC.selectedCardData = selectedDisease
             }
             
+            let navVC = UINavigationController(rootViewController: detailVC)
             // Configure modal presentation
             detailVC.modalPresentationStyle = .formSheet // or .pageSheet
             detailVC.modalTransitionStyle = .coverVertical
             
             // Present the view controller
-            present(detailVC, animated: true)
+            present(navVC, animated: true)
         }
     }
 }

@@ -479,8 +479,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 // Set modal presentation style
 //                detailVC.modalPresentationStyle = .fullScreen
 //                detailVC.modalTransitionStyle = .coverVertical
-                detailVC.navigationItem.title = "hello"
-                present(detailVC, animated: true, completion: nil) // Present modally
+                let navVC = UINavigationController(rootViewController: detailVC)
+                //detailVC.navigationItem.title = selectedItem.self as! String
+                present(navVC, animated: true, completion: nil) // Present modally
                 //navigationController?.pushViewController(detailVC, animated: true)
                 
                 detailVC.navigationItem.title = "hello"
