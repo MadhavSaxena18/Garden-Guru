@@ -719,6 +719,31 @@ class DataControllerGG {
         return getDiseases(for: rosePlant.plantID)
     }
     
+    func getDiseasesForUserPlants(userId: UUID) -> [Diseases] {
+            // Get all plants belonging to the user
+            let userPlants = userPlant.filter { $0.userId == userId }
+            
+            // Get all diseases for these plants
+            var allDiseases: [Diseases] = []
+            for userPlant in userPlants {
+                let plantDiseases = getDiseases(for: userPlant.userplantID)
+                allDiseases.append(contentsOf: plantDiseases)
+            }
+            
+            // Remove duplicates by using diseaseID instead of Set
+            return Array(Dictionary(grouping: allDiseases) { $0.diseaseID }.values.map { $0[0] })
+        }
+        
+        // Replace the existing getCommonIssuesForRose function with this:
+    func getCommonIssuesForUserPlants() -> [Diseases] {
+            // For now, we'll use the first user's plants
+            // In a real app, you'd pass the current user's ID
+            if let firstUser = user.first {
+                return getDiseasesForUserPlants(userId: firstUser.userId)
+            }
+            return []
+        }
+    
     func getCommonFertilizersForParlorPalm() -> [String] {
         return ["Organic Compost", "Liquid Fertilizer", "Seaweed Extract"] // Custom fertilizers for Parlour Palm
     }
@@ -779,7 +804,7 @@ class DataControllerGG {
         }
         
         
-        func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
+    func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
             return careReminders.first { _ in true } 
         }
         
