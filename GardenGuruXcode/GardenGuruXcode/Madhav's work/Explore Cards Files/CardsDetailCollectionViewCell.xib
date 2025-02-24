@@ -4,6 +4,7 @@
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -27,8 +28,9 @@
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="mXZ-Mj-Mvm">
                         <rect key="frame" x="193" y="5" width="100" height="66"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="redraw" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="VAN-03-h6u">
-                                <rect key="frame" x="5" y="7" width="40" height="51"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="drop.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="VAN-03-h6u">
+                                <rect key="frame" x="5" y="13.666666666666668" width="40" height="39.666666666666657"/>
+                                <color key="tintColor" systemColor="secondaryLabelColor"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="40" id="xec-vV-pky"/>
                                 </constraints>
@@ -51,11 +53,11 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="VAN-03-h6u" firstAttribute="leading" secondItem="mXZ-Mj-Mvm" secondAttribute="leading" constant="5" id="0cf-kn-2eh"/>
-                            <constraint firstAttribute="bottom" secondItem="VAN-03-h6u" secondAttribute="bottom" constant="8" id="1d0-oN-kut"/>
+                            <constraint firstAttribute="bottom" secondItem="VAN-03-h6u" secondAttribute="bottom" constant="12" id="1d0-oN-kut"/>
                             <constraint firstItem="gIK-ki-OBx" firstAttribute="top" secondItem="mXZ-Mj-Mvm" secondAttribute="top" constant="16" id="7y3-d9-t4d"/>
                             <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="66" id="UvG-w1-jmj"/>
                             <constraint firstAttribute="height" constant="66" id="aaE-nw-1x9"/>
-                            <constraint firstItem="VAN-03-h6u" firstAttribute="top" secondItem="mXZ-Mj-Mvm" secondAttribute="top" constant="7" id="bSg-yp-s7l"/>
+                            <constraint firstItem="VAN-03-h6u" firstAttribute="top" secondItem="mXZ-Mj-Mvm" secondAttribute="top" constant="13" id="bSg-yp-s7l"/>
                             <constraint firstItem="gIK-ki-OBx" firstAttribute="leading" secondItem="VAN-03-h6u" secondAttribute="trailing" constant="9" id="nzN-PC-ceR"/>
                             <constraint firstAttribute="width" constant="100" id="wp8-Ov-7b1"/>
                         </constraints>
@@ -68,8 +70,8 @@
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="mrC-Ol-Ner">
                         <rect key="frame" x="193" y="76" width="100" height="66"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="redraw" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="ooW-j3-MN8">
-                                <rect key="frame" x="5" y="7" width="40" height="51"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="fertilizer_symbol" translatesAutoresizingMaskIntoConstraints="NO" id="ooW-j3-MN8">
+                                <rect key="frame" x="5" y="13" width="40" height="41"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="40" id="XhZ-tG-7vk"/>
                                 </constraints>
@@ -93,8 +95,8 @@
                         <constraints>
                             <constraint firstItem="S0T-T0-cqr" firstAttribute="leading" secondItem="ooW-j3-MN8" secondAttribute="trailing" constant="9" id="4P5-D5-dzS"/>
                             <constraint firstAttribute="height" constant="66" id="Pau-2r-J2L"/>
-                            <constraint firstAttribute="bottom" secondItem="ooW-j3-MN8" secondAttribute="bottom" constant="8" id="RDh-Tr-gN5"/>
-                            <constraint firstItem="ooW-j3-MN8" firstAttribute="top" secondItem="mrC-Ol-Ner" secondAttribute="top" constant="7" id="dd7-74-TLD"/>
+                            <constraint firstAttribute="bottom" secondItem="ooW-j3-MN8" secondAttribute="bottom" constant="12" id="RDh-Tr-gN5"/>
+                            <constraint firstItem="ooW-j3-MN8" firstAttribute="top" secondItem="mrC-Ol-Ner" secondAttribute="top" constant="13" id="dd7-74-TLD"/>
                             <constraint firstItem="ooW-j3-MN8" firstAttribute="leading" secondItem="mrC-Ol-Ner" secondAttribute="leading" constant="5" id="k2M-KS-3IH"/>
                             <constraint firstItem="S0T-T0-cqr" firstAttribute="top" secondItem="mrC-Ol-Ner" secondAttribute="top" constant="16" id="kcZ-O7-CwI"/>
                             <constraint firstAttribute="width" constant="100" id="pcG-FS-05e"/>
@@ -108,8 +110,9 @@
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="UpU-sw-ucU">
                         <rect key="frame" x="193" y="147" width="100" height="66"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="redraw" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="9ai-Fy-x6d">
-                                <rect key="frame" x="5" y="7" width="40" height="51"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="sun.min.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="9ai-Fy-x6d">
+                                <rect key="frame" x="5" y="7.9999999999999964" width="40" height="49.333333333333329"/>
+                                <color key="tintColor" systemColor="systemGrayColor"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="51" id="LoJ-WO-LEm"/>
                                     <constraint firstAttribute="width" constant="40" id="jdY-FK-H7r"/>
@@ -177,4 +180,15 @@
             <point key="canvasLocation" x="4.5801526717557248" y="14.788732394366198"/>
         </collectionViewCell>
     </objects>
+    <resources>
+        <image name="drop.fill" catalog="system" width="96" height="128"/>
+        <image name="fertilizer_symbol" width="248" height="330"/>
+        <image name="sun.min.fill" catalog="system" width="128" height="123"/>
+        <systemColor name="secondaryLabelColor">
+            <color red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+        <systemColor name="systemGrayColor">
+            <color red="0.5568627451" green="0.5568627451" blue="0.57647058819999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
 </document>
