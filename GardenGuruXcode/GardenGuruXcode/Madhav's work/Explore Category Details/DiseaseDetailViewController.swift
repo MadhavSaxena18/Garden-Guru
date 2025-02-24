@@ -16,6 +16,7 @@ class DiseaseDetailViewController: UIViewController {
     @IBOutlet weak var diseaseNameLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
     
+    @IBOutlet weak var diseaseSymptoms: UILabel!
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -47,6 +48,8 @@ class DiseaseDetailViewController: UIViewController {
         
         // Configure disease name label
         diseaseNameLabel.text = disease.diseaseName
+        let symptomsText = disease.diseaseSymptoms.joined(separator: ", ")
+        diseaseSymptoms.text = "Symptoms: \(symptomsText)"
         diseaseNameLabel.textColor = .white
         diseaseNameLabel.font = .systemFont(ofSize: 32, weight: .bold)
     }
