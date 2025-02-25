@@ -160,6 +160,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+<<<<<<< Updated upstream
 
 
 				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias;
@@ -169,6 +170,9 @@
 
 				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias;
 
+=======
+				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias;
+>>>>>>> Stashed changes
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -198,6 +202,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+<<<<<<< Updated upstream
 
 
 				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias;
@@ -207,6 +212,9 @@
 
 				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias;
 
+=======
+				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias;
+>>>>>>> Stashed changes
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
