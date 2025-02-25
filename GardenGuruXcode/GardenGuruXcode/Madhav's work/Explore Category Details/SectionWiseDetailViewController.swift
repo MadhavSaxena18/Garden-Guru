@@ -215,35 +215,26 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         switch dataType {
         case .diseases:
-            if selectedSegmentIndex == 0 { // Only for Discover segment
-                if let storyboard = storyboard {
-                    let detailVC = storyboard.instantiateViewController(withIdentifier: "DiseaseDetailViewController") as! DiseaseDetailViewController
-                    detailVC.disease = diseases[indexPath.item]
-                    navigationController?.pushViewController(detailVC, animated: true)
-                }
-            } else {
-                // For other segments, show the regular CardsDetailViewController
-                if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
-                    .instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
-                    detailVC.selectedCardData = diseases[indexPath.item]
-                    let navVC = UINavigationController(rootViewController: detailVC)
-                    detailVC.modalPresentationStyle = .formSheet
-                    present(navVC, animated: true)
-                }
+            if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
+                .instantiateViewController(withIdentifier: "DiseaseDetailViewController") as? DiseaseDetailViewController {
+                detailVC.disease = diseases[indexPath.item]
+                // Since we're pushing from section view, set isModallyPresented to false
+                detailVC.isModallyPresented = false
+                navigationController?.pushViewController(detailVC, animated: true)
             }
             
-        case .plants, .fertilizers:
-            // Keep existing presentation for plants and fertilizers
+        case .plants:
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
                 .instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
-                
-                if case .plants = dataType {
-                    detailVC.selectedCardData = plants[indexPath.item]
-                }
-                
-                let navVC = UINavigationController(rootViewController: detailVC)
-                detailVC.modalPresentationStyle = .formSheet
-                present(navVC, animated: true)
+                detailVC.selectedCardData = plants[indexPath.item]
+                navigationController?.pushViewController(detailVC, animated: true)
+            }
+            
+        case .fertilizers:
+            if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
+                .instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
+                detailVC.selectedCardData = fertilizers[indexPath.item]
+                navigationController?.pushViewController(detailVC, animated: true)
             }
         }
     }

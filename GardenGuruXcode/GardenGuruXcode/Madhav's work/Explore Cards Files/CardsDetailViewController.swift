@@ -8,9 +8,10 @@
 import UIKit
 
 class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UICollectionViewDataSource{
-    static var detailData: CardDetailsSection1?
+    //static var detailData: CardDetailsSection1?
     @IBOutlet weak var cardDetailCollectionView: UICollectionView!
-    var selectedCardData: Any? 
+    var selectedCardData: Any?
+    var isModallyPresented: Bool = false
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -24,6 +25,24 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
         
         cardDetailCollectionView.dataSource = self
         cardDetailCollectionView.delegate = self
+        setupNavigationBar()
+    }
+    
+    private func setupNavigationBar() {
+        // Only show Done button if modally presented
+        if isModallyPresented {
+            let doneButton = UIBarButtonItem(
+                title: "Done",
+                style: .done,
+                target: self,
+                action: #selector(dismissVC)
+            )
+            navigationItem.leftBarButtonItem = doneButton
+        }
+    }
+    
+    @objc private func dismissVC() {
+        dismiss(animated: true)
     }
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -163,8 +182,5 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             trailing: 16
         )
         return section
-    }
-    @IBAction func doneButtonTapped(_ sender: UIBarButtonItem) {
-        dismiss(animated: true, completion: nil)
     }
 }

@@ -20,6 +20,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     @IBOutlet weak var segmentControlOnExplore: UISegmentedControl!
     private var currentData: [[Any]] = []
     
+    
     var discoverCategories: [(title: String, items: [Any])] = []
     var forMyPlantCategories: [(title: String, items: [Any])] = []
     var selectedSegment = 0
@@ -31,9 +32,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+       
         plantCarAI.isUserInteractionEnabled = true
-        
+            
         // Create a tap gesture recognizer
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
         configureSearchController()
@@ -58,8 +59,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         navigationItem.searchController = searchController
         definesPresentationContext = true
     }
-    
-    
+
+
     
     func setUpcollectionView(){
         let firstNib = UINib(nibName: "TopWinterCollectionViewCell", bundle: nil)
@@ -133,44 +134,44 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             // Keep original category structure but filter items
             filteredDiscoverCategories = discoverCategories.compactMap { category in
                 switch category.title {
-                case "Top Summer Plants", "Top Winter Plants":
-                    let filteredPlants = category.items.filter { item in
-                        guard let plant = item as? Plant else { return false }
-                        return plant.plantName.lowercased().contains(searchText)
-                    }
-                    return filteredPlants.isEmpty ? nil : (category.title, filteredPlants)
-                    
-                case "Common Issues":
-                    let filteredDiseases = category.items.filter { item in
-                        guard let disease = item as? Diseases else { return false }
-                        return disease.diseaseName.lowercased().contains(searchText)
-                    }
-                    return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
-                    
-                default:
-                    return nil
+                    case "Top Summer Plants", "Top Winter Plants":
+                        let filteredPlants = category.items.filter { item in
+                            guard let plant = item as? Plant else { return false }
+                            return plant.plantName.lowercased().contains(searchText)
+                        }
+                        return filteredPlants.isEmpty ? nil : (category.title, filteredPlants)
+                        
+                    case "Common Issues":
+                        let filteredDiseases = category.items.filter { item in
+                            guard let disease = item as? Diseases else { return false }
+                            return disease.diseaseName.lowercased().contains(searchText)
+                        }
+                        return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
+                        
+                    default:
+                        return nil
                 }
             }
         } else {
             // Similar structure for For My Plants segment
             filteredForMyPlantCategories = forMyPlantCategories.compactMap { category in
                 switch category.title {
-                case "Common Issues in your Plant":
-                    let filteredDiseases = category.items.filter { item in
-                        guard let disease = item as? Diseases else { return false }
-                        return disease.diseaseName.lowercased().contains(searchText)
-                    }
-                    return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
-                    
-                case "Common Fertilizers for Parlor Palm":
-                    let filteredFertilizers = category.items.filter { item in
-                        guard let fertilizer = item as? String else { return false }
-                        return fertilizer.lowercased().contains(searchText)
-                    }
-                    return filteredFertilizers.isEmpty ? nil : (category.title, filteredFertilizers)
-                    
-                default:
-                    return nil
+                    case "Common Issues in your Plant":
+                        let filteredDiseases = category.items.filter { item in
+                            guard let disease = item as? Diseases else { return false }
+                            return disease.diseaseName.lowercased().contains(searchText)
+                        }
+                        return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
+                        
+                    case "Common Fertilizers for Parlor Palm":
+                        let filteredFertilizers = category.items.filter { item in
+                            guard let fertilizer = item as? String else { return false }
+                            return fertilizer.lowercased().contains(searchText)
+                        }
+                        return filteredFertilizers.isEmpty ? nil : (category.title, filteredFertilizers)
+                        
+                    default:
+                        return nil
                 }
             }
         }
@@ -190,8 +191,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         let categories = selectedSegment == 0 ?
-        (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-        (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
         return categories.count
     }
     
@@ -209,18 +210,18 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
      }*/
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         let categories = selectedSegment == 0 ?
-        (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-        (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
         return categories[section].items.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let categories = selectedSegment == 0 ?
-        (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-        (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
         let category = categories[indexPath.section]
         let item = category.items[indexPath.row]
-        
+
         // First check the category title to determine which cell to use
         if category.title == "Top Summer Plants" || category.title == "Top Winter Plants" {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
@@ -271,7 +272,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 }
                 cell.contentView.layer.cornerRadius = 25
                 cell.contentView.layer.masksToBounds = true
-                
+               
                 cell.layer.shadowColor = UIColor.black.cgColor
                 cell.layer.shadowOffset = CGSize(width: 0, height: 2)
                 cell.layer.shadowRadius = 4
@@ -289,8 +290,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             // Get the current categories based on segment and search state
             let categories = selectedSegment == 0 ?
-            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+                (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+                (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
             
             // Get the category title for this section
             let categoryTitle = categories[sectionIndex].title
@@ -416,8 +417,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
             
             let categories = selectedSegment == 0 ?
-            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+                (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+                (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
             
             headerView.headerTitle.text = categories[indexPath.section].title
             
@@ -438,8 +439,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     @objc func sectionButtonTapped(_ sender: UIButton) {
         // Use filtered categories when search is active
         let categories = selectedSegment == 0 ?
-        (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-        (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
         
         let selectedCategory = categories[sender.tag]
         
@@ -470,38 +471,52 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             VC.headerData = ExploreScreen.headerForInMyPlantSegment
         }
         
+        // Configure back button to show "Explore"
+        let backItem = UIBarButtonItem()
+        backItem.title = "Explore"
+        navigationItem.backBarButtonItem = backItem
+        
         navigationController?.pushViewController(VC, animated: true)
     }
     
     
     
     
-    
+
     
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let categories = selectedSegment == 0 ?
-        (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-        (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
         
         let selectedCategory = categories[indexPath.section]
         let selectedItem = selectedCategory.items[indexPath.row]
-        
-        // Check if it's a disease from Common Issues category
+
         if let disease = selectedItem as? Diseases,
            (selectedCategory.title == "Common Issues" || selectedCategory.title == "Common Issues in your Plant") {
-            // Show DiseaseDetailViewController
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
                 .instantiateViewController(withIdentifier: "DiseaseDetailViewController") as? DiseaseDetailViewController {
                 detailVC.disease = disease
-                let navVC = UINavigationController(rootViewController: detailVC)
-                present(navVC, animated: true)
+                
+                // Check if we're coming from a collection view cell
+                if let _ = collectionView.cellForItem(at: indexPath) {
+                    // Coming from collection view cell tap
+                    detailVC.isModallyPresented = true
+                    let navVC = UINavigationController(rootViewController: detailVC)
+                    present(navVC, animated: true)
+                } else {
+                    // Coming from section header tap
+                    detailVC.isModallyPresented = false
+                    navigationController?.pushViewController(detailVC, animated: true)
+                }
             }
         } else {
             // Show regular CardsDetailViewController for other items
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
                 .instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
                 detailVC.selectedCardData = selectedItem
+                detailVC.isModallyPresented = true // Set to true for modal presentation
                 let navVC = UINavigationController(rootViewController: detailVC)
                 detailVC.modalPresentationStyle = .formSheet
                 present(navVC, animated: true)
@@ -509,7 +524,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         }
     }
     
-    
+
     
     @objc func imageTapped() {
         let plantCarAIVC = PlantCarAIViewController()
@@ -525,6 +540,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         present(navController, animated: true)
     }
     
-}
+  }
     
 
