@@ -817,8 +817,6 @@ class DataControllerGG {
     func getUsers() -> [userInfo] {
         return user
     }
-    
-
 }
     //if let parlourPalm = dataController.plants.first(where: { $0.plantName == "Parlour Palm" }) {
     //    let diseasesForParlourPalm = dataController.getDiseases(for: parlourPalm.plantID)
