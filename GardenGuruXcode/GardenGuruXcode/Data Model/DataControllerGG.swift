@@ -900,6 +900,7 @@ class DataControllerGG {
     func getUsers() -> [userInfo] {
         return user
     }
+
     
     
     func getUserPlants(for userId: UUID) -> [UserPlant] {
@@ -918,6 +919,7 @@ class DataControllerGG {
     // Add this function to get users (moved outside of updateCareReminderStatus)
     
     
+
 }
 
     //if let parlourPalm = dataController.plants.first(where: { $0.plantName == "Parlour Palm" }) {
