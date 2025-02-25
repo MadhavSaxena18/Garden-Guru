@@ -91,3 +91,17 @@ enum Season {
 enum Category {
     case medicinal , Ornamental, Flowering
 }
+struct Design {
+    var designID: UUID = UUID() //PK
+    var name: String
+    var description: String
+    var image: String
+}
+struct PlantDesign {
+    var plantDesignID: UUID = UUID()
+    var plantID: UUID // FK FOR PLANT
+    var designID: UUID // FK FOR DESIGN
+}
+
+//we have to add fertilizer and make its relation with diseases
+

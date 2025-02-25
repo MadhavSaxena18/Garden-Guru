@@ -242,7 +242,7 @@ class DataControllerGG {
     init() {
         
         
-        var John : userInfo = userInfo(
+        let John : userInfo = userInfo(
             userName: "John",
             location: "Greater Noida",
             reminderAllowed: true)
@@ -251,7 +251,7 @@ class DataControllerGG {
         
         
         
-        var parlorPalm : Plant =  Plant(
+        let parlorPalm : Plant =  Plant(
             plantName: "Parlor Palm",
             plantImage: ["parlor_palm_1.jpg", "parlor_palm_2.jpg"],
             plantBotanicalName: "Chamaedorea elegans",
@@ -265,7 +265,7 @@ class DataControllerGG {
             pruningFrequency: 365 // Yearly
         )
         
-        var stringOfPearls : Plant = Plant(
+        let stringOfPearls : Plant = Plant(
             plantName: "String Of Pearls",
             plantImage: ["string_of_pearls_1.jpg", "string_of_pearls_2.jpg"],
             plantBotanicalName: "Senecio rowleyanus",
@@ -280,7 +280,7 @@ class DataControllerGG {
             
         )
         
-        var hibiscus : Plant = Plant(
+        let hibiscus : Plant = Plant(
             plantName: "Hibiscus",
             plantImage: ["hibiscus_1.jpg", "hibiscus_2.jpg"],
             plantBotanicalName: "Hibiscus rosa-sinensis",
@@ -294,7 +294,7 @@ class DataControllerGG {
             pruningFrequency: 90  // Every 3 months
         )
         
-        var jadePlant : Plant = Plant(
+        let jadePlant : Plant = Plant(
             plantName: "Jade Plant",
             plantImage: ["jade_plant_1.jpg", "jade_plant_2.jpg"],
             plantBotanicalName: "Crassula ovata",
@@ -308,7 +308,7 @@ class DataControllerGG {
             pruningFrequency: 120 // Every 4 months
         )
         
-        var peaceLily : Plant = Plant(
+        let peaceLily : Plant = Plant(
             plantName: "Peace Lily",
             plantImage: ["peace_lily_1.jpg", "peace_lily_2.jpg"],
             plantBotanicalName: "Spathiphyllum",
@@ -322,7 +322,7 @@ class DataControllerGG {
             pruningFrequency: 90 // Every 3 months
         )
         
-        var arecaPalm : Plant = Plant(
+        let arecaPalm : Plant = Plant(
             plantName: "Areca Palm",
             plantImage: ["areca_palm_1.jpg", "areca_palm_2.jpg"],
             plantBotanicalName: "Dypsis lutescens",
@@ -336,6 +336,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120// Every 4 months
         )
+
         var rose: Plant = Plant(
             plantName: "Rose",
             plantImage: ["rose plant"],
@@ -348,12 +349,14 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 90
         )
+
+    
         
         plants.append(contentsOf: [parlorPalm, stringOfPearls ,hibiscus  ,jadePlant , peaceLily , arecaPalm , rose])
         
         
         //Diseases data
-        var rootRot : Diseases = Diseases(
+        let rootRot : Diseases = Diseases(
             diseaseName: "Root Rot",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellowing leaves", "Soft, mushy roots", "Wilting despite watering"],
@@ -384,7 +387,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var powderyMildew : Diseases = Diseases(
+        let powderyMildew : Diseases = Diseases(
             diseaseName: "Powdery Mildew",
             diseaseID: UUID(),
             diseaseSymptoms: ["White powdery spots on leaves", "Distorted growth", "Leaves turning yellow"],
@@ -415,7 +418,7 @@ class DataControllerGG {
             diseaseSeason: .rainy
         )
         
-        var leafSpot : Diseases = Diseases(
+        let leafSpot : Diseases = Diseases(
             diseaseName: "Leaf Spot",
             diseaseID: UUID(),
             diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
@@ -445,7 +448,7 @@ class DataControllerGG {
             ], diseaseSeason: .summer
         )
         
-        var blight : Diseases = Diseases(
+        let blight : Diseases = Diseases(
             diseaseName: "Blight",
             diseaseID: UUID(),
             diseaseSymptoms: ["Brown, sunken spots on stems and leaves", "Rapid wilting", "Fungal growth on plant surface"],
@@ -475,7 +478,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var rust : Diseases = Diseases(
+        let rust : Diseases = Diseases(
             diseaseName: "Rust",
             diseaseID: UUID(),
             diseaseSymptoms: ["Orange or brown pustules on leaves", "Leaf curling", "Early leaf drop"],
@@ -505,7 +508,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var dampingOff:Diseases = Diseases(
+        let dampingOff:Diseases = Diseases(
             diseaseName: "Damping Off",
             diseaseID: UUID(),
             diseaseSymptoms: ["Seedlings collapsing", "Rotting at soil level", "Poor germination"],
@@ -535,7 +538,7 @@ class DataControllerGG {
             ], diseaseSeason: .Spring
         )
         
-        var grayMold : Diseases = Diseases(
+        let grayMold : Diseases = Diseases(
             diseaseName: "Botrytis (Gray Mold)",
             diseaseID: UUID(),
             diseaseSymptoms: ["Gray fuzzy mold on leaves", "Brown water-soaked spots", "Stems collapsing"],
@@ -565,7 +568,7 @@ class DataControllerGG {
             ], diseaseSeason: .summer
         )
         
-        var anthracnose : Diseases =  Diseases(
+        let anthracnose : Diseases =  Diseases(
             diseaseName: "Anthracnose",
             diseaseID: UUID(),
             diseaseSymptoms: ["Dark sunken lesions on stems and leaves", "Defoliation", "Brown streaks on flowers"],
@@ -595,7 +598,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var mosaicVirus : Diseases = Diseases(
+        let mosaicVirus : Diseases = Diseases(
             diseaseName: "Mosaic Virus",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellow-green mottling on leaves", "Stunted growth", "Distorted leaf shapes"],
@@ -637,7 +640,7 @@ class DataControllerGG {
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: peaceLily.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: peaceLily.plantID, diseaseID: blight.diseaseID))
         
-        var john1Plant : UserPlant = UserPlant(
+        let john1Plant : UserPlant = UserPlant(
             userId: John.userId,
             userplantID: parlorPalm.plantID,
             userPlantNickName: "Near Sofa",
@@ -649,7 +652,7 @@ class DataControllerGG {
             isRepottingCompleted: false
         )
         
-        var john2Plant : UserPlant = UserPlant(
+        let john2Plant : UserPlant = UserPlant(
             userId: John.userId,
             userplantID: peaceLily.plantID,
             userPlantNickName: "In Garden",
@@ -660,6 +663,8 @@ class DataControllerGG {
             isFertilizingCompleted: false,
             isRepottingCompleted: false
         )
+        
+        
         
         // Add the user plants to the array
         userPlant.append(john1Plant)
@@ -776,6 +781,31 @@ class DataControllerGG {
         return getDiseases(for: rosePlant.plantID)
     }
     
+    func getDiseasesForUserPlants(userId: UUID) -> [Diseases] {
+            // Get all plants belonging to the user
+            let userPlants = userPlant.filter { $0.userId == userId }
+            
+            // Get all diseases for these plants
+            var allDiseases: [Diseases] = []
+            for userPlant in userPlants {
+                let plantDiseases = getDiseases(for: userPlant.userplantID)
+                allDiseases.append(contentsOf: plantDiseases)
+            }
+            
+            // Remove duplicates by using diseaseID instead of Set
+            return Array(Dictionary(grouping: allDiseases) { $0.diseaseID }.values.map { $0[0] })
+        }
+        
+        // Replace the existing getCommonIssuesForRose function with this:
+    func getCommonIssuesForUserPlants() -> [Diseases] {
+            // For now, we'll use the first user's plants
+            // In a real app, you'd pass the current user's ID
+            if let firstUser = user.first {
+                return getDiseasesForUserPlants(userId: firstUser.userId)
+            }
+            return []
+        }
+    
     func getCommonFertilizersForParlorPalm() -> [String] {
         return ["Organic Compost", "Liquid Fertilizer", "Seaweed Extract"] // Custom fertilizers for Parlour Palm
     }
@@ -857,7 +887,13 @@ class DataControllerGG {
             }
         }
         
+
+    func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
+            return careReminders.first { _ in true } 
+        }
         
+
+
     }
     
     // Add this function to get users (moved outside of updateCareReminderStatus)

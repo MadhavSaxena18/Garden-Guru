@@ -8,7 +8,7 @@
 import UIKit
 
 class HeaderSectionCollectionReusableView: UICollectionReusableView {
-    var headerLabel = UILabel()
+    var headerTitle = UILabel()
     var button = UIButton(type: .system)
      
      override init(frame: CGRect){
@@ -23,20 +23,20 @@ class HeaderSectionCollectionReusableView: UICollectionReusableView {
      
      
      func updateSectionHeader(){
-         headerLabel.translatesAutoresizingMaskIntoConstraints = false
+         headerTitle.translatesAutoresizingMaskIntoConstraints = false
          button.translatesAutoresizingMaskIntoConstraints = false
          
-         addSubview(headerLabel)
+         addSubview(headerTitle)
          addSubview(button)
          
-         NSLayoutConstraint.activate([headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-                                      headerLabel.bottomAnchor.constraint(equalTo: bottomAnchor),
-                                      headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+         NSLayoutConstraint.activate([headerTitle.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+                                      headerTitle.bottomAnchor.constraint(equalTo: bottomAnchor),
+                                      headerTitle.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
                                       //headerLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
                                       
                                       button.topAnchor.constraint(equalTo: topAnchor, constant: -2),
                                       button.bottomAnchor.constraint(equalTo: bottomAnchor),
-                                      button.leadingAnchor.constraint(equalTo: headerLabel.trailingAnchor , constant: 15),
+                                      button.leadingAnchor.constraint(equalTo: headerTitle.trailingAnchor , constant: 15),
 //                                      button.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -200),
                                      ])
          
