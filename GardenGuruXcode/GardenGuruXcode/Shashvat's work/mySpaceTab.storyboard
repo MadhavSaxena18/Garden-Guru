@@ -79,7 +79,7 @@
         <!--Add Plant-->
         <scene sceneID="aVL-Uu-o6e">
             <objects>
-                <viewController id="mqh-fK-l9V" sceneMemberID="viewController">
+                <viewController id="mqh-fK-l9V" customClass="AddPlantViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="NgV-sH-Qoy">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -127,6 +127,10 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Add Plant" id="jaB-5g-QHY"/>
+                    <connections>
+                        <outlet property="cameraButton" destination="lGc-gO-F5t" id="mvA-3c-5NB"/>
+                        <outlet property="searchBar" destination="d95-7P-oeP" id="wIa-nj-Tjp"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="68I-J0-6CM" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>

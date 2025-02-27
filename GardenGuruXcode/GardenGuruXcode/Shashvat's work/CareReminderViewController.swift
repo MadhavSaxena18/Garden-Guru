@@ -82,6 +82,14 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         let currentDate = Date()
         let calendar = Calendar.current
         
+        // First verify we have valid reminders
+        guard !reminders.isEmpty else {
+            print("No reminders available")
+            noRemindersView.isHidden = false
+            careReminderCollectionView.isHidden = true
+            return
+        }
+        
         switch careReminderSegmentedControl.selectedSegmentIndex {
         case 0: // Today's Reminders
             filteredReminders = reminders.filter { reminder in
@@ -101,27 +109,13 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
             filteredReminders = []
         }
         
-        // Show/hide no reminders view based on filtered results
-        let hasReminders = filteredReminders.contains { reminder in
-            switch careReminderSegmentedControl.selectedSegmentIndex {
-            case 0:
-                return calendar.isDateInToday(reminder.reminder.upcomingReminderForWater) ||
-                       calendar.isDateInToday(reminder.reminder.upcomingReminderForFertilizers) ||
-                       calendar.isDateInToday(reminder.reminder.upcomingReminderForRepotted)
-            case 1:
-                return reminder.reminder.upcomingReminderForWater > currentDate ||
-                       reminder.reminder.upcomingReminderForFertilizers > currentDate ||
-                       reminder.reminder.upcomingReminderForRepotted > currentDate
-            default:
-                return false
-            }
-        }
+        print("Filtered \(reminders.count) reminders to \(filteredReminders.count) reminders")
         
+        // Show/hide no reminders view based on filtered results
+        let hasReminders = !filteredReminders.isEmpty
         noRemindersView.isHidden = hasReminders
         careReminderCollectionView.isHidden = !hasReminders
         
-        print("Filtered Reminders Count: \(filteredReminders.count)")
-        print("Reminders: \(reminders.map { "\($0.plant.plantName) - Water: \($0.reminder.upcomingReminderForWater)" })")
         careReminderCollectionView.reloadData()
     }
     
@@ -387,17 +381,38 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         return formatter.string(from: date)
     }
     
-    @IBAction  func unwindToCareReminder( segue: UIStoryboardSegue) {
-        
-    }
-    
+//    @IBAction  func unwindToCareReminder( segue: UIStoryboardSegue) {
+//
+//    }
+//
     // Add viewWillAppear to refresh data when view appears
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        print("CareReminder viewWillAppear - Refreshing data")
+        refreshData()
+    }
+    
+    // Add a new method to refresh data
+    private func refreshData() {
         if let firstUser = dataController.getUsers().first {
             reminders = dataController.getCareReminders(for: firstUser.userId)
+            print("Loaded \(reminders.count) reminders")
+            
+            // Debug print each reminder
+            reminders.forEach { reminder in
+                print("Reminder for plant: \(reminder.plant.plantName)")
+                print("- Plant ID: \(reminder.userPlant.userplantID)")
+                print("- Next water: \(reminder.reminder.upcomingReminderForWater)")
+            }
+            
+            filterReminders()
         }
-        filterReminders()
+    }
+    
+    // Update the unwind segue to refresh data
+    @IBAction func unwindToCareReminder(segue: UIStoryboardSegue) {
+        print("Unwinding to care reminder - Refreshing data")
+        refreshData()
     }
 }
 
