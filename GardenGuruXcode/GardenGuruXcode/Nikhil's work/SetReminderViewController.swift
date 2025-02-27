@@ -261,6 +261,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     }
 
     func configure(plantName: String, nickname: String) {
-        plantNameLabel.text = "\(nickname) (\(plantName))"
+        plantNameLabel.text = plantName  // Plant name in bold (already styled in the label setup)
+        locationLabel.text = nickname    // Nickname below in gray (already styled in the label setup)
     }
 }

@@ -718,19 +718,14 @@ class DataControllerGG {
         if let index = self.userPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
             self.userPlant.remove(at: index)
             
-            // 2. Find and remove the reminder relation first
-            if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
-                let removedRelation = reminderOfUserPlant.remove(at: relationIndex)
-                
-                // 3. Now remove the actual reminder using the relation
-                if let reminderIndex = careReminders.firstIndex(where: { reminder in
-                    // Match reminder with the relation we just removed
-                    reminder.upcomingReminderForWater == userPlant.lastWatered &&
-                    reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
-                    reminder.upcomingReminderForRepotted == userPlant.lastRepotted
-                }) {
-                    careReminders.remove(at: reminderIndex)
-                }
+            // 2. Find and remove all reminder relations for this plant
+            reminderOfUserPlant.removeAll { $0.userPlantRelationID == userPlant.userPlantRelationID }
+            
+            // 3. Remove the actual reminders that match this plant's dates
+            careReminders.removeAll { reminder in
+                reminder.upcomingReminderForWater == userPlant.lastWatered &&
+                reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
+                reminder.upcomingReminderForRepotted == userPlant.lastRepotted
             }
             
             // 4. Remove any user plant diseases

@@ -34,9 +34,17 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         return view
     }()
     
-    // MARK: - View Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Add observer for plant deletion
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshAfterPlantDeletion),
+            name: NSNotification.Name("PlantDeleted"),
+            object: nil
+        )
         
         // Add no reminders view
         view.addSubview(noRemindersView)
@@ -55,6 +63,20 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
         setupCollectionView()
         setupSegmentedControl()
         filterReminders()
+    }
+    
+    @objc private func refreshAfterPlantDeletion() {
+        // Get the first user's reminders using the getter function
+        if let firstUser = dataController.getUsers().first {
+            reminders = dataController.getCareReminders(for: firstUser.userId)
+        }
+        filterReminders()
+        careReminderCollectionView.reloadData()
+    }
+    
+    deinit {
+        // Remove observer when view controller is deallocated
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Setup Methods

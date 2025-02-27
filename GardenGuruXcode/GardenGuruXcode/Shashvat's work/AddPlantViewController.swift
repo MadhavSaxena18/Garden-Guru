@@ -7,7 +7,7 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
     private var selectedPlant: Plant?
     
     @IBOutlet weak var searchBar: UISearchBar!
-    @IBOutlet weak var cameraButton: UIButton!
+  
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,7 +35,7 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
             searchResultsTableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
             searchResultsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             searchResultsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            searchResultsTableView.bottomAnchor.constraint(equalTo: cameraButton.topAnchor, constant: -20)
+            searchResultsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -100)
         ])
     }
     

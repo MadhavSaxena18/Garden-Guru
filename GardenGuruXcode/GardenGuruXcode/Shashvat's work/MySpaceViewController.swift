@@ -65,19 +65,26 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     }
     
     private func loadData() {
+        print("=== MySpaceViewController loadData started ===")
+        
         // Get the first user's plants
-        if let firstUser = dataController.getUsers().first {
+        let users = dataController.getUsers()
+        print("Found \(users.count) users")
+        
+        if let firstUser = users.first {
             print("Found user: \(firstUser.userName)")
             
             // Get all user plants and care reminders
             let plantReminders = dataController.getCareReminders(for: firstUser.userId)
+            print("Found \(plantReminders.count) plant reminders")
             
             // Map to named tuples
             let plants = plantReminders.map { (userPlant: $0.userPlant, plant: $0.plant) }
-            print("Number of plants loaded: \(plants.count)")
+            print("Mapped to \(plants.count) plants")
             
             // Calculate user stats
             let totalPlants = plants.count
+            print("Total plants: \(totalPlants)")
             
             // Count plants by category
             var categoryCount: [Category: Int] = [:]
@@ -107,10 +114,18 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             print("Plant categories: \(plantCategories)")
             print("Categorized plants count: \(categorizedPlants.count)")
             
+            // Check if we have any data
+            if plants.isEmpty {
+                print("WARNING: No plants found!")
+                // You might want to show a message in the UI here
+            }
+            
             mySpaceCollectionView.reloadData()
         } else {
-            print("No users found in DataController")
+            print("ERROR: No users found in DataController")
         }
+        
+        print("=== MySpaceViewController loadData completed ===")
     }
     
     // Update the search results
@@ -293,6 +308,15 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         // Set theme background color
         mySpaceCollectionView.backgroundColor = UIColor(hex: "EBF4EB")
         
+        // Add these constraints
+        mySpaceCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            mySpaceCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            mySpaceCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mySpaceCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mySpaceCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
         // Enable swipe to delete
         let layout = UICollectionViewCompositionalLayout { [weak self] (sectionIndex, environment) -> NSCollectionLayoutSection? in
             guard let self = self else { return nil }
@@ -393,6 +417,9 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 print("Care reminders count: \(self?.dataController.getCareReminders(for: self?.dataController.getUsers().first?.userId ?? UUID()).count ?? 0)")
             }
         }
+        
+        // Post notification that a plant was deleted
+        NotificationCenter.default.post(name: NSNotification.Name("PlantDeleted"), object: nil)
     }
     
     private func showOptions(for userPlant: UserPlant, at indexPath: IndexPath) {
