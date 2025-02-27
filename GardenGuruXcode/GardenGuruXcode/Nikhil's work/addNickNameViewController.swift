@@ -89,12 +89,12 @@ class addNickNameViewController: UIViewController {
         ])
         
         cancelButton.setTitle("Cancel", for: .normal)
-        cancelButton.setTitleColor(.red, for: .normal)
-        cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+         cancelButton.setTitleColor(.red, for: .normal)
+          cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
         
-        addButton.setTitle("Add", for: .normal)
+           addButton.setTitle("Add", for: .normal)
         addButton.setTitleColor(.systemBlue, for: .normal)
-        addButton.addTarget(self, action: #selector(addTapped), for: .touchUpInside)
+         addButton.addTarget(self, action: #selector(addTapped), for: .touchUpInside)
     }
     
     @objc func cancelTapped() {
@@ -109,9 +109,9 @@ class addNickNameViewController: UIViewController {
         let newController = SetReminderViewController()
         newController.locationLabel.text = nickname
         if let navController = navigationController {
-               navController.pushViewController(newController, animated: true)  // Navigate correctly
+               navController.pushViewController(newController, animated: true)
            } else {
-               present(newController, animated: true)  // Fallback to modal presentation
+               present(newController, animated: true)  
            }
         // navigationController?.present(newController, animated: true)
     }
