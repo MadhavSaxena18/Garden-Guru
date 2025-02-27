@@ -724,30 +724,30 @@ class DataControllerGG {
         return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
     }
 
-        func getPlant(by plantID: UUID) -> Plant? {
-            return plants.first { $0.plantID == plantID }
-        }
-    
-        func getDiseases(for plantID: UUID) -> [Diseases] {
-            let diseaseIDs = plantDiseases
-                .filter { $0.plantID == plantID }
-                .map { $0.diseaseID }
-            
-            return diseases.filter { diseaseIDs.contains($0.diseaseID) }
-        }
+//        func getPlant(by plantID: UUID) -> Plant? {
+//            return plants.first { $0.plantID == plantID }
+//        }
+//    
+//        func getDiseases(for plantID: UUID) -> [Diseases] {
+//            let diseaseIDs = plantDiseases
+//                .filter { $0.plantID == plantID }
+//                .map { $0.diseaseID }
+//            
+//            return diseases.filter { diseaseIDs.contains($0.diseaseID) }
+//        }
     
         func getPlantbyName (by name : String) -> Plant? {
         return plants.first(where: {$0.plantName == name})
     }
     
     
-        func getTopWinterPlants() -> [Plant] {
-            return plants.filter { $0.favourableSeason == .winter }
-        }
-
-        func getCommonIssues() -> [Diseases] {
-            return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
-        }
+//        func getTopWinterPlants() -> [Plant] {
+//            return plants.filter { $0.favourableSeason == .winter }
+//        }
+//
+//        func getCommonIssues() -> [Diseases] {
+//            return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
+//        }
 
 //    func getPlant(by plantID: UUID) -> Plant? {
 //        return plants.first { $0.plantID == plantID }
@@ -804,11 +804,146 @@ class DataControllerGG {
     func getCommonFertilizersForParlorPalm() -> [String] {
         return ["Organic Compost", "Liquid Fertilizer", "Seaweed Extract"] // Custom fertilizers for Parlour Palm
     }
-    
-    // Get user's plants with their care reminders
     func getCareReminders(for userId: UUID) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
-        let userPlants = userPlant.filter { $0.userId == userId }
-        var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
+           // 1. Get only the user plants that exist in userPlant array
+           let userPlants = userPlant.filter { $0.userId == userId }
+           var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
+           
+           for userPlant in userPlants {
+               // 2. Verify the plant exists
+               if let plant = getPlant(by: userPlant.userplantID) {
+                   // 3. Check if there's a valid reminder relationship
+                   if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+                       // 4. Find the existing reminder
+                       if let existingReminder = careReminders.first(where: { reminder in
+                           reminder.upcomingReminderForWater == userPlant.lastWatered &&
+                           reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
+                           reminder.upcomingReminderForRepotted == userPlant.lastRepotted
+                       }) {
+                           reminders.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
+                       }
+                   } else {
+                       // 5. Create new reminder only if needed
+                       let waterReminder = CareReminder_(
+                           upcomingReminderForWater: userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60)),
+                           upcomingReminderForFertilizers: userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60)),
+                           upcomingReminderForRepotted: userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60)),
+                           isWateringCompleted: userPlant.isWateringCompleted,
+                           isFertilizingCompleted: userPlant.isFertilizingCompleted,
+                           isRepottingCompleted: userPlant.isRepottingCompleted
+                       )
+                       reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
+                   }
+               }
+           }
+           return reminders
+       }
+       
+       // Update care reminder completion status
+       func updateCareReminderStatus(for userPlantId: UUID, reminderType: String, isCompleted: Bool, currentDate: Date) {
+           if let index = userPlant.firstIndex(where: { $0.userPlantRelationID == userPlantId }) {
+               switch reminderType {
+               case "Watering":
+                   userPlant[index].isWateringCompleted = isCompleted
+                   if isCompleted {
+                       userPlant[index].lastWatered = currentDate
+                   }
+               case "Fertilization":
+                   userPlant[index].isFertilizingCompleted = isCompleted
+                   if isCompleted {
+                       userPlant[index].lastFertilized = currentDate
+                   }
+               case "Pruning":
+                   userPlant[index].isRepottingCompleted = isCompleted
+                   if isCompleted {
+                       userPlant[index].lastRepotted = currentDate
+                   }
+               default:
+                   break
+               }
+           }
+
+       }
+       
+       // Add this function to get users (moved outside of updateCareReminderStatus)
+       func getUsers() -> [userInfo] {
+           return user
+       }
+       
+
+       func getUserPlants(for userId: UUID) -> [UserPlant] {
+               return userPlant.filter { $0.userId == userId }
+           }
+           
+           
+           func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
+               return careReminders.first { _ in true }
+           }
+           
+       func deleteUserPlant(_ userPlant: UserPlant) {
+           print("Deleting plant with ID: \(userPlant.userPlantRelationID)")
+           print("Before deletion:")
+           print("- User plants count: \(self.userPlant.count)")
+           print("- Care reminders count: \(careReminders.count)")
+           print("- Reminder relations count: \(reminderOfUserPlant.count)")
+           
+           // 1. Remove from user plants array
+           if let index = self.userPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+               self.userPlant.remove(at: index)
+               
+               // 2. Find and remove the reminder relation first
+               if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+                   let removedRelation = reminderOfUserPlant.remove(at: relationIndex)
+                   
+                   // 3. Now remove the actual reminder using the relation
+                   if let reminderIndex = careReminders.firstIndex(where: { reminder in
+                       // Match reminder with the relation we just removed
+                       reminder.upcomingReminderForWater == userPlant.lastWatered &&
+                       reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
+                       reminder.upcomingReminderForRepotted == userPlant.lastRepotted
+                   }) {
+                       careReminders.remove(at: reminderIndex)
+                   }
+               }
+               
+               // 4. Remove any user plant diseases
+               userPlantDisease.removeAll { $0.usersPlantRelationID == userPlant.userId }
+           }
+           
+           print("After deletion:")
+           print("- User plants count: \(self.userPlant.count)")
+           print("- Care reminders count: \(careReminders.count)")
+           print("- Reminder relations count: \(reminderOfUserPlant.count)")
+       }
+
+       func getPlants() -> [Plant] {
+           return plants
+       }
+
+       // Add this method to DataControllerGG
+       func addUserPlant(_ userPlant: UserPlant) {
+           self.userPlant.append(userPlant)
+           
+           // Create and add care reminder
+           let reminder = CareReminder_(
+               upcomingReminderForWater: userPlant.lastWatered,
+               upcomingReminderForFertilizers: userPlant.lastFertilized,
+               upcomingReminderForRepotted: userPlant.lastRepotted,
+               isWateringCompleted: false,
+               isFertilizingCompleted: false,
+               isRepottingCompleted: false
+           )
+           careReminders.append(reminder)
+           
+           // Create relationship
+           let relationship = CareReminderOfUserPlant(
+               careReminderID: UUID(),
+               userPlantRelationID: userPlant.userPlantRelationID
+           )
+           reminderOfUserPlant.append(relationship)
+       }
+   }
+
 
 
         func getPlant(by plantID: UUID) -> Plant? {
@@ -912,6 +1047,77 @@ class DataControllerGG {
     }
 
 }
+
+    
+//    // Get user's plants with their care reminders
+//    func getCareReminders(for userId: UUID) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
+//        let userPlants = userPlant.filter { $0.userId == userId }
+//        var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
+//
+//        
+//        for userPlant in userPlants {
+//            if let plant = getPlant(by: userPlant.userplantID) {
+//                // Calculate next reminder dates based on frequencies
+//                let nextWateringDate = userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60))
+//                let nextFertilizingDate = userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60))
+//                let nextRepottingDate = userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60))
+//                
+//                let waterReminder = CareReminder_(
+//                    upcomingReminderForWater: nextWateringDate,
+//                    upcomingReminderForFertilizers: nextFertilizingDate,
+//                    upcomingReminderForRepotted: nextRepottingDate,
+//                    isWateringCompleted: userPlant.isWateringCompleted,
+//                    isFertilizingCompleted: userPlant.isFertilizingCompleted,
+//                    isRepottingCompleted: userPlant.isRepottingCompleted
+//                )
+//                reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
+//            }
+//        }
+//        return reminders
+//    }
+//    
+//    // Update care reminder completion status
+//    func updateCareReminderStatus(for userPlantId: UUID, reminderType: String, isCompleted: Bool, currentDate: Date) {
+//        if let index = userPlant.firstIndex(where: { $0.userPlantRelationID == userPlantId }) {
+//            switch reminderType {
+//            case "Watering":
+//                userPlant[index].isWateringCompleted = isCompleted
+//                if isCompleted {
+//                    userPlant[index].lastWatered = currentDate
+//                }
+//            case "Fertilization":
+//                userPlant[index].isFertilizingCompleted = isCompleted
+//                if isCompleted {
+//                    userPlant[index].lastFertilized = currentDate
+//                }
+//            case "Pruning":
+//                userPlant[index].isRepottingCompleted = isCompleted
+//                if isCompleted {
+//                    userPlant[index].lastRepotted = currentDate
+//                }
+//            default:
+//                break
+//            }
+//        }
+//
+//    func getUserPlants(for userId: UUID) -> [UserPlant] {
+//            return userPlant.filter { $0.userId == userId }
+//        }
+//        
+//        
+//    func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
+//            return careReminders.first { _ in true } 
+//        }
+//        
+//
+//    }
+//    
+//    // Add this function to get users (moved outside of updateCareReminderStatus)
+//    func getUsers() -> [userInfo] {
+//        return user
+//    }
+//}
+
     //if let parlourPalm = dataController.plants.first(where: { $0.plantName == "Parlour Palm" }) {
     //    let diseasesForParlourPalm = dataController.getDiseases(for: parlourPalm.plantID)
     //    print("Diseases for \(parlourPalm.plantName): \(diseasesForParlourPalm.map { $0.diseaseName })")
