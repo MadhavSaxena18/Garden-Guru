@@ -9,7 +9,7 @@ import UIKit
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
     let PlantCarAI = UIImageView()
-
+    
     var identifier = 0
     
     @IBOutlet weak var plantCarAI: UIImageView!
@@ -20,29 +20,24 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     @IBOutlet weak var segmentControlOnExplore: UISegmentedControl!
     private var currentData: [[Any]] = []
     
+    
     var discoverCategories: [(title: String, items: [Any])] = []
     var forMyPlantCategories: [(title: String, items: [Any])] = []
     var selectedSegment = 0
     
+    // Add these properties
+    private var filteredDiscoverCategories: [(title: String, items: [Any])] = []
+    private var filteredForMyPlantCategories: [(title: String, items: [Any])] = []
+    private var isSearchActive: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Create a UISearchController
-        let searchController = UISearchController(searchResultsController: nil)
-        searchController.searchResultsUpdater = self
-        searchController.obscuresBackgroundDuringPresentation = false
-        searchController.searchBar.placeholder = "Search plant, fertilizer..."
-        
-        // Add the search controller to the navigation item
-        navigationItem.searchController = searchController
-        
-        // Ensure the search bar doesn't persist on navigation
-        definesPresentationContext = true
+       
         plantCarAI.isUserInteractionEnabled = true
             
         // Create a tap gesture recognizer
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
-            
+        configureSearchController()
         // Add the gesture recognizer to the image view
         plantCarAI.addGestureRecognizer(tapGesture)
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
@@ -54,6 +49,15 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
     override func viewWillAppear(_ animated: Bool) {
         updateDataForSelectedSegment()
+    }
+    func configureSearchController() {
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search here..."
+        
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
     }
 
 
@@ -97,24 +101,19 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     func updateDataForSelectedSegment() {
         selectedSegment = segmentControlOnExplore.selectedSegmentIndex
-        switch  segmentControlOnExplore.selectedSegmentIndex {
+        switch segmentControlOnExplore.selectedSegmentIndex {
         case 0: // "Discover"
-            print("Hey")
             identifier = 0
-            print("Identifer: \(identifier)")
             discoverCategories = [
-                   ("Top Summer Plants", DataControllerGG().getTopWinterPlants()),
-                   ("Common Issues", DataControllerGG().getCommonIssues())
-               ]
+                ("Top Summer Plants", DataControllerGG().getTopWinterPlants()),
+                ("Common Issues", DataControllerGG().getCommonIssues())
+            ]
         case 1: // "For You"
             identifier = 1
-            print("Identifer: \(identifier)")
-            print("bbb")
             forMyPlantCategories = [
-                        ("Common Issues for Rose Plant", DataControllerGG().getCommonIssuesForRose()),
-                        ("Common Fertilizers for Parlor Palm", DataControllerGG().getCommonFertilizersForParlorPalm())
-                    ]
-
+                ("Common Issues in your Plant", DataControllerGG().getCommonIssuesForUserPlants()),
+                ("Common Fertilizers for Parlor Palm", DataControllerGG().getCommonFertilizersForParlorPalm())
+            ]
         default:
             currentData = []
         }
@@ -122,9 +121,62 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
     
     func updateSearchResults(for searchController: UISearchController) {
-        guard let searchText = searchController.searchBar.text else { return }
-        print("Search text: \(searchText)")
-        // Update your search results based on the searchText
+        guard let searchText = searchController.searchBar.text?.lowercased(), !searchText.isEmpty else {
+            isSearchActive = false
+            updateDataForSelectedSegment()
+            collectionView.reloadData()
+            return
+        }
+        
+        isSearchActive = true
+        
+        if selectedSegment == 0 {
+            // Keep original category structure but filter items
+            filteredDiscoverCategories = discoverCategories.compactMap { category in
+                switch category.title {
+                    case "Top Summer Plants", "Top Winter Plants":
+                        let filteredPlants = category.items.filter { item in
+                            guard let plant = item as? Plant else { return false }
+                            return plant.plantName.lowercased().contains(searchText)
+                        }
+                        return filteredPlants.isEmpty ? nil : (category.title, filteredPlants)
+                        
+                    case "Common Issues":
+                        let filteredDiseases = category.items.filter { item in
+                            guard let disease = item as? Diseases else { return false }
+                            return disease.diseaseName.lowercased().contains(searchText)
+                        }
+                        return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
+                        
+                    default:
+                        return nil
+                }
+            }
+        } else {
+            // Similar structure for For My Plants segment
+            filteredForMyPlantCategories = forMyPlantCategories.compactMap { category in
+                switch category.title {
+                    case "Common Issues in your Plant":
+                        let filteredDiseases = category.items.filter { item in
+                            guard let disease = item as? Diseases else { return false }
+                            return disease.diseaseName.lowercased().contains(searchText)
+                        }
+                        return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
+                        
+                    case "Common Fertilizers for Parlor Palm":
+                        let filteredFertilizers = category.items.filter { item in
+                            guard let fertilizer = item as? String else { return false }
+                            return fertilizer.lowercased().contains(searchText)
+                        }
+                        return filteredFertilizers.isEmpty ? nil : (category.title, filteredFertilizers)
+                        
+                    default:
+                        return nil
+                }
+            }
+        }
+        
+        collectionView.reloadData()
     }
     
     
@@ -138,7 +190,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return selectedSegment == 0 ? discoverCategories.count : forMyPlantCategories.count
+        let categories = selectedSegment == 0 ?
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+        return categories.count
     }
     
     /*
@@ -154,174 +209,124 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
      }
      }*/
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        let categories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
-                return categories[section].items.count
+        let categories = selectedSegment == 0 ?
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+        return categories[section].items.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-//        switch indexPath.section{
-//        case 0:
-//            if(identifier == 0){
-//                print("Section 1 In Discover")
-//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
-//                cell.updateDataOfSection1(with: indexPath)
-//                cell.layer.cornerRadius = 11
-//                return cell
-//            }else{
-//                print("Section 1 in For my plants")
-//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
-//                cell.updateDataOfSection1InForMyPlantSegment(with: indexPath)
-//                cell.layer.cornerRadius = 25
-//                return cell
-//            }
-//
-//        case 1:
-//            if(identifier == 0){
-//                print("mm")
-//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
-//                cell.updateDataOfSection2(with: indexPath)
-//                cell.layer.cornerRadius = 11
-//                return cell
-//            }else{
-//                print("ttttt")
-//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
-//                cell.updateDataOfSection2InForMyPlantSegment(with: indexPath)
-//                cell.layer.cornerRadius = 25
-//                return cell
-//            }
-//
-//
-//        case 2:
-//            if identifier == 0{
-//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "third", for: indexPath) as! Section3CollectionViewCell
-//                cell.updateDataOfSection3(with: indexPath)
-//                cell.layer.cornerRadius = 18
-//                return cell
-//            }else{
-//                print("ababaaaaaaa")
-//                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ThirdForMyPlant", for: indexPath) as! Section3InForMyPlantCollectionViewCell
-//                cell.updateDataOfSection3InForMyPlantSegment(with: indexPath)
-//                cell.layer.cornerRadius = 25
-//                return cell
-//            }
-//
-//        default:
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
-//            //cell.updateDataOfSection1(with: indexPath)
-//            return cell
-//        }
-             let categories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
-             let category = categories[indexPath.section]
-             let item = category.items[indexPath.row]
+        let categories = selectedSegment == 0 ?
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+        let category = categories[indexPath.section]
+        let item = category.items[indexPath.row]
 
-             if selectedSegment == 0 { // Discover Segment
-                 if category.title == "Top Summer Plants" {
-                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as? Section1CollectionViewCell
-                     if let plant = item as? Plant {
-                         cell?.configure(with: plant)
-                     }
-                     //cell?.contentView.layer.cornerRadius = 11
-                     cell?.contentView.layer.masksToBounds = true
-                     
-                     cell?.layer.cornerRadius = 11
-                     cell?.layer.shadowColor = UIColor.black.cgColor
-                     cell?.layer.shadowOffset = CGSize(width: 0, height: 2)
-                     cell?.layer.shadowRadius = 4
-                     cell?.layer.shadowOpacity = 0.2
-                     cell?.layer.masksToBounds = false
-                     return cell!
-                 } else { // Common Issues
-                     print("firsssssssss")
-                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
-                     if let disease = item as? Diseases {
-                         cell.configure(with: disease)
-                     }
-                     //cell.contentView.layer.cornerRadius = 11
-                     cell.contentView.layer.masksToBounds = true
-                     
-                     cell.layer.cornerRadius = 11
-                     cell.layer.shadowColor = UIColor.black.cgColor
-                     cell.layer.shadowOffset = CGSize(width: 0, height: 2)
-                     cell.layer.shadowRadius = 4
-                     cell.layer.shadowOpacity = 0.2
-                     cell.layer.masksToBounds = false
-                     
-                     return cell
-                 }
-             } else { // For My Plant Segment
-                 if category.title == "Common Issues in Rose Plant" {
-                     print("chhikloooooo")
-                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
-                     if let disease = item as? Diseases {
-                         cell.configure(with: disease)
-                     }
-                     cell.contentView.layer.cornerRadius = 25
-                     cell.contentView.layer.masksToBounds = true
-                     
-                     cell.layer.shadowColor = UIColor.black.cgColor
-                     cell.layer.shadowOffset = CGSize(width: 0, height: 2)
-                     cell.layer.shadowRadius = 4
-                     cell.layer.shadowOpacity = 0.2
-                     cell.layer.masksToBounds = false
-                     return cell
-                 } else { // Common Fertile for Parlour Palm
-                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as!Section2InForMyPlantCollectionViewCell
-                     if let fertilizer = item as? String {
-                         cell.configure(with: fertilizer)
-                     }
-                     cell.contentView.layer.cornerRadius = 25
-                     cell.contentView.layer.masksToBounds = true
-                    
-                     cell.layer.shadowColor = UIColor.black.cgColor
-                     cell.layer.shadowOffset = CGSize(width: 0, height: 2)
-                     cell.layer.shadowRadius = 4
-                     cell.layer.shadowOpacity = 0.2
-                     cell.layer.masksToBounds = false
-                     return cell
-                 }
+        // First check the category title to determine which cell to use
+        if category.title == "Top Summer Plants" || category.title == "Top Winter Plants" {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
+            if let plant = item as? Plant {
+                cell.configure(with: plant)
+            }
+            cell.contentView.layer.masksToBounds = true
+            cell.layer.cornerRadius = 11
+            cell.layer.shadowColor = UIColor.black.cgColor
+            cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+            cell.layer.shadowRadius = 4
+            cell.layer.shadowOpacity = 0.2
+            cell.layer.masksToBounds = false
+            return cell
+        } else if category.title == "Common Issues" {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
+            if let disease = item as? Diseases {
+                cell.configure(with: disease)
+            }
+            cell.contentView.layer.masksToBounds = true
+            cell.layer.cornerRadius = 11
+            cell.layer.shadowColor = UIColor.black.cgColor
+            cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+            cell.layer.shadowRadius = 4
+            cell.layer.shadowOpacity = 0.2
+            cell.layer.masksToBounds = false
+            return cell
+        } else {
+            // For My Plant Segment
+            if category.title == "Common Issues in your Plant" {
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
+                if let disease = item as? Diseases {
+                    cell.configure(with: disease)
+                }
+                cell.contentView.layer.cornerRadius = 25
+                cell.contentView.layer.masksToBounds = true
+                
+                cell.layer.shadowColor = UIColor.black.cgColor
+                cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                cell.layer.shadowRadius = 4
+                cell.layer.shadowOpacity = 0.2
+                cell.layer.masksToBounds = false
+                return cell
+            } else { // Common Fertile for Parlour Palm
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as!Section2InForMyPlantCollectionViewCell
+                if let fertilizer = item as? String {
+                    cell.configure(with: fertilizer)
+                }
+                cell.contentView.layer.cornerRadius = 25
+                cell.contentView.layer.masksToBounds = true
+               
+                cell.layer.shadowColor = UIColor.black.cgColor
+                cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                cell.layer.shadowRadius = 4
+                cell.layer.shadowOpacity = 0.2
+                cell.layer.masksToBounds = false
+                return cell
+            }
         }
-        
     }
     
     
-    func generateLayout()-> UICollectionViewCompositionalLayout{
-        let layout = UICollectionViewCompositionalLayout
-        { [self]
-            (sectionIndex, environment) -> NSCollectionLayoutSection? in let section: NSCollectionLayoutSection
-            switch sectionIndex{
-            case 0:
-                if identifier == 0{
-                    section = self.generateSection1Layout()
-                }else{
-                    section = self.generateSection1LayoutInForMyPlants()
-                }
+    func generateLayout() -> UICollectionViewCompositionalLayout {
+        let layout = UICollectionViewCompositionalLayout { [self]
+            (sectionIndex, environment) -> NSCollectionLayoutSection? in
+            
+            // Get the current categories based on segment and search state
+            let categories = selectedSegment == 0 ?
+                (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+                (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+            
+            // Get the category title for this section
+            let categoryTitle = categories[sectionIndex].title
+            
+            let section: NSCollectionLayoutSection
+            
+            // Choose layout based on category title instead of section index
+            switch categoryTitle {
+            case "Top Summer Plants", "Top Winter Plants":
+                section = self.generateSection1Layout()
                 
+            case "Common Issues":
+                section = self.generateSection2Layout()
                 
-            case 1:
-                if identifier == 0 {
-                    section = self.generateSection2Layout()
-                }
-                else{
-                    section = self.generateSection1LayoutInForMyPlants()
-                }
+            case "Common Issues in your Plant":
+                section = self.generateSection1LayoutInForMyPlants()
                 
-            case 2:
-                if identifier == 0{
-                    section = self.generateSection3Layout()
-                }else{
-                    section = self.generateSection1LayoutInForMyPlants()
-                }
+            case "Common Fertilizers for Parlor Palm":
+                section = self.generateSection1LayoutInForMyPlants()
                 
-            default :
+            default:
                 print("Invalid Section")
                 return nil
             }
             
-            let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(45))
-            
-            let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
-            
-            
+            // Add header
+            let headerSize = NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0),
+                heightDimension: .absolute(45)
+            )
+            let header = NSCollectionLayoutBoundarySupplementaryItem(
+                layoutSize: headerSize,
+                elementKind: UICollectionView.elementKindSectionHeader,
+                alignment: .top
+            )
             section.boundarySupplementaryItems = [header]
             
             return section
@@ -408,55 +413,70 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        if kind == UICollectionView.elementKindSectionHeader{
-            let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
-            if segmentControlOnExplore.selectedSegmentIndex == 0{
-                header.headerLabel.text = ExploreScreen.headerData[indexPath.section]
-                header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-                header.headerLabel.textColor = UIColor(hex: "284329")
-                header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
-                header.button.tintColor = UIColor(hex: "284329")
-                header.button.tag = indexPath.section
-                header.button.imageEdgeInsets = UIEdgeInsets(top: 9, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
-                header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
-                header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
-                return header
-                
-            }else{
-                header.headerLabel.text = ExploreScreen.headerForInMyPlantSegment[indexPath.section]
-                header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-                header.headerLabel.textColor = UIColor(hex: "284329")
-                header.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
-                header.button.tintColor = UIColor(hex: "284329")
-                header.button.tag = indexPath.section
-                header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
-                header.button.imageEdgeInsets = UIEdgeInsets(top:9, left: 0, bottom: 0, right: 0) // Adjust spacing between text and image
-                
-                //header.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
-                return header
-                
-            }
+        if kind == UICollectionView.elementKindSectionHeader {
+            let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
+            
+            let categories = selectedSegment == 0 ?
+                (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+                (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+            
+            headerView.headerTitle.text = categories[indexPath.section].title
+            
+            headerView.headerTitle.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+            headerView.headerTitle.textColor = UIColor(hex: "284329")
+            headerView.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+            headerView.button.tintColor = UIColor(hex: "284329")
+            headerView.button.tag = indexPath.section
+            headerView.button.imageEdgeInsets = UIEdgeInsets(top: 9, left: 0, bottom: 0, right: 0)
+            headerView.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
+            
+            return headerView
         }
-        
-        print("Supplementary item is not a error")
         return UICollectionReusableView()
     }
     
     
-    @objc func sectionButtonTapped(_ sender: UIButton){
+    @objc func sectionButtonTapped(_ sender: UIButton) {
+        // Use filtered categories when search is active
+        let categories = selectedSegment == 0 ?
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+        
+        let selectedCategory = categories[sender.tag]
+        
+        // For all sections during search and normal state
         let storyBoard = UIStoryboard(name: "exploreTab", bundle: nil)
         let VC = storyBoard.instantiateViewController(withIdentifier: "SectionWiseDetailViewController") as! SectionWiseDetailViewController
         
-        VC.sectionNumber = sender.tag // Pass the section number
-        VC.selectedSegmentIndex = segmentControlOnExplore.selectedSegmentIndex // Pass the selected segment index (if needed)
+        // Find the original section number based on category title
+        let originalCategories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
+        if let originalSectionIndex = originalCategories.firstIndex(where: { $0.title == selectedCategory.title }) {
+            // Pass the original section number
+            VC.sectionNumber = originalSectionIndex
+        } else {
+            VC.sectionNumber = sender.tag
+        }
         
+        // Pass the filtered data if searching
+        if isSearchActive {
+            VC.filteredItems = selectedCategory.items
+        }
+        
+        VC.selectedSegmentIndex = segmentControlOnExplore.selectedSegmentIndex
+        
+        // Pass the correct header data based on segment
         if segmentControlOnExplore.selectedSegmentIndex == 0 {
             VC.headerData = ExploreScreen.headerData
-            } else {
-                VC.headerData = ExploreScreen.headerForInMyPlantSegment
-            }
-        navigationController?.pushViewController(VC, animated: true)
+        } else {
+            VC.headerData = ExploreScreen.headerForInMyPlantSegment
+        }
         
+        // Configure back button to show "Explore"
+        let backItem = UIBarButtonItem()
+        backItem.title = "Explore"
+        navigationItem.backBarButtonItem = backItem
+        
+        navigationController?.pushViewController(VC, animated: true)
     }
     
     
@@ -466,33 +486,58 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//            let sectionData = currentData[indexPath.section]
-//            let item = sectionData[indexPath.row]
-        let categories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
-            let selectedCategory = categories[indexPath.section]
-            let selectedItem = selectedCategory.items[indexPath.row]  // Get the clicked item
+        let categories = selectedSegment == 0 ?
+            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
+            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+        
+        let selectedCategory = categories[indexPath.section]
+        let selectedItem = selectedCategory.items[indexPath.row]
 
-            let storyboard = UIStoryboard(name: "exploreTab", bundle: nil)
-            if let detailVC = storyboard.instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
-                detailVC.selectedCardData = selectedItem // Pass the selected `Plant` or `Diseases`
+        if let disease = selectedItem as? Diseases,
+           (selectedCategory.title == "Common Issues" || selectedCategory.title == "Common Issues in your Plant") {
+            if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
+                .instantiateViewController(withIdentifier: "DiseaseDetailViewController") as? DiseaseDetailViewController {
+                detailVC.disease = disease
                 
-                // Set modal presentation style
-//                detailVC.modalPresentationStyle = .fullScreen
-//                detailVC.modalTransitionStyle = .coverVertical
-                detailVC.navigationItem.title = "hello"
-                present(detailVC, animated: true, completion: nil) // Present modally
-                //navigationController?.pushViewController(detailVC, animated: true)
-                
-                detailVC.navigationItem.title = "hello"
-                //navigationItem.title = "hello"
+                // Check if we're coming from a collection view cell
+                if let _ = collectionView.cellForItem(at: indexPath) {
+                    // Coming from collection view cell tap
+                    detailVC.isModallyPresented = true
+                    let navVC = UINavigationController(rootViewController: detailVC)
+                    present(navVC, animated: true)
+                } else {
+                    // Coming from section header tap
+                    detailVC.isModallyPresented = false
+                    navigationController?.pushViewController(detailVC, animated: true)
+                }
             }
+        } else {
+            // Show regular CardsDetailViewController for other items
+            if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
+                .instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
+                detailVC.selectedCardData = selectedItem
+                detailVC.isModallyPresented = true // Set to true for modal presentation
+                let navVC = UINavigationController(rootViewController: detailVC)
+                detailVC.modalPresentationStyle = .formSheet
+                present(navVC, animated: true)
+            }
+        }
     }
     
 
     
     @objc func imageTapped() {
-        // Perform the segue when the image view is tapped
-        performSegue(withIdentifier: "plantCarAI", sender: self)
+        let plantCarAIVC = PlantCarAIViewController()
+        let navController = UINavigationController(rootViewController: plantCarAIVC)
+        navController.modalPresentationStyle = .pageSheet // or .formSheet for iPad compatibility
+        
+        if let sheet = navController.sheetPresentationController {
+            sheet.detents = [.large()] // This makes it full height but still modal
+            sheet.prefersGrabberVisible = true // Shows a grabber at the top
+            sheet.preferredCornerRadius = 25 // Rounds the top corners
+        }
+        
+        present(navController, animated: true)
     }
     
   }
