@@ -1,4 +1,3 @@
-
 //
 //  SetReminderViewController.swift
 //  GardenGuruXcode
@@ -259,5 +258,9 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+
+    func configure(plantName: String, nickname: String) {
+        plantNameLabel.text = "\(nickname) (\(plantName))"
     }
 }
