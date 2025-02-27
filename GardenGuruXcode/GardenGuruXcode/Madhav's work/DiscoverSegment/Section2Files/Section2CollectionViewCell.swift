@@ -24,16 +24,18 @@ class Section2CollectionViewCell: UICollectionViewCell {
     }
     
     func configure(with disease: Diseases) {
-        
-            if let firstImageName = disease.diseaseImage.first {
-                imageViewLabel.image = UIImage(named: firstImageName) // Load image from name
-            } else {
-                imageViewLabel.image = UIImage(named: "placeholder") // Default placeholder image
-            }
+        if let firstImageName = disease.diseaseImage.first {
+            imageViewLabel.image = UIImage(named: firstImageName) // Load image from name
+        } else {
+            imageViewLabel.image = UIImage(named: "placeholder") // Default placeholder image
+        }
 
-            diseaseNameLabel.text = disease.diseaseName
+        diseaseNameLabel.text = disease.diseaseName
+        
+        
+        let symptomsText = disease.diseaseSymptoms.joined(separator: ", ")
+        plantDescriptionLabel.text = "Symptoms: \(symptomsText)"
+
     }
-   
-    
 
 }
