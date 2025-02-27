@@ -1,210 +1,5 @@
 import Foundation
 
-//
-//
-//    var rootRot : Diseases = Diseases(
-//        diseaseName: "Root Rot",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Yellowing leaves", "Soft, mushy roots", "Wilting despite watering"],
-//        diseaseImage: ["rootrot1.jpg", "rootrot2.jpg"],
-//        diseaseCure: ["Remove affected roots", "Repot with well-draining soil", "Reduce watering"],
-//        diseaseFertilizers: ["Organic compost", "Neem-based fungicide"],
-//        cureDuration: 14,
-//        diseaseSeason: .winter
-//    )
-//
-//    var powderyMildew : Diseases = Diseases(
-//        diseaseName: "Powdery Mildew",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["White powdery spots on leaves", "Distorted growth", "Leaves turning yellow"],
-//        diseaseImage: ["powderymildew1.jpg", "powderymildew2.jpg"],
-//        diseaseCure: ["Apply sulfur-based fungicide", "Increase air circulation", "Remove infected leaves"],
-//        diseaseFertilizers: ["Compost tea", "Liquid seaweed fertilizer"],
-//        cureDuration: 10,
-//        diseaseSeason: .rainy
-//    )
-//
-//    var leafSpot : Diseases = Diseases(
-//        diseaseName: "Leaf Spot",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
-//        diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
-//        diseaseCure: ["Remove infected leaves", "Apply copper-based fungicide", "Ensure proper air circulation"],
-//        diseaseFertilizers: ["Fish emulsion", "Balanced NPK fertilizer (10-10-10)"],
-//        cureDuration: 7,
-//        diseaseSeason: .summer
-//    )
-//
-//    var blight : Diseases = Diseases(
-//        diseaseName: "Blight",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Brown, sunken spots on stems and leaves", "Rapid wilting", "Fungal growth on plant surface"],
-//        diseaseImage: ["blight1.jpg", "blight2.jpg"],
-//        diseaseCure: ["Use copper fungicide", "Remove infected parts", "Avoid overhead watering"],
-//        diseaseFertilizers: ["Bone meal", "Slow-release potassium fertilizer"],
-//        cureDuration: 12,
-//        diseaseSeason: .winter
-//    )
-//
-//    var rust : Diseases = Diseases(
-//        diseaseName: "Rust",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Orange or brown pustules on leaves", "Leaf curling", "Early leaf drop"],
-//        diseaseImage: ["rust1.jpg", "rust2.jpg"],
-//        diseaseCure: ["Remove infected leaves", "Apply sulfur-based fungicide", "Keep foliage dry"],
-//        diseaseFertilizers: ["Nitrogen-rich fertilizer", "Liquid fish fertilizer"],
-//        cureDuration: 8,
-//        diseaseSeason: .winter
-//    )
-//
-//    var dampingOff:Diseases = Diseases(
-//        diseaseName: "Damping Off",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Seedlings collapsing", "Rotting at soil level", "Poor germination"],
-//        diseaseImage: ["dampingoff1.jpg", "dampingoff2.jpg"],
-//        diseaseCure: ["Use sterile soil mix", "Avoid overwatering", "Apply biological fungicides"],
-//        diseaseFertilizers: ["Weak liquid fertilizer", "Seaweed extract"],
-//        cureDuration: 5,
-//        diseaseSeason: .Spring
-//    )
-//
-//    var grayMold : Diseases = Diseases(
-//        diseaseName: "Botrytis (Gray Mold)",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Gray fuzzy mold on leaves", "Brown water-soaked spots", "Stems collapsing"],
-//        diseaseImage: ["botrytis1.jpg", "botrytis2.jpg"],
-//        diseaseCure: ["Improve air circulation", "Apply neem oil spray", "Remove affected plant parts"],
-//        diseaseFertilizers: ["Calcium nitrate", "Organic compost"],
-//        cureDuration: 9,
-//        diseaseSeason: .summer
-//    )
-//
-//    var anthracnose : Diseases =  Diseases(
-//        diseaseName: "Anthracnose",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Dark sunken lesions on stems and leaves", "Defoliation", "Brown streaks on flowers"],
-//        diseaseImage: ["anthracnose1.jpg", "anthracnose2.jpg"],
-//        diseaseCure: ["Apply copper-based fungicide", "Prune infected branches", "Ensure good drainage"],
-//        diseaseFertilizers: ["Phosphorus-rich fertilizer", "Epsom salt spray"],
-//        cureDuration: 11,
-//        diseaseSeason: .winter
-//    )
-//
-//    var mosaicVirus : Diseases = Diseases(
-//        diseaseName: "Mosaic Virus",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Yellow-green mottling on leaves", "Stunted growth", "Distorted leaf shapes"],
-//        diseaseImage: ["mosaicvirus1.jpg", "mosaicvirus2.jpg"],
-//        diseaseCure: ["Remove infected plants", "Control aphids", "Use disease-resistant varieties"],
-//        diseaseFertilizers: ["Balanced organic fertilizer", "Liquid potassium supplement"],
-//        cureDuration: 15,
-//        diseaseSeason: .winter
-//    )
-//
-//    // PLANT DATA
-//
-//    var parlorPalm : Plant =  Plant(
-//        plantName: "Parlor Palm",
-//        plantImage: ["parlor_palm_1.jpg", "parlor_palm_2.jpg"],
-//        plantBotanicalName: "Chamaedorea elegans",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A low-maintenance indoor plant known for its lush green fronds. \n Thrives in indirect light and improves air quality.",
-//        favourableSeason: .winter,
-//        waterFrequency :90,
-//        fertilizerFrequency: 7, // Once a week
-//        repottingFrequency: 30, // Monthly
-//        pruningFrequency: 365 // Yearly
-//    )
-//
-//    var stringOfPearls : Plant = Plant(
-//        plantName: "String Of Pearls",
-//        plantImage: ["string_of_pearls_1.jpg", "string_of_pearls_2.jpg"],
-//        plantBotanicalName: "Senecio rowleyanus",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A trailing succulent with bead-like leaves, ideal for hanging baskets . \n Requires bright, indirect sunlight and minimal watering.",
-//        favourableSeason: .summer,
-//        waterFrequency: 14, // Every 2 weeks
-//        fertilizerFrequency: 60, // Every 2 months
-//        repottingFrequency: 730, // Every 2 years
-//        pruningFrequency: 120 // Every 4 months
-//
-//    )
-//
-//    var hibiscus : Plant = Plant(
-//        plantName: "Hibiscus",
-//        plantImage: ["hibiscus_1.jpg", "hibiscus_2.jpg"],
-//        plantBotanicalName: "Hibiscus rosa-sinensis",
-//        category: .Flowering,
-//        plantDescription:
-//            "A vibrant flowering plant known for its large, colorful blooms . \n Requires full sun and regular watering for optimal growth.",
-//        favourableSeason: .summer,
-//        waterFrequency: 3, // Every 3 days
-//        fertilizerFrequency: 15, // Twice a month
-//        repottingFrequency: 365, // Yearly
-//        pruningFrequency: 90  // Every 3 months
-//    )
-//
-//    var jadePlant : Plant = Plant(
-//        plantName: "Jade Plant",
-//        plantImage: ["jade_plant_1.jpg", "jade_plant_2.jpg"],
-//        plantBotanicalName: "Crassula ovata",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A hardy succulent believed to bring good luck and prosperity. Requires minimal watering and bright light.",
-//        favourableSeason: .winter,
-//        waterFrequency: 14, // Every 2 weeks
-//        fertilizerFrequency: 90, // Every 3 months
-//        repottingFrequency: 730, // Every 2 years
-//        pruningFrequency: 120 // Every 4 months
-//    )
-//
-//    var peaceLily : Plant = Plant(
-//        plantName: "Peace Lily",
-//        plantImage: ["peace_lily_1.jpg", "peace_lily_2.jpg"],
-//        plantBotanicalName: "Spathiphyllum",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A graceful indoor plant with white blooms that purifies the air. Thrives in low to medium light with moderate watering.",
-//        favourableSeason: .winter,
-//        waterFrequency: 7, // Weekly
-//        fertilizerFrequency: 30, // Monthly
-//        repottingFrequency: 365, // Yearly
-//        pruningFrequency: 90 // Every 3 months
-//    )
-//
-//    var arecaPalm : Plant = Plant(
-//        plantName: "Areca Palm",
-//        plantImage: ["areca_palm_1.jpg", "areca_palm_2.jpg"],
-//        plantBotanicalName: "Dypsis lutescens",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A popular indoor palm with feathery fronds that adds a tropical vibe. Prefers bright, indirect light and moderate watering."
-//        ,
-//        favourableSeason: .winter,
-//        waterFrequency: 5, // Every 5 days
-//        fertilizerFrequency: 60, // Every 2 months
-//        repottingFrequency: 730, // Every 2 years
-//        pruningFrequency: 120// Every 4 months
-//    )
-//
-//
-//
-//    //Plant Disease
-//
-//    var parlorPalmRust : PlantDisease = PlantDisease(
-//        plantDiseaseID: UUID(),
-//        plantID: parlorPalm.plantID,
-//        diseaseID: rust.diseaseID
-//    )
-//
-//    var arecaPalmAnthracnose : PlantDisease = PlantDisease(
-//    plantDiseaseID: UUID(),
-//    plantID: arecaPalm.plantID,
-//    diseaseID: anthracnose.diseaseID
-//    )
-
 class DataControllerGG {
 
 
@@ -348,7 +143,74 @@ class DataControllerGG {
                     pruningFrequency: 90
                 )
         
-        plants.append(contentsOf: [parlorPalm, stringOfPearls ,hibiscus  ,jadePlant , peaceLily , arecaPalm , rose])
+        let sunflower: Plant = Plant(
+            plantName: "Sunflower",
+            plantImage: ["sunflower plant"], //nam abhi change krna hai
+            plantBotanicalName: "Helianthus annuus",
+            category: .Ornamental,
+            plantDescription: "Bright and cheerful flowers that follow the sun. Prefers full sun and well-draining soil.",
+            favourableSeason: .summer,
+            waterFrequency: 5,
+            fertilizerFrequency: 20,
+            repottingFrequency: 365,
+            pruningFrequency: 60
+        )
+
+        let bellflower: Plant = Plant(
+            plantName: "Bellflower",
+            plantImage: ["bellflower plant"],//name change
+            plantBotanicalName: "Campanula spp.",
+            category: .Ornamental,
+            plantDescription: "Delicate, bell-shaped flowers that add charm to any garden. Grows well in partial sun.",
+            favourableSeason: .summer,
+            waterFrequency: 6,
+            fertilizerFrequency: 25,
+            repottingFrequency: 365,
+            pruningFrequency: 75
+        )
+
+        let orchid: Plant = Plant(
+            plantName: "Orchid",
+            plantImage: ["orchid plant"],//name change
+            plantBotanicalName: "Orchidaceae",
+            category: .Ornamental,
+            plantDescription: "Elegant and exotic flowers that thrive in indirect light with high humidity.",
+            favourableSeason: .winter,
+            waterFrequency: 7,
+            fertilizerFrequency: 15,
+            repottingFrequency: 730,
+            pruningFrequency: 90
+        )
+        
+        let snakePlant: Plant = Plant(
+            plantName: "Snake Plant",
+            plantImage: ["snake plant"],//name change
+            plantBotanicalName: "Sansevieria trifasciata",
+            category: .Ornamental,
+            plantDescription: "A hardy, air-purifying plant that thrives in low light and requires minimal care.",
+            favourableSeason: .summer,
+            waterFrequency: 14,
+            fertilizerFrequency: 60,
+            repottingFrequency: 730,
+            pruningFrequency: 180
+        )
+
+        let daisy: Plant = Plant(
+            plantName: "Daisy",
+            plantImage: ["daisy plant"],//name change
+            plantBotanicalName: "Bellis perennis",
+            category: .Ornamental,
+            plantDescription: "Cheerful flowers that bloom throughout the year, thriving in full sun and well-drained soil.",
+            favourableSeason: .winter,
+            waterFrequency: 5,
+            fertilizerFrequency: 30,
+            repottingFrequency: 365,
+            pruningFrequency: 60
+        )
+
+
+        
+        plants.append(contentsOf: [parlorPalm, stringOfPearls ,hibiscus  ,jadePlant , peaceLily , arecaPalm , rose , sunflower , bellflower , daisy , snakePlant , orchid])
         
         
         //Diseases data
@@ -946,6 +808,7 @@ class DataControllerGG {
 
 
 
+
         func getPlant(by plantID: UUID) -> Plant? {
             return plants.first { $0.plantID == plantID }
         }
@@ -1296,4 +1159,5 @@ class DataControllerGG {
     //        )
     //    ]
     //}
+
 
