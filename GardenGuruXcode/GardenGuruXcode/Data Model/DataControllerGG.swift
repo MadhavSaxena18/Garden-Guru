@@ -131,7 +131,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120// Every 4 months
         )
-
+        
         var rose: Plant = Plant(
             plantName: "Rose",
             plantImage: ["rose plant"],
@@ -144,8 +144,8 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 90
         )
-
-    
+        
+        
         
         let sunflower: Plant = Plant(
             plantName: "Sunflower",
@@ -159,7 +159,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 60
         )
-
+        
         let bellflower: Plant = Plant(
             plantName: "Bellflower",
             plantImage: ["bellflower plant"],//name change
@@ -172,7 +172,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 75
         )
-
+        
         let orchid: Plant = Plant(
             plantName: "Orchid",
             plantImage: ["orchid plant"],//name change
@@ -198,7 +198,7 @@ class DataControllerGG {
             repottingFrequency: 730,
             pruningFrequency: 180
         )
-
+        
         let daisy: Plant = Plant(
             plantName: "Daisy",
             plantImage: ["daisy plant"],//name change
@@ -211,8 +211,8 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 60
         )
-
-
+        
+        
         
         plants.append(contentsOf: [parlorPalm, stringOfPearls ,hibiscus  ,jadePlant , peaceLily , arecaPalm , rose , sunflower , bellflower , daisy , snakePlant , orchid])
         
@@ -590,50 +590,9 @@ class DataControllerGG {
         return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
     }
     
-    
-    //        func getPlant(by plantID: UUID) -> Plant? {
-    //            return plants.first { $0.plantID == plantID }
-    //        }
-    //
-    //        func getDiseases(for plantID: UUID) -> [Diseases] {
-    //            let diseaseIDs = plantDiseases
-    //                .filter { $0.plantID == plantID }
-    //                .map { $0.diseaseID }
-    //
-    //            return diseases.filter { diseaseIDs.contains($0.diseaseID) }
-    //        }
-    //
     func getPlantbyName (by name : String) -> Plant? {
         return plants.first(where: {$0.plantName == name})
     }
-    //
-    //
-    //        func getTopWinterPlants() -> [Plant] {
-    //            return plants.filter { $0.favourableSeason == .winter }
-    //        }
-    //
-    //        func getCommonIssues() -> [Diseases] {
-    //            return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
-    //        }
-    
-    //    func getPlant(by plantID: UUID) -> Plant? {
-    //        return plants.first { $0.plantID == plantID }
-    //    }
-    //
-    //    func getDiseases(for plantID: UUID) -> [Diseases] {
-    //        let diseaseIDs = plantDiseases
-    //            .filter { $0.plantID == plantID }
-    //            .map { $0.diseaseID }
-    //
-    //        return diseases.filter { diseaseIDs.contains($0.diseaseID) }
-    //    }
-    //    func getTopWinterPlants() -> [Plant] {
-    //        return plants.filter { $0.favourableSeason == .winter }
-    //    }
-    //
-    //    func getCommonIssues() -> [Diseases] {
-    //        return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
-    //    }
     
     
     func getCommonIssuesForRose() -> [Diseases] {
@@ -644,221 +603,64 @@ class DataControllerGG {
     }
     
     func getDiseasesForUserPlants(userId: UUID) -> [Diseases] {
-            // Get all plants belonging to the user
-            let userPlants = userPlant.filter { $0.userId == userId }
-            
-            // Get all diseases for these plants
-            var allDiseases: [Diseases] = []
-            for userPlant in userPlants {
-                let plantDiseases = getDiseases(for: userPlant.userplantID)
-                allDiseases.append(contentsOf: plantDiseases)
-            }
-            
-            // Remove duplicates by using diseaseID instead of Set
-            return Array(Dictionary(grouping: allDiseases) { $0.diseaseID }.values.map { $0[0] })
+        // Get all plants belonging to the user
+        let userPlants = userPlant.filter { $0.userId == userId }
+        
+        // Get all diseases for these plants
+        var allDiseases: [Diseases] = []
+        for userPlant in userPlants {
+            let plantDiseases = getDiseases(for: userPlant.userplantID)
+            allDiseases.append(contentsOf: plantDiseases)
         }
         
-        // Replace the existing getCommonIssuesForRose function with this:
+        // Remove duplicates by using diseaseID instead of Set
+        return Array(Dictionary(grouping: allDiseases) { $0.diseaseID }.values.map { $0[0] })
+    }
+    
+    // Replace the existing getCommonIssuesForRose function with this:
     func getCommonIssuesForUserPlants() -> [Diseases] {
-            // For now, we'll use the first user's plants
-            // In a real app, you'd pass the current user's ID
-            if let firstUser = user.first {
-                return getDiseasesForUserPlants(userId: firstUser.userId)
-            }
-            return []
+        // For now, we'll use the first user's plants
+        // In a real app, you'd pass the current user's ID
+        if let firstUser = user.first {
+            return getDiseasesForUserPlants(userId: firstUser.userId)
         }
+        return []
+    }
     
     func getCommonFertilizersForParlorPalm() -> [String] {
         return ["Organic Compost", "Liquid Fertilizer", "Seaweed Extract"] // Custom fertilizers for Parlour Palm
     }
     func getCareReminders(for userId: UUID) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
-
-           // 1. Get only the user plants that exist in userPlant array
-           let userPlants = userPlant.filter { $0.userId == userId }
-           var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
-           
-           for userPlant in userPlants {
-               // 2. Verify the plant exists
-               if let plant = getPlant(by: userPlant.userplantID) {
-                   // 3. Check if there's a valid reminder relationship
-                   if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
-                       // 4. Find the existing reminder
-                       if let existingReminder = careReminders.first(where: { reminder in
-                           reminder.upcomingReminderForWater == userPlant.lastWatered &&
-                           reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
-                           reminder.upcomingReminderForRepotted == userPlant.lastRepotted
-                       }) {
-                           reminders.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
-                       }
-                   } else {
-                       // 5. Create new reminder only if needed
-                       let waterReminder = CareReminder_(
-                           upcomingReminderForWater: userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60)),
-                           upcomingReminderForFertilizers: userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60)),
-                           upcomingReminderForRepotted: userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60)),
-                           isWateringCompleted: userPlant.isWateringCompleted,
-                           isFertilizingCompleted: userPlant.isFertilizingCompleted,
-                           isRepottingCompleted: userPlant.isRepottingCompleted
-                       )
-                       reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
-                   }
-               }
-           }
-           return reminders
-       }
-       
-       // Update care reminder completion status
-       func updateCareReminderStatus(for userPlantId: UUID, reminderType: String, isCompleted: Bool, currentDate: Date) {
-           if let index = userPlant.firstIndex(where: { $0.userPlantRelationID == userPlantId }) {
-               switch reminderType {
-               case "Watering":
-                   userPlant[index].isWateringCompleted = isCompleted
-                   if isCompleted {
-                       userPlant[index].lastWatered = currentDate
-                   }
-               case "Fertilization":
-                   userPlant[index].isFertilizingCompleted = isCompleted
-                   if isCompleted {
-                       userPlant[index].lastFertilized = currentDate
-                   }
-               case "Pruning":
-                   userPlant[index].isRepottingCompleted = isCompleted
-                   if isCompleted {
-                       userPlant[index].lastRepotted = currentDate
-                   }
-               default:
-                   break
-               }
-           }
-
-       }
-       
-       // Add this function to get users (moved outside of updateCareReminderStatus)
-       func getUsers() -> [userInfo] {
-           return user
-       }
-       
-
-       func getUserPlants(for userId: UUID) -> [UserPlant] {
-               return userPlant.filter { $0.userId == userId }
-           }
-           
-           
-           func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
-               return careReminders.first { _ in true }
-           }
-           
-       func deleteUserPlant(_ userPlant: UserPlant) {
-           print("Deleting plant with ID: \(userPlant.userPlantRelationID)")
-           print("Before deletion:")
-           print("- User plants count: \(self.userPlant.count)")
-           print("- Care reminders count: \(careReminders.count)")
-           print("- Reminder relations count: \(reminderOfUserPlant.count)")
-           
-           // 1. Remove from user plants array
-           if let index = self.userPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
-               self.userPlant.remove(at: index)
-               
-               // 2. Find and remove the reminder relation first
-               if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
-                   let removedRelation = reminderOfUserPlant.remove(at: relationIndex)
-                   
-                   // 3. Now remove the actual reminder using the relation
-                   if let reminderIndex = careReminders.firstIndex(where: { reminder in
-                       // Match reminder with the relation we just removed
-                       reminder.upcomingReminderForWater == userPlant.lastWatered &&
-                       reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
-                       reminder.upcomingReminderForRepotted == userPlant.lastRepotted
-                   }) {
-                       careReminders.remove(at: reminderIndex)
-                   }
-               }
-               
-               // 4. Remove any user plant diseases
-               userPlantDisease.removeAll { $0.usersPlantRelationID == userPlant.userId }
-           }
-           
-           print("After deletion:")
-           print("- User plants count: \(self.userPlant.count)")
-           print("- Care reminders count: \(careReminders.count)")
-           print("- Reminder relations count: \(reminderOfUserPlant.count)")
-       }
-
-       func getPlants() -> [Plant] {
-           return plants
-       }
-
-       // Add this method to DataControllerGG
-       func addUserPlant(_ userPlant: UserPlant) {
-           self.userPlant.append(userPlant)
-           
-           // Create and add care reminder
-           let reminder = CareReminder_(
-               upcomingReminderForWater: userPlant.lastWatered,
-               upcomingReminderForFertilizers: userPlant.lastFertilized,
-               upcomingReminderForRepotted: userPlant.lastRepotted,
-               isWateringCompleted: false,
-               isFertilizingCompleted: false,
-               isRepottingCompleted: false
-           )
-           careReminders.append(reminder)
-           
-           // Create relationship
-           let relationship = CareReminderOfUserPlant(
-               careReminderID: UUID(),
-               userPlantRelationID: userPlant.userPlantRelationID
-           )
-           reminderOfUserPlant.append(relationship)
-       }
-   }
-
-
+        
+        // 1. Get only the user plants that exist in userPlant array
         let userPlants = userPlant.filter { $0.userId == userId }
         var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
         
-        func getPlant(by plantID: UUID) -> Plant? {
-            return plants.first { $0.plantID == plantID }
-        }
-        
-        func getDiseases(for plantID: UUID) -> [Diseases] {
-            let diseaseIDs = plantDiseases
-                .filter { $0.plantID == plantID }
-                .map { $0.diseaseID }
-            
-            return diseases.filter { diseaseIDs.contains($0.diseaseID) }
-        }
-        
-        func getPlantbyName (by name : String) -> Plant? {
-            return plants.first(where: {$0.plantName == name})
-        }
-        
-        
-        func getTopWinterPlants() -> [Plant] {
-            return plants.filter { $0.favourableSeason == .winter }
-        }
-        
-        func getCommonIssues() -> [Diseases] {
-            return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
-        }
-        
-        
-        
         for userPlant in userPlants {
+            // 2. Verify the plant exists
             if let plant = getPlant(by: userPlant.userplantID) {
-                // Calculate next reminder dates based on frequencies
-                let nextWateringDate = userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60))
-                let nextFertilizingDate = userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60))
-                let nextRepottingDate = userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60))
-                
-                let waterReminder = CareReminder_(
-                    upcomingReminderForWater: nextWateringDate,
-                    upcomingReminderForFertilizers: nextFertilizingDate,
-                    upcomingReminderForRepotted: nextRepottingDate,
-                    isWateringCompleted: userPlant.isWateringCompleted,
-                    isFertilizingCompleted: userPlant.isFertilizingCompleted,
-                    isRepottingCompleted: userPlant.isRepottingCompleted
-                )
-                reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
+                // 3. Check if there's a valid reminder relationship
+                if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+                    // 4. Find the existing reminder
+                    if let existingReminder = careReminders.first(where: { reminder in
+                        reminder.upcomingReminderForWater == userPlant.lastWatered &&
+                        reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
+                        reminder.upcomingReminderForRepotted == userPlant.lastRepotted
+                    }) {
+                        reminders.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
+                    }
+                } else {
+                    // 5. Create new reminder only if needed
+                    let waterReminder = CareReminder_(
+                        upcomingReminderForWater: userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60)),
+                        upcomingReminderForFertilizers: userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60)),
+                        upcomingReminderForRepotted: userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60)),
+                        isWateringCompleted: userPlant.isWateringCompleted,
+                        isFertilizingCompleted: userPlant.isFertilizingCompleted,
+                        isRepottingCompleted: userPlant.isRepottingCompleted
+                    )
+                    reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
+                }
             }
         }
         return reminders
@@ -888,20 +690,12 @@ class DataControllerGG {
             }
         }
         
-
-    func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
-            return careReminders.first { _ in true } 
-        }
-        
-
-
     }
     
     // Add this function to get users (moved outside of updateCareReminderStatus)
     func getUsers() -> [userInfo] {
         return user
     }
-
     
     
     func getUserPlants(for userId: UUID) -> [UserPlant] {
@@ -913,193 +707,67 @@ class DataControllerGG {
         return careReminders.first { _ in true }
     }
     
+    func deleteUserPlant(_ userPlant: UserPlant) {
+        print("Deleting plant with ID: \(userPlant.userPlantRelationID)")
+        print("Before deletion:")
+        print("- User plants count: \(self.userPlant.count)")
+        print("- Care reminders count: \(careReminders.count)")
+        print("- Reminder relations count: \(reminderOfUserPlant.count)")
+        
+        // 1. Remove from user plants array
+        if let index = self.userPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+            self.userPlant.remove(at: index)
+            
+            // 2. Find and remove the reminder relation first
+            if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+                let removedRelation = reminderOfUserPlant.remove(at: relationIndex)
+                
+                // 3. Now remove the actual reminder using the relation
+                if let reminderIndex = careReminders.firstIndex(where: { reminder in
+                    // Match reminder with the relation we just removed
+                    reminder.upcomingReminderForWater == userPlant.lastWatered &&
+                    reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
+                    reminder.upcomingReminderForRepotted == userPlant.lastRepotted
+                }) {
+                    careReminders.remove(at: reminderIndex)
+                }
+            }
+            
+            // 4. Remove any user plant diseases
+            userPlantDisease.removeAll { $0.usersPlantRelationID == userPlant.userId }
+        }
+        
+        print("After deletion:")
+        print("- User plants count: \(self.userPlant.count)")
+        print("- Care reminders count: \(careReminders.count)")
+        print("- Reminder relations count: \(reminderOfUserPlant.count)")
+    }
     
+    func getPlants() -> [Plant] {
+        return plants
+    }
     
-    
-    
-    // Add this function to get users (moved outside of updateCareReminderStatus)
-    
-    
-
+    // Add this method to DataControllerGG
+    func addUserPlant(_ userPlant: UserPlant) {
+        self.userPlant.append(userPlant)
+        
+        // Create and add care reminder
+        let reminder = CareReminder_(
+            upcomingReminderForWater: userPlant.lastWatered,
+            upcomingReminderForFertilizers: userPlant.lastFertilized,
+            upcomingReminderForRepotted: userPlant.lastRepotted,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        careReminders.append(reminder)
+        
+        // Create relationship
+        let relationship = CareReminderOfUserPlant(
+            careReminderID: UUID(),
+            userPlantRelationID: userPlant.userPlantRelationID
+        )
+        reminderOfUserPlant.append(relationship)
+    }
 }
-
-    //if let parlourPalm = dataController.plants.first(where: { $0.plantName == "Parlour Palm" }) {
-    //    let diseasesForParlourPalm = dataController.getDiseases(for: parlourPalm.plantID)
-    //    print("Diseases for \(parlourPalm.plantName): \(diseasesForParlourPalm.map { $0.diseaseName })")
-    //}
-    
-    
-    
-    
-    
-    
-    //    let plants: [Plant] = [
-    //        Plant(
-    //            plantName: "Parlor Palm",
-    //            plantNickName: "Indoor Beauty",
-    //            plantImage: ["parlor_palm_1.jpg", "parlor_palm_2.jpg"],
-    //            plantBotanicalName: "Chamaedorea elegans",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A low-maintenance indoor plant known for its lush green fronds. \n Thrives in indirect light and improves air quality.",
-    //            favourableSeason: .winter,
-    //            disease: [mosaicVirus , rust , powderyMildew],
-    //            waterFrequency :90,
-    //            fertilizerFrequency: 7, // Once a week
-    //            repottingFrequency: 30, // Monthly
-    //            pruningFrequency: 365 // Yearly
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "String Of Pearls",
-    //            plantNickName: "Pearl Vine",
-    //            plantImage: ["string_of_pearls_1.jpg", "string_of_pearls_2.jpg"],
-    //            plantBotanicalName: "Senecio rowleyanus",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A trailing succulent with bead-like leaves, ideal for hanging baskets . \n Requires bright, indirect sunlight and minimal watering.",
-    //            favourableSeason: .summer,
-    //            disease: [mosaicVirus , rust],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 60, // Every 2 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120 // Every 4 months
-    //
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Hibiscus",
-    //            plantNickName: "Tropical Bloom",
-    //            plantImage: ["hibiscus_1.jpg", "hibiscus_2.jpg"],
-    //            plantBotanicalName: "Hibiscus rosa-sinensis",
-    //            category: .Flowering,
-    //            plantDescription:
-    //                "A vibrant flowering plant known for its large, colorful blooms . \n Requires full sun and regular watering for optimal growth.",
-    //            favourableSeason: .summer,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 3, // Every 3 days
-    //            fertilizerFrequency: 15, // Twice a month
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 90  // Every 3 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Jade Plant",
-    //            plantNickName: "Money Plant",
-    //            plantImage: ["jade_plant_1.jpg", "jade_plant_2.jpg"],
-    //            plantBotanicalName: "Crassula ovata",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A hardy succulent believed to bring good luck and prosperity. Requires minimal watering and bright light.",
-    //            favourableSeason: .winter,
-    //            disease: [leafSpot],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 90, // Every 3 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120 // Every 4 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Peace Lily",
-    //            plantNickName: "Elegant White",
-    //            plantImage: ["peace_lily_1.jpg", "peace_lily_2.jpg"],
-    //            plantBotanicalName: "Spathiphyllum",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A graceful indoor plant with white blooms that purifies the air. Thrives in low to medium light with moderate watering.",
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 7, // Weekly
-    //            fertilizerFrequency: 30, // Monthly
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 90 // Every 3 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Tulsi (Holy Basil)",
-    //            plantNickName: "Sacred Herb",
-    //            plantImage: ["tulsi_1.jpg", "tulsi_2.jpg"],
-    //            plantBotanicalName: "Ocimum sanctum",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A sacred plant in Indian households known for its medicinal properties. Requires full sunlight and regular watering."
-    //            ,
-    //            favourableSeason: .summer,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 3, // Every 3 days
-    //            fertilizerFrequency: 30, // Monthly
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 60 // Every 2 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Areca Palm",
-    //            plantNickName: "Golden Cane",
-    //            plantImage: ["areca_palm_1.jpg", "areca_palm_2.jpg"],
-    //            plantBotanicalName: "Dypsis lutescens",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A popular indoor palm with feathery fronds that adds a tropical vibe. Prefers bright, indirect light and moderate watering."
-    //            ,
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 5, // Every 5 days
-    //            fertilizerFrequency: 60, // Every 2 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120// Every 4 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Snake Plant",
-    //            plantNickName: "Mother-in-law's Tongue",
-    //            plantImage: ["snake_plant_1.jpg", "snake_plant_2.jpg"],
-    //            plantBotanicalName: "Sansevieria trifasciata",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A hardy, low-maintenance plant known for its air-purifying abilities. Can survive in low light and needs minimal watering."
-    //            ,
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 90, // Every 3 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120// Every 4 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Rose",
-    //            plantNickName: "Queen of Flowers",
-    //            plantImage: ["rose_1.jpg", "rose_2.jpg"],
-    //            plantBotanicalName: "Rosa",
-    //            category: .Flowering,
-    //            plantDescription:
-    //                "A classic flowering plant known for its beauty and fragrance. Requires full sun and regular pruning for healthy blooms."
-    //            ,
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 3, // Every 3 days
-    //            fertilizerFrequency: 15, // Twice a month
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 30 // Monthly
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Aloe Vera",
-    //            plantNickName: "Healing Succulent",
-    //            plantImage: ["aloe_vera_1.jpg", "aloe_vera_2.jpg"],
-    //            plantBotanicalName: "Aloe barbadensis miller",
-    //            category: .medicinal,
-    //            plantDescription:
-    //                "A medicinal plant known for its soothing gel used in skincare. Needs bright light and minimal watering."
-    //            ,
-    //            favourableSeason: .summer,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 60, // Every 2 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120 // Every 4 months
-    //        )
-    //    ]
-    //}
-
 
