@@ -1,4 +1,3 @@
-
 //
 //  SetReminderViewController.swift
 //  GardenGuruXcode
@@ -25,7 +24,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     
      let locationLabel: UILabel = {
         let label = UILabel()
-        label.text = "Near Sofa"
+        // label.text = "Near Sofa"
         label.font = UIFont.systemFont(ofSize: 16)
         label.textColor = .gray
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -52,7 +51,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         ("Fertiliser", "Once in a month", "fertilizer", false),
         ("Repotting", "Every year", "repot", false),
         ("Set Time", "Default time: 5:00 pm", "clock1", true)
-    ]
+    ] 
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -154,7 +153,8 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     @objc  func setReminderButtonTapped() {
         print("Set Reminder button tapped!")
         print("helllooooo oooooo")
-//        Amit sir resolve this but we have to not to do this because of tab switchingby a button
+//        Amit sir resolve this but we have to not to do this because of tab switching
+        //      by a button
 //        let storyboard = UIStoryboard(name: "mySpaceTab", bundle: nil)
 //        let careVC = storyboard.instantiateViewController(withIdentifier: "CareReminderViewController")
 //        navigationController?.pushViewController(careVC, animated: true)
@@ -258,5 +258,10 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+
+    func configure(plantName: String, nickname: String) {
+        plantNameLabel.text = plantName  // Plant name in bold (already styled in the label setup)
+        locationLabel.text = nickname    // Nickname below in gray (already styled in the label setup)
     }
 }

@@ -3,7 +3,9 @@
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="collection view cell content view" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -36,22 +38,14 @@
                                     </collectionViewCell>
                                 </cells>
                             </collectionView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Total Plants: 3" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="a3c-2c-scD">
-                                <rect key="frame" x="273" y="105" width="108" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
                         <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="X4Q-MF-1Ro" secondAttribute="trailing" id="7lg-sM-faY"/>
-                            <constraint firstItem="X4Q-MF-1Ro" firstAttribute="top" secondItem="a3c-2c-scD" secondAttribute="bottom" constant="10" id="BFp-El-NTA"/>
-                            <constraint firstItem="vDu-zF-Fre" firstAttribute="trailing" secondItem="a3c-2c-scD" secondAttribute="trailing" constant="12" id="Ozi-5d-YYd"/>
                             <constraint firstItem="X4Q-MF-1Ro" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" id="Ufd-zO-eUC"/>
                             <constraint firstItem="vDu-zF-Fre" firstAttribute="bottom" secondItem="X4Q-MF-1Ro" secondAttribute="bottom" id="gRW-VG-ri9"/>
-                            <constraint firstItem="a3c-2c-scD" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="2" id="kbt-CF-QKR"/>
+                            <constraint firstItem="X4Q-MF-1Ro" firstAttribute="top" secondItem="vDu-zF-Fre" secondAttribute="top" constant="33" id="n7u-Zw-nXS"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="My Space" id="0I0-Mu-EWD">
@@ -79,7 +73,7 @@
         <!--Add Plant-->
         <scene sceneID="aVL-Uu-o6e">
             <objects>
-                <viewController id="mqh-fK-l9V" sceneMemberID="viewController">
+                <viewController id="mqh-fK-l9V" customClass="AddPlantViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="NgV-sH-Qoy">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -96,6 +90,9 @@
                                 <buttonConfiguration key="configuration" style="plain" image="camera.circle.fill" catalog="system" title="">
                                     <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="80"/>
                                 </buttonConfiguration>
+                                <connections>
+                                    <segue destination="4sg-aR-BOq" kind="show" id="f9E-Ss-VtK"/>
+                                </connections>
                             </button>
                             <searchBar contentMode="redraw" searchBarStyle="minimal" placeholder="Search Plants" translatesAutoresizingMaskIntoConstraints="NO" id="d95-7P-oeP">
                                 <rect key="frame" x="11.666666666666657" y="303" width="370" height="56"/>
@@ -127,6 +124,9 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Add Plant" id="jaB-5g-QHY"/>
+                    <connections>
+                        <outlet property="searchBar" destination="d95-7P-oeP" id="wIa-nj-Tjp"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="68I-J0-6CM" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -219,10 +219,82 @@
             </objects>
             <point key="canvasLocation" x="994.6564885496183" y="3.5211267605633805"/>
         </scene>
+        <!--Add Plant Camera View Controller-->
+        <scene sceneID="T7b-9F-Pt2">
+            <objects>
+                <viewController storyboardIdentifier="scanAndDiagnoseViewController" modalPresentationStyle="fullScreen" id="4sg-aR-BOq" customClass="addPlantCameraViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="dHG-f5-lzV">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Aya-v0-q8Z">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="695.66666666666663"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                            </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="LTT-PX-2ZI">
+                                <rect key="frame" x="146.66666666666666" y="728.66666666666663" width="100" height="96.333333333333371"/>
+                                <color key="backgroundColor" systemColor="systemGray2Color"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="96.329999999999998" id="LEi-Ku-nPI"/>
+                                    <constraint firstAttribute="width" constant="100" id="bib-XL-MIc"/>
+                                </constraints>
+                                <color key="tintColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" image="circle" catalog="system">
+                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="64"/>
+                                </buttonConfiguration>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="50"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                                <connections>
+                                    <action selector="captureButtonTapped:" destination="4sg-aR-BOq" eventType="touchUpInside" id="xyz-abc-123"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="9Lx-Uy-ymP"/>
+                        <color key="backgroundColor" red="0.92156862750000001" green="0.95686274510000002" blue="0.92156862750000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="LTT-PX-2ZI" firstAttribute="top" secondItem="Aya-v0-q8Z" secondAttribute="bottom" constant="33" id="29o-x6-sGo"/>
+                            <constraint firstAttribute="bottom" secondItem="LTT-PX-2ZI" secondAttribute="bottom" constant="27" id="CDx-eZ-usu"/>
+                            <constraint firstItem="Aya-v0-q8Z" firstAttribute="centerX" secondItem="LTT-PX-2ZI" secondAttribute="centerX" id="E5D-zf-LEh"/>
+                            <constraint firstItem="Aya-v0-q8Z" firstAttribute="leading" secondItem="9Lx-Uy-ymP" secondAttribute="leading" id="Yp0-Vl-u9I"/>
+                            <constraint firstItem="Aya-v0-q8Z" firstAttribute="top" secondItem="dHG-f5-lzV" secondAttribute="topMargin" constant="-103" id="riJ-BW-UqI"/>
+                            <constraint firstItem="LTT-PX-2ZI" firstAttribute="centerX" secondItem="dHG-f5-lzV" secondAttribute="centerX" id="y2p-73-Fjb"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" id="7Th-4W-zU5">
+                        <barButtonItem key="leftBarButtonItem" style="plain" id="QFY-Jh-tvv">
+                            <imageReference key="image" image="xmark.square.fill" catalog="system" symbolScale="large" variableValue="0.0"/>
+                            <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <connections>
+                                <segue destination="5WA-d8-ydn" kind="unwind" unwindAction="unwindToAddPlantViewController:" id="gba-zi-aus"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="cameraView" destination="Aya-v0-q8Z" id="def-ghi-456"/>
+                        <outlet property="captureButton" destination="LTT-PX-2ZI" id="jkl-mno-789"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Q84-TF-mB3" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+                <exit id="5WA-d8-ydn" userLabel="Exit" sceneMemberID="exit"/>
+            </objects>
+            <point key="canvasLocation" x="3613" y="-50"/>
+        </scene>
     </scenes>
     <resources>
         <image name="bell" catalog="system" width="125" height="128"/>
         <image name="camera.circle.fill" catalog="system" width="128" height="123"/>
+        <image name="circle" catalog="system" width="128" height="123"/>
         <image name="fan.fill" catalog="system" width="128" height="116"/>
+        <image name="xmark.square.fill" catalog="system" width="128" height="114"/>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemGray2Color">
+            <color red="0.68235294120000001" green="0.68235294120000001" blue="0.69803921570000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
     </resources>
 </document>

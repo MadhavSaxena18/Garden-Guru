@@ -1,273 +1,82 @@
 import Foundation
 
-//
-//
-//    var rootRot : Diseases = Diseases(
-//        diseaseName: "Root Rot",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Yellowing leaves", "Soft, mushy roots", "Wilting despite watering"],
-//        diseaseImage: ["rootrot1.jpg", "rootrot2.jpg"],
-//        diseaseCure: ["Remove affected roots", "Repot with well-draining soil", "Reduce watering"],
-//        diseaseFertilizers: ["Organic compost", "Neem-based fungicide"],
-//        cureDuration: 14,
-//        diseaseSeason: .winter
-//    )
-//
-//    var powderyMildew : Diseases = Diseases(
-//        diseaseName: "Powdery Mildew",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["White powdery spots on leaves", "Distorted growth", "Leaves turning yellow"],
-//        diseaseImage: ["powderymildew1.jpg", "powderymildew2.jpg"],
-//        diseaseCure: ["Apply sulfur-based fungicide", "Increase air circulation", "Remove infected leaves"],
-//        diseaseFertilizers: ["Compost tea", "Liquid seaweed fertilizer"],
-//        cureDuration: 10,
-//        diseaseSeason: .rainy
-//    )
-//
-//    var leafSpot : Diseases = Diseases(
-//        diseaseName: "Leaf Spot",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
-//        diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
-//        diseaseCure: ["Remove infected leaves", "Apply copper-based fungicide", "Ensure proper air circulation"],
-//        diseaseFertilizers: ["Fish emulsion", "Balanced NPK fertilizer (10-10-10)"],
-//        cureDuration: 7,
-//        diseaseSeason: .summer
-//    )
-//
-//    var blight : Diseases = Diseases(
-//        diseaseName: "Blight",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Brown, sunken spots on stems and leaves", "Rapid wilting", "Fungal growth on plant surface"],
-//        diseaseImage: ["blight1.jpg", "blight2.jpg"],
-//        diseaseCure: ["Use copper fungicide", "Remove infected parts", "Avoid overhead watering"],
-//        diseaseFertilizers: ["Bone meal", "Slow-release potassium fertilizer"],
-//        cureDuration: 12,
-//        diseaseSeason: .winter
-//    )
-//
-//    var rust : Diseases = Diseases(
-//        diseaseName: "Rust",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Orange or brown pustules on leaves", "Leaf curling", "Early leaf drop"],
-//        diseaseImage: ["rust1.jpg", "rust2.jpg"],
-//        diseaseCure: ["Remove infected leaves", "Apply sulfur-based fungicide", "Keep foliage dry"],
-//        diseaseFertilizers: ["Nitrogen-rich fertilizer", "Liquid fish fertilizer"],
-//        cureDuration: 8,
-//        diseaseSeason: .winter
-//    )
-//
-//    var dampingOff:Diseases = Diseases(
-//        diseaseName: "Damping Off",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Seedlings collapsing", "Rotting at soil level", "Poor germination"],
-//        diseaseImage: ["dampingoff1.jpg", "dampingoff2.jpg"],
-//        diseaseCure: ["Use sterile soil mix", "Avoid overwatering", "Apply biological fungicides"],
-//        diseaseFertilizers: ["Weak liquid fertilizer", "Seaweed extract"],
-//        cureDuration: 5,
-//        diseaseSeason: .Spring
-//    )
-//
-//    var grayMold : Diseases = Diseases(
-//        diseaseName: "Botrytis (Gray Mold)",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Gray fuzzy mold on leaves", "Brown water-soaked spots", "Stems collapsing"],
-//        diseaseImage: ["botrytis1.jpg", "botrytis2.jpg"],
-//        diseaseCure: ["Improve air circulation", "Apply neem oil spray", "Remove affected plant parts"],
-//        diseaseFertilizers: ["Calcium nitrate", "Organic compost"],
-//        cureDuration: 9,
-//        diseaseSeason: .summer
-//    )
-//
-//    var anthracnose : Diseases =  Diseases(
-//        diseaseName: "Anthracnose",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Dark sunken lesions on stems and leaves", "Defoliation", "Brown streaks on flowers"],
-//        diseaseImage: ["anthracnose1.jpg", "anthracnose2.jpg"],
-//        diseaseCure: ["Apply copper-based fungicide", "Prune infected branches", "Ensure good drainage"],
-//        diseaseFertilizers: ["Phosphorus-rich fertilizer", "Epsom salt spray"],
-//        cureDuration: 11,
-//        diseaseSeason: .winter
-//    )
-//
-//    var mosaicVirus : Diseases = Diseases(
-//        diseaseName: "Mosaic Virus",
-//        diseaseID: UUID(),
-//        diseaseSymptoms: ["Yellow-green mottling on leaves", "Stunted growth", "Distorted leaf shapes"],
-//        diseaseImage: ["mosaicvirus1.jpg", "mosaicvirus2.jpg"],
-//        diseaseCure: ["Remove infected plants", "Control aphids", "Use disease-resistant varieties"],
-//        diseaseFertilizers: ["Balanced organic fertilizer", "Liquid potassium supplement"],
-//        cureDuration: 15,
-//        diseaseSeason: .winter
-//    )
-//
-//    // PLANT DATA
-//
-//    var parlorPalm : Plant =  Plant(
-//        plantName: "Parlor Palm",
-//        plantImage: ["parlor_palm_1.jpg", "parlor_palm_2.jpg"],
-//        plantBotanicalName: "Chamaedorea elegans",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A low-maintenance indoor plant known for its lush green fronds. \n Thrives in indirect light and improves air quality.",
-//        favourableSeason: .winter,
-//        waterFrequency :90,
-//        fertilizerFrequency: 7, // Once a week
-//        repottingFrequency: 30, // Monthly
-//        pruningFrequency: 365 // Yearly
-//    )
-//
-//    var stringOfPearls : Plant = Plant(
-//        plantName: "String Of Pearls",
-//        plantImage: ["string_of_pearls_1.jpg", "string_of_pearls_2.jpg"],
-//        plantBotanicalName: "Senecio rowleyanus",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A trailing succulent with bead-like leaves, ideal for hanging baskets . \n Requires bright, indirect sunlight and minimal watering.",
-//        favourableSeason: .summer,
-//        waterFrequency: 14, // Every 2 weeks
-//        fertilizerFrequency: 60, // Every 2 months
-//        repottingFrequency: 730, // Every 2 years
-//        pruningFrequency: 120 // Every 4 months
-//
-//    )
-//
-//    var hibiscus : Plant = Plant(
-//        plantName: "Hibiscus",
-//        plantImage: ["hibiscus_1.jpg", "hibiscus_2.jpg"],
-//        plantBotanicalName: "Hibiscus rosa-sinensis",
-//        category: .Flowering,
-//        plantDescription:
-//            "A vibrant flowering plant known for its large, colorful blooms . \n Requires full sun and regular watering for optimal growth.",
-//        favourableSeason: .summer,
-//        waterFrequency: 3, // Every 3 days
-//        fertilizerFrequency: 15, // Twice a month
-//        repottingFrequency: 365, // Yearly
-//        pruningFrequency: 90  // Every 3 months
-//    )
-//
-//    var jadePlant : Plant = Plant(
-//        plantName: "Jade Plant",
-//        plantImage: ["jade_plant_1.jpg", "jade_plant_2.jpg"],
-//        plantBotanicalName: "Crassula ovata",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A hardy succulent believed to bring good luck and prosperity. Requires minimal watering and bright light.",
-//        favourableSeason: .winter,
-//        waterFrequency: 14, // Every 2 weeks
-//        fertilizerFrequency: 90, // Every 3 months
-//        repottingFrequency: 730, // Every 2 years
-//        pruningFrequency: 120 // Every 4 months
-//    )
-//
-//    var peaceLily : Plant = Plant(
-//        plantName: "Peace Lily",
-//        plantImage: ["peace_lily_1.jpg", "peace_lily_2.jpg"],
-//        plantBotanicalName: "Spathiphyllum",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A graceful indoor plant with white blooms that purifies the air. Thrives in low to medium light with moderate watering.",
-//        favourableSeason: .winter,
-//        waterFrequency: 7, // Weekly
-//        fertilizerFrequency: 30, // Monthly
-//        repottingFrequency: 365, // Yearly
-//        pruningFrequency: 90 // Every 3 months
-//    )
-//
-//    var arecaPalm : Plant = Plant(
-//        plantName: "Areca Palm",
-//        plantImage: ["areca_palm_1.jpg", "areca_palm_2.jpg"],
-//        plantBotanicalName: "Dypsis lutescens",
-//        category: .Ornamental,
-//        plantDescription:
-//            "A popular indoor palm with feathery fronds that adds a tropical vibe. Prefers bright, indirect light and moderate watering."
-//        ,
-//        favourableSeason: .winter,
-//        waterFrequency: 5, // Every 5 days
-//        fertilizerFrequency: 60, // Every 2 months
-//        repottingFrequency: 730, // Every 2 years
-//        pruningFrequency: 120// Every 4 months
-//    )
-//
-//
-//
-//    //Plant Disease
-//
-//    var parlorPalmRust : PlantDisease = PlantDisease(
-//        plantDiseaseID: UUID(),
-//        plantID: parlorPalm.plantID,
-//        diseaseID: rust.diseaseID
-//    )
-//
-//    var arecaPalmAnthracnose : PlantDisease = PlantDisease(
-//    plantDiseaseID: UUID(),
-//    plantID: arecaPalm.plantID,
-//    diseaseID: anthracnose.diseaseID
-//    )
-
 class DataControllerGG {
-
-//    private var plants: [Plant] = []
-//    private var diseases: [Diseases] = []
-//    private var plantDiseases: [PlantDisease] = []
-//    private var user : [userInfo] = []
-//    private var userPlant : [UserPlant] = []
-//    let currentDate = Date()
-//    private var userPlantDisease : [UsersPlantDisease] = []
-
-       private var plants: [Plant] = []
-       private var diseases: [Diseases] = []
-       private var plantDiseases: [PlantDisease] = []
-       private var user : [userInfo] = []
-       private var userPlant : [UserPlant] = []
-       let currentDate = Date()
-       private var userPlantDisease : [UsersPlantDisease] = []
-       private var careReminders : [CareReminder_] = []
-       private var reminderOfUserPlant : [CareReminderOfUserPlant] = []
-
+    
+    
+    //    private var plants: [Plant] = []
+    //    private var diseases: [Diseases] = []
+    //    private var plantDiseases: [PlantDisease] = []
+    //    private var user : [userInfo] = []
+    //    private var userPlant : [UserPlant] = []
+    //    let currentDate = Date()
+    //    private var userPlantDisease : [UsersPlantDisease] = []
+    
+    
+    
+    private var plants: [Plant] = []
+    private var diseases: [Diseases] = []
+    private var plantDiseases: [PlantDisease] = []
+    private var user : [userInfo] = []
+    private var userPlant : [UserPlant] = []
+    let currentDate = Date()
+    private var userPlantDisease : [UsersPlantDisease] = []
+    private var careReminders : [CareReminder_] = []
+    private var reminderOfUserPlant : [CareReminderOfUserPlant] = []
+    private var fertilizer : [Fertilizer] = []
+    private var diseaseFertilizer : [DiseaseFertilizer] = []
+    
+    //    private var plants: [Plant] = []
+    //    private var diseases: [Diseases] = []
+    //    private var plantDiseases: [PlantDisease] = []
+    //    private var user : [userInfo] = []
+    //    private var userPlant : [UserPlant] = []
+    //    let currentDate = Date()
+    //    private var userPlantDisease : [UsersPlantDisease] = []
+    
+    
     
     init() {
         
         
-        var John : userInfo = userInfo(
+        let John : userInfo = userInfo(
             userName: "John",
             location: "Greater Noida",
             reminderAllowed: true)
         
         user.append(John)
         
-       
         
-        var parlorPalm : Plant =  Plant(
-            plantName: "Parlor Palm",
+        
+        let parlorPalm : Plant =  Plant(
+            plantName: "Parlor-Palm",
             plantImage: ["parlor_palm_1.jpg", "parlor_palm_2.jpg"],
             plantBotanicalName: "Chamaedorea elegans",
             category: .Ornamental,
             plantDescription:
                 "A low-maintenance indoor plant known for its lush green fronds. \n Thrives in indirect light and improves air quality.",
             favourableSeason: .winter,
-            waterFrequency :90,
+            waterFrequency :3, // Twice in a week
             fertilizerFrequency: 7, // Once a week
             repottingFrequency: 30, // Monthly
             pruningFrequency: 365 // Yearly
         )
         
-        var stringOfPearls : Plant = Plant(
-            plantName: "String Of Pearls",
-            plantImage: ["string_of_pearls_1.jpg", "string_of_pearls_2.jpg"],
+        let tulip : Plant = Plant(
+            plantName: "Tulip",
+            plantImage: ["Tulip1.jpg", "Tulip2.jpg"],
             plantBotanicalName: "Senecio rowleyanus",
             category: .Ornamental,
             plantDescription:
-                "A trailing succulent with bead-like leaves, ideal for hanging baskets . \n Requires bright, indirect sunlight and minimal watering.",
+                "Tulips are one of the most iconic and beloved flowering plants, known for their vibrant colors and elegant, cup-shaped blooms. They grow from bulbs and produce long, slender green leaves with a smooth texture.",
             favourableSeason: .summer,
-            waterFrequency: 14, // Every 2 weeks
+            waterFrequency: 4, // Every 2 weeks
             fertilizerFrequency: 60, // Every 2 months
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120 // Every 4 months
             
         )
         
-        var hibiscus : Plant = Plant(
+        let hibiscus : Plant = Plant(
             plantName: "Hibiscus",
             plantImage: ["hibiscus_1.jpg", "hibiscus_2.jpg"],
             plantBotanicalName: "Hibiscus rosa-sinensis",
@@ -281,13 +90,13 @@ class DataControllerGG {
             pruningFrequency: 90  // Every 3 months
         )
         
-        var jadePlant : Plant = Plant(
-            plantName: "Jade Plant",
-            plantImage: ["jade_plant_1.jpg", "jade_plant_2.jpg"],
+        let aloeVera : Plant = Plant(
+            plantName: "Aloe Vera",
+            plantImage: ["AloeVera1.jpg", "AloeVera2.jpg"],
             plantBotanicalName: "Crassula ovata",
             category: .Ornamental,
             plantDescription:
-                "A hardy succulent believed to bring good luck and prosperity. Requires minimal watering and bright light.",
+                "Aloe vera is a hardy, evergreen succulent known for its thick, fleshy, green leaves filled with a soothing gel. The leaves have serrated edges with small, soft spines. This plant stores water in its leaves, making it highly drought-resistant.",
             favourableSeason: .winter,
             waterFrequency: 14, // Every 2 weeks
             fertilizerFrequency: 90, // Every 3 months
@@ -295,13 +104,13 @@ class DataControllerGG {
             pruningFrequency: 120 // Every 4 months
         )
         
-        var peaceLily : Plant = Plant(
-            plantName: "Peace Lily",
-            plantImage: ["peace_lily_1.jpg", "peace_lily_2.jpg"],
+        let rainLily : Plant = Plant(
+            plantName: "Rain Lily",
+            plantImage: ["RainLily1.jpg", "RainLily2.jpg"],
             plantBotanicalName: "Spathiphyllum",
             category: .Ornamental,
             plantDescription:
-                "A graceful indoor plant with white blooms that purifies the air. Thrives in low to medium light with moderate watering.",
+                "Rain lilies are delicate, perennial flowering plants that bloom after rainfall, hence their name. They produce star-shaped or trumpet-like flowers in shades of pink, yellow, or white. The grass-like, slender green leaves add to their elegant appearance. ",
             favourableSeason: .winter,
             waterFrequency: 7, // Weekly
             fertilizerFrequency: 30, // Monthly
@@ -309,8 +118,8 @@ class DataControllerGG {
             pruningFrequency: 90 // Every 3 months
         )
         
-        var arecaPalm : Plant = Plant(
-            plantName: "Areca Palm",
+        let arecaPalm : Plant = Plant(
+            plantName: "Areca Palm (Dypsis lutescens)",
             plantImage: ["areca_palm_1.jpg", "areca_palm_2.jpg"],
             plantBotanicalName: "Dypsis lutescens",
             category: .Ornamental,
@@ -323,24 +132,94 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120// Every 4 months
         )
-        var rose: Plant = Plant(
-                    plantName: "Rose",
-                    plantImage: ["rose plant"],
-                    plantBotanicalName: "Rosa spp.",
-                    category: .Ornamental,
-                    plantDescription: "A classic choice for any home. Thrives in full sun and well-draining soil.",
-                    favourableSeason: .winter,
-                    waterFrequency: 7,
-                    fertilizerFrequency: 30,
-                    repottingFrequency: 365,
-                    pruningFrequency: 90
-                )
         
-        plants.append(contentsOf: [parlorPalm, stringOfPearls ,hibiscus  ,jadePlant , peaceLily , arecaPalm , rose])
+        var rose: Plant = Plant(
+            plantName: "Mawar-Rose",
+            plantImage: ["rose plant"],
+            plantBotanicalName: "Rosa spp.",
+            category: .Ornamental,
+            plantDescription: "A classic choice for any home. Thrives in full sun and well-draining soil.",
+            favourableSeason: .winter,
+            waterFrequency: 7,
+            fertilizerFrequency: 30,
+            repottingFrequency: 365,
+            pruningFrequency: 90
+        )
+        
+        
+        
+        let sunflower: Plant = Plant(
+            plantName: "sunflower",
+            plantImage: ["sunflower1.jpg" , "sunflower2.jpg"], //nam abhi change krna hai
+            plantBotanicalName: "Helianthus annuus",
+            category: .Ornamental,
+            plantDescription: "Bright and cheerful flowers that follow the sun. Prefers full sun and well-draining soil.",
+            favourableSeason: .summer,
+            waterFrequency: 5,
+            fertilizerFrequency: 20,
+            repottingFrequency: 365,
+            pruningFrequency: 60
+        )
+        
+        let bellflower: Plant = Plant(
+            plantName: "bellflower",
+            plantImage: ["bellflower plant"],//name change
+            plantBotanicalName: "Campanula spp.",
+            category: .Ornamental,
+            plantDescription: "Delicate, bell-shaped flowers that add charm to any garden. Grows well in partial sun.",
+            favourableSeason: .summer,
+            waterFrequency: 6,
+            fertilizerFrequency: 25,
+            repottingFrequency: 365,
+            pruningFrequency: 75
+        )
+        
+        let orchid: Plant = Plant(
+            plantName: "Orchidaceae - Orchid",
+            plantImage: ["orchidplant1.jpg" , "orchidplant2.jpg"],//name change
+            plantBotanicalName: "Orchidaceae",
+            category: .Ornamental,
+            plantDescription: "Elegant and exotic flowers that thrive in indirect light with high humidity.",
+            favourableSeason: .winter,
+            waterFrequency: 7,
+            fertilizerFrequency: 15,
+            repottingFrequency: 730,
+            pruningFrequency: 90
+        )
+        
+        let snakePlant: Plant = Plant(
+            plantName: "Snake plant (Sanseviera)",
+            plantImage: ["snakeplant1.jpg" , "snakeplant2.jpg"],//name change
+            plantBotanicalName: "Sansevieria trifasciata",
+            category: .Ornamental,
+            plantDescription: "A hardy, air-purifying plant that thrives in low light and requires minimal care.",
+            favourableSeason: .summer,
+            waterFrequency: 14,
+            fertilizerFrequency: 60,
+            repottingFrequency: 730,
+            pruningFrequency: 180
+        )
+        
+        let daisy: Plant = Plant(
+            plantName: "daisy",
+            plantImage: ["daisy1.jpg" , "daisy2.jpg"],//name change
+            plantBotanicalName: "Bellis perennis",
+            category: .Ornamental,
+            plantDescription: "Cheerful flowers that bloom throughout the year, thriving in full sun and well-drained soil.",
+            favourableSeason: .winter,
+            waterFrequency: 5,
+            fertilizerFrequency: 30,
+            repottingFrequency: 365,
+            pruningFrequency: 60
+        )
+        
+        
+        
+        plants.append(contentsOf: [parlorPalm, tulip ,hibiscus  ,aloeVera , rainLily , arecaPalm , rose , sunflower , bellflower , daisy , snakePlant , orchid])
         
         
         //Diseases data
-        var rootRot : Diseases = Diseases(
+        let rootRot : Diseases = Diseases(
             diseaseName: "Root Rot",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellowing leaves", "Soft, mushy roots", "Wilting despite watering"],
@@ -371,7 +250,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var powderyMildew : Diseases = Diseases(
+        let powderyMildew : Diseases = Diseases(
             diseaseName: "Powdery Mildew",
             diseaseID: UUID(),
             diseaseSymptoms: ["White powdery spots on leaves", "Distorted growth", "Leaves turning yellow"],
@@ -402,7 +281,7 @@ class DataControllerGG {
             diseaseSeason: .rainy
         )
         
-        var leafSpot : Diseases = Diseases(
+        let leafSpot : Diseases = Diseases(
             diseaseName: "Leaf Spot",
             diseaseID: UUID(),
             diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
@@ -432,7 +311,7 @@ class DataControllerGG {
             ], diseaseSeason: .summer
         )
         
-        var blight : Diseases = Diseases(
+        let blight : Diseases = Diseases(
             diseaseName: "Blight",
             diseaseID: UUID(),
             diseaseSymptoms: ["Brown, sunken spots on stems and leaves", "Rapid wilting", "Fungal growth on plant surface"],
@@ -462,7 +341,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var rust : Diseases = Diseases(
+        let rust : Diseases = Diseases(
             diseaseName: "Rust",
             diseaseID: UUID(),
             diseaseSymptoms: ["Orange or brown pustules on leaves", "Leaf curling", "Early leaf drop"],
@@ -492,7 +371,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var dampingOff:Diseases = Diseases(
+        let dampingOff:Diseases = Diseases(
             diseaseName: "Damping Off",
             diseaseID: UUID(),
             diseaseSymptoms: ["Seedlings collapsing", "Rotting at soil level", "Poor germination"],
@@ -522,7 +401,7 @@ class DataControllerGG {
             ], diseaseSeason: .Spring
         )
         
-        var grayMold : Diseases = Diseases(
+        let grayMold : Diseases = Diseases(
             diseaseName: "Botrytis (Gray Mold)",
             diseaseID: UUID(),
             diseaseSymptoms: ["Gray fuzzy mold on leaves", "Brown water-soaked spots", "Stems collapsing"],
@@ -552,7 +431,7 @@ class DataControllerGG {
             ], diseaseSeason: .summer
         )
         
-        var anthracnose : Diseases =  Diseases(
+        let anthracnose : Diseases =  Diseases(
             diseaseName: "Anthracnose",
             diseaseID: UUID(),
             diseaseSymptoms: ["Dark sunken lesions on stems and leaves", "Defoliation", "Brown streaks on flowers"],
@@ -582,7 +461,7 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        var mosaicVirus : Diseases = Diseases(
+        let mosaicVirus : Diseases = Diseases(
             diseaseName: "Mosaic Virus",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellow-green mottling on leaves", "Stunted growth", "Distorted leaf shapes"],
@@ -621,10 +500,10 @@ class DataControllerGG {
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: grayMold.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: blight.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: grayMold.diseaseID))
-        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: peaceLily.plantID, diseaseID: rootRot.diseaseID))
-        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: peaceLily.plantID, diseaseID: blight.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: rootRot.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: blight.diseaseID))
         
-        var john1Plant : UserPlant = UserPlant(
+        let john1Plant : UserPlant = UserPlant(
             userId: John.userId,
             userplantID: parlorPalm.plantID,
             userPlantNickName: "Near Sofa",
@@ -636,9 +515,9 @@ class DataControllerGG {
             isRepottingCompleted: false
         )
         
-        var john2Plant : UserPlant = UserPlant(
+        let john2Plant : UserPlant = UserPlant(
             userId: John.userId,
-            userplantID: peaceLily.plantID,
+            userplantID: rainLily.plantID,
             userPlantNickName: "In Garden",
             lastWatered: currentDate,
             lastFertilized: currentDate,
@@ -648,6 +527,8 @@ class DataControllerGG {
             isRepottingCompleted: false
         )
         
+        
+        
         // Add the user plants to the array
         userPlant.append(john1Plant)
         userPlant.append(john2Plant)
@@ -655,6 +536,7 @@ class DataControllerGG {
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rootRot.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rust.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john2Plant.userId, diseaseID: rust.diseaseID))
+        
         
         var reminderofUserPlant1 : CareReminder_ = CareReminder_(
             upcomingReminderForWater: currentDate,
@@ -676,12 +558,62 @@ class DataControllerGG {
         
         careReminders.append(contentsOf: [reminderofUserPlant1, reminderOfUserPlant2])
         
-//        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
+        //        var reminderofUserPlant1 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 120, to: currentDate)! , isCompleted: true)
+        //
+        //        var reminderOfUserPlant2 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!, isCompleted: true)
+        //
+        //        careReminders.append(contentsOf: [reminderofUserPlant1 , reminderOfUserPlant2])
         
+        
+        //        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
+      
+
+        // Creating 5 fertilizer objects
+        let npk = Fertilizer(
+            fertilizerName: "NPK 20-20-20",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/npk_20_20_20.jpg",
+            fertilizerDescription: "Balanced fertilizer for overall plant growth."
+        )
+
+        let urea = Fertilizer(
+            fertilizerName: "Urea",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/urea.jpg",
+            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
+        )
+
+        let boneMeal = Fertilizer(
+            fertilizerName: "Bone Meal",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/bone_meal.jpg",
+            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
+        )
+
+        let vermicompost = Fertilizer(
+            fertilizerName: "Vermicompost",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/vermicompost.jpg",
+            fertilizerDescription: "Organic compost that improves soil health and fertility."
+        )
+
+        let potash = Fertilizer(
+            fertilizerName: "Potash",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/potash.jpg",
+            fertilizerDescription: "Essential for flower and fruit development in plants."
+        )
+        
+        fertilizer.append(contentsOf : [npk , urea , boneMeal , vermicompost , potash])
+        
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: blight.diseaseID, fertilizerId: potash.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: vermicompost.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rootRot.diseaseID, fertilizerId: boneMeal.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: grayMold.diseaseID, fertilizerId: urea.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: npk.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: blight.diseaseID, fertilizerId: urea.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rootRot.diseaseID, fertilizerId: vermicompost.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: potash.fertilizerId))
         
         
     }
-
+    
+    
     func getPlant(by plantID: UUID) -> Plant? {
         return plants.first { $0.plantID == plantID }
     }
@@ -693,13 +625,18 @@ class DataControllerGG {
         
         return diseases.filter { diseaseIDs.contains($0.diseaseID) }
     }
-    func getTopWinterPlants() -> [Plant] {
+    func getTopSeasonPlants() -> [Plant] {
         return plants.filter { $0.favourableSeason == .winter }
     }
     
     func getCommonIssues() -> [Diseases] {
         return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
     }
+    
+    func getPlantbyName (by name : String) -> Plant? {
+        return plants.first(where: {$0.plantName == name})
+    }
+    
     
     func getCommonIssuesForRose() -> [Diseases] {
         guard let rosePlant = plants.first(where: { $0.plantName == "Rose" }) else { return [] }
@@ -708,57 +645,65 @@ class DataControllerGG {
         return getDiseases(for: rosePlant.plantID)
     }
     
+    func getDiseasesForUserPlants(userId: UUID) -> [Diseases] {
+        // Get all plants belonging to the user
+        let userPlants = userPlant.filter { $0.userId == userId }
+        
+        // Get all diseases for these plants
+        var allDiseases: [Diseases] = []
+        for userPlant in userPlants {
+            let plantDiseases = getDiseases(for: userPlant.userplantID)
+            allDiseases.append(contentsOf: plantDiseases)
+        }
+        
+        // Remove duplicates by using diseaseID instead of Set
+        return Array(Dictionary(grouping: allDiseases) { $0.diseaseID }.values.map { $0[0] })
+    }
+    
+    // Replace the existing getCommonIssuesForRose function with this:
+    func getCommonIssuesForUserPlants() -> [Diseases] {
+        // For now, we'll use the first user's plants
+        // In a real app, you'd pass the current user's ID
+        if let firstUser = user.first {
+            return getDiseasesForUserPlants(userId: firstUser.userId)
+        }
+        return []
+    }
+    
     func getCommonFertilizersForParlorPalm() -> [String] {
         return ["Organic Compost", "Liquid Fertilizer", "Seaweed Extract"] // Custom fertilizers for Parlour Palm
     }
-    
-    // Get user's plants with their care reminders
     func getCareReminders(for userId: UUID) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
+        
+        // 1. Get only the user plants that exist in userPlant array
         let userPlants = userPlant.filter { $0.userId == userId }
         var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
-
-        func getPlant(by plantID: UUID) -> Plant? {
-            return plants.first { $0.plantID == plantID }
-        }
-    
-        func getDiseases(for plantID: UUID) -> [Diseases] {
-            let diseaseIDs = plantDiseases
-                .filter { $0.plantID == plantID }
-                .map { $0.diseaseID }
-            
-            return diseases.filter { diseaseIDs.contains($0.diseaseID) }
-        }
-    
-        func getPlantbyName (by name : String) -> Plant? {
-        return plants.first(where: {$0.plantName == name})
-    }
-    
-    
-        func getTopWinterPlants() -> [Plant] {
-            return plants.filter { $0.favourableSeason == .winter }
-        }
-
-        func getCommonIssues() -> [Diseases] {
-            return diseases.filter { $0.diseaseSeason == .winter } // Filtering common winter issues
-        }
-
         
         for userPlant in userPlants {
+            // 2. Verify the plant exists
             if let plant = getPlant(by: userPlant.userplantID) {
-                // Calculate next reminder dates based on frequencies
-                let nextWateringDate = userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60))
-                let nextFertilizingDate = userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60))
-                let nextRepottingDate = userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60))
-                
-                let waterReminder = CareReminder_(
-                    upcomingReminderForWater: nextWateringDate,
-                    upcomingReminderForFertilizers: nextFertilizingDate,
-                    upcomingReminderForRepotted: nextRepottingDate,
-                    isWateringCompleted: userPlant.isWateringCompleted,
-                    isFertilizingCompleted: userPlant.isFertilizingCompleted,
-                    isRepottingCompleted: userPlant.isRepottingCompleted
-                )
-                reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
+                // 3. Check if there's a valid reminder relationship
+                if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+                    // 4. Find the existing reminder
+                    if let existingReminder = careReminders.first(where: { reminder in
+                        reminder.upcomingReminderForWater == userPlant.lastWatered &&
+                        reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
+                        reminder.upcomingReminderForRepotted == userPlant.lastRepotted
+                    }) {
+                        reminders.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
+                    }
+                } else {
+                    // 5. Create new reminder only if needed
+                    let waterReminder = CareReminder_(
+                        upcomingReminderForWater: userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60)),
+                        upcomingReminderForFertilizers: userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60)),
+                        upcomingReminderForRepotted: userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60)),
+                        isWateringCompleted: userPlant.isWateringCompleted,
+                        isFertilizingCompleted: userPlant.isFertilizingCompleted,
+                        isRepottingCompleted: userPlant.isRepottingCompleted
+                    )
+                    reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
+                }
             }
         }
         return reminders
@@ -787,7 +732,7 @@ class DataControllerGG {
                 break
             }
         }
-
+        
     }
     
     // Add this function to get users (moved outside of updateCareReminderStatus)
@@ -795,194 +740,71 @@ class DataControllerGG {
         return user
     }
     
-
+    
     func getUserPlants(for userId: UUID) -> [UserPlant] {
-            return userPlant.filter { $0.userId == userId }
+        return userPlant.filter { $0.userId == userId }
+    }
+    
+    
+    func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
+        return careReminders.first { _ in true }
+    }
+    
+    func deleteUserPlant(_ userPlant: UserPlant) {
+        print("Deleting plant with ID: \(userPlant.userPlantRelationID)")
+        print("Before deletion:")
+        print("- User plants count: \(self.userPlant.count)")
+        print("- Care reminders count: \(careReminders.count)")
+        print("- Reminder relations count: \(reminderOfUserPlant.count)")
+        
+        // 1. Remove from user plants array
+        if let index = self.userPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
+            self.userPlant.remove(at: index)
+            
+            // 2. Find and remove all reminder relations for this plant
+            reminderOfUserPlant.removeAll { $0.userPlantRelationID == userPlant.userPlantRelationID }
+            
+            // 3. Remove the actual reminders that match this plant's dates
+            careReminders.removeAll { reminder in
+                reminder.upcomingReminderForWater == userPlant.lastWatered &&
+                reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
+                reminder.upcomingReminderForRepotted == userPlant.lastRepotted
+            }
+            
+            // 4. Remove any user plant diseases
+            userPlantDisease.removeAll { $0.usersPlantRelationID == userPlant.userId }
         }
         
+        print("After deletion:")
+        print("- User plants count: \(self.userPlant.count)")
+        print("- Care reminders count: \(careReminders.count)")
+        print("- Reminder relations count: \(reminderOfUserPlant.count)")
+    }
+    
+    func getPlants() -> [Plant] {
+        return plants
+    }
+    
+    // Add this method to DataControllerGG
+    func addUserPlant(_ userPlant: UserPlant) {
+        self.userPlant.append(userPlant)
         
-        func getCareReminder(for userPlant: UserPlant) -> CareReminder_? {
-            return careReminders.first { _ in true } 
-        }
+        // Create and add care reminder
+        let reminder = CareReminder_(
+            upcomingReminderForWater: userPlant.lastWatered,
+            upcomingReminderForFertilizers: userPlant.lastFertilized,
+            upcomingReminderForRepotted: userPlant.lastRepotted,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        careReminders.append(reminder)
         
-
+        // Create relationship
+        let relationship = CareReminderOfUserPlant(
+            careReminderID: UUID(),
+            userPlantRelationID: userPlant.userPlantRelationID
+        )
+        reminderOfUserPlant.append(relationship)
+    }
 }
-    //if let parlourPalm = dataController.plants.first(where: { $0.plantName == "Parlour Palm" }) {
-    //    let diseasesForParlourPalm = dataController.getDiseases(for: parlourPalm.plantID)
-    //    print("Diseases for \(parlourPalm.plantName): \(diseasesForParlourPalm.map { $0.diseaseName })")
-    //}
-    
-    
-    
-    
-    
-    
-    //    let plants: [Plant] = [
-    //        Plant(
-    //            plantName: "Parlor Palm",
-    //            plantNickName: "Indoor Beauty",
-    //            plantImage: ["parlor_palm_1.jpg", "parlor_palm_2.jpg"],
-    //            plantBotanicalName: "Chamaedorea elegans",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A low-maintenance indoor plant known for its lush green fronds. \n Thrives in indirect light and improves air quality.",
-    //            favourableSeason: .winter,
-    //            disease: [mosaicVirus , rust , powderyMildew],
-    //            waterFrequency :90,
-    //            fertilizerFrequency: 7, // Once a week
-    //            repottingFrequency: 30, // Monthly
-    //            pruningFrequency: 365 // Yearly
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "String Of Pearls",
-    //            plantNickName: "Pearl Vine",
-    //            plantImage: ["string_of_pearls_1.jpg", "string_of_pearls_2.jpg"],
-    //            plantBotanicalName: "Senecio rowleyanus",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A trailing succulent with bead-like leaves, ideal for hanging baskets . \n Requires bright, indirect sunlight and minimal watering.",
-    //            favourableSeason: .summer,
-    //            disease: [mosaicVirus , rust],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 60, // Every 2 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120 // Every 4 months
-    //
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Hibiscus",
-    //            plantNickName: "Tropical Bloom",
-    //            plantImage: ["hibiscus_1.jpg", "hibiscus_2.jpg"],
-    //            plantBotanicalName: "Hibiscus rosa-sinensis",
-    //            category: .Flowering,
-    //            plantDescription:
-    //                "A vibrant flowering plant known for its large, colorful blooms . \n Requires full sun and regular watering for optimal growth.",
-    //            favourableSeason: .summer,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 3, // Every 3 days
-    //            fertilizerFrequency: 15, // Twice a month
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 90  // Every 3 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Jade Plant",
-    //            plantNickName: "Money Plant",
-    //            plantImage: ["jade_plant_1.jpg", "jade_plant_2.jpg"],
-    //            plantBotanicalName: "Crassula ovata",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A hardy succulent believed to bring good luck and prosperity. Requires minimal watering and bright light.",
-    //            favourableSeason: .winter,
-    //            disease: [leafSpot],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 90, // Every 3 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120 // Every 4 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Peace Lily",
-    //            plantNickName: "Elegant White",
-    //            plantImage: ["peace_lily_1.jpg", "peace_lily_2.jpg"],
-    //            plantBotanicalName: "Spathiphyllum",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A graceful indoor plant with white blooms that purifies the air. Thrives in low to medium light with moderate watering.",
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 7, // Weekly
-    //            fertilizerFrequency: 30, // Monthly
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 90 // Every 3 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Tulsi (Holy Basil)",
-    //            plantNickName: "Sacred Herb",
-    //            plantImage: ["tulsi_1.jpg", "tulsi_2.jpg"],
-    //            plantBotanicalName: "Ocimum sanctum",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A sacred plant in Indian households known for its medicinal properties. Requires full sunlight and regular watering."
-    //            ,
-    //            favourableSeason: .summer,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 3, // Every 3 days
-    //            fertilizerFrequency: 30, // Monthly
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 60 // Every 2 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Areca Palm",
-    //            plantNickName: "Golden Cane",
-    //            plantImage: ["areca_palm_1.jpg", "areca_palm_2.jpg"],
-    //            plantBotanicalName: "Dypsis lutescens",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A popular indoor palm with feathery fronds that adds a tropical vibe. Prefers bright, indirect light and moderate watering."
-    //            ,
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 5, // Every 5 days
-    //            fertilizerFrequency: 60, // Every 2 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120// Every 4 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Snake Plant",
-    //            plantNickName: "Mother-in-law's Tongue",
-    //            plantImage: ["snake_plant_1.jpg", "snake_plant_2.jpg"],
-    //            plantBotanicalName: "Sansevieria trifasciata",
-    //            category: .Ornamental,
-    //            plantDescription:
-    //                "A hardy, low-maintenance plant known for its air-purifying abilities. Can survive in low light and needs minimal watering."
-    //            ,
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 90, // Every 3 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120// Every 4 months
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Rose",
-    //            plantNickName: "Queen of Flowers",
-    //            plantImage: ["rose_1.jpg", "rose_2.jpg"],
-    //            plantBotanicalName: "Rosa",
-    //            category: .Flowering,
-    //            plantDescription:
-    //                "A classic flowering plant known for its beauty and fragrance. Requires full sun and regular pruning for healthy blooms."
-    //            ,
-    //            favourableSeason: .winter,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 3, // Every 3 days
-    //            fertilizerFrequency: 15, // Twice a month
-    //            repottingFrequency: 365, // Yearly
-    //            pruningFrequency: 30 // Monthly
-    //        ),
-    //
-    //        Plant(
-    //            plantName: "Aloe Vera",
-    //            plantNickName: "Healing Succulent",
-    //            plantImage: ["aloe_vera_1.jpg", "aloe_vera_2.jpg"],
-    //            plantBotanicalName: "Aloe barbadensis miller",
-    //            category: .medicinal,
-    //            plantDescription:
-    //                "A medicinal plant known for its soothing gel used in skincare. Needs bright light and minimal watering."
-    //            ,
-    //            favourableSeason: .summer,
-    //            disease: [anthracnose, dampingOff],
-    //            waterFrequency: 14, // Every 2 weeks
-    //            fertilizerFrequency: 60, // Every 2 months
-    //            repottingFrequency: 730, // Every 2 years
-    //            pruningFrequency: 120 // Every 4 months
-    //        )
-    //    ]
-    //}
-

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8E5A16822D6D8FAD00B10410 /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = 8E5A16812D6D8FAD00B10410 /* GoogleGenerativeAI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		8EB683392D311C110091572C /* GardenGuruXcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GardenGuruXcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8E5A16822D6D8FAD00B10410 /* GoogleGenerativeAI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 			);
 			name = GardenGuruXcode;
 			packageProductDependencies = (
+				8E5A16812D6D8FAD00B10410 /* GoogleGenerativeAI */,
 			);
 			productName = GardenGuruXcode;
 			productReference = 8EB683392D311C110091572C /* GardenGuruXcode.app */;
@@ -107,6 +113,9 @@
 			);
 			mainGroup = 8EB683302D311C110091572C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8EB6833A2D311C110091572C /* Products */;
 			projectDirPath = "";
@@ -145,7 +154,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WUC5X4DK59;
+				DEVELOPMENT_TEAM = 8SVMZW7RWH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
@@ -160,7 +169,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias1;
+				PRODUCT_BUNDLE_IDENTIFIER = in.galgotia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -175,7 +184,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WUC5X4DK59;
+				DEVELOPMENT_TEAM = 8SVMZW7RWH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
@@ -190,7 +199,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = in.galgotias1;
+				PRODUCT_BUNDLE_IDENTIFIER = in.galgotia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -339,6 +348,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/generative-ai-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.6;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8E5A16812D6D8FAD00B10410 /* GoogleGenerativeAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */;
+			productName = GoogleGenerativeAI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8EB683312D311C110091572C /* Project object */;
 }
