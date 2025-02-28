@@ -22,7 +22,8 @@ class DataControllerGG {
     private var userPlantDisease : [UsersPlantDisease] = []
     private var careReminders : [CareReminder_] = []
     private var reminderOfUserPlant : [CareReminderOfUserPlant] = []
-    
+    private var fertilizer : [Fertilizer] = []
+    private var diseaseFertilizer : [DiseaseFertilizer] = []
     
     //    private var plants: [Plant] = []
     //    private var diseases: [Diseases] = []
@@ -565,7 +566,49 @@ class DataControllerGG {
         
         
         //        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
+      
+
+        // Creating 5 fertilizer objects
+        let npk = Fertilizer(
+            fertilizerName: "NPK 20-20-20",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/npk_20_20_20.jpg",
+            fertilizerDescription: "Balanced fertilizer for overall plant growth."
+        )
+
+        let urea = Fertilizer(
+            fertilizerName: "Urea",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/urea.jpg",
+            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
+        )
+
+        let boneMeal = Fertilizer(
+            fertilizerName: "Bone Meal",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/bone_meal.jpg",
+            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
+        )
+
+        let vermicompost = Fertilizer(
+            fertilizerName: "Vermicompost",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/vermicompost.jpg",
+            fertilizerDescription: "Organic compost that improves soil health and fertility."
+        )
+
+        let potash = Fertilizer(
+            fertilizerName: "Potash",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/potash.jpg",
+            fertilizerDescription: "Essential for flower and fruit development in plants."
+        )
         
+        fertilizer.append(contentsOf : [npk , urea , boneMeal , vermicompost , potash])
+        
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: blight.diseaseID, fertilizerId: potash.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: vermicompost.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rootRot.diseaseID, fertilizerId: boneMeal.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: grayMold.diseaseID, fertilizerId: urea.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: npk.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: blight.diseaseID, fertilizerId: urea.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rootRot.diseaseID, fertilizerId: vermicompost.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: potash.fertilizerId))
         
         
     }
@@ -582,8 +625,8 @@ class DataControllerGG {
         
         return diseases.filter { diseaseIDs.contains($0.diseaseID) }
     }
-    func getTopWinterPlants() -> [Plant] {
-        return plants.filter { $0.favourableSeason == .winter }
+    func getTopSeasonPlants() -> [Plant] {
+        return plants.filter { $0.favourableSeason == .summer }
     }
     
     func getCommonIssues() -> [Diseases] {
