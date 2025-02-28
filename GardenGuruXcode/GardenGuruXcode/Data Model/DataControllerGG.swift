@@ -94,7 +94,7 @@ class DataControllerGG {
             plantName: "Aloe Vera",
             plantImage: ["AloeVera1.jpg", "AloeVera2.jpg"],
             plantBotanicalName: "Crassula ovata",
-            category: .Ornamental,
+            category: .medicinal,
             plantDescription:
                 "Aloe vera is a hardy, evergreen succulent known for its thick, fleshy, green leaves filled with a soothing gel. The leaves have serrated edges with small, soft spines. This plant stores water in its leaves, making it highly drought-resistant.",
             favourableSeason: .winter,
@@ -220,7 +220,7 @@ class DataControllerGG {
         
         //Diseases data
         let rootRot : Diseases = Diseases(
-            diseaseName: "Root Rot",
+            diseaseName: "Black Rot",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellowing leaves", "Soft, mushy roots", "Wilting despite watering"],
             diseaseImage: ["rootrot1.jpg", "rootrot2.jpg"],
@@ -282,7 +282,7 @@ class DataControllerGG {
         )
         
         let leafSpot : Diseases = Diseases(
-            diseaseName: "Leaf Spot",
+            diseaseName: "Leaf spot",
             diseaseID: UUID(),
             diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
             diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
@@ -312,7 +312,7 @@ class DataControllerGG {
         )
         
         let blight : Diseases = Diseases(
-            diseaseName: "Blight",
+            diseaseName: "Rachis Blight",
             diseaseID: UUID(),
             diseaseSymptoms: ["Brown, sunken spots on stems and leaves", "Rapid wilting", "Fungal growth on plant surface"],
             diseaseImage: ["blight1.jpg", "blight2.jpg"],
@@ -493,7 +493,220 @@ class DataControllerGG {
             ], diseaseSeason: .winter
         )
         
-        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight ,leafSpot , powderyMildew ])
+        let potassiumDeficiency: Diseases = Diseases(
+            diseaseName: "1.⁠ ⁠Potassium Deficiency",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Yellowing leaf edges", "Brown scorching on leaf tips", "Weak stems and slow growth"],
+            diseaseImage: ["potassium_deficiency1.jpg", "potassium_deficiency2.jpg"],
+            diseaseCure: ["Apply potassium-rich fertilizers", "Use compost containing banana peels", "Ensure proper watering to aid nutrient absorption"],
+            diseaseFertilizers: ["Potassium sulfate", "Wood ash", "Kelp meal"],
+            cureDuration: 10,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Apply potassium-rich fertilizers like potassium sulfate or muriate of potash.",
+                    "Use organic compost such as banana peels or wood ash.",
+                    "Avoid overwatering, which can leach potassium from the soil."
+                ],
+                "Preventive Measures": [
+                    "Maintain balanced soil nutrients.",
+                    "Test soil regularly to ensure potassium levels remain adequate.",
+                    "Avoid excessive nitrogen fertilization, which can interfere with potassium uptake."
+                ],
+                "Symptoms": [
+                    "Yellowing of leaf edges and tips.",
+                    "Curling and browning of older leaves.",
+                    "Reduced resistance to drought and diseases."
+                ],
+                "Vitamins Required": ["Potassium (K)"],
+                "Related Images": ["Potassium deficiency affected leaf 1", "Potassium deficiency affected leaf 2"],
+                "Video Solution": ["https://youtu.be/example3", "https://youtu.be/example4"]
+            ], diseaseSeason: .summer
+        )
+
+        let manganeseDeficiency: Diseases = Diseases(
+            diseaseName: "2.⁠ ⁠Manganese Deficiency",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Interveinal chlorosis on young leaves", "Stunted growth", "Leaf curling"],
+            diseaseImage: ["manganese_deficiency1.jpg", "manganese_deficiency2.jpg"],
+            diseaseCure: ["Apply manganese sulfate", "Use chelated manganese foliar spray", "Improve soil pH to 5.5-6.5"],
+            diseaseFertilizers: ["Manganese sulfate", "Chelated manganese spray"],
+            cureDuration: 12,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Spray manganese sulfate or chelated manganese on leaves.",
+                    "Adjust soil pH to 5.5-6.5 to improve manganese availability.",
+                    "Avoid over-application of phosphorus fertilizers, which can inhibit manganese uptake."
+                ],
+                "Preventive Measures": [
+                    "Use balanced fertilizers with trace minerals.",
+                    "Regularly test soil to maintain optimal manganese levels.",
+                    "Ensure proper soil aeration to enhance root absorption."
+                ],
+                "Symptoms": [
+                    "Yellowing between leaf veins.",
+                    "Young leaves show paling and curling.",
+                    "Reduced plant growth and weaker stems."
+                ],
+                "Vitamins Required": ["Manganese (Mn)"],
+                "Related Images": ["Manganese deficiency affected leaf 1", "Manganese deficiency affected leaf 2"],
+                "Video Solution": ["https://youtu.be/example5", "https://youtu.be/example6"]
+            ], diseaseSeason: .summer
+        )
+
+        let magnesiumDeficiency: Diseases = Diseases(
+            diseaseName: "3.⁠ ⁠Magnesium Deficiency",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Interveinal chlorosis on older leaves", "Purple or reddish discoloration", "Leaf curling"],
+            diseaseImage: ["magnesium_deficiency1.jpg", "magnesium_deficiency2.jpg"],
+            diseaseCure: ["Apply Epsom salt (magnesium sulfate)", "Use dolomitic lime to enrich soil", "Maintain soil pH above 6.0"],
+            diseaseFertilizers: ["Magnesium sulfate (Epsom salt)", "Dolomitic lime"],
+            cureDuration: 10,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Dissolve Epsom salt in water and spray it on the leaves.",
+                    "Apply dolomitic lime to soil for long-term magnesium improvement.",
+                    "Maintain soil pH at 6.0-6.5 for better magnesium availability."
+                ],
+                "Preventive Measures": [
+                    "Use balanced fertilizers that include magnesium.",
+                    "Avoid excessive potassium application, which competes with magnesium.",
+                    "Regular soil testing for nutrient balance."
+                ],
+                "Symptoms": [
+                    "Yellowing between veins in older leaves.",
+                    "Leaves develop purple or reddish hues.",
+                    "Weak plant growth and curling leaves."
+                ],
+                "Vitamins Required": ["Magnesium (Mg)"],
+                "Related Images": ["Magnesium deficiency affected leaf 1", "Magnesium deficiency affected leaf 2"],
+                "Video Solution": ["https://youtu.be/example7", "https://youtu.be/example8"]
+            ], diseaseSeason: .rainy
+        )
+
+        let blackScorch: Diseases = Diseases(
+            diseaseName: "4.⁠ ⁠Black Scorch",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Black necrotic patches on leaves", "Stem cracking", "Dieback of plant parts"],
+            diseaseImage: ["black_scorch1.jpg", "black_scorch2.jpg"],
+            diseaseCure: ["Prune infected parts", "Use copper-based fungicide", "Ensure proper ventilation"],
+            diseaseFertilizers: ["Balanced NPK fertilizer", "Organic compost"],
+            cureDuration: 20,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Prune and destroy infected plant parts.",
+                    "Apply copper-based fungicides.",
+                    "Ensure proper plant spacing for better air circulation."
+                ],
+                "Preventive Measures": [
+                    "Avoid overhead watering to reduce moisture buildup.",
+                    "Sterilize tools before pruning.",
+                    "Use resistant plant varieties where available."
+                ],
+                "Symptoms": [
+                    "Dark, necrotic lesions on leaves.",
+                    "Cracking and dieback of stems.",
+                    "Weak plant structure and stunted growth."
+                ],
+                "Vitamins Required": ["None (fungal disease)."],
+                "Related Images": ["Black Scorch affected leaf 1", "Black Scorch affected leaf 2"],
+                "Video Solution": ["https://youtu.be/example9", "https://youtu.be/example10"]
+            ], diseaseSeason: .summer
+        )
+
+        let leafSpots: Diseases = Diseases(
+            diseaseName: "5.⁠ ⁠Leaf Spots",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Circular brown spots on leaves", "Yellow halos around spots", "Premature leaf drop"],
+            diseaseImage: ["leaf_spots1.jpg", "leaf_spots2.jpg"],
+            diseaseCure: ["Apply neem oil spray", "Use copper-based fungicides", "Remove affected leaves"],
+            diseaseFertilizers: ["Compost tea", "Nitrogen-rich fertilizers"],
+            cureDuration: 14,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Spray neem oil or copper fungicide.",
+                    "Remove and dispose of infected leaves.",
+                    "Avoid excessive watering to prevent fungal spread."
+                ],
+                "Preventive Measures": [
+                    "Ensure good air circulation around plants.",
+                    "Water plants at the base rather than overhead.",
+                    "Maintain healthy soil with organic matter."
+                ],
+                "Symptoms": [
+                    "Spots on leaves with yellow margins.",
+                    "Leaves may turn brown and fall off prematurely.",
+                    "Stunted plant growth in severe cases."
+                ],
+                "Vitamins Required": ["None (fungal disease)."],
+                "Related Images": ["Leaf Spots affected leaf 1", "Leaf Spots affected leaf 2"],
+                "Video Solution": ["https://youtu.be/example11", "https://youtu.be/example12"]
+            ], diseaseSeason: .summer
+        )
+        
+        let fusariumWilt: Diseases = Diseases(
+            diseaseName: "6.⁠ ⁠Fusarium Wilt",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Yellowing and wilting of lower leaves", "Vascular browning in stems", "Stunted growth and plant death"],
+            diseaseImage: ["fusarium_wilt1.jpg", "fusarium_wilt2.jpg"],
+            diseaseCure: ["Remove and destroy infected plants", "Use disease-resistant plant varieties", "Apply biofungicides"],
+            diseaseFertilizers: ["Compost-enriched soil", "Phosphorus-rich fertilizers"],
+            cureDuration: 25,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Remove and destroy infected plants to prevent further spread.",
+                    "Use disease-resistant plant varieties whenever possible.",
+                    "Apply biofungicides containing Trichoderma to suppress Fusarium spores.",
+                    "Improve soil drainage and avoid overwatering."
+                ],
+                "Preventive Measures": [
+                    "Rotate crops regularly to prevent soil-borne infections.",
+                    "Maintain well-drained soil with organic compost.",
+                    "Sterilize gardening tools and pots before use."
+                ],
+                "Symptoms": [
+                    "Gradual yellowing and wilting of leaves, starting from the bottom.",
+                    "Darkening of the vascular tissues inside the stem.",
+                    "Plant stunting and eventual death."
+                ],
+                "Vitamins Required": ["None (fungal disease)."],
+                "Related Images": ["Fusarium Wilt affected plant 1", "Fusarium Wilt affected plant 2"],
+                "Video Solution": ["https://youtu.be/example13", "https://youtu.be/example14"]
+            ], diseaseSeason: .summer
+        )
+
+        let parlatoriaBlanchard: Diseases = Diseases(
+            diseaseName: "8.⁠ ⁠Parlatoria Blanchardi",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Tiny yellow spots on leaves", "Sticky honeydew secretion", "Weak and stunted plant growth"],
+            diseaseImage: ["parlatoria_blanchard1.jpg", "parlatoria_blanchard2.jpg"],
+            diseaseCure: ["Apply neem oil or insecticidal soap", "Introduce natural predators like ladybugs", "Prune heavily infested branches"],
+            diseaseFertilizers: ["Balanced NPK fertilizer", "Compost-based organic fertilizers"],
+            cureDuration: 15,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Spray neem oil or insecticidal soap to control scale insects.",
+                    "Encourage beneficial insects like ladybugs that feed on scales.",
+                    "Prune and discard heavily infested plant parts."
+                ],
+                "Preventive Measures": [
+                    "Inspect new plants before introducing them to the garden.",
+                    "Avoid excessive nitrogen fertilizers, which attract pests.",
+                    "Regularly clean plant leaves to remove early signs of infestation."
+                ],
+                "Symptoms": [
+                    "Tiny yellow or white spots on leaves.",
+                    "Sticky honeydew secretion, leading to sooty mold.",
+                    "Leaves and stems become weak and stunted."
+                ],
+                "Vitamins Required": ["None (pest infestation)."],
+                "Related Images": ["Parlatoria Blanchard affected plant 1", "Parlatoria Blanchard affected plant 2"],
+                "Video Solution": ["https://youtu.be/example15", "https://youtu.be/example16"]
+            ], diseaseSeason: .winter
+        )
+
+
+        
+        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight ,leafSpot , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpot , fusariumWilt , parlatoriaBlanchard])
         
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rust.diseaseID))
@@ -502,6 +715,8 @@ class DataControllerGG {
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: grayMold.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: blight.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: aloeVera.plantID, diseaseID: potassiumDeficiency.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: aloeVera.plantID, diseaseID: magnesiumDeficiency.diseaseID))
         
         let john1Plant : UserPlant = UserPlant(
             userId: John.userId,
@@ -527,15 +742,29 @@ class DataControllerGG {
             isRepottingCompleted: false
         )
         
+        let john3Plant : UserPlant = UserPlant(
+            userId: John.userId,
+            userplantID: aloeVera.plantID,
+            userPlantNickName: "In Balcony",
+            lastWatered: currentDate,
+            lastFertilized: currentDate,
+            lastRepotted: currentDate,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        
         
         
         // Add the user plants to the array
         userPlant.append(john1Plant)
         userPlant.append(john2Plant)
+        userPlant.append(john3Plant)
         
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rootRot.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rust.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john2Plant.userId, diseaseID: rust.diseaseID))
+        userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john3Plant.userId, diseaseID: potassiumDeficiency.diseaseID))
         
         
         var reminderofUserPlant1 : CareReminder_ = CareReminder_(
@@ -636,14 +865,14 @@ class DataControllerGG {
     func getPlantbyName (by name : String) -> Plant? {
         return plants.first(where: {$0.plantName == name})
     }
-    
-    
-    func getCommonIssuesForRose() -> [Diseases] {
-        guard let rosePlant = plants.first(where: { $0.plantName == "Rose" }) else { return [] }
-        print("hellllllllllllllllloooooooooo")
-        print(getDiseases(for: rosePlant.plantID))
-        return getDiseases(for: rosePlant.plantID)
-    }
+//    
+//    
+//    func getCommonIssuesForRose() -> [Diseases] {
+//        guard let rosePlant = plants.first(where: { $0.plantName == "Rose" }) else { return [] }
+//        print("hellllllllllllllllloooooooooo")
+//        print(getDiseases(for: rosePlant.plantID))
+//        return getDiseases(for: rosePlant.plantID)
+//    }
     
     func getDiseasesForUserPlants(userId: UUID) -> [Diseases] {
         // Get all plants belonging to the user

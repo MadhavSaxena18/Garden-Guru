@@ -73,7 +73,7 @@
         <!--Add Plant-->
         <scene sceneID="aVL-Uu-o6e">
             <objects>
-                <viewController id="mqh-fK-l9V" customClass="AddPlantViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="AddPlantViewController" id="mqh-fK-l9V" customClass="AddPlantViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="NgV-sH-Qoy">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -91,7 +91,7 @@
                                     <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="80"/>
                                 </buttonConfiguration>
                                 <connections>
-                                    <segue destination="4sg-aR-BOq" kind="show" id="f9E-Ss-VtK"/>
+                                    <action selector="openCamera:" destination="mqh-fK-l9V" eventType="touchUpInside" id="wj9-wX-kBV"/>
                                 </connections>
                             </button>
                             <searchBar contentMode="redraw" searchBarStyle="minimal" placeholder="Search Plants" translatesAutoresizingMaskIntoConstraints="NO" id="d95-7P-oeP">
@@ -222,13 +222,13 @@
         <!--Add Plant Camera View Controller-->
         <scene sceneID="T7b-9F-Pt2">
             <objects>
-                <viewController storyboardIdentifier="scanAndDiagnoseViewController" modalPresentationStyle="fullScreen" id="4sg-aR-BOq" customClass="addPlantCameraViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="addPlantCameraViewController" modalPresentationStyle="fullScreen" id="4sg-aR-BOq" customClass="addPlantCameraViewController" customModule="GardenGuruXcode" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="dHG-f5-lzV">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Aya-v0-q8Z">
-                                <rect key="frame" x="0.0" y="0.0" width="393" height="695.66666666666663"/>
+                                <rect key="frame" x="0.0" y="-44" width="393" height="739.66666666666663"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="LTT-PX-2ZI">
@@ -269,7 +269,7 @@
                             <imageReference key="image" image="xmark.square.fill" catalog="system" symbolScale="large" variableValue="0.0"/>
                             <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <connections>
-                                <segue destination="5WA-d8-ydn" kind="unwind" unwindAction="unwindToAddPlantViewController:" id="gba-zi-aus"/>
+                                <action selector="dismissCamera:" destination="4sg-aR-BOq" id="xyz-123-abc"/>
                             </connections>
                         </barButtonItem>
                     </navigationItem>
@@ -279,7 +279,6 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Q84-TF-mB3" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-                <exit id="5WA-d8-ydn" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
             <point key="canvasLocation" x="3613" y="-50"/>
         </scene>

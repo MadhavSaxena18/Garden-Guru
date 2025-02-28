@@ -29,6 +29,15 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Setup navigation bar
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "xmark.square.fill"),
+            style: .plain,
+            target: self,
+            action: #selector(dismissCamera)
+        )
+        navigationItem.leftBarButtonItem?.tintColor = .black
+        
         // Check camera permission first
         checkCameraPermission()
         setupMLModels()
@@ -36,14 +45,14 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
         // Hide tab bar
         self.tabBarController?.tabBar.isHidden = true
         
-        // Setup capture button
-        captureButton.layer.cornerRadius = captureButton.bounds.width / 2
-        captureButton.backgroundColor = .white
-        captureButton.layer.borderWidth = 4
-        captureButton.layer.borderColor = UIColor.systemGreen.cgColor
-        
-        // Add tap gesture to button
-        captureButton.addTarget(self, action: #selector(captureButtonTapped), for: .touchUpInside)
+        // Remove all button styling code, let storyboard handle it
+        // captureButton.layer.cornerRadius = captureButton.bounds.width / 2
+        // captureButton.backgroundColor = .white
+        // captureButton.layer.borderWidth = 4
+        // captureButton.layer.borderColor = UIColor.black.cgColor
+        // captureButton.tintColor = .black
+        // captureButton.configuration?.background.backgroundColor = .clear
+        // captureButton.configuration?.baseForegroundColor = .black
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -134,7 +143,7 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
         }
     }
     
-    private func stopCameraSession() {
+    func stopCameraSession() {
         captureSession?.stopRunning()
     }
     
@@ -148,6 +157,11 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
         
         let settings = AVCapturePhotoSettings()
         photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+    
+    @objc func dismissCamera() {
+        stopCameraSession()
+        dismiss(animated: true)
     }
     
     // MARK: - Photo Capture Delegate

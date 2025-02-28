@@ -38,6 +38,9 @@ class CareReminderViewController: UIViewController, UICollectionViewDataSource, 
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Set back button color to green
+        navigationController?.navigationBar.tintColor = UIColor(hex: "004E05") // Dark green color
+        
         // Add observer for plant deletion
         NotificationCenter.default.addObserver(
             self,
