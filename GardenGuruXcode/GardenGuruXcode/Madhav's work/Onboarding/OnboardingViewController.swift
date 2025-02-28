@@ -25,7 +25,7 @@ class OnboardingViewController: UIViewController {
         ),
         OnboardingSlide(
             title: "Explore & Learn",
-            description: "Discover new plants, care tips, and connect with other plant enthusiasts.",
+            description: "Discover new plants and check out their care tips.",
             image: "leaf.arrow.circlepath"
         )
     ]
