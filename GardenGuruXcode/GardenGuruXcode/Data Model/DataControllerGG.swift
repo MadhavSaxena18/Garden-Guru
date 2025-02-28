@@ -785,7 +785,24 @@ class DataControllerGG {
             isRepottingCompleted: false
         )
         
-        careReminders.append(contentsOf: [reminderofUserPlant1, reminderOfUserPlant2])
+        var reminderofUserPlant3 : CareReminder_ = CareReminder_(
+            upcomingReminderForWater: currentDate,
+            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 5, to: currentDate)!,
+            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 180, to: currentDate)!,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        
+        careReminders.append(contentsOf: [reminderofUserPlant1, reminderOfUserPlant2 , reminderofUserPlant3])
+        
+        reminderOfUserPlant.append(CareReminderOfUserPlant(userPlantRelationID: john1Plant.userPlantRelationID, careReminderId: reminderofUserPlant1.careReminderID))
+        
+        reminderOfUserPlant.append(CareReminderOfUserPlant(userPlantRelationID: john2Plant.userPlantRelationID, careReminderId: reminderOfUserPlant2.careReminderID))
+        
+        reminderOfUserPlant.append(CareReminderOfUserPlant(userPlantRelationID: john3Plant.userPlantRelationID, careReminderId: reminderofUserPlant3.careReminderID))
+        
+        
         
         //        var reminderofUserPlant1 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 120, to: currentDate)! , isCompleted: true)
         //
@@ -1032,7 +1049,7 @@ class DataControllerGG {
         // Create relationship
         let relationship = CareReminderOfUserPlant(
             careReminderID: UUID(),
-            userPlantRelationID: userPlant.userPlantRelationID
+            userPlantRelationID: userPlant.userPlantRelationID, careReminderId: UUID()
         )
         reminderOfUserPlant.append(relationship)
     }

@@ -71,6 +71,7 @@ struct UsersPlantDisease {
 
 
 struct CareReminder_ {
+    var careReminderID : UUID = UUID() //PK FOR USER PLANT
     var upcomingReminderForWater: Date
     var upcomingReminderForFertilizers: Date
     var upcomingReminderForRepotted: Date
@@ -82,6 +83,7 @@ struct CareReminder_ {
 struct CareReminderOfUserPlant{
     var careReminderID : UUID = UUID()
     var userPlantRelationID : UUID  //FK FOR USER PLANT
+    var careReminderId : UUID //FK FOR CARE REMINDER
 }
 
 enum Season {
