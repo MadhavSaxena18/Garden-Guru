@@ -105,3 +105,15 @@ struct PlantDesign {
 
 //we have to add fertilizer and make its relation with diseases
 
+struct fertilizer {
+    var fertlizerName : String
+    var fertilizerId : UUID = UUID() //PK
+    var fertilizerImage : String
+    var fertilizerDescription : String
+}
+
+struct diseaseFertilizer {
+    var diseaseFertilizerId : UUID = UUID() //PK
+    var diseaseID : UUID //FK FOR DISEASE
+    var fertilizerId : UUID //FK FOR FETRTILIZER
+}
