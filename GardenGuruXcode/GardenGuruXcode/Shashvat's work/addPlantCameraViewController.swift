@@ -28,7 +28,9 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupCamera()
+        
+        // Check camera permission first
+        checkCameraPermission()
         setupMLModels()
         
         // Hide tab bar
@@ -58,6 +60,11 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
         self.tabBarController?.tabBar.isHidden = false
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        videoPreviewLayer?.frame = cameraView.bounds
+    }
+    
     // MARK: - Camera Setup
     private func setupCamera() {
         captureSession = AVCaptureSession()
@@ -69,38 +76,55 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
             return
         }
         
-        captureSession?.addInput(input)
-        
+        // Initialize photo output
         photoOutput = AVCapturePhotoOutput()
-        captureSession?.addOutput(photoOutput!)
         
+        // Configure capture session
+        captureSession?.beginConfiguration()
+        
+        if captureSession?.canAddInput(input) == true {
+            captureSession?.addInput(input)
+        }
+        
+        if let photoOutput = photoOutput, captureSession?.canAddOutput(photoOutput) == true {
+            captureSession?.addOutput(photoOutput)
+        }
+        
+        captureSession?.commitConfiguration()
+        
+        // Setup preview layer
         videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession!)
         videoPreviewLayer?.videoGravity = .resizeAspectFill
-        videoPreviewLayer?.frame = cameraView.bounds
-        cameraView.layer.addSublayer(videoPreviewLayer!)
+        
+        // Update preview layer frame in viewDidLayoutSubviews instead
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.videoPreviewLayer?.frame = self.cameraView.bounds
+            self.cameraView.layer.addSublayer(self.videoPreviewLayer!)
+        }
     }
     
     private func setupMLModels() {
-        // Load YOLO model
-        if let yoloURL = Bundle.main.url(forResource: "YOLOv3TinyFP16", withExtension: "mlmodel") {
-            do {
-                let config = MLModelConfiguration()
-                let model = try MLModel(contentsOf: yoloURL, configuration: config)
-                yoloModel = try VNCoreMLModel(for: model)
-            } catch {
-                print("Error loading YOLO model: \(error)")
-            }
+        // Test YOLO model initialization
+        do {
+            let _ = try VNCoreMLModel(for: YOLOv3TinyFP16().model)
+            yoloModel = try VNCoreMLModel(for: YOLOv3TinyFP16().model)
+            print("✅ YOLO model initialized successfully")
+        } catch {
+            print("❌ YOLO model initialization failed: \(error.localizedDescription)")
+            showAlert(message: "Failed to load YOLO model")
+            return
         }
         
-        // Load Plant Identify model
-        if let plantURL = Bundle.main.url(forResource: "PlantIdentify", withExtension: "mlmodel") {
-            do {
-                let config = MLModelConfiguration()
-                let model = try MLModel(contentsOf: plantURL, configuration: config)
-                plantIdentifyModel = try VNCoreMLModel(for: model)
-            } catch {
-                print("Error loading Plant Identify model: \(error)")
-            }
+        // Test Plant Identify model initialization
+        do {
+            let _ = try VNCoreMLModel(for: PlantIdentify().model)
+            plantIdentifyModel = try VNCoreMLModel(for: PlantIdentify().model)
+            print("✅ Plant Identify model initialized successfully")
+        } catch {
+            print("❌ Plant Identify model initialization failed: \(error.localizedDescription)")
+            showAlert(message: "Failed to load Plant Identify model")
+            return
         }
     }
     
@@ -117,8 +141,13 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     // MARK: - Actions
     @IBAction func captureButtonTapped(_ sender: Any) {
         print("Capture button tapped")
+        guard let photoOutput = photoOutput else {
+            showAlert(message: "Camera not ready")
+            return
+        }
+        
         let settings = AVCapturePhotoSettings()
-        photoOutput?.capturePhoto(with: settings, delegate: self)
+        photoOutput.capturePhoto(with: settings, delegate: self)
     }
     
     // MARK: - Photo Capture Delegate
@@ -135,52 +164,141 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     
     // MARK: - ML Processing
     private func processImage(_ image: UIImage) {
-        guard let cgImage = image.cgImage else { return }
-        
-        let requestHandler = VNImageRequestHandler(cgImage: cgImage)
-        
-        // Create requests for both models
-        let yoloRequest = VNCoreMLRequest(model: yoloModel!) { [weak self] request, error in
-            self?.handleYOLOResults(request.results as? [VNRecognizedObjectObservation])
+        guard let cgImage = image.cgImage else { 
+            showAlert(message: "Failed to process image")
+            return 
         }
         
-        let plantRequest = VNCoreMLRequest(model: plantIdentifyModel!) { [weak self] request, error in
-            self?.handlePlantResults(request.results as? [VNClassificationObservation])
-        }
-        
-        // Perform requests
-        try? requestHandler.perform([yoloRequest, plantRequest])
-    }
-    
-    private func handleYOLOResults(_ results: [VNRecognizedObjectObservation]?) {
-        // Handle YOLO detection results
-    }
-    
-    private func handlePlantResults(_ results: [VNClassificationObservation]?) {
-        guard let plantResults = results?.prefix(3) else { return } // Get top 3 results
-        
-        DispatchQueue.main.async { [weak self] in
-            let alert = UIAlertController(title: "Detected Plants", message: "Please select the correct plant:", preferredStyle: .actionSheet)
-            
-            // Add an action for each detected plant
-            for result in plantResults {
-                let plantName = result.identifier
-                let confidence = Int(result.confidence * 100)
+        // First run YOLO to detect if there's a plant in the image
+        runYOLOModel(image) { [weak self] yoloResult in
+            if let result = yoloResult?.lowercased() {
+                print("\n--- Processing image with YOLO ---")
+                print("YOLO Result: \(result)")
                 
-                let action = UIAlertAction(title: "\(plantName) (\(confidence)%)", style: .default) { [weak self] _ in
-                    if let plant = self?.getPlantFromIdentification(name: plantName) {
-                        self?.showNicknameViewController(for: plant)
-                    } else {
-                        self?.showAlert(message: "Plant not found in database")
+                // Check if it's a plant (using same conditions as scanAndDiagnoseViewController)
+                if result.contains("pottedplant") || result.contains("vase") || result.contains("no objects detected") {
+                    // If YOLO detects a plant or no objects, run plant identification
+                    self?.runPlantClassifier(image) { plantResult in
+                        if let plantName = plantResult {
+                            // Check if it's not a non-plant object
+                            if !plantName.lowercased().contains("non plant object") {
+                                DispatchQueue.main.async {
+                                    self?.handleIdentifiedPlant(plantName)
+                                }
+                            } else {
+                                self?.showAlert(message: "Please capture a plant image to identify")
+                            }
+                        } else {
+                            self?.showAlert(message: "Could not classify plant")
+                        }
                     }
+                } else {
+                    self?.showAlert(message: "Please capture a plant image")
                 }
-                alert.addAction(action)
+            } else {
+                self?.showAlert(message: "Failed to analyze image")
+            }
+        }
+    }
+    
+    private func runYOLOModel(_ image: UIImage, completion: @escaping (String?) -> Void) {
+        guard let model = yoloModel,
+              let cgImage = image.cgImage else {
+            completion(nil)
+            return
+        }
+        
+        let request = VNCoreMLRequest(model: model) { request, error in
+            if let error = error {
+                print("YOLO error: \(error)")
+                completion(nil)
+                return
             }
             
-            // Add cancel action
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            if let results = request.results as? [VNRecognizedObjectObservation],
+               let bestResult = results.first,
+               let bestLabel = bestResult.labels.first {
+                print("YOLO Result: \(bestLabel.identifier)")
+                completion(bestLabel.identifier)
+            } else {
+                print("⚠️ No YOLO result")
+                completion("no objects detected")  // Important: Return this instead of nil
+            }
+        }
+        
+        request.imageCropAndScaleOption = .scaleFit
+        
+        do {
+            try VNImageRequestHandler(cgImage: cgImage).perform([request])
+        } catch {
+            print("YOLO request failed: \(error)")
+            completion(nil)
+        }
+    }
+    
+    private func runPlantClassifier(_ image: UIImage, completion: @escaping (String?) -> Void) {
+        guard let model = plantIdentifyModel,
+              let cgImage = image.cgImage else {
+            print("❌ Failed to prepare plant classification - model or image is nil")
+            completion(nil)
+            return
+        }
+        
+        let request = VNCoreMLRequest(model: model) { request, error in
+            if let error = error {
+                print("❌ Plant classification error: \(error)")
+                completion(nil)
+                return
+            }
             
-            self?.present(alert, animated: true)
+            print("\n--- Plant Classification Results ---")
+            if let results = request.results as? [VNClassificationObservation] {
+                // Print top 3 results with confidence scores
+                for (index, result) in results.prefix(3).enumerated() {
+                    let confidence = Int(result.confidence * 100)
+                    print("🌿 #\(index + 1): \(result.identifier) (\(confidence)% confidence)")
+                }
+                
+                if let topResult = results.first {
+                    print("✅ Selected plant: \(topResult.identifier)")
+                    completion(topResult.identifier)
+                } else {
+                    print("❌ No classification results")
+                    completion(nil)
+                }
+            } else {
+                print("❌ No valid classification results")
+                completion(nil)
+            }
+        }
+        
+        do {
+            try VNImageRequestHandler(cgImage: cgImage).perform([request])
+        } catch {
+            print("❌ Plant classification request failed: \(error)")
+            completion(nil)
+        }
+    }
+    
+    private func handleIdentifiedPlant(_ plantName: String) {
+        // Check if the plant exists in our database
+        if let plant = getPlantFromIdentification(name: plantName) {
+            // Show confirmation alert with confidence
+            let alert = UIAlertController(
+                title: "Plant Identified",
+                message: "Is this a \(plantName)?",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
+                self?.showNicknameViewController(for: plant)
+            })
+            
+            alert.addAction(UIAlertAction(title: "No", style: .cancel))
+            
+            present(alert, animated: true)
+        } else {
+            showAlert(message: "Sorry, this plant is not in our database")
         }
     }
     
@@ -245,6 +363,24 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+    
+    // Add camera usage description to Info.plist
+    private func checkCameraPermission() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            setupCamera()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                if granted {
+                    DispatchQueue.main.async {
+                        self?.setupCamera()
+                    }
+                }
+            }
+        default:
+            showAlert(message: "Camera access is required to take photos")
+        }
     }
 }
 

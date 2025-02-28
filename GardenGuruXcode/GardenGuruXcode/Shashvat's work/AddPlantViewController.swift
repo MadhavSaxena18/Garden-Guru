@@ -126,4 +126,8 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
             self.present(setReminderVC, animated: true)
         }
     }
+    
+    @IBAction func unwindToAddPlantViewController(segue: UIStoryboardSegue) {
+        // This method just needs to exist to be a valid unwind destination
+    }
 }
