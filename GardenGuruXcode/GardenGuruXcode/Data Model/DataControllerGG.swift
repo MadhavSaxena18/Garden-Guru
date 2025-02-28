@@ -94,7 +94,7 @@ class DataControllerGG {
             plantName: "Aloe Vera",
             plantImage: ["AloeVera1.jpg", "AloeVera2.jpg"],
             plantBotanicalName: "Crassula ovata",
-            category: .Ornamental,
+            category: .medicinal,
             plantDescription:
                 "Aloe vera is a hardy, evergreen succulent known for its thick, fleshy, green leaves filled with a soothing gel. The leaves have serrated edges with small, soft spines. This plant stores water in its leaves, making it highly drought-resistant.",
             favourableSeason: .winter,
@@ -715,6 +715,8 @@ class DataControllerGG {
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: grayMold.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: blight.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: aloeVera.plantID, diseaseID: potassiumDeficiency.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: aloeVera.plantID, diseaseID: magnesiumDeficiency.diseaseID))
         
         let john1Plant : UserPlant = UserPlant(
             userId: John.userId,
@@ -740,15 +742,29 @@ class DataControllerGG {
             isRepottingCompleted: false
         )
         
+        let john3Plant : UserPlant = UserPlant(
+            userId: John.userId,
+            userplantID: aloeVera.plantID,
+            userPlantNickName: "In Balcony",
+            lastWatered: currentDate,
+            lastFertilized: currentDate,
+            lastRepotted: currentDate,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        
         
         
         // Add the user plants to the array
         userPlant.append(john1Plant)
         userPlant.append(john2Plant)
+        userPlant.append(john3Plant)
         
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rootRot.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john1Plant.userId, diseaseID: rust.diseaseID))
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john2Plant.userId, diseaseID: rust.diseaseID))
+        userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john3Plant.userId, diseaseID: potassiumDeficiency.diseaseID))
         
         
         var reminderofUserPlant1 : CareReminder_ = CareReminder_(
