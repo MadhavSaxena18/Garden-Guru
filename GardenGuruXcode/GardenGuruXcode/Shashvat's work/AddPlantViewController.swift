@@ -13,6 +13,9 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         super.viewDidLoad()
         setupSearchBar()
         setupTableView()
+        
+        // Set back button color to green
+        navigationController?.navigationBar.tintColor = UIColor(hex: "004E05") // Dark green color
     }
     
     private func setupSearchBar() {
@@ -128,6 +131,19 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
     }
     
     @IBAction func unwindToAddPlantViewController(segue: UIStoryboardSegue) {
-        // This method just needs to exist to be a valid unwind destination
+        if let sourceViewController = segue.source as? addPlantCameraViewController {
+            // Now we can access stopCameraSession
+            sourceViewController.stopCameraSession()
+        }
+    }
+    
+    @IBAction func openCamera(_ sender: Any) {
+        let storyboard = UIStoryboard(name: "mySpaceTab", bundle: nil)
+        if let cameraVC = storyboard.instantiateViewController(withIdentifier: "addPlantCameraViewController") as? addPlantCameraViewController {
+            // Create a navigation controller
+            let navController = UINavigationController(rootViewController: cameraVC)
+            navController.modalPresentationStyle = .fullScreen
+            present(navController, animated: true)
+        }
     }
 }
