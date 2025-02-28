@@ -105,7 +105,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         case 0: // "Discover"
             identifier = 0
             discoverCategories = [
-                ("Top Summer Plants", DataControllerGG().getTopWinterPlants()),
+                ("Current Season Plants", DataControllerGG().getTopSeasonPlants()),
                 ("Common Issues", DataControllerGG().getCommonIssues())
             ]
         case 1: // "For You"
@@ -134,7 +134,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             // Keep original category structure but filter items
             filteredDiscoverCategories = discoverCategories.compactMap { category in
                 switch category.title {
-                    case "Top Summer Plants", "Top Winter Plants":
+                    case "Current Season Plants" :
                         let filteredPlants = category.items.filter { item in
                             guard let plant = item as? Plant else { return false }
                             return plant.plantName.lowercased().contains(searchText)
@@ -223,7 +223,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let item = category.items[indexPath.row]
 
         // First check the category title to determine which cell to use
-        if category.title == "Top Summer Plants" || category.title == "Top Winter Plants" {
+        if category.title == "Current Season Plants" {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
             if let plant = item as? Plant {
                 cell.configure(with: plant)
@@ -300,7 +300,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             // Choose layout based on category title instead of section index
             switch categoryTitle {
-            case "Top Summer Plants", "Top Winter Plants":
+            case "Current Season Plants":
                 section = self.generateSection1Layout()
                 
             case "Common Issues":

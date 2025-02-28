@@ -105,7 +105,7 @@ class SectionWiseDetailViewController: UIViewController {
             switch section {
             case 0: // Top Winter Plants
                 dataType = .plants
-                plants = dataController.getTopWinterPlants()
+                plants = dataController.getTopSeasonPlants()
                 print("Loaded winter plants: \(plants.count)")
                 print("Plant names: \(plants.map { $0.plantName })")
                 
