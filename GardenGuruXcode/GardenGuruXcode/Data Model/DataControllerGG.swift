@@ -22,7 +22,8 @@ class DataControllerGG {
     private var userPlantDisease : [UsersPlantDisease] = []
     private var careReminders : [CareReminder_] = []
     private var reminderOfUserPlant : [CareReminderOfUserPlant] = []
-    
+    private var fertilizer : [Fertilizer] = []
+    private var diseaseFertilizer : [DiseaseFertilizer] = []
     
     //    private var plants: [Plant] = []
     //    private var diseases: [Diseases] = []
@@ -47,28 +48,28 @@ class DataControllerGG {
         
         
         let parlorPalm : Plant =  Plant(
-            plantName: "Parlor Palm",
+            plantName: "Parlor-Palm",
             plantImage: ["parlor_palm_1.jpg", "parlor_palm_2.jpg"],
             plantBotanicalName: "Chamaedorea elegans",
             category: .Ornamental,
             plantDescription:
                 "A low-maintenance indoor plant known for its lush green fronds. \n Thrives in indirect light and improves air quality.",
             favourableSeason: .winter,
-            waterFrequency :90,
+            waterFrequency :3, // Twice in a week
             fertilizerFrequency: 7, // Once a week
             repottingFrequency: 30, // Monthly
             pruningFrequency: 365 // Yearly
         )
         
-        let stringOfPearls : Plant = Plant(
-            plantName: "String Of Pearls",
-            plantImage: ["string_of_pearls_1.jpg", "string_of_pearls_2.jpg"],
+        let tulip : Plant = Plant(
+            plantName: "Tulip",
+            plantImage: ["Tulip1.jpg", "Tulip2.jpg"],
             plantBotanicalName: "Senecio rowleyanus",
             category: .Ornamental,
             plantDescription:
-                "A trailing succulent with bead-like leaves, ideal for hanging baskets . \n Requires bright, indirect sunlight and minimal watering.",
+                "Tulips are one of the most iconic and beloved flowering plants, known for their vibrant colors and elegant, cup-shaped blooms. They grow from bulbs and produce long, slender green leaves with a smooth texture.",
             favourableSeason: .summer,
-            waterFrequency: 14, // Every 2 weeks
+            waterFrequency: 4, // Every 2 weeks
             fertilizerFrequency: 60, // Every 2 months
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120 // Every 4 months
@@ -89,13 +90,13 @@ class DataControllerGG {
             pruningFrequency: 90  // Every 3 months
         )
         
-        let jadePlant : Plant = Plant(
-            plantName: "Jade Plant",
-            plantImage: ["jade_plant_1.jpg", "jade_plant_2.jpg"],
+        let aloeVera : Plant = Plant(
+            plantName: "Aloe Vera",
+            plantImage: ["AloeVera1.jpg", "AloeVera2.jpg"],
             plantBotanicalName: "Crassula ovata",
             category: .Ornamental,
             plantDescription:
-                "A hardy succulent believed to bring good luck and prosperity. Requires minimal watering and bright light.",
+                "Aloe vera is a hardy, evergreen succulent known for its thick, fleshy, green leaves filled with a soothing gel. The leaves have serrated edges with small, soft spines. This plant stores water in its leaves, making it highly drought-resistant.",
             favourableSeason: .winter,
             waterFrequency: 14, // Every 2 weeks
             fertilizerFrequency: 90, // Every 3 months
@@ -103,13 +104,13 @@ class DataControllerGG {
             pruningFrequency: 120 // Every 4 months
         )
         
-        let peaceLily : Plant = Plant(
-            plantName: "Peace Lily",
-            plantImage: ["peace_lily_1.jpg", "peace_lily_2.jpg"],
+        let rainLily : Plant = Plant(
+            plantName: "Rain Lily",
+            plantImage: ["RainLily1.jpg", "RainLily2.jpg"],
             plantBotanicalName: "Spathiphyllum",
             category: .Ornamental,
             plantDescription:
-                "A graceful indoor plant with white blooms that purifies the air. Thrives in low to medium light with moderate watering.",
+                "Rain lilies are delicate, perennial flowering plants that bloom after rainfall, hence their name. They produce star-shaped or trumpet-like flowers in shades of pink, yellow, or white. The grass-like, slender green leaves add to their elegant appearance. ",
             favourableSeason: .winter,
             waterFrequency: 7, // Weekly
             fertilizerFrequency: 30, // Monthly
@@ -118,7 +119,7 @@ class DataControllerGG {
         )
         
         let arecaPalm : Plant = Plant(
-            plantName: "Areca Palm",
+            plantName: "Areca Palm (Dypsis lutescens)",
             plantImage: ["areca_palm_1.jpg", "areca_palm_2.jpg"],
             plantBotanicalName: "Dypsis lutescens",
             category: .Ornamental,
@@ -133,7 +134,7 @@ class DataControllerGG {
         )
         
         var rose: Plant = Plant(
-            plantName: "Rose",
+            plantName: "Mawar-Rose",
             plantImage: ["rose plant"],
             plantBotanicalName: "Rosa spp.",
             category: .Ornamental,
@@ -148,8 +149,8 @@ class DataControllerGG {
         
         
         let sunflower: Plant = Plant(
-            plantName: "Sunflower",
-            plantImage: ["sunflower plant"], //nam abhi change krna hai
+            plantName: "sunflower",
+            plantImage: ["sunflower1.jpg" , "sunflower2.jpg"], //nam abhi change krna hai
             plantBotanicalName: "Helianthus annuus",
             category: .Ornamental,
             plantDescription: "Bright and cheerful flowers that follow the sun. Prefers full sun and well-draining soil.",
@@ -161,7 +162,7 @@ class DataControllerGG {
         )
         
         let bellflower: Plant = Plant(
-            plantName: "Bellflower",
+            plantName: "bellflower",
             plantImage: ["bellflower plant"],//name change
             plantBotanicalName: "Campanula spp.",
             category: .Ornamental,
@@ -174,8 +175,8 @@ class DataControllerGG {
         )
         
         let orchid: Plant = Plant(
-            plantName: "Orchid",
-            plantImage: ["orchid plant"],//name change
+            plantName: "Orchidaceae - Orchid",
+            plantImage: ["orchidplant1.jpg" , "orchidplant2.jpg"],//name change
             plantBotanicalName: "Orchidaceae",
             category: .Ornamental,
             plantDescription: "Elegant and exotic flowers that thrive in indirect light with high humidity.",
@@ -187,8 +188,8 @@ class DataControllerGG {
         )
         
         let snakePlant: Plant = Plant(
-            plantName: "Snake Plant",
-            plantImage: ["snake plant"],//name change
+            plantName: "Snake plant (Sanseviera)",
+            plantImage: ["snakeplant1.jpg" , "snakeplant2.jpg"],//name change
             plantBotanicalName: "Sansevieria trifasciata",
             category: .Ornamental,
             plantDescription: "A hardy, air-purifying plant that thrives in low light and requires minimal care.",
@@ -200,8 +201,8 @@ class DataControllerGG {
         )
         
         let daisy: Plant = Plant(
-            plantName: "Daisy",
-            plantImage: ["daisy plant"],//name change
+            plantName: "daisy",
+            plantImage: ["daisy1.jpg" , "daisy2.jpg"],//name change
             plantBotanicalName: "Bellis perennis",
             category: .Ornamental,
             plantDescription: "Cheerful flowers that bloom throughout the year, thriving in full sun and well-drained soil.",
@@ -214,7 +215,7 @@ class DataControllerGG {
         
         
         
-        plants.append(contentsOf: [parlorPalm, stringOfPearls ,hibiscus  ,jadePlant , peaceLily , arecaPalm , rose , sunflower , bellflower , daisy , snakePlant , orchid])
+        plants.append(contentsOf: [parlorPalm, tulip ,hibiscus  ,aloeVera , rainLily , arecaPalm , rose , sunflower , bellflower , daisy , snakePlant , orchid])
         
         
         //Diseases data
@@ -499,8 +500,8 @@ class DataControllerGG {
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: grayMold.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: blight.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: grayMold.diseaseID))
-        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: peaceLily.plantID, diseaseID: rootRot.diseaseID))
-        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: peaceLily.plantID, diseaseID: blight.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: rootRot.diseaseID))
+        plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: rainLily.plantID, diseaseID: blight.diseaseID))
         
         let john1Plant : UserPlant = UserPlant(
             userId: John.userId,
@@ -516,7 +517,7 @@ class DataControllerGG {
         
         let john2Plant : UserPlant = UserPlant(
             userId: John.userId,
-            userplantID: peaceLily.plantID,
+            userplantID: rainLily.plantID,
             userPlantNickName: "In Garden",
             lastWatered: currentDate,
             lastFertilized: currentDate,
@@ -565,7 +566,49 @@ class DataControllerGG {
         
         
         //        var userPlantReminder : CareReminderOfUserPlant = CareReminderOfUserPlant(careReminderID: UUID(), userPlantRelationID: john1Plant.userPlantRelationID)
+      
+
+        // Creating 5 fertilizer objects
+        let npk = Fertilizer(
+            fertilizerName: "NPK 20-20-20",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/npk_20_20_20.jpg",
+            fertilizerDescription: "Balanced fertilizer for overall plant growth."
+        )
+
+        let urea = Fertilizer(
+            fertilizerName: "Urea",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/urea.jpg",
+            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
+        )
+
+        let boneMeal = Fertilizer(
+            fertilizerName: "Bone Meal",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/bone_meal.jpg",
+            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
+        )
+
+        let vermicompost = Fertilizer(
+            fertilizerName: "Vermicompost",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/vermicompost.jpg",
+            fertilizerDescription: "Organic compost that improves soil health and fertility."
+        )
+
+        let potash = Fertilizer(
+            fertilizerName: "Potash",
+            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/potash.jpg",
+            fertilizerDescription: "Essential for flower and fruit development in plants."
+        )
         
+        fertilizer.append(contentsOf : [npk , urea , boneMeal , vermicompost , potash])
+        
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: blight.diseaseID, fertilizerId: potash.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: vermicompost.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rootRot.diseaseID, fertilizerId: boneMeal.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: grayMold.diseaseID, fertilizerId: urea.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: npk.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: blight.diseaseID, fertilizerId: urea.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rootRot.diseaseID, fertilizerId: vermicompost.fertilizerId))
+        diseaseFertilizer.append(DiseaseFertilizer(diseaseID: rust.diseaseID, fertilizerId: potash.fertilizerId))
         
         
     }
@@ -582,7 +625,7 @@ class DataControllerGG {
         
         return diseases.filter { diseaseIDs.contains($0.diseaseID) }
     }
-    func getTopWinterPlants() -> [Plant] {
+    func getTopSeasonPlants() -> [Plant] {
         return plants.filter { $0.favourableSeason == .winter }
     }
     
