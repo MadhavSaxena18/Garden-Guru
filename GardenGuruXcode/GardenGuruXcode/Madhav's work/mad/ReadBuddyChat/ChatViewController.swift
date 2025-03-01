@@ -314,14 +314,23 @@ class ChatViewController: UIViewController {
             setupActions()
         }
         
-        private func setupGeminiModel() {
-            do {
-                let apiKey = try ConfigManager.shared.getGeminiAPIKey()
-                model = GenerativeModel(name: "gemini-pro", apiKey: apiKey)
-            } catch {
-                showAPIKeyError()
-            }
+//        private func setupGeminiModel() {
+//            do {
+//                let apiKey = try ConfigManager.shared.getGeminiAPIKey()
+//                model = GenerativeModel(name: "gemini-pro", apiKey: apiKey, modelVersion: "v1")
+//            } catch {
+//                showAPIKeyError()
+//            }
+//        }
+    private func setupGeminiModel() {
+        do {
+            let apiKey = try ConfigManager.shared.getGeminiAPIKey()
+            print("🔑 Loaded API Key: \(apiKey)")  // Debug print statement
+            model = GenerativeModel(name: "gemini-pro", apiKey: apiKey)
+        } catch {
+            showAPIKeyError()
         }
+    }
         
         private func showAPIKeyError() {
             let alert = UIAlertController(
