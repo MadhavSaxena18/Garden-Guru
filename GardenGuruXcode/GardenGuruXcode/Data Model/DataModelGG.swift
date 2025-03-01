@@ -83,7 +83,7 @@ struct CareReminder_ {
 }
 
 struct CareReminderOfUserPlant{
-    var careReminderID : UUID = UUID()
+    var careReminderOfUserPlantID : UUID = UUID()
     var userPlantRelationID : UUID  //FK FOR USER PLANT
     var careReminderId : UUID //FK FOR CARE REMINDER
 }
