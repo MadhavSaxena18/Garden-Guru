@@ -26,6 +26,8 @@ struct Plant: Equatable {
     var fertilizerFrequency: Int
     var repottingFrequency: Int
     var pruningFrequency: Int
+    let idealTemperature: [Double]  // Array of suitable temperatures
+    let lightRequirement: String 
 }
 
 struct Diseases : Equatable{

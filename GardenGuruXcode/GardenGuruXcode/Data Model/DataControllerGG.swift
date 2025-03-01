@@ -58,7 +58,9 @@ class DataControllerGG {
             waterFrequency :3, // Twice in a week
             fertilizerFrequency: 7, // Once a week
             repottingFrequency: 30, // Monthly
-            pruningFrequency: 365 // Yearly
+            pruningFrequency: 365, // Yearly
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Medium"
         )
         
         let tulip : Plant = Plant(
@@ -72,7 +74,9 @@ class DataControllerGG {
             waterFrequency: 4, // Every 2 weeks
             fertilizerFrequency: 60, // Every 2 months
             repottingFrequency: 730, // Every 2 years
-            pruningFrequency: 120 // Every 4 months
+            pruningFrequency: 120, // Every 4 months
+            idealTemperature: [15.0, 20.0],
+            lightRequirement: "Medium"
             
         )
         
@@ -87,7 +91,10 @@ class DataControllerGG {
             waterFrequency: 3, // Every 3 days
             fertilizerFrequency: 15, // Twice a month
             repottingFrequency: 365, // Yearly
-            pruningFrequency: 90  // Every 3 months
+            pruningFrequency: 90,  // Every 3 months
+            idealTemperature: [20.0, 30.0],
+            lightRequirement: "High"
+            
         )
         
         let aloeVera : Plant = Plant(
@@ -101,7 +108,9 @@ class DataControllerGG {
             waterFrequency: 14, // Every 2 weeks
             fertilizerFrequency: 90, // Every 3 months
             repottingFrequency: 730, // Every 2 years
-            pruningFrequency: 120 // Every 4 months
+            pruningFrequency: 120, // Every 4 months
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Medium"
         )
         
         let rainLily : Plant = Plant(
@@ -115,7 +124,9 @@ class DataControllerGG {
             waterFrequency: 7, // Weekly
             fertilizerFrequency: 30, // Monthly
             repottingFrequency: 365, // Yearly
-            pruningFrequency: 90 // Every 3 months
+            pruningFrequency: 90, // Every 3 months
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Medium"
         )
         
         let arecaPalm : Plant = Plant(
@@ -130,7 +141,9 @@ class DataControllerGG {
             waterFrequency: 5, // Every 5 days
             fertilizerFrequency: 60, // Every 2 months
             repottingFrequency: 730, // Every 2 years
-            pruningFrequency: 120// Every 4 months
+            pruningFrequency: 120,// Every 4 months
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Medium"
         )
         
         var rose: Plant = Plant(
@@ -143,7 +156,9 @@ class DataControllerGG {
             waterFrequency: 7,
             fertilizerFrequency: 30,
             repottingFrequency: 365,
-            pruningFrequency: 90
+            pruningFrequency: 90,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Medium"
         )
         
         
@@ -158,7 +173,9 @@ class DataControllerGG {
             waterFrequency: 5,
             fertilizerFrequency: 20,
             repottingFrequency: 365,
-            pruningFrequency: 60
+            pruningFrequency: 60,
+            idealTemperature: [20.0, 30.0],
+            lightRequirement: "Medium"
         )
         
         let bellflower: Plant = Plant(
@@ -171,7 +188,9 @@ class DataControllerGG {
             waterFrequency: 6,
             fertilizerFrequency: 25,
             repottingFrequency: 365,
-            pruningFrequency: 75
+            pruningFrequency: 75,
+            idealTemperature: [15.0, 20.0],
+            lightRequirement: "Medium"
         )
         
         let orchid: Plant = Plant(
@@ -184,7 +203,9 @@ class DataControllerGG {
             waterFrequency: 7,
             fertilizerFrequency: 15,
             repottingFrequency: 730,
-            pruningFrequency: 90
+            pruningFrequency: 90,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Medium"
         )
         
         let snakePlant: Plant = Plant(
@@ -197,7 +218,9 @@ class DataControllerGG {
             waterFrequency: 14,
             fertilizerFrequency: 60,
             repottingFrequency: 730,
-            pruningFrequency: 180
+            pruningFrequency: 180,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Low"
         )
         
         let daisy: Plant = Plant(
@@ -210,7 +233,9 @@ class DataControllerGG {
             waterFrequency: 5,
             fertilizerFrequency: 30,
             repottingFrequency: 365,
-            pruningFrequency: 60
+            pruningFrequency: 60,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Medium"
         )
         
         
@@ -872,7 +897,58 @@ class DataControllerGG {
         return diseases.filter { diseaseIDs.contains($0.diseaseID) }
     }
     func getTopSeasonPlants() -> [Plant] {
-        return plants.filter { $0.favourableSeason == .winter }
+        // Get user's location
+        let userLocation = UserDefaults.standard.string(forKey: "userLocation")?.lowercased() ?? ""
+        
+        // Get current date to determine season
+        let calendar = Calendar.current
+        let month = calendar.component(.month, from: Date())
+        
+        // Define seasons based on months (Northern Hemisphere)
+        let isWinter = (12...12).contains(month) || (1...2).contains(month)
+        let isSummer = (6...8).contains(month)
+        
+        // Filter plants based on location and season
+        return plants.filter { plant in
+            // Location-based filtering
+            if userLocation.contains("noida") || userLocation.contains("delhi") {
+                // North India conditions
+                if isSummer {
+                    return plant.lightRequirement == "High" &&
+                           plant.idealTemperature.contains { $0 > 25 }
+                } else if isWinter {
+                    return plant.lightRequirement == "Low" &&
+                           plant.idealTemperature.contains { $0 < 20 }
+                }
+            } else if userLocation.contains("mumbai") || userLocation.contains("chennai") {
+                // Coastal conditions
+                if isSummer {
+                    return plant.lightRequirement == "High" &&
+                           plant.idealTemperature.contains { $0 > 30 }
+                } else if isWinter {
+                    return plant.lightRequirement == "Medium" &&
+                           plant.idealTemperature.contains { $0 > 20 }
+                }
+            } else if userLocation.contains("bangalore") || userLocation.contains("pune") {
+                // Moderate climate conditions
+                if isSummer {
+                    return plant.lightRequirement == "Medium" &&
+                           plant.idealTemperature.contains { $0 > 20 && $0 < 30 }
+                } else if isWinter {
+                    return plant.lightRequirement == "Low" &&
+                           plant.idealTemperature.contains { $0 > 15 }
+                }
+            }
+            
+            // Default seasonal filtering if location not recognized
+            if isSummer {
+                return plant.favourableSeason == .summer
+            } else if isWinter {
+                return plant.favourableSeason == .winter
+            } else {
+                return true // Show all plants for other months
+            }
+        }
     }
     
     func getCommonIssues() -> [Diseases] {
@@ -882,14 +958,7 @@ class DataControllerGG {
     func getPlantbyName (by name : String) -> Plant? {
         return plants.first(where: {$0.plantName == name})
     }
-//    
-//    
-//    func getCommonIssuesForRose() -> [Diseases] {
-//        guard let rosePlant = plants.first(where: { $0.plantName == "Rose" }) else { return [] }
-//        print("hellllllllllllllllloooooooooo")
-//        print(getDiseases(for: rosePlant.plantID))
-//        return getDiseases(for: rosePlant.plantID)
-//    }
+
     
     func getDiseasesForUserPlants(userId: UUID) -> [Diseases] {
         // Get all plants belonging to the user
