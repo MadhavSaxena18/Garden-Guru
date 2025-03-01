@@ -1117,7 +1117,7 @@ class DataControllerGG {
         
         // Create relationship
         let relationship = CareReminderOfUserPlant(
-            careReminderID: UUID(),
+            careReminderOfUserPlantID: UUID(),
             userPlantRelationID: userPlant.userPlantRelationID, careReminderId: UUID()
         )
         reminderOfUserPlant.append(relationship)
