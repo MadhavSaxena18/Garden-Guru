@@ -26,6 +26,8 @@ struct Plant: Equatable {
     var fertilizerFrequency: Int
     var repottingFrequency: Int
     var pruningFrequency: Int
+    let idealTemperature: [Double]  // Array of suitable temperatures
+    let lightRequirement: String 
 }
 
 struct Diseases : Equatable{
@@ -71,6 +73,7 @@ struct UsersPlantDisease {
 
 
 struct CareReminder_ {
+    var careReminderID : UUID = UUID() //PK FOR USER PLANT
     var upcomingReminderForWater: Date
     var upcomingReminderForFertilizers: Date
     var upcomingReminderForRepotted: Date
@@ -80,8 +83,9 @@ struct CareReminder_ {
 }
 
 struct CareReminderOfUserPlant{
-    var careReminderID : UUID = UUID()
+    var careReminderOfUserPlantID : UUID = UUID()
     var userPlantRelationID : UUID  //FK FOR USER PLANT
+    var careReminderId : UUID //FK FOR CARE REMINDER
 }
 
 enum Season {
