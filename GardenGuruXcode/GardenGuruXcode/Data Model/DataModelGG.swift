@@ -72,14 +72,24 @@ struct UsersPlantDisease {
 }
 
 
-struct CareReminder_ {
-    var careReminderID : UUID = UUID() //PK FOR USER PLANT
+class CareReminder_ {
+    let careReminderID: UUID
     var upcomingReminderForWater: Date
     var upcomingReminderForFertilizers: Date
     var upcomingReminderForRepotted: Date
-    var isWateringCompleted: Bool = false
-    var isFertilizingCompleted: Bool = false
-    var isRepottingCompleted: Bool = false
+    var isWateringCompleted: Bool
+    var isFertilizingCompleted: Bool
+    var isRepottingCompleted: Bool
+    
+    init(upcomingReminderForWater: Date, upcomingReminderForFertilizers: Date, upcomingReminderForRepotted: Date, isWateringCompleted: Bool, isFertilizingCompleted: Bool, isRepottingCompleted: Bool) {
+        self.careReminderID = UUID()
+        self.upcomingReminderForWater = upcomingReminderForWater
+        self.upcomingReminderForFertilizers = upcomingReminderForFertilizers
+        self.upcomingReminderForRepotted = upcomingReminderForRepotted
+        self.isWateringCompleted = isWateringCompleted
+        self.isFertilizingCompleted = isFertilizingCompleted
+        self.isRepottingCompleted = isRepottingCompleted
+    }
 }
 
 struct CareReminderOfUserPlant{

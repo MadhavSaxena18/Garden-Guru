@@ -19,24 +19,46 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     var onCheckboxToggle: (() -> Void)?
     
     
-    func configure(with reminderData: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_)) {
+    func configure(with reminderData: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), 
+                  isCompleted: Bool, 
+                  dueDate: Date, 
+                  isUpcoming: Bool,
+                  isTomorrow: Bool,
+                  shouldEnableCheckbox: Bool) {
         careReminderPlantImageView.image = UIImage(named: reminderData.plant.plantImage[0])
         plantNameCareReminderLabel.text = reminderData.plant.plantName
         nickNameCareReminderLabel.text = reminderData.userPlant.userPlantNickName
-        let checkBoxImage = reminderData.reminder.isWateringCompleted ? UIImage(systemName: "checkmark.square.fill") : UIImage(systemName: "square")
+        
+        // Enable/disable checkbox based on parameter
+        checkBoxCareReminderButton.isEnabled = shouldEnableCheckbox
+        checkBoxCareReminderButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
+        
+        // Update checkbox image
+        let checkBoxImage = isCompleted ? 
+            UIImage(systemName: "checkmark.square.fill")?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal) :
+            UIImage(systemName: "square")
         checkBoxCareReminderButton.setImage(checkBoxImage, for: .normal)
-        dueDateCareReminder.isHidden = !reminderData.reminder.isWateringCompleted
-//        if isUpcoming {
-//                   let formatter = DateFormatter()
-//                   formatter.dateStyle = .medium
-//            dueDateCareReminder.text = "Due: \(formatter.string(from: reminder.dueDate))"
-//            dueDateCareReminder.isHidden = false
-//               } else {
-//                   dueDateCareReminder.isHidden = true
-//               }
         
+        // Update due date label
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
         
-        
+        if isUpcoming {
+            if isTomorrow {
+                dueDateCareReminder.text = "Due Tomorrow"
+            } else {
+                dueDateCareReminder.text = "Due: \(formatter.string(from: dueDate))"
+            }
+            dueDateCareReminder.textColor = .black
+        } else {
+            if isCompleted {
+                dueDateCareReminder.text = "Completed"
+                dueDateCareReminder.textColor = UIColor(hex: "004E05") // Dark green color
+            } else {
+                dueDateCareReminder.text = "Due Today"
+                dueDateCareReminder.textColor = .black
+            }
+        }
     }
     
     override func awakeFromNib() {
