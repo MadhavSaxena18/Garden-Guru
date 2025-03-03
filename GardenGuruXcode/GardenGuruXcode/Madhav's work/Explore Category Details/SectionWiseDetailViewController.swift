@@ -8,14 +8,19 @@
 import UIKit
 
 class SectionWiseDetailViewController: UIViewController {
+
+    // MARK: - Outlets
+
+    @IBOutlet weak var collectionView: UICollectionView!
+    
     var sectionNumber: Int?
     var selectedSegmentIndex: Int?
     var headerData: [String]?
     
     private var plants: [Plant] = []
     private var diseases: [Diseases] = []
-    private var fertilizers: [String] = []
-    private var isShowingPlants = true // To track what type of data we're showing
+    private var fertilizers: [Fertilizer] = [] // Changed from [String] to [Fertilizer]
+    private var isShowingPlants = true
     private var dataType: DataType = .plants
     
     private enum DataType {
@@ -23,10 +28,6 @@ class SectionWiseDetailViewController: UIViewController {
         case diseases
         case fertilizers
     }
-    // MARK: - Outlets
-
-    @IBOutlet weak var collectionView: UICollectionView!
-    
     // MARK: - Dependencies
     var filteredItems: [Any]?
     // MARK: - Dependencies
@@ -107,16 +108,19 @@ class SectionWiseDetailViewController: UIViewController {
                 dataType = .plants
                 plants = dataController.getTopSeasonPlants()
                 print("Loaded winter plants: \(plants.count)")
-                print("Plant names: \(plants.map { $0.plantName })")
                 
             case 1: // Common Issues
                 dataType = .diseases
                 diseases = dataController.getCommonIssues()
                 print("Loaded common issues: \(diseases.count)")
-                print("Disease names: \(diseases.map { $0.diseaseName })")
+                
+            case 2: // Common Fertilizers
+                dataType = .fertilizers
+                fertilizers = dataController.getCommonFertilizers() // This now correctly assigns [Fertilizer]
+                print("Loaded fertilizers: \(fertilizers.count)")
                 
             default:
-                print("Unknown section for Discover segment")
+                break
             }
             
         case 1: // For My Plants
@@ -129,7 +133,7 @@ class SectionWiseDetailViewController: UIViewController {
                 
             case 1: // Common Fertilizers
                 dataType = .fertilizers
-                fertilizers = dataController.getCommonFertilizersForParlorPalm()
+                fertilizers = dataController.getCommonFertilizers()
                 print("Loaded fertilizers: \(fertilizers.count)")
                 print("Fertilizers: \(fertilizers)")
                 

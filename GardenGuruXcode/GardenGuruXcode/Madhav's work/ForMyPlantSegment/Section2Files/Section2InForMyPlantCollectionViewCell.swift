@@ -23,11 +23,17 @@ class Section2InForMyPlantCollectionViewCell: UICollectionViewCell {
 //        descriptionOfImageInforMyPlantSegment.text = ExploreScreen.dataOfSection2InforMyPlantSection[indexPath.row].discription
 //    }
     
-    func configure(with fertilizer: String) {
-//            titleLabel.text = fertilizer
-        imageViewForMyPlantSegment.image = UIImage(named: fertilizer)
-        descriptionOfImageInforMyPlantSegment.text = fertilizer
-        }
+    // Updated configure function to accept a Fertilizer object
+    func configure(with fertilizer: Fertilizer) {
+        imageViewForMyPlantSegment.image = UIImage(named: fertilizer.fertilizerImage) ?? UIImage(named: "fertilizer_placeholder")
+        descriptionOfImageInforMyPlantSegment.text = fertilizer.fertilizerName
+    }
+    
+    // Keep the old method for backward compatibility if needed
+    func configure(with fertilizerName: String) {
+        imageViewForMyPlantSegment.image = UIImage(named: fertilizerName)
+        descriptionOfImageInforMyPlantSegment.text = fertilizerName
+    }
 
     
 
