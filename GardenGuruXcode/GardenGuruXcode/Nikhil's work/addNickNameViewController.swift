@@ -43,7 +43,7 @@ class addNickNameViewController: UIViewController {
     
     func setupAlertBox() {
         let titleLabel = UILabel()
-        titleLabel.text = "Let’s Give Nickname First"
+        titleLabel.text = "Let's Give Nickname First"
         titleLabel.font = UIFont.boldSystemFont(ofSize: 18)
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -104,16 +104,16 @@ class addNickNameViewController: UIViewController {
     @objc func addTapped() {
         guard let nickname = textField.text, !nickname.isEmpty else { return }
         print("Nickname saved: \(nickname)")
-        //dismiss(animated: true)
         
-        let newController = SetReminderViewController()
-        newController.locationLabel.text = nickname
-        if let navController = navigationController {
-               navController.pushViewController(newController, animated: true)
-           } else {
-               present(newController, animated: true)  
-           }
-        // navigationController?.present(newController, animated: true)
+        let setReminderVC = SetReminderViewController()
+        setReminderVC.locationLabel.text = nickname
+        
+        // Create navigation controller
+        let navController = UINavigationController(rootViewController: setReminderVC)
+        navController.modalPresentationStyle = .fullScreen
+        
+        // Present modally
+        present(navController, animated: true)
     }
    
 
