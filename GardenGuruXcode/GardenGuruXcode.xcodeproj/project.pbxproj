@@ -155,7 +155,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 				DEVELOPMENT_TEAM = 2TWN3DD56C;
+=======
+				DEVELOPMENT_TEAM = WUC5X4DK59;
+>>>>>>> Stashed changes
 =======
 				DEVELOPMENT_TEAM = WUC5X4DK59;
 >>>>>>> Stashed changes
@@ -195,7 +199,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 				DEVELOPMENT_TEAM = 2TWN3DD56C;
+=======
+				DEVELOPMENT_TEAM = WUC5X4DK59;
+>>>>>>> Stashed changes
 =======
 				DEVELOPMENT_TEAM = WUC5X4DK59;
 >>>>>>> Stashed changes
