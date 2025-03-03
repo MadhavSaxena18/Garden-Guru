@@ -850,35 +850,92 @@ class DataControllerGG {
       
 
         // Creating 5 fertilizer objects
+//        let npk = Fertilizer(
+//            fertilizerName: "NPK 20-20-20",
+//            fertilizerImage: "npk1.jpg",
+//            fertilizerDescription: "Balanced fertilizer for overall plant growth."
+//        )
+//
+//        let urea = Fertilizer(
+//            fertilizerName: "Urea",
+//            fertilizerImage: "urea1.jpg",
+//            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
+//        )
+//
+//        let boneMeal = Fertilizer(
+//            fertilizerName: "Bone Meal",
+//            fertilizerImage: "boneMeal1.jpg",
+//            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
+//        )
+//
+//        let vermicompost = Fertilizer(
+//            fertilizerName: "Vermicompost",
+//            fertilizerImage: "vermicompost1.jpg",
+//            fertilizerDescription: "Organic compost that improves soil health and fertility."
+//        )
+//
+//        let potash = Fertilizer(
+//            fertilizerName: "Potash",
+//            fertilizerImage: "potash1.jpg",
+//            fertilizerDescription: "Essential for flower and fruit development in plants."
+//        )
         let npk = Fertilizer(
-            fertilizerName: "NPK 20-20-20",
-            fertilizerImage: "npk1.jpg",
-            fertilizerDescription: "Balanced fertilizer for overall plant growth."
-        )
+                           fertilizerName: "NPK 20-20-20",
+                           fertilizerImage: "npk1.jpg",
+                           fertilizerDescription: "Balanced fertilizer for overall plant growth.",
+                           type: "Chemical",
+                           applicationMethod: "Dissolve in water and apply to soil",
+                           applicationFrequency: "Once every 2 weeks",
+                           warningSigns: ["Overuse may cause nutrient burn", "Avoid applying in high temperatures"],
+                           alternativeFertilizers: ["Compost Tea", "Bone Meal"]
+                    
+                           )
 
-        let urea = Fertilizer(
-            fertilizerName: "Urea",
-            fertilizerImage: "urea1.jpg",
-            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
-        )
+                       let urea = Fertilizer(
+                           fertilizerName: "Urea",
+                           fertilizerImage: "urea1.jpg",
+                           fertilizerDescription: "High nitrogen fertilizer for leafy plant growth.",
+                           type: "Chemical",
+                   applicationMethod: "Mix with soil or dissolve in water",
+                   applicationFrequency: "Once per month",
+                   warningSigns: ["Excess nitrogen can weaken plant stems", "Leads to excessive leaf growth with fewer fruits"],
+                   alternativeFertilizers: ["Blood Meal", "Fish Emulsion"]
+                
+                       )
 
-        let boneMeal = Fertilizer(
-            fertilizerName: "Bone Meal",
-            fertilizerImage: "boneMeal1.jpg",
-            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
-        )
+                       let boneMeal = Fertilizer(
+                           fertilizerName: "Bone Meal",
+                           fertilizerImage: "boneMeal1.jpg",
+                           fertilizerDescription: "Organic phosphorus-rich fertilizer for root development.",
+                            type: "Organic",
+                   applicationMethod: "Sprinkle around the base of plants and mix into soil",
+                   applicationFrequency: "Once every 6 weeks",
+                   warningSigns: ["Overuse can increase soil pH", "Slow release may not work for quick-growing plants"],
+                   alternativeFertilizers: ["Rock Phosphate", "Fish Bone Meal"]
 
-        let vermicompost = Fertilizer(
-            fertilizerName: "Vermicompost",
-            fertilizerImage: "vermicompost1.jpg",
-            fertilizerDescription: "Organic compost that improves soil health and fertility."
-        )
+                       )
 
-        let potash = Fertilizer(
-            fertilizerName: "Potash",
-            fertilizerImage: "potash1.jpg",
-            fertilizerDescription: "Essential for flower and fruit development in plants."
-        )
+                       let vermicompost = Fertilizer(
+                           fertilizerName: "Vermicompost",
+                           fertilizerImage: "vermicompost1.jpg",
+                           fertilizerDescription: "Organic compost that improves soil health and fertility.",
+                           type: "Organic",
+                   applicationMethod: "Mix into soil or use as top dressing",
+                   applicationFrequency: "Once a month",
+                   warningSigns: ["None, completely safe for plants"],
+                   alternativeFertilizers: ["Compost", "Manure"]
+                       )
+
+                       let potash = Fertilizer(
+                           fertilizerName: "Potash",
+                           fertilizerImage: "potash1.jpg",
+                           fertilizerDescription: "Essential for flower and fruit development in plants.",
+                           type: "Mineral-based",
+                   applicationMethod: "Mix with water and apply to roots",
+                   applicationFrequency: "Once every 3 weeks",
+                   warningSigns: ["Excess potassium can lead to calcium and magnesium deficiencies"],
+                   alternativeFertilizers: ["Wood Ash", "Greensand"]
+                       )
         
         fertilizer.append(contentsOf : [npk , urea , boneMeal , vermicompost , potash])
         
