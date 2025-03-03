@@ -53,7 +53,7 @@ class DataControllerGG {
             repottingFrequency: 30, // Monthly
             pruningFrequency: 365, // Yearly
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let tulip : Plant = Plant(
@@ -69,7 +69,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120, // Every 4 months
             idealTemperature: [15.0, 20.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
             
         )
         
@@ -103,7 +103,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120, // Every 4 months
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let rainLily : Plant = Plant(
@@ -119,7 +119,7 @@ class DataControllerGG {
             repottingFrequency: 365, // Yearly
             pruningFrequency: 90, // Every 3 months
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let arecaPalm : Plant = Plant(
@@ -136,7 +136,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120,// Every 4 months
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         var rose: Plant = Plant(
@@ -151,7 +151,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 90,
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         
@@ -168,7 +168,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 60,
             idealTemperature: [20.0, 30.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let bellflower: Plant = Plant(
@@ -183,7 +183,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 75,
             idealTemperature: [15.0, 20.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let orchid: Plant = Plant(
@@ -198,7 +198,7 @@ class DataControllerGG {
             repottingFrequency: 730,
             pruningFrequency: 90,
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let snakePlant: Plant = Plant(
@@ -228,7 +228,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 60,
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         
