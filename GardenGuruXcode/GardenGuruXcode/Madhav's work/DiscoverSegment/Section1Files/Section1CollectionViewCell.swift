@@ -17,6 +17,13 @@ class Section1CollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var plantNameLabel: UILabel!
     
     @IBOutlet weak var plantDescriptionLabel: UILabel!
+    
+    private let weatherService = WeatherService()
+    private let locationManager = LocationManager()
+    private var currentWeather: WeatherService.WeatherResponse?
+    override func awakeFromNib() {
+        <#code#>
+    }
     func updateDataOfSection1(with indexPath: IndexPath){
 //        cardView.layer.shadowColor = UIColor.black.cgColor
 //        cardView.layer.shadowOpacity = 0.9
