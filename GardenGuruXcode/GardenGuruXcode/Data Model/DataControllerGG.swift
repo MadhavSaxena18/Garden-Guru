@@ -305,35 +305,7 @@ class DataControllerGG {
             diseaseSeason: .rainy
         )
         
-//        let leafSpot : Diseases = Diseases(
-//            diseaseName: "Leaf spot",
-//            diseaseID: UUID(),
-//            diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
-//            diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
-//            diseaseCure: ["Remove infected leaves", "Apply copper-based fungicide", "Ensure proper air circulation"],
-//            diseaseFertilizers: ["Fish emulsion", "Balanced NPK fertilizer (10-10-10)"],
-//            cureDuration: 7,
-//            diseaseDetail: [
-//                "Cure and Treatment": [
-//                    "Remove affected leaves to prevent spread.",
-//                    "Use a copper or neem oil-based fungicide.",
-//                    "Avoid wetting foliage when watering."
-//                ],
-//                "Preventive Measures": [
-//                    "Ensure good air circulation.",
-//                    "Use disease-resistant plant varieties.",
-//                    "Water plants early in the day so leaves dry quickly."
-//                ],
-//                "Symptoms": [
-//                    "Small brown, black, or yellow spots on leaves.",
-//                    "Spots may enlarge and merge over time.",
-//                    "Leaf drop in severe cases."
-//                ],
-//                "Vitamins Required": ["Boron", "Manganese"],
-//                "Related Images": ["Leaf Spot affected leaf 1", "Leaf Spot affected leaf 2"],
-//                "Video Solution": ["https://youtu.be/example15", "https://youtu.be/example16"]
-//            ], diseaseSeason: .summer
-//        )
+        
         
         let blight : Diseases = Diseases(
             diseaseName: "Rachis Blight",
