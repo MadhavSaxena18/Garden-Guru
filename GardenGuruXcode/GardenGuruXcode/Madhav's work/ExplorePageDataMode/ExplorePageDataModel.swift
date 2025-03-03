@@ -77,7 +77,7 @@ class ExploreScreen{
                                                                                     DataOfSection3InDicoverSegment(designImage: UIImage(named: "design3")!, designName: "The Art of Nature🌸"),
                                                                                     DataOfSection3InDicoverSegment(designImage: UIImage(named: "design4")!, designName: "The Art of Nature🌸"),
     ]
-    static var headerData: [String] = ["Top Winter Plants", "Common Issues", "Top Designs"]
+    static var headerData: [String] = ["Current Season Plants", "Common Issues", "Top Designs"]
     
     
     
