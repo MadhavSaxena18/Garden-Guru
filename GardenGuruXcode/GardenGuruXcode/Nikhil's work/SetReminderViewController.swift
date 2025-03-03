@@ -81,11 +81,12 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         // Set the title
         title = "Set Reminder"
         
+                
         // Configure the navigation bar appearance
         //navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barTintColor = UIColor.systemGreen
-        navigationController?.navigationBar.tintColor = .white
-        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.tintColor = .black
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
         
         // Add a custom "Cancel" button to the right side
         let cancelButton = UIBarButtonItem(
