@@ -629,19 +629,19 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
                 .instantiateViewController(withIdentifier: "DiseaseDetailViewController") as? DiseaseDetailViewController {
                 detailVC.disease = disease
-                
-                // Check if we're coming from a collection view cell
-                if let _ = collectionView.cellForItem(at: indexPath) {
-                    // Coming from collection view cell tap
-                    detailVC.isModallyPresented = true
-                    let navVC = UINavigationController(rootViewController: detailVC)
-                    present(navVC, animated: true)
-                } else {
-                    // Coming from section header tap
-                    detailVC.isModallyPresented = false
-                    navigationController?.pushViewController(detailVC, animated: true)
-                }
+                detailVC.isModallyPresented = true
+                let navVC = UINavigationController(rootViewController: detailVC)
+                present(navVC, animated: true)
             }
+        } else if let fertilizer = selectedItem as? Fertilizer,
+                  selectedCategory.title == "Common Fertilizers for Parlor Palm" {
+            // Handle fertilizer selection
+            let detailVC = FertilizerDetailViewController()
+            detailVC.fertilizer = fertilizer
+            detailVC.title = "Fertilizer Details"
+            let navVC = UINavigationController(rootViewController: detailVC)
+            navVC.modalPresentationStyle = .formSheet
+            present(navVC, animated: true)
         } else {
             // Show regular CardsDetailViewController for other items
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
@@ -654,7 +654,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
-    
 
     
     @objc func imageTapped() {
