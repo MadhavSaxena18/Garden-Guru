@@ -306,7 +306,6 @@ class DataControllerGG {
         )
         
         
-        
         let blight : Diseases = Diseases(
             diseaseName: "Rachis Blight",
             diseaseID: UUID(),
