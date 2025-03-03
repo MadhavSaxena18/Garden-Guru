@@ -1211,4 +1211,13 @@ class DataControllerGG {
         )
         reminderOfUserPlant.append(relationship)
     }
+    
+    func getDisease(byName diseaseName: String) -> Diseases? {
+                return diseases.first { $0.diseaseName == diseaseName }
+            }
+        
+            // Add this function to get disease details
+            func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
+                return diseases.first { $0.diseaseName == diseaseName }?.diseaseDetail
+            }
 }
