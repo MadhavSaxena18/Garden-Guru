@@ -1,4 +1,10 @@
 import Foundation
+import Supabase
+
+
+class supaBaseController {
+    var supaBaseClient:SupabaseClient = SupabaseClient(supabaseURL: URL(string: "https://gqvziyioemmgvawvjvnx.supabase.co")!, supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdnppeWlvZW1tZ3Zhd3Zqdm54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1MzY4OTAsImV4cCI6MjA1NTExMjg5MH0.ZFpyFJTj0CDOp1BcmxomXqYc9cyCqSihZn98c9QJAdg")
+}
 
 class DataControllerGG {
     
@@ -17,7 +23,7 @@ class DataControllerGG {
     private var diseases: [Diseases] = []
     private var plantDiseases: [PlantDisease] = []
     private var user : [userInfo] = []
-    private var userPlant : [UserPlant] = []
+    var userPlant : [UserPlant] = []
     let currentDate = Date()
     private var userPlantDisease : [UsersPlantDisease] = []
     private var careReminders : [CareReminder_] = []
@@ -53,7 +59,7 @@ class DataControllerGG {
             repottingFrequency: 30, // Monthly
             pruningFrequency: 365, // Yearly
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let tulip : Plant = Plant(
@@ -69,7 +75,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120, // Every 4 months
             idealTemperature: [15.0, 20.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
             
         )
         
@@ -103,7 +109,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120, // Every 4 months
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let rainLily : Plant = Plant(
@@ -119,7 +125,7 @@ class DataControllerGG {
             repottingFrequency: 365, // Yearly
             pruningFrequency: 90, // Every 3 months
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let arecaPalm : Plant = Plant(
@@ -136,7 +142,7 @@ class DataControllerGG {
             repottingFrequency: 730, // Every 2 years
             pruningFrequency: 120,// Every 4 months
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         var rose: Plant = Plant(
@@ -151,7 +157,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 90,
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         
@@ -168,7 +174,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 60,
             idealTemperature: [20.0, 30.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let bellflower: Plant = Plant(
@@ -183,7 +189,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 75,
             idealTemperature: [15.0, 20.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let orchid: Plant = Plant(
@@ -198,7 +204,7 @@ class DataControllerGG {
             repottingFrequency: 730,
             pruningFrequency: 90,
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         let snakePlant: Plant = Plant(
@@ -228,7 +234,7 @@ class DataControllerGG {
             repottingFrequency: 365,
             pruningFrequency: 60,
             idealTemperature: [18.0, 24.0],
-            lightRequirement: "Medium"
+            lightRequirement: "Mid"
         )
         
         
@@ -298,36 +304,7 @@ class DataControllerGG {
             ],
             diseaseSeason: .rainy
         )
-        
-        let leafSpot : Diseases = Diseases(
-            diseaseName: "Leaf spot",
-            diseaseID: UUID(),
-            diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
-            diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
-            diseaseCure: ["Remove infected leaves", "Apply copper-based fungicide", "Ensure proper air circulation"],
-            diseaseFertilizers: ["Fish emulsion", "Balanced NPK fertilizer (10-10-10)"],
-            cureDuration: 7,
-            diseaseDetail: [
-                "Cure and Treatment": [
-                    "Remove affected leaves to prevent spread.",
-                    "Use a copper or neem oil-based fungicide.",
-                    "Avoid wetting foliage when watering."
-                ],
-                "Preventive Measures": [
-                    "Ensure good air circulation.",
-                    "Use disease-resistant plant varieties.",
-                    "Water plants early in the day so leaves dry quickly."
-                ],
-                "Symptoms": [
-                    "Small brown, black, or yellow spots on leaves.",
-                    "Spots may enlarge and merge over time.",
-                    "Leaf drop in severe cases."
-                ],
-                "Vitamins Required": ["Boron", "Manganese"],
-                "Related Images": ["Leaf Spot affected leaf 1", "Leaf Spot affected leaf 2"],
-                "Video Solution": ["https://youtu.be/example15", "https://youtu.be/example16"]
-            ], diseaseSeason: .summer
-        )
+        //hello madhav bhai
         
         let blight : Diseases = Diseases(
             diseaseName: "Rachis Blight",
@@ -512,7 +489,7 @@ class DataControllerGG {
         )
         
         let potassiumDeficiency: Diseases = Diseases(
-            diseaseName: "1.⁠ ⁠Potassium Deficiency",
+            diseaseName: "1. Potassium Deficiency",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellowing leaf edges", "Brown scorching on leaf tips", "Weak stems and slow growth"],
             diseaseImage: ["potassium_deficiency1.jpg", "potassium_deficiency2.jpg"],
@@ -724,7 +701,7 @@ class DataControllerGG {
 
 
         
-        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight ,leafSpot , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpot , fusariumWilt , parlatoriaBlanchard])
+        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight /*leafSpot*/ , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpots , fusariumWilt , parlatoriaBlanchard])
         
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rust.diseaseID))
@@ -844,35 +821,92 @@ class DataControllerGG {
       
 
         // Creating 5 fertilizer objects
+//        let npk = Fertilizer(
+//            fertilizerName: "NPK 20-20-20",
+//            fertilizerImage: "npk1.jpg",
+//            fertilizerDescription: "Balanced fertilizer for overall plant growth."
+//        )
+//
+//        let urea = Fertilizer(
+//            fertilizerName: "Urea",
+//            fertilizerImage: "urea1.jpg",
+//            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
+//        )
+//
+//        let boneMeal = Fertilizer(
+//            fertilizerName: "Bone Meal",
+//            fertilizerImage: "boneMeal1.jpg",
+//            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
+//        )
+//
+//        let vermicompost = Fertilizer(
+//            fertilizerName: "Vermicompost",
+//            fertilizerImage: "vermicompost1.jpg",
+//            fertilizerDescription: "Organic compost that improves soil health and fertility."
+//        )
+//
+//        let potash = Fertilizer(
+//            fertilizerName: "Potash",
+//            fertilizerImage: "potash1.jpg",
+//            fertilizerDescription: "Essential for flower and fruit development in plants."
+//        )
         let npk = Fertilizer(
-            fertilizerName: "NPK 20-20-20",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/npk_20_20_20.jpg",
-            fertilizerDescription: "Balanced fertilizer for overall plant growth."
-        )
+                           fertilizerName: "NPK 20-20-20",
+                           fertilizerImage: "npk1.jpg",
+                           fertilizerDescription: "Balanced fertilizer for overall plant growth.",
+                           type: "Chemical",
+                           applicationMethod: "Dissolve in water and apply to soil",
+                           applicationFrequency: "Once every 2 weeks",
+                           warningSigns: ["Overuse may cause nutrient burn", "Avoid applying in high temperatures"],
+                           alternativeFertilizers: ["Compost Tea", "Bone Meal"]
+                    
+                           )
 
-        let urea = Fertilizer(
-            fertilizerName: "Urea",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/urea.jpg",
-            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
-        )
+                       let urea = Fertilizer(
+                           fertilizerName: "Urea",
+                           fertilizerImage: "urea1.jpg",
+                           fertilizerDescription: "High nitrogen fertilizer for leafy plant growth.",
+                           type: "Chemical",
+                   applicationMethod: "Mix with soil or dissolve in water",
+                   applicationFrequency: "Once per month",
+                   warningSigns: ["Excess nitrogen can weaken plant stems", "Leads to excessive leaf growth with fewer fruits"],
+                   alternativeFertilizers: ["Blood Meal", "Fish Emulsion"]
+                
+                       )
 
-        let boneMeal = Fertilizer(
-            fertilizerName: "Bone Meal",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/bone_meal.jpg",
-            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
-        )
+                       let boneMeal = Fertilizer(
+                           fertilizerName: "Bone Meal",
+                           fertilizerImage: "boneMeal1.jpg",
+                           fertilizerDescription: "Organic phosphorus-rich fertilizer for root development.",
+                            type: "Organic",
+                   applicationMethod: "Sprinkle around the base of plants and mix into soil",
+                   applicationFrequency: "Once every 6 weeks",
+                   warningSigns: ["Overuse can increase soil pH", "Slow release may not work for quick-growing plants"],
+                   alternativeFertilizers: ["Rock Phosphate", "Fish Bone Meal"]
 
-        let vermicompost = Fertilizer(
-            fertilizerName: "Vermicompost",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/vermicompost.jpg",
-            fertilizerDescription: "Organic compost that improves soil health and fertility."
-        )
+                       )
 
-        let potash = Fertilizer(
-            fertilizerName: "Potash",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/potash.jpg",
-            fertilizerDescription: "Essential for flower and fruit development in plants."
-        )
+                       let vermicompost = Fertilizer(
+                           fertilizerName: "Vermicompost",
+                           fertilizerImage: "vermicompost1.jpg",
+                           fertilizerDescription: "Organic compost that improves soil health and fertility.",
+                           type: "Organic",
+                   applicationMethod: "Mix into soil or use as top dressing",
+                   applicationFrequency: "Once a month",
+                   warningSigns: ["None, completely safe for plants"],
+                   alternativeFertilizers: ["Compost", "Manure"]
+                       )
+
+                       let potash = Fertilizer(
+                           fertilizerName: "Potash",
+                           fertilizerImage: "potash1.jpg",
+                           fertilizerDescription: "Essential for flower and fruit development in plants.",
+                           type: "Mineral-based",
+                   applicationMethod: "Mix with water and apply to roots",
+                   applicationFrequency: "Once every 3 weeks",
+                   warningSigns: ["Excess potassium can lead to calcium and magnesium deficiencies"],
+                   alternativeFertilizers: ["Wood Ash", "Greensand"]
+                       )
         
         fertilizer.append(contentsOf : [npk , urea , boneMeal , vermicompost , potash])
         
@@ -1191,8 +1225,10 @@ class DataControllerGG {
     
     // Add this method to DataControllerGG
     func addUserPlant(_ userPlant: UserPlant) {
+        //adding user plant
+        print(userPlant)
         self.userPlant.append(userPlant)
-        
+        print(self.userPlant)
         // Create and add care reminder
         let reminder = CareReminder_(
             upcomingReminderForWater: userPlant.lastWatered,
@@ -1217,7 +1253,66 @@ class DataControllerGG {
             }
         
             // Add this function to get disease details
-            func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
-                return diseases.first { $0.diseaseName == diseaseName }?.diseaseDetail
-            }
+//    func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
+//        print("Searching for: [\(diseaseName)]")
+//
+//        // Clean up disease name: trim spaces & remove invisible characters
+//        let cleanedDiseaseName = diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//            .replacingOccurrences(of: "\u{200B}", with: "") // Removes Zero-Width Spaces
+//
+//        // Debug: Print all stored disease names to check formatting issues
+//        for disease in diseases {
+//            let storedName = disease.diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//                .replacingOccurrences(of: "\u{200B}", with: "")
+//            print("Stored Disease: [\(storedName)]")
+//        }
+//
+//        // Find matching disease
+//        let disease = diseases.first {
+//            $0.diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//                .replacingOccurrences(of: "\u{200B}", with: "") == cleanedDiseaseName
+//        }
+//
+//        if let disease = disease {
+//            print("✅ Disease found: \(disease.diseaseName)")
+//            print("Disease Details: \(disease.diseaseDetail)")
+//            return disease.diseaseDetail
+//        } else {
+//            print("❌ No match found for: \(diseaseName)")
+//            return nil
+//        }
+//    }
+    
+    func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
+        print("🔎 Searching for: [\(diseaseName)]")
+
+        let cleanedDiseaseName = cleanText(diseaseName)
+
+        for disease in diseases {
+            let storedName = cleanText(disease.diseaseName)
+            print("📌 Stored Disease: [\(storedName)]")
+            print("   - Character count: \(storedName.count)")
+            print("   - Matches? \(storedName == cleanedDiseaseName)")
+        }
+
+        let disease = diseases.first {
+            cleanText($0.diseaseName) == cleanedDiseaseName
+        }
+
+        if let disease = disease {
+            print("✅ Disease found: \(disease.diseaseName)")
+            print("Disease Details: \(disease.diseaseDetail)")
+            return disease.diseaseDetail
+        } else {
+            print("❌ No match found for: \(diseaseName)")
+            return nil
+        }
+    }
+    func cleanText(_ text: String) -> String {
+        return text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{00A0}", with: " ") // Remove non-breaking spaces
+            .replacingOccurrences(of: "\u{200B}", with: "")  // Remove zero-width spaces
+            .replacingOccurrences(of: #"[\s]+"#, with: " ", options: .regularExpression) // Normalize multiple spaces
+    }
 }
