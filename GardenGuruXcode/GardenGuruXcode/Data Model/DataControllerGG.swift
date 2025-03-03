@@ -299,35 +299,35 @@ class DataControllerGG {
             diseaseSeason: .rainy
         )
         
-        let leafSpot : Diseases = Diseases(
-            diseaseName: "Leaf spot",
-            diseaseID: UUID(),
-            diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
-            diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
-            diseaseCure: ["Remove infected leaves", "Apply copper-based fungicide", "Ensure proper air circulation"],
-            diseaseFertilizers: ["Fish emulsion", "Balanced NPK fertilizer (10-10-10)"],
-            cureDuration: 7,
-            diseaseDetail: [
-                "Cure and Treatment": [
-                    "Remove affected leaves to prevent spread.",
-                    "Use a copper or neem oil-based fungicide.",
-                    "Avoid wetting foliage when watering."
-                ],
-                "Preventive Measures": [
-                    "Ensure good air circulation.",
-                    "Use disease-resistant plant varieties.",
-                    "Water plants early in the day so leaves dry quickly."
-                ],
-                "Symptoms": [
-                    "Small brown, black, or yellow spots on leaves.",
-                    "Spots may enlarge and merge over time.",
-                    "Leaf drop in severe cases."
-                ],
-                "Vitamins Required": ["Boron", "Manganese"],
-                "Related Images": ["Leaf Spot affected leaf 1", "Leaf Spot affected leaf 2"],
-                "Video Solution": ["https://youtu.be/example15", "https://youtu.be/example16"]
-            ], diseaseSeason: .summer
-        )
+//        let leafSpot : Diseases = Diseases(
+//            diseaseName: "Leaf spot",
+//            diseaseID: UUID(),
+//            diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
+//            diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
+//            diseaseCure: ["Remove infected leaves", "Apply copper-based fungicide", "Ensure proper air circulation"],
+//            diseaseFertilizers: ["Fish emulsion", "Balanced NPK fertilizer (10-10-10)"],
+//            cureDuration: 7,
+//            diseaseDetail: [
+//                "Cure and Treatment": [
+//                    "Remove affected leaves to prevent spread.",
+//                    "Use a copper or neem oil-based fungicide.",
+//                    "Avoid wetting foliage when watering."
+//                ],
+//                "Preventive Measures": [
+//                    "Ensure good air circulation.",
+//                    "Use disease-resistant plant varieties.",
+//                    "Water plants early in the day so leaves dry quickly."
+//                ],
+//                "Symptoms": [
+//                    "Small brown, black, or yellow spots on leaves.",
+//                    "Spots may enlarge and merge over time.",
+//                    "Leaf drop in severe cases."
+//                ],
+//                "Vitamins Required": ["Boron", "Manganese"],
+//                "Related Images": ["Leaf Spot affected leaf 1", "Leaf Spot affected leaf 2"],
+//                "Video Solution": ["https://youtu.be/example15", "https://youtu.be/example16"]
+//            ], diseaseSeason: .summer
+//        )
         
         let blight : Diseases = Diseases(
             diseaseName: "Rachis Blight",
@@ -512,7 +512,7 @@ class DataControllerGG {
         )
         
         let potassiumDeficiency: Diseases = Diseases(
-            diseaseName: "1.⁠ ⁠Potassium Deficiency",
+            diseaseName: "1. Potassium Deficiency",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellowing leaf edges", "Brown scorching on leaf tips", "Weak stems and slow growth"],
             diseaseImage: ["potassium_deficiency1.jpg", "potassium_deficiency2.jpg"],
@@ -724,7 +724,7 @@ class DataControllerGG {
 
 
         
-        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight ,leafSpot , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpot , fusariumWilt , parlatoriaBlanchard])
+        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight /*leafSpot*/ , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpots , fusariumWilt , parlatoriaBlanchard])
         
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rust.diseaseID))
@@ -846,31 +846,31 @@ class DataControllerGG {
         // Creating 5 fertilizer objects
         let npk = Fertilizer(
             fertilizerName: "NPK 20-20-20",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/npk_20_20_20.jpg",
+            fertilizerImage: "npk1.jpg",
             fertilizerDescription: "Balanced fertilizer for overall plant growth."
         )
 
         let urea = Fertilizer(
             fertilizerName: "Urea",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/urea.jpg",
+            fertilizerImage: "urea1.jpg",
             fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
         )
 
         let boneMeal = Fertilizer(
             fertilizerName: "Bone Meal",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/bone_meal.jpg",
+            fertilizerImage: "boneMeal1.jpg",
             fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
         )
 
         let vermicompost = Fertilizer(
             fertilizerName: "Vermicompost",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/vermicompost.jpg",
+            fertilizerImage: "vermicompost1.jpg",
             fertilizerDescription: "Organic compost that improves soil health and fertility."
         )
 
         let potash = Fertilizer(
             fertilizerName: "Potash",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/potash.jpg",
+            fertilizerImage: "potash1.jpg",
             fertilizerDescription: "Essential for flower and fruit development in plants."
         )
         
@@ -1219,7 +1219,66 @@ class DataControllerGG {
             }
         
             // Add this function to get disease details
-            func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
-                return diseases.first { $0.diseaseName == diseaseName }?.diseaseDetail
-            }
+//    func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
+//        print("Searching for: [\(diseaseName)]")
+//
+//        // Clean up disease name: trim spaces & remove invisible characters
+//        let cleanedDiseaseName = diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//            .replacingOccurrences(of: "\u{200B}", with: "") // Removes Zero-Width Spaces
+//
+//        // Debug: Print all stored disease names to check formatting issues
+//        for disease in diseases {
+//            let storedName = disease.diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//                .replacingOccurrences(of: "\u{200B}", with: "")
+//            print("Stored Disease: [\(storedName)]")
+//        }
+//
+//        // Find matching disease
+//        let disease = diseases.first {
+//            $0.diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//                .replacingOccurrences(of: "\u{200B}", with: "") == cleanedDiseaseName
+//        }
+//
+//        if let disease = disease {
+//            print("✅ Disease found: \(disease.diseaseName)")
+//            print("Disease Details: \(disease.diseaseDetail)")
+//            return disease.diseaseDetail
+//        } else {
+//            print("❌ No match found for: \(diseaseName)")
+//            return nil
+//        }
+//    }
+    
+    func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
+        print("🔎 Searching for: [\(diseaseName)]")
+
+        let cleanedDiseaseName = cleanText(diseaseName)
+
+        for disease in diseases {
+            let storedName = cleanText(disease.diseaseName)
+            print("📌 Stored Disease: [\(storedName)]")
+            print("   - Character count: \(storedName.count)")
+            print("   - Matches? \(storedName == cleanedDiseaseName)")
+        }
+
+        let disease = diseases.first {
+            cleanText($0.diseaseName) == cleanedDiseaseName
+        }
+
+        if let disease = disease {
+            print("✅ Disease found: \(disease.diseaseName)")
+            print("Disease Details: \(disease.diseaseDetail)")
+            return disease.diseaseDetail
+        } else {
+            print("❌ No match found for: \(diseaseName)")
+            return nil
+        }
+    }
+    func cleanText(_ text: String) -> String {
+        return text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{00A0}", with: " ") // Remove non-breaking spaces
+            .replacingOccurrences(of: "\u{200B}", with: "")  // Remove zero-width spaces
+            .replacingOccurrences(of: #"[\s]+"#, with: " ", options: .regularExpression) // Normalize multiple spaces
+    }
 }

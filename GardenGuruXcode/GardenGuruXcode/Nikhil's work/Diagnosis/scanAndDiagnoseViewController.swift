@@ -265,7 +265,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                     print("Most frequent disease: \(mostFrequentDisease)")
                     
                     DispatchQueue.main.async {
-                        DiagnosisViewController.diagnosisLabel.text = "Disease: \(mostFrequentDisease)"
+                        DiagnosisViewController.diagnosisLabel.text = "\(mostFrequentDisease)"
                     }
                 } else {
                     DispatchQueue.main.async {
