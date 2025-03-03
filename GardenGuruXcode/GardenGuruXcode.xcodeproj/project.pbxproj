@@ -154,10 +154,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8SVMZW7RWH;
+				DEVELOPMENT_TEAM = U929489J2U;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = splashScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -169,7 +171,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = in.galgot;
+				PRODUCT_BUNDLE_IDENTIFIER = in.galgotia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -184,10 +186,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8SVMZW7RWH;
+				DEVELOPMENT_TEAM = U929489J2U;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = splashScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -199,7 +203,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = in.galgot;
+				PRODUCT_BUNDLE_IDENTIFIER = in.galgotia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

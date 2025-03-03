@@ -989,9 +989,38 @@ class DataControllerGG {
         return []
     }
     
-    func getCommonFertilizersForParlorPalm() -> [String] {
-        return ["Organic Compost", "Liquid Fertilizer", "Seaweed Extract"] // Custom fertilizers for Parlour Palm
-    }
+    func getCommonFertilizers() -> [Fertilizer] {
+                // Return all available fertilizers
+                return fertilizer
+            }
+            
+            // Get fertilizers recommended for a specific disease
+            func getFertilizersForDisease(diseaseID: UUID) -> [Fertilizer] {
+                // Get fertilizer IDs for this disease
+                let fertilizerIDs = diseaseFertilizer
+                    .filter { $0.diseaseID == diseaseID }
+                    .map { $0.fertilizerId }
+                
+                // Return fertilizers that match these IDs
+                return fertilizer.filter { fertilizerIDs.contains($0.fertilizerId) }
+            }
+            
+            // Get fertilizers recommended for a specific plant's diseases
+            func getFertilizersForPlant(plantID: UUID) -> [Fertilizer] {
+                // Get diseases for this plant
+                let plantDiseaseIDs = plantDiseases
+                    .filter { $0.plantID == plantID }
+                    .map { $0.diseaseID }
+                
+                // Get fertilizer IDs for these diseases
+                let fertilizerIDs = diseaseFertilizer
+                    .filter { plantDiseaseIDs.contains($0.diseaseID) }
+                    .map { $0.fertilizerId }
+                
+                // Return fertilizers that match these IDs
+                return fertilizer.filter { fertilizerIDs.contains($0.fertilizerId) }
+            }
+    
     func getCareReminders(for userId: UUID) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
         let userPlants = userPlant.filter { $0.userId == userId }
         var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
