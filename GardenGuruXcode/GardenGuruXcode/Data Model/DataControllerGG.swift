@@ -1,4 +1,10 @@
 import Foundation
+import Supabase
+
+
+class supaBaseController {
+    var supaBaseClient:SupabaseClient = SupabaseClient(supabaseURL: URL(string: "https://gqvziyioemmgvawvjvnx.supabase.co")!, supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdnppeWlvZW1tZ3Zhd3Zqdm54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1MzY4OTAsImV4cCI6MjA1NTExMjg5MH0.ZFpyFJTj0CDOp1BcmxomXqYc9cyCqSihZn98c9QJAdg")
+}
 
 class DataControllerGG {
     
