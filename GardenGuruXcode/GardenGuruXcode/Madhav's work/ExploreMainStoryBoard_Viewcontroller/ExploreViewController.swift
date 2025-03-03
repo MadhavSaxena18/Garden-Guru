@@ -230,7 +230,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             forMyPlantCategories = [
                 ("Common Issues in your Plant", Array(allIssues.prefix(5))),
-                ("Common Fertilizers for Parlor Palm", Array(allFertilizers.prefix(5)))
+                ("Common Fertilizers", Array(allFertilizers.prefix(5)))
             ]
             if isSearchActive {
                 filteredForMyPlantCategories = forMyPlantCategories
@@ -286,7 +286,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         }
                         return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
                         
-                    case "Common Fertilizers for Parlor Palm":
+                    case "Common Fertilizers":
                         let filteredFertilizers = category.items.filter { item in
                             guard let fertilizer = item as? Fertilizer else { return false }
                             return fertilizer.fertilizerName.lowercased().contains(searchText)
@@ -440,7 +440,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             case "Common Issues in your Plant":
                 section = self.generateSection1LayoutInForMyPlants()
                 
-            case "Common Fertilizers for Parlor Palm":
+            case "Common Fertilizers":
                 section = self.generateSection1LayoutInForMyPlants()
                 
             default:
