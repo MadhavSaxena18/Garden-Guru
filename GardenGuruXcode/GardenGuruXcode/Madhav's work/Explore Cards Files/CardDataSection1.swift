@@ -18,37 +18,47 @@ class CardDataSection1: UICollectionViewCell {
     @IBOutlet var infoLabel3Outlet: UILabel!
     override func awakeFromNib() {
         super.awakeFromNib()
-        // Initialization code
-       
+        // Set up icons for the info boxes
+        infoImage1Outlet.image = UIImage(systemName: "drop.fill") // Water icon
+        //infoImage2Outlet.image = UIImage(systemName: "leaf.fill") // Fertilizer icon
+        infoImage3Outlet.image = UIImage(systemName: "sun.max.fill") // Light icon
     }
     
-
-//    func update(with indexPath : IndexPath){
-//        plantImageOutlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfPlant
-//        infoImage1Outlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfLable1
-//        infoImage2Outlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfLable2
-//        infoImage3Outlet.image = ExploreScreen.cardDetailSection1[indexPath.row].imageOfLable3
-//        infoLabel1Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info1
-//        infoLabel2Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info2
-//        infoLabel3Outlet.text = ExploreScreen.cardDetailSection1[indexPath.row].info3
-//    }
     func update(with data: Any?) {
-            guard let data = data else {
-                resetCell()
-                return
-            }
-
-            if let plant = data as? Plant {
-                plantImageOutlet.image = UIImage(named: plant.plantImage.first ?? "defaultPlantImage")
-                infoLabel1Outlet.text = plant.plantName
-            } else if let disease = data as? Diseases {
-                plantImageOutlet.image = UIImage(named: disease.diseaseImage.first ?? "defaultDiseaseImage")
-                infoLabel1Outlet.text = disease.diseaseName
-            }
+        guard let data = data else {
+            resetCell()
+            return
         }
 
-        private func resetCell() {
-            plantImageOutlet.image = UIImage(named: "defaultPlantImage")
-            infoLabel1Outlet.text = "N/A"
+        if let plant = data as? Plant {
+            // Set plant image
+            plantImageOutlet.image = UIImage(named: plant.plantImage.first ?? "defaultPlantImage")
+            
+            // Water frequency
+            let waterDays = plant.waterFrequency
+            infoLabel1Outlet.text = "Every \(waterDays) days"
+            
+            // Fertilizer frequency
+            let fertilizerDays = plant.fertilizerFrequency
+            infoLabel2Outlet.text = "Every \(fertilizerDays) days"
+            
+            // Light requirement (using water requirement as placeholder since light isn't in the model)
+            infoLabel3Outlet.text = plant.lightRequirement
+            
+        } else if let disease = data as? Diseases {
+            plantImageOutlet.image = UIImage(named: disease.diseaseImage.first ?? "defaultDiseaseImage")
+            resetInfoLabels()
         }
-   }
+    }
+
+    private func resetCell() {
+        plantImageOutlet.image = UIImage(named: "defaultPlantImage")
+        resetInfoLabels()
+    }
+    
+    private func resetInfoLabels() {
+        infoLabel1Outlet.text = "N/A"
+        infoLabel2Outlet.text = "N/A"
+        infoLabel3Outlet.text = "N/A"
+    }
+}

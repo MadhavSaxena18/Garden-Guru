@@ -172,8 +172,8 @@
                                 </constraints>
                             </imageView>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="-1" estimatedSectionHeaderHeight="-1" sectionFooterHeight="-1" estimatedSectionFooterHeight="-1" translatesAutoresizingMaskIntoConstraints="NO" id="7tY-Hg-DcZ">
-                                <rect key="frame" x="5" y="322" width="383" height="496"/>
-                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <rect key="frame" x="15" y="322" width="363" height="496"/>
+                                <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="calibratedRGB"/>
                             </tableView>
                             <view alpha="0.75" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="JVX-Ka-9jc">
                                 <rect key="frame" x="0.0" y="232" width="393" height="90"/>
@@ -217,13 +217,13 @@
                             </navigationBar>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="3ZX-gO-Bos"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstItem="ozL-D5-CO1" firstAttribute="leading" secondItem="jcE-wv-ObK" secondAttribute="leading" id="0H7-bf-4gU"/>
                             <constraint firstItem="5k1-o0-4RA" firstAttribute="top" secondItem="jcE-wv-ObK" secondAttribute="top" id="86t-jk-Ych"/>
-                            <constraint firstItem="7tY-Hg-DcZ" firstAttribute="leading" secondItem="3ZX-gO-Bos" secondAttribute="leading" constant="5" id="8f8-cC-IVr"/>
+                            <constraint firstItem="7tY-Hg-DcZ" firstAttribute="leading" secondItem="3ZX-gO-Bos" secondAttribute="leading" constant="15" id="8f8-cC-IVr"/>
                             <constraint firstItem="oo8-Fm-dSW" firstAttribute="top" secondItem="5k1-o0-4RA" secondAttribute="bottom" id="HAs-L5-CMt"/>
-                            <constraint firstItem="3ZX-gO-Bos" firstAttribute="trailing" secondItem="7tY-Hg-DcZ" secondAttribute="trailing" constant="5" id="N7h-dN-8ha"/>
+                            <constraint firstItem="3ZX-gO-Bos" firstAttribute="trailing" secondItem="7tY-Hg-DcZ" secondAttribute="trailing" constant="15" id="N7h-dN-8ha"/>
                             <constraint firstItem="oo8-Fm-dSW" firstAttribute="top" secondItem="3ZX-gO-Bos" secondAttribute="top" id="Pei-BV-ENp"/>
                             <constraint firstItem="oo8-Fm-dSW" firstAttribute="leading" secondItem="3ZX-gO-Bos" secondAttribute="leading" id="ZhJ-aG-Ghp"/>
                             <constraint firstItem="7tY-Hg-DcZ" firstAttribute="bottom" secondItem="3ZX-gO-Bos" secondAttribute="bottom" id="dxy-XQ-bde"/>
@@ -243,6 +243,7 @@
                     <connections>
                         <outlet property="diseaseNameLabel" destination="oPT-yU-Tft" id="XWu-uf-NbO"/>
                         <outlet property="diseaseSymptoms" destination="2yu-k5-UqU" id="SBB-2A-b2I"/>
+                        <outlet property="headerBackgroundView" destination="JVX-Ka-9jc" id="225-10-m0Q"/>
                         <outlet property="headerImageView" destination="oo8-Fm-dSW" id="7Na-Gr-EHw"/>
                         <outlet property="tableView" destination="7tY-Hg-DcZ" id="QYQ-vS-EcT"/>
                     </connections>
@@ -695,10 +696,10 @@
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemRedColor">
-            <color red="1" green="0.23137254900000001" blue="0.18823529410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="1" green="0.23137254901960785" blue="0.18823529411764706" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemTealColor">
-            <color red="0.18823529410000001" green="0.69019607839999997" blue="0.78039215689999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.18823529411764706" green="0.69019607843137254" blue="0.7803921568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

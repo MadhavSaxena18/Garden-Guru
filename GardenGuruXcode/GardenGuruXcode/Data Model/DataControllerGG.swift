@@ -1,4 +1,10 @@
 import Foundation
+import Supabase
+
+
+class supaBaseController {
+    var supaBaseClient:SupabaseClient = SupabaseClient(supabaseURL: URL(string: "https://gqvziyioemmgvawvjvnx.supabase.co")!, supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdnppeWlvZW1tZ3Zhd3Zqdm54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1MzY4OTAsImV4cCI6MjA1NTExMjg5MH0.ZFpyFJTj0CDOp1BcmxomXqYc9cyCqSihZn98c9QJAdg")
+}
 
 class DataControllerGG {
     
@@ -17,7 +23,7 @@ class DataControllerGG {
     private var diseases: [Diseases] = []
     private var plantDiseases: [PlantDisease] = []
     private var user : [userInfo] = []
-    private var userPlant : [UserPlant] = []
+    var userPlant : [UserPlant] = []
     let currentDate = Date()
     private var userPlantDisease : [UsersPlantDisease] = []
     private var careReminders : [CareReminder_] = []
@@ -25,15 +31,8 @@ class DataControllerGG {
     private var fertilizer : [Fertilizer] = []
     private var diseaseFertilizer : [DiseaseFertilizer] = []
     
-    //    private var plants: [Plant] = []
-    //    private var diseases: [Diseases] = []
-    //    private var plantDiseases: [PlantDisease] = []
-    //    private var user : [userInfo] = []
-    //    private var userPlant : [UserPlant] = []
-    //    let currentDate = Date()
-    //    private var userPlantDisease : [UsersPlantDisease] = []
-    
-    
+    // Store completion states in memory
+    private var reminderCompletionStates: [UUID: [String: Bool]] = [:]
     
     init() {
         
@@ -58,7 +57,9 @@ class DataControllerGG {
             waterFrequency :3, // Twice in a week
             fertilizerFrequency: 7, // Once a week
             repottingFrequency: 30, // Monthly
-            pruningFrequency: 365 // Yearly
+            pruningFrequency: 365, // Yearly
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Mid"
         )
         
         let tulip : Plant = Plant(
@@ -72,7 +73,9 @@ class DataControllerGG {
             waterFrequency: 4, // Every 2 weeks
             fertilizerFrequency: 60, // Every 2 months
             repottingFrequency: 730, // Every 2 years
-            pruningFrequency: 120 // Every 4 months
+            pruningFrequency: 120, // Every 4 months
+            idealTemperature: [15.0, 20.0],
+            lightRequirement: "Mid"
             
         )
         
@@ -87,7 +90,10 @@ class DataControllerGG {
             waterFrequency: 3, // Every 3 days
             fertilizerFrequency: 15, // Twice a month
             repottingFrequency: 365, // Yearly
-            pruningFrequency: 90  // Every 3 months
+            pruningFrequency: 90,  // Every 3 months
+            idealTemperature: [20.0, 30.0],
+            lightRequirement: "High"
+            
         )
         
         let aloeVera : Plant = Plant(
@@ -101,21 +107,25 @@ class DataControllerGG {
             waterFrequency: 14, // Every 2 weeks
             fertilizerFrequency: 90, // Every 3 months
             repottingFrequency: 730, // Every 2 years
-            pruningFrequency: 120 // Every 4 months
+            pruningFrequency: 120, // Every 4 months
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Mid"
         )
         
         let rainLily : Plant = Plant(
             plantName: "Rain Lily",
             plantImage: ["RainLily1.jpg", "RainLily2.jpg"],
             plantBotanicalName: "Spathiphyllum",
-            category: .Ornamental,
+            category: .Flowering,
             plantDescription:
                 "Rain lilies are delicate, perennial flowering plants that bloom after rainfall, hence their name. They produce star-shaped or trumpet-like flowers in shades of pink, yellow, or white. The grass-like, slender green leaves add to their elegant appearance. ",
             favourableSeason: .winter,
             waterFrequency: 7, // Weekly
             fertilizerFrequency: 30, // Monthly
             repottingFrequency: 365, // Yearly
-            pruningFrequency: 90 // Every 3 months
+            pruningFrequency: 90, // Every 3 months
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Mid"
         )
         
         let arecaPalm : Plant = Plant(
@@ -130,7 +140,9 @@ class DataControllerGG {
             waterFrequency: 5, // Every 5 days
             fertilizerFrequency: 60, // Every 2 months
             repottingFrequency: 730, // Every 2 years
-            pruningFrequency: 120// Every 4 months
+            pruningFrequency: 120,// Every 4 months
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Mid"
         )
         
         var rose: Plant = Plant(
@@ -143,7 +155,9 @@ class DataControllerGG {
             waterFrequency: 7,
             fertilizerFrequency: 30,
             repottingFrequency: 365,
-            pruningFrequency: 90
+            pruningFrequency: 90,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Mid"
         )
         
         
@@ -158,7 +172,9 @@ class DataControllerGG {
             waterFrequency: 5,
             fertilizerFrequency: 20,
             repottingFrequency: 365,
-            pruningFrequency: 60
+            pruningFrequency: 60,
+            idealTemperature: [20.0, 30.0],
+            lightRequirement: "Mid"
         )
         
         let bellflower: Plant = Plant(
@@ -171,7 +187,9 @@ class DataControllerGG {
             waterFrequency: 6,
             fertilizerFrequency: 25,
             repottingFrequency: 365,
-            pruningFrequency: 75
+            pruningFrequency: 75,
+            idealTemperature: [15.0, 20.0],
+            lightRequirement: "Mid"
         )
         
         let orchid: Plant = Plant(
@@ -184,7 +202,9 @@ class DataControllerGG {
             waterFrequency: 7,
             fertilizerFrequency: 15,
             repottingFrequency: 730,
-            pruningFrequency: 90
+            pruningFrequency: 90,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Mid"
         )
         
         let snakePlant: Plant = Plant(
@@ -197,7 +217,9 @@ class DataControllerGG {
             waterFrequency: 14,
             fertilizerFrequency: 60,
             repottingFrequency: 730,
-            pruningFrequency: 180
+            pruningFrequency: 180,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Low"
         )
         
         let daisy: Plant = Plant(
@@ -210,7 +232,9 @@ class DataControllerGG {
             waterFrequency: 5,
             fertilizerFrequency: 30,
             repottingFrequency: 365,
-            pruningFrequency: 60
+            pruningFrequency: 60,
+            idealTemperature: [18.0, 24.0],
+            lightRequirement: "Mid"
         )
         
         
@@ -280,36 +304,7 @@ class DataControllerGG {
             ],
             diseaseSeason: .rainy
         )
-        
-        let leafSpot : Diseases = Diseases(
-            diseaseName: "Leaf spot",
-            diseaseID: UUID(),
-            diseaseSymptoms: ["Dark brown or black spots on leaves", "Yellowing of leaves", "Leaves dropping prematurely"],
-            diseaseImage: ["leafspot1.jpg", "leafspot2.jpg"],
-            diseaseCure: ["Remove infected leaves", "Apply copper-based fungicide", "Ensure proper air circulation"],
-            diseaseFertilizers: ["Fish emulsion", "Balanced NPK fertilizer (10-10-10)"],
-            cureDuration: 7,
-            diseaseDetail: [
-                "Cure and Treatment": [
-                    "Remove affected leaves to prevent spread.",
-                    "Use a copper or neem oil-based fungicide.",
-                    "Avoid wetting foliage when watering."
-                ],
-                "Preventive Measures": [
-                    "Ensure good air circulation.",
-                    "Use disease-resistant plant varieties.",
-                    "Water plants early in the day so leaves dry quickly."
-                ],
-                "Symptoms": [
-                    "Small brown, black, or yellow spots on leaves.",
-                    "Spots may enlarge and merge over time.",
-                    "Leaf drop in severe cases."
-                ],
-                "Vitamins Required": ["Boron", "Manganese"],
-                "Related Images": ["Leaf Spot affected leaf 1", "Leaf Spot affected leaf 2"],
-                "Video Solution": ["https://youtu.be/example15", "https://youtu.be/example16"]
-            ], diseaseSeason: .summer
-        )
+        //hello madhav bhai
         
         let blight : Diseases = Diseases(
             diseaseName: "Rachis Blight",
@@ -494,7 +489,7 @@ class DataControllerGG {
         )
         
         let potassiumDeficiency: Diseases = Diseases(
-            diseaseName: "1.⁠ ⁠Potassium Deficiency",
+            diseaseName: "1. Potassium Deficiency",
             diseaseID: UUID(),
             diseaseSymptoms: ["Yellowing leaf edges", "Brown scorching on leaf tips", "Weak stems and slow growth"],
             diseaseImage: ["potassium_deficiency1.jpg", "potassium_deficiency2.jpg"],
@@ -706,7 +701,7 @@ class DataControllerGG {
 
 
         
-        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight ,leafSpot , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpot , fusariumWilt , parlatoriaBlanchard])
+        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight /*leafSpot*/ , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpots , fusariumWilt , parlatoriaBlanchard])
         
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rust.diseaseID))
@@ -767,25 +762,53 @@ class DataControllerGG {
         userPlantDisease.append(UsersPlantDisease(usersPlantDisease: UUID(), usersPlantRelationID: john3Plant.userId, diseaseID: potassiumDeficiency.diseaseID))
         
         
-        var reminderofUserPlant1 : CareReminder_ = CareReminder_(
-            upcomingReminderForWater: currentDate,
-            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!,
-            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 120, to: currentDate)!,
+        // Create reminders with proper dates
+        let reminderofUserPlant1 = CareReminder_(
+            upcomingReminderForWater: currentDate, // Today
+            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, // 4 days from now
+            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 120, to: currentDate)!, // 120 days from now
             isWateringCompleted: false,
             isFertilizingCompleted: false,
             isRepottingCompleted: false
         )
-        
-        var reminderOfUserPlant2 : CareReminder_ = CareReminder_(
-            upcomingReminderForWater: currentDate,
-            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!,
-            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!,
+
+        let reminderOfUserPlant2 = CareReminder_(
+            upcomingReminderForWater: currentDate, // Today
+            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 3, to: currentDate)!, // 3 days from now
+            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 100, to: currentDate)!, // 100 days from now
             isWateringCompleted: false,
             isFertilizingCompleted: false,
             isRepottingCompleted: false
         )
+
+        let reminderofUserPlant3 = CareReminder_(
+            upcomingReminderForWater: currentDate, // Today
+            upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 5, to: currentDate)!, // 5 days from now
+            upcomingReminderForRepotted: Calendar.current.date(byAdding: .day, value: 180, to: currentDate)!, // 180 days from now
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+
+        // Add reminders to array
+        careReminders.append(contentsOf: [reminderofUserPlant1, reminderOfUserPlant2, reminderofUserPlant3])
+
+        // Create relationships
+        reminderOfUserPlant.append(CareReminderOfUserPlant(
+            userPlantRelationID: john1Plant.userPlantRelationID,
+            careReminderId: reminderofUserPlant1.careReminderID
+        ))
+
+        reminderOfUserPlant.append(CareReminderOfUserPlant(
+            userPlantRelationID: john2Plant.userPlantRelationID,
+            careReminderId: reminderOfUserPlant2.careReminderID
+        ))
+
+        reminderOfUserPlant.append(CareReminderOfUserPlant(
+            userPlantRelationID: john3Plant.userPlantRelationID,
+            careReminderId: reminderofUserPlant3.careReminderID
+        ))
         
-        careReminders.append(contentsOf: [reminderofUserPlant1, reminderOfUserPlant2])
         
         //        var reminderofUserPlant1 : CareReminder_ = CareReminder_(upcomingReminderForWater: currentDate, upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 4, to: currentDate)!, upcomingReminderForRepotted:  Calendar.current.date(byAdding: .day, value: 120, to: currentDate)! , isCompleted: true)
         //
@@ -798,35 +821,92 @@ class DataControllerGG {
       
 
         // Creating 5 fertilizer objects
+//        let npk = Fertilizer(
+//            fertilizerName: "NPK 20-20-20",
+//            fertilizerImage: "npk1.jpg",
+//            fertilizerDescription: "Balanced fertilizer for overall plant growth."
+//        )
+//
+//        let urea = Fertilizer(
+//            fertilizerName: "Urea",
+//            fertilizerImage: "urea1.jpg",
+//            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
+//        )
+//
+//        let boneMeal = Fertilizer(
+//            fertilizerName: "Bone Meal",
+//            fertilizerImage: "boneMeal1.jpg",
+//            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
+//        )
+//
+//        let vermicompost = Fertilizer(
+//            fertilizerName: "Vermicompost",
+//            fertilizerImage: "vermicompost1.jpg",
+//            fertilizerDescription: "Organic compost that improves soil health and fertility."
+//        )
+//
+//        let potash = Fertilizer(
+//            fertilizerName: "Potash",
+//            fertilizerImage: "potash1.jpg",
+//            fertilizerDescription: "Essential for flower and fruit development in plants."
+//        )
         let npk = Fertilizer(
-            fertilizerName: "NPK 20-20-20",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/npk_20_20_20.jpg",
-            fertilizerDescription: "Balanced fertilizer for overall plant growth."
-        )
+                           fertilizerName: "NPK 20-20-20",
+                           fertilizerImage: "npk1.jpg",
+                           fertilizerDescription: "Balanced fertilizer for overall plant growth.",
+                           type: "Chemical",
+                           applicationMethod: "Dissolve in water and apply to soil",
+                           applicationFrequency: "Once every 2 weeks",
+                           warningSigns: ["Overuse may cause nutrient burn", "Avoid applying in high temperatures"],
+                           alternativeFertilizers: ["Compost Tea", "Bone Meal"]
+                    
+                           )
 
-        let urea = Fertilizer(
-            fertilizerName: "Urea",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/urea.jpg",
-            fertilizerDescription: "High nitrogen fertilizer for leafy plant growth."
-        )
+                       let urea = Fertilizer(
+                           fertilizerName: "Urea",
+                           fertilizerImage: "urea1.jpg",
+                           fertilizerDescription: "High nitrogen fertilizer for leafy plant growth.",
+                           type: "Chemical",
+                   applicationMethod: "Mix with soil or dissolve in water",
+                   applicationFrequency: "Once per month",
+                   warningSigns: ["Excess nitrogen can weaken plant stems", "Leads to excessive leaf growth with fewer fruits"],
+                   alternativeFertilizers: ["Blood Meal", "Fish Emulsion"]
+                
+                       )
 
-        let boneMeal = Fertilizer(
-            fertilizerName: "Bone Meal",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/bone_meal.jpg",
-            fertilizerDescription: "Organic phosphorus-rich fertilizer for root development."
-        )
+                       let boneMeal = Fertilizer(
+                           fertilizerName: "Bone Meal",
+                           fertilizerImage: "boneMeal1.jpg",
+                           fertilizerDescription: "Organic phosphorus-rich fertilizer for root development.",
+                            type: "Organic",
+                   applicationMethod: "Sprinkle around the base of plants and mix into soil",
+                   applicationFrequency: "Once every 6 weeks",
+                   warningSigns: ["Overuse can increase soil pH", "Slow release may not work for quick-growing plants"],
+                   alternativeFertilizers: ["Rock Phosphate", "Fish Bone Meal"]
 
-        let vermicompost = Fertilizer(
-            fertilizerName: "Vermicompost",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/vermicompost.jpg",
-            fertilizerDescription: "Organic compost that improves soil health and fertility."
-        )
+                       )
 
-        let potash = Fertilizer(
-            fertilizerName: "Potash",
-            fertilizerImage: "https://your-supabase-url/storage/v1/object/public/fertilizers/potash.jpg",
-            fertilizerDescription: "Essential for flower and fruit development in plants."
-        )
+                       let vermicompost = Fertilizer(
+                           fertilizerName: "Vermicompost",
+                           fertilizerImage: "vermicompost1.jpg",
+                           fertilizerDescription: "Organic compost that improves soil health and fertility.",
+                           type: "Organic",
+                   applicationMethod: "Mix into soil or use as top dressing",
+                   applicationFrequency: "Once a month",
+                   warningSigns: ["None, completely safe for plants"],
+                   alternativeFertilizers: ["Compost", "Manure"]
+                       )
+
+                       let potash = Fertilizer(
+                           fertilizerName: "Potash",
+                           fertilizerImage: "potash1.jpg",
+                           fertilizerDescription: "Essential for flower and fruit development in plants.",
+                           type: "Mineral-based",
+                   applicationMethod: "Mix with water and apply to roots",
+                   applicationFrequency: "Once every 3 weeks",
+                   warningSigns: ["Excess potassium can lead to calcium and magnesium deficiencies"],
+                   alternativeFertilizers: ["Wood Ash", "Greensand"]
+                       )
         
         fertilizer.append(contentsOf : [npk , urea , boneMeal , vermicompost , potash])
         
@@ -855,7 +935,58 @@ class DataControllerGG {
         return diseases.filter { diseaseIDs.contains($0.diseaseID) }
     }
     func getTopSeasonPlants() -> [Plant] {
-        return plants.filter { $0.favourableSeason == .winter }
+        // Get user's location
+        let userLocation = UserDefaults.standard.string(forKey: "userLocation")?.lowercased() ?? ""
+        
+        // Get current date to determine season
+        let calendar = Calendar.current
+        let month = calendar.component(.month, from: Date())
+        
+        // Define seasons based on months (Northern Hemisphere)
+        let isWinter = (12...12).contains(month) || (1...2).contains(month)
+        let isSummer = (6...8).contains(month)
+        
+        // Filter plants based on location and season
+        return plants.filter { plant in
+            // Location-based filtering
+            if userLocation.contains("noida") || userLocation.contains("delhi") {
+                // North India conditions
+                if isSummer {
+                    return plant.lightRequirement == "High" &&
+                           plant.idealTemperature.contains { $0 > 25 }
+                } else if isWinter {
+                    return plant.lightRequirement == "Low" &&
+                           plant.idealTemperature.contains { $0 < 20 }
+                }
+            } else if userLocation.contains("mumbai") || userLocation.contains("chennai") {
+                // Coastal conditions
+                if isSummer {
+                    return plant.lightRequirement == "High" &&
+                           plant.idealTemperature.contains { $0 > 30 }
+                } else if isWinter {
+                    return plant.lightRequirement == "Medium" &&
+                           plant.idealTemperature.contains { $0 > 20 }
+                }
+            } else if userLocation.contains("bangalore") || userLocation.contains("pune") {
+                // Moderate climate conditions
+                if isSummer {
+                    return plant.lightRequirement == "Medium" &&
+                           plant.idealTemperature.contains { $0 > 20 && $0 < 30 }
+                } else if isWinter {
+                    return plant.lightRequirement == "Low" &&
+                           plant.idealTemperature.contains { $0 > 15 }
+                }
+            }
+            
+            // Default seasonal filtering if location not recognized
+            if isSummer {
+                return plant.favourableSeason == .summer
+            } else if isWinter {
+                return plant.favourableSeason == .winter
+            } else {
+                return true // Show all plants for other months
+            }
+        }
     }
     
     func getCommonIssues() -> [Diseases] {
@@ -865,14 +996,7 @@ class DataControllerGG {
     func getPlantbyName (by name : String) -> Plant? {
         return plants.first(where: {$0.plantName == name})
     }
-//    
-//    
-//    func getCommonIssuesForRose() -> [Diseases] {
-//        guard let rosePlant = plants.first(where: { $0.plantName == "Rose" }) else { return [] }
-//        print("hellllllllllllllllloooooooooo")
-//        print(getDiseases(for: rosePlant.plantID))
-//        return getDiseases(for: rosePlant.plantID)
-//    }
+
     
     func getDiseasesForUserPlants(userId: UUID) -> [Diseases] {
         // Get all plants belonging to the user
@@ -899,69 +1023,112 @@ class DataControllerGG {
         return []
     }
     
-    func getCommonFertilizersForParlorPalm() -> [String] {
-        return ["Organic Compost", "Liquid Fertilizer", "Seaweed Extract"] // Custom fertilizers for Parlour Palm
-    }
+    func getCommonFertilizers() -> [Fertilizer] {
+                // Return all available fertilizers
+                return fertilizer
+            }
+            
+            // Get fertilizers recommended for a specific disease
+            func getFertilizersForDisease(diseaseID: UUID) -> [Fertilizer] {
+                // Get fertilizer IDs for this disease
+                let fertilizerIDs = diseaseFertilizer
+                    .filter { $0.diseaseID == diseaseID }
+                    .map { $0.fertilizerId }
+                
+                // Return fertilizers that match these IDs
+                return fertilizer.filter { fertilizerIDs.contains($0.fertilizerId) }
+            }
+            
+            // Get fertilizers recommended for a specific plant's diseases
+            func getFertilizersForPlant(plantID: UUID) -> [Fertilizer] {
+                // Get diseases for this plant
+                let plantDiseaseIDs = plantDiseases
+                    .filter { $0.plantID == plantID }
+                    .map { $0.diseaseID }
+                
+                // Get fertilizer IDs for these diseases
+                let fertilizerIDs = diseaseFertilizer
+                    .filter { plantDiseaseIDs.contains($0.diseaseID) }
+                    .map { $0.fertilizerId }
+                
+                // Return fertilizers that match these IDs
+                return fertilizer.filter { fertilizerIDs.contains($0.fertilizerId) }
+            }
+    
     func getCareReminders(for userId: UUID) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
-        
-        // 1. Get only the user plants that exist in userPlant array
         let userPlants = userPlant.filter { $0.userId == userId }
         var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
         
         for userPlant in userPlants {
-            // 2. Verify the plant exists
-            if let plant = getPlant(by: userPlant.userplantID) {
-                // 3. Check if there's a valid reminder relationship
-                if let relationIndex = reminderOfUserPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
-                    // 4. Find the existing reminder
-                    if let existingReminder = careReminders.first(where: { reminder in
-                        reminder.upcomingReminderForWater == userPlant.lastWatered &&
-                        reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
-                        reminder.upcomingReminderForRepotted == userPlant.lastRepotted
-                    }) {
-                        reminders.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
-                    }
-                } else {
-                    // 5. Create new reminder only if needed
-                    let waterReminder = CareReminder_(
-                        upcomingReminderForWater: userPlant.lastWatered.addingTimeInterval(TimeInterval(plant.waterFrequency * 24 * 60 * 60)),
-                        upcomingReminderForFertilizers: userPlant.lastFertilized.addingTimeInterval(TimeInterval(plant.fertilizerFrequency * 24 * 60 * 60)),
-                        upcomingReminderForRepotted: userPlant.lastRepotted.addingTimeInterval(TimeInterval(plant.repottingFrequency * 24 * 60 * 60)),
-                        isWateringCompleted: userPlant.isWateringCompleted,
-                        isFertilizingCompleted: userPlant.isFertilizingCompleted,
-                        isRepottingCompleted: userPlant.isRepottingCompleted
-                    )
-                    reminders.append((userPlant: userPlant, plant: plant, reminder: waterReminder))
+            if let plant = getPlant(by: userPlant.userplantID),
+               let relation = reminderOfUserPlant.first(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }),
+               let reminder = careReminders.first(where: { $0.careReminderID == relation.careReminderId }) {
+                
+                // Apply stored completion states
+                if let states = reminderCompletionStates[reminder.careReminderID] {
+                    reminder.isWateringCompleted = states["Watering"] ?? false
+                    reminder.isFertilizingCompleted = states["Fertilization"] ?? false
+                    reminder.isRepottingCompleted = states["Pruning"] ?? false
                 }
+                
+                reminders.append((userPlant: userPlant, plant: plant, reminder: reminder))
             }
         }
+        
         return reminders
     }
     
     // Update care reminder completion status
     func updateCareReminderStatus(for userPlantId: UUID, reminderType: String, isCompleted: Bool, currentDate: Date) {
-        if let index = userPlant.firstIndex(where: { $0.userPlantRelationID == userPlantId }) {
+        if let userPlantIndex = userPlant.firstIndex(where: { $0.userPlantRelationID == userPlantId }),
+           let relation = reminderOfUserPlant.first(where: { $0.userPlantRelationID == userPlantId }),
+           let reminderIndex = careReminders.firstIndex(where: { $0.careReminderID == relation.careReminderId }) {
+            
+            let reminderId = careReminders[reminderIndex].careReminderID
+            
+            // Update completion state in memory
+            if reminderCompletionStates[reminderId] == nil {
+                reminderCompletionStates[reminderId] = [:]
+            }
+            reminderCompletionStates[reminderId]?[reminderType] = isCompleted
+            
+            // Update model objects
             switch reminderType {
             case "Watering":
-                userPlant[index].isWateringCompleted = isCompleted
+                userPlant[userPlantIndex].isWateringCompleted = isCompleted
+                careReminders[reminderIndex].isWateringCompleted = isCompleted
                 if isCompleted {
-                    userPlant[index].lastWatered = currentDate
+                    userPlant[userPlantIndex].lastWatered = currentDate
                 }
+                
             case "Fertilization":
-                userPlant[index].isFertilizingCompleted = isCompleted
+                userPlant[userPlantIndex].isFertilizingCompleted = isCompleted
+                careReminders[reminderIndex].isFertilizingCompleted = isCompleted
                 if isCompleted {
-                    userPlant[index].lastFertilized = currentDate
+                    userPlant[userPlantIndex].lastFertilized = currentDate
                 }
+                
             case "Pruning":
-                userPlant[index].isRepottingCompleted = isCompleted
+                userPlant[userPlantIndex].isRepottingCompleted = isCompleted
+                careReminders[reminderIndex].isRepottingCompleted = isCompleted
                 if isCompleted {
-                    userPlant[index].lastRepotted = currentDate
+                    userPlant[userPlantIndex].lastRepotted = currentDate
                 }
             default:
                 break
             }
+            
+            // Notify UI to update
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ReminderStatusUpdated"),
+                object: nil,
+                userInfo: [
+                    "reminderId": reminderId,
+                    "reminderType": reminderType,
+                    "isCompleted": isCompleted
+                ]
+            )
         }
-        
     }
     
     // Add this function to get users (moved outside of updateCareReminderStatus)
@@ -980,34 +1147,76 @@ class DataControllerGG {
     }
     
     func deleteUserPlant(_ userPlant: UserPlant) {
+        print("\n=== Starting Plant Deletion ===")
         print("Deleting plant with ID: \(userPlant.userPlantRelationID)")
-        print("Before deletion:")
-        print("- User plants count: \(self.userPlant.count)")
-        print("- Care reminders count: \(careReminders.count)")
-        print("- Reminder relations count: \(reminderOfUserPlant.count)")
+        print("Initial counts:")
+        print("- User plants: \(self.userPlant.count)")
+        print("- Care reminders: \(careReminders.count)")
+        print("- Reminder relations: \(reminderOfUserPlant.count)")
         
-        // 1. Remove from user plants array
-        if let index = self.userPlant.firstIndex(where: { $0.userPlantRelationID == userPlant.userPlantRelationID }) {
-            self.userPlant.remove(at: index)
-            
-            // 2. Find and remove all reminder relations for this plant
-            reminderOfUserPlant.removeAll { $0.userPlantRelationID == userPlant.userPlantRelationID }
-            
-            // 3. Remove the actual reminders that match this plant's dates
+        // 1. Find all reminder relations for this plant
+        let relationsToRemove = reminderOfUserPlant.filter { $0.userPlantRelationID == userPlant.userPlantRelationID }
+        print("\nFound \(relationsToRemove.count) relations to remove")
+        
+        // 2. Remove all associated care reminders
+        for relation in relationsToRemove {
+            print("Removing reminder with ID: \(relation.careReminderId)")
+            let initialReminderCount = careReminders.count
             careReminders.removeAll { reminder in
-                reminder.upcomingReminderForWater == userPlant.lastWatered &&
-                reminder.upcomingReminderForFertilizers == userPlant.lastFertilized &&
-                reminder.upcomingReminderForRepotted == userPlant.lastRepotted
+                let shouldRemove = reminder.careReminderID == relation.careReminderId
+                if shouldRemove {
+                    print("Found and removing reminder")
+                }
+                return shouldRemove
             }
-            
-            // 4. Remove any user plant diseases
-            userPlantDisease.removeAll { $0.usersPlantRelationID == userPlant.userId }
+            print("Reminders removed: \(initialReminderCount - careReminders.count)")
         }
         
-        print("After deletion:")
-        print("- User plants count: \(self.userPlant.count)")
-        print("- Care reminders count: \(careReminders.count)")
-        print("- Reminder relations count: \(reminderOfUserPlant.count)")
+        // 3. Remove all reminder relations
+        let initialRelationCount = reminderOfUserPlant.count
+        reminderOfUserPlant.removeAll { relation in
+            let shouldRemove = relation.userPlantRelationID == userPlant.userPlantRelationID
+            if shouldRemove {
+                print("Removing relation for plant ID: \(relation.userPlantRelationID)")
+            }
+            return shouldRemove
+        }
+        print("Relations removed: \(initialRelationCount - reminderOfUserPlant.count)")
+        
+        // 4. Remove from user plants array
+        let initialPlantCount = self.userPlant.count
+        self.userPlant.removeAll { plant in
+            let shouldRemove = plant.userPlantRelationID == userPlant.userPlantRelationID
+            if shouldRemove {
+                print("Removing plant with ID: \(plant.userPlantRelationID)")
+            }
+            return shouldRemove
+        }
+        print("Plants removed: \(initialPlantCount - self.userPlant.count)")
+        
+        // 5. Remove any associated plant diseases
+        let initialDiseaseCount = userPlantDisease.count
+        userPlantDisease.removeAll { disease in
+            let shouldRemove = disease.usersPlantRelationID == userPlant.userId
+            if shouldRemove {
+                print("Removing disease for plant")
+            }
+            return shouldRemove
+        }
+        print("Diseases removed: \(initialDiseaseCount - userPlantDisease.count)")
+        
+        print("\nFinal counts:")
+        print("- User plants: \(self.userPlant.count)")
+        print("- Care reminders: \(careReminders.count)")
+        print("- Reminder relations: \(reminderOfUserPlant.count)")
+        print("=== Deletion Complete ===\n")
+        
+        // 6. Post notification with deleted plant ID
+        NotificationCenter.default.post(
+            name: NSNotification.Name("PlantDeleted"),
+            object: nil,
+            userInfo: ["deletedPlantID": userPlant.userPlantRelationID]
+        )
     }
     
     func getPlants() -> [Plant] {
@@ -1016,8 +1225,10 @@ class DataControllerGG {
     
     // Add this method to DataControllerGG
     func addUserPlant(_ userPlant: UserPlant) {
+        //adding user plant
+        print(userPlant)
         self.userPlant.append(userPlant)
-        
+        print(self.userPlant)
         // Create and add care reminder
         let reminder = CareReminder_(
             upcomingReminderForWater: userPlant.lastWatered,
@@ -1031,9 +1242,77 @@ class DataControllerGG {
         
         // Create relationship
         let relationship = CareReminderOfUserPlant(
-            careReminderID: UUID(),
-            userPlantRelationID: userPlant.userPlantRelationID
+            careReminderOfUserPlantID: UUID(),
+            userPlantRelationID: userPlant.userPlantRelationID, careReminderId: UUID()
         )
         reminderOfUserPlant.append(relationship)
+    }
+    
+    func getDisease(byName diseaseName: String) -> Diseases? {
+                return diseases.first { $0.diseaseName == diseaseName }
+            }
+        
+            // Add this function to get disease details
+//    func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
+//        print("Searching for: [\(diseaseName)]")
+//
+//        // Clean up disease name: trim spaces & remove invisible characters
+//        let cleanedDiseaseName = diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//            .replacingOccurrences(of: "\u{200B}", with: "") // Removes Zero-Width Spaces
+//
+//        // Debug: Print all stored disease names to check formatting issues
+//        for disease in diseases {
+//            let storedName = disease.diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//                .replacingOccurrences(of: "\u{200B}", with: "")
+//            print("Stored Disease: [\(storedName)]")
+//        }
+//
+//        // Find matching disease
+//        let disease = diseases.first {
+//            $0.diseaseName.trimmingCharacters(in: .whitespacesAndNewlines)
+//                .replacingOccurrences(of: "\u{200B}", with: "") == cleanedDiseaseName
+//        }
+//
+//        if let disease = disease {
+//            print("✅ Disease found: \(disease.diseaseName)")
+//            print("Disease Details: \(disease.diseaseDetail)")
+//            return disease.diseaseDetail
+//        } else {
+//            print("❌ No match found for: \(diseaseName)")
+//            return nil
+//        }
+//    }
+    
+    func getDiseaseDetails(for diseaseName: String) -> [String: [String]]? {
+        print("🔎 Searching for: [\(diseaseName)]")
+
+        let cleanedDiseaseName = cleanText(diseaseName)
+
+        for disease in diseases {
+            let storedName = cleanText(disease.diseaseName)
+            print("📌 Stored Disease: [\(storedName)]")
+            print("   - Character count: \(storedName.count)")
+            print("   - Matches? \(storedName == cleanedDiseaseName)")
+        }
+
+        let disease = diseases.first {
+            cleanText($0.diseaseName) == cleanedDiseaseName
+        }
+
+        if let disease = disease {
+            print("✅ Disease found: \(disease.diseaseName)")
+            print("Disease Details: \(disease.diseaseDetail)")
+            return disease.diseaseDetail
+        } else {
+            print("❌ No match found for: \(diseaseName)")
+            return nil
+        }
+    }
+    func cleanText(_ text: String) -> String {
+        return text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{00A0}", with: " ") // Remove non-breaking spaces
+            .replacingOccurrences(of: "\u{200B}", with: "")  // Remove zero-width spaces
+            .replacingOccurrences(of: #"[\s]+"#, with: " ", options: .regularExpression) // Normalize multiple spaces
     }
 }

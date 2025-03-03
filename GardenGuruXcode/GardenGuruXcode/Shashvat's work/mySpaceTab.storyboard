@@ -194,6 +194,7 @@
                     <connections>
                         <outlet property="careReminderCollectionView" destination="T0h-k5-Cqx" id="gCG-Pc-xMV"/>
                         <outlet property="careReminderSegmentedControl" destination="yft-zO-ZKL" id="wNj-79-xYI"/>
+                        <outlet property="editButton" destination="I0z-yB-zK8" id="7L1-vY-kHb"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="5n8-0t-mOd" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>

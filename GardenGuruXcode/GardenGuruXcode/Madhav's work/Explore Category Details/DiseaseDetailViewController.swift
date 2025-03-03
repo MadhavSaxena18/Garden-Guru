@@ -20,6 +20,7 @@ class DiseaseDetailViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     
     @IBOutlet weak var diseaseSymptoms: UILabel!
+    @IBOutlet weak var headerBackgroundView: UIView!
     var isModallyPresented: Bool = false
     
     override func viewDidLoad() {
@@ -27,6 +28,17 @@ class DiseaseDetailViewController: UIViewController {
         setupUI()
         configureHeaderView()
         setupNavigationBar()
+        setupHeaderGradient()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        // Update gradient frame when view resizes
+        if let gradientView = headerBackgroundView.subviews.last,
+           let gradientLayer = gradientView.layer.sublayers?.first as? CAGradientLayer {
+            gradientLayer.frame = headerBackgroundView.bounds
+        }
     }
     
     private func setupNavigationBar() {
@@ -73,8 +85,75 @@ class DiseaseDetailViewController: UIViewController {
         diseaseNameLabel.text = disease.diseaseName
         let symptomsText = disease.diseaseSymptoms.joined(separator: ", ")
         diseaseSymptoms.text = "\(symptomsText)"
+        
+        // Style the disease name label
         diseaseNameLabel.textColor = .white
         diseaseNameLabel.font = .systemFont(ofSize: 32, weight: .bold)
+        diseaseNameLabel.layer.shadowColor = UIColor.black.cgColor
+        diseaseNameLabel.layer.shadowOffset = CGSize(width: 0, height: 1)
+        diseaseNameLabel.layer.shadowRadius = 3
+        diseaseNameLabel.layer.shadowOpacity = 0.5
+        
+        // Style the symptoms label
+        diseaseSymptoms.textColor = .white
+        diseaseSymptoms.font = .systemFont(ofSize: 16, weight: .medium)
+        diseaseSymptoms.layer.shadowColor = UIColor.black.cgColor
+        diseaseSymptoms.layer.shadowOffset = CGSize(width: 0, height: 1)
+        diseaseSymptoms.layer.shadowRadius = 3
+        diseaseSymptoms.layer.shadowOpacity = 0.5
+        
+        // Ensure labels are above the blur and gradient
+        diseaseNameLabel.layer.zPosition = 1
+        diseaseSymptoms.layer.zPosition = 1
+    }
+    
+    private func setupHeaderGradient() {
+        // Create and configure blur effect
+        let blurEffect = UIBlurEffect(style: .dark)  // Changed to dark for better contrast
+        let blurView = UIVisualEffectView(effect: blurEffect)
+        blurView.frame = headerBackgroundView.bounds
+        blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        
+        // Create gradient layer
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.frame = headerBackgroundView.bounds
+        
+        // Create an attractive gradient with multiple colors
+        let primaryColor = UIColor(red: 0.85, green: 0.1, blue: 0.1, alpha: 1.0)  // Vibrant red
+        let secondaryColor = UIColor(red: 0.6, green: 0.0, blue: 0.0, alpha: 1.0) // Darker red
+        
+        gradientLayer.colors = [
+            UIColor.clear.cgColor,                                // Transparent at top
+            primaryColor.withAlphaComponent(0.3).cgColor,        // Subtle primary color
+            primaryColor.withAlphaComponent(0.5).cgColor,        // Medium primary color
+            secondaryColor.withAlphaComponent(0.7).cgColor,      // Stronger secondary color
+            secondaryColor.withAlphaComponent(0.8).cgColor       // Most intense at bottom
+        ]
+        
+        // More precise gradient positioning
+        gradientLayer.locations = [0.0, 0.3, 0.5, 0.7, 1.0]
+        
+        // Adjust gradient direction slightly
+        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        
+        // Add blur view first
+        headerBackgroundView.addSubview(blurView)
+        
+        // Add gradient on top of blur
+        let gradientView = UIView(frame: headerBackgroundView.bounds)
+        gradientView.layer.addSublayer(gradientLayer)
+        gradientView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        headerBackgroundView.addSubview(gradientView)
+        
+        // Make background clear to let blur work
+        headerBackgroundView.backgroundColor = .clear
+        
+        // Enhanced shadow effect
+        headerBackgroundView.layer.shadowColor = UIColor.black.cgColor
+        headerBackgroundView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        headerBackgroundView.layer.shadowRadius = 4
+        headerBackgroundView.layer.shadowOpacity = 0.2
     }
 }
 
@@ -168,9 +247,9 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
     }
     
     private func configureDetailCell(_ cell: UITableViewCell, for section: Int, backgroundColor: UIColor) {
-        // Setup background view with EBF4EB color
+        // Setup background view with white color
         let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(red: 235/255, green: 244/255, blue: 235/255, alpha: 1.0)
+        backgroundView.backgroundColor = .white
         backgroundView.layer.cornerRadius = 8
         cell.backgroundView = backgroundView
         
@@ -183,24 +262,44 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
             trailing: padding.right
         )
         
+        // Remove any existing subviews from previous cells
+        cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+        cell.textLabel?.text = nil // Clear existing text
+        
         // Configure content based on section
         switch section {
         case 0: // Cure and Treatment
             if let cureAndTreatment = disease?.diseaseDetail["Cure and Treatment"] as? [String] {
                 cell.textLabel?.text = cureAndTreatment.joined(separator: "\n")
+                cell.textLabel?.numberOfLines = 0
+                cell.textLabel?.font = .systemFont(ofSize: 15)
+                cell.textLabel?.textColor = .darkGray
             }
+            
         case 1: // Preventive Measures
             if let preventiveMeasures = disease?.diseaseDetail["Preventive Measures"] as? [String] {
                 cell.textLabel?.text = preventiveMeasures.joined(separator: "\n")
+                cell.textLabel?.numberOfLines = 0
+                cell.textLabel?.font = .systemFont(ofSize: 15)
+                cell.textLabel?.textColor = .darkGray
             }
+            
         case 2: // Symptoms
             if let symptoms = disease?.diseaseDetail["Symptoms"] as? [String] {
                 cell.textLabel?.text = symptoms.joined(separator: "\n")
+                cell.textLabel?.numberOfLines = 0
+                cell.textLabel?.font = .systemFont(ofSize: 15)
+                cell.textLabel?.textColor = .darkGray
             }
+            
         case 3: // Vitamins Required
             if let vitamins = disease?.diseaseDetail["Vitamins Required"] as? [String] {
                 cell.textLabel?.text = vitamins.joined(separator: "\n")
+                cell.textLabel?.numberOfLines = 0
+                cell.textLabel?.font = .systemFont(ofSize: 15)
+                cell.textLabel?.textColor = .darkGray
             }
+            
         case 4: // Related Images
             if let images = disease?.diseaseDetail["Related Images"] as? [String] {
                 // Create scroll view for horizontal scrolling
@@ -222,35 +321,27 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
                     imageView.contentMode = .scaleAspectFill
                     imageView.clipsToBounds = true
                     imageView.image = UIImage(named: imageName)
-                    
-                    // Make image view interactive
                     imageView.isUserInteractionEnabled = true
                     let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:)))
                     imageView.addGestureRecognizer(tapGesture)
                     
-                    // Set larger fixed size for image views
                     let imageSize: CGFloat = 280
                     imageView.widthAnchor.constraint(equalToConstant: imageSize).isActive = true
                     imageView.heightAnchor.constraint(equalToConstant: imageSize).isActive = true
-                    
                     imageView.layer.cornerRadius = 12
                     
                     stackView.addArrangedSubview(imageView)
                 }
                 
-                // Add stack view to scroll view
                 scrollView.addSubview(stackView)
-                
-                // Add scroll view to cell
                 cell.contentView.addSubview(scrollView)
                 
-                // Setup constraints with increased height
                 NSLayoutConstraint.activate([
                     scrollView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 10),
                     scrollView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 20),
                     scrollView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -20),
                     scrollView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -10),
-                    scrollView.heightAnchor.constraint(equalToConstant: 300),  // Increased from 220 to 300
+                    scrollView.heightAnchor.constraint(equalToConstant: 300),
                     
                     stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
                     stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
@@ -258,62 +349,53 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
                     stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
                     stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
                 ])
-                
-                // Remove default label
-                cell.textLabel?.text = nil
             }
+            
         case 5: // Video Solution
             if let videos = disease?.diseaseDetail["Video Solution"] as? [String] {
+                // Create text view for clickable links
+                let textView = UITextView()
+                textView.translatesAutoresizingMaskIntoConstraints = false
+                textView.isEditable = false
+                textView.isScrollEnabled = false
+                textView.backgroundColor = .clear
+                textView.delegate = self
+                
                 // Create attributed string for links
                 let attributedString = NSMutableAttributedString()
-                
                 for (index, video) in videos.enumerated() {
-                    // Create link attributes
                     let linkAttributes: [NSAttributedString.Key: Any] = [
                         .foregroundColor: UIColor.systemBlue,
                         .underlineStyle: NSUnderlineStyle.single.rawValue,
                         .link: video
                     ]
                     
-                    // Create attributed string for this link
                     let videoLink = NSAttributedString(string: "Video Solution \(index + 1)", attributes: linkAttributes)
                     attributedString.append(videoLink)
                     
-                    // Add newline if not the last item
                     if index < videos.count - 1 {
                         attributedString.append(NSAttributedString(string: "\n"))
                     }
                 }
                 
-                // Create text view for clickable links
-                let textView = UITextView()
                 textView.attributedText = attributedString
-                textView.isEditable = false
-                textView.isScrollEnabled = false
-                textView.backgroundColor = .clear
-                textView.delegate = self
                 textView.linkTextAttributes = [
                     .foregroundColor: UIColor.systemBlue,
                     .underlineStyle: NSUnderlineStyle.single.rawValue
                 ]
                 
-                // Add text view to cell
-                textView.frame = cell.contentView.bounds
-                textView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
                 cell.contentView.addSubview(textView)
                 
-                // Remove default label since we're using text view
-                cell.textLabel?.text = nil
+                NSLayoutConstraint.activate([
+                    textView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: padding.top),
+                    textView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: padding.left),
+                    textView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -padding.right),
+                    textView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -padding.bottom)
+                ])
             }
+            
         default:
             break
-        }
-        
-        // Style the text (except for video solution and related images cells)
-        if section != 5 && section != 4 {
-            cell.textLabel?.numberOfLines = 0
-            cell.textLabel?.font = .systemFont(ofSize: 15)
-            cell.textLabel?.textColor = .darkGray
         }
         
         // Remove selection style and accessory
