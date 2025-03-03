@@ -226,7 +226,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         case 1: // "For My Plants"
             identifier = 1
             let allIssues = DataControllerGG().getCommonIssuesForUserPlants()
-            let allFertilizers = DataControllerGG().getCommonFertilizersForParlorPalm()
+            let allFertilizers = DataControllerGG().getCommonFertilizers()
             
             forMyPlantCategories = [
                 ("Common Issues in your Plant", Array(allIssues.prefix(5))),
@@ -288,8 +288,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         
                     case "Common Fertilizers for Parlor Palm":
                         let filteredFertilizers = category.items.filter { item in
-                            guard let fertilizer = item as? String else { return false }
-                            return fertilizer.lowercased().contains(searchText)
+                            guard let fertilizer = item as? Fertilizer else { return false }
+                            return fertilizer.fertilizerName.lowercased().contains(searchText)
                         }
                         return filteredFertilizers.isEmpty ? nil : (category.title, filteredFertilizers)
                         
@@ -398,7 +398,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 return cell
             } else { // Common Fertile for Parlour Palm
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as!Section2InForMyPlantCollectionViewCell
-                if let fertilizer = item as? String {
+                if let fertilizer = item as? Fertilizer {
                     cell.configure(with: fertilizer)
                 }
                 cell.contentView.layer.cornerRadius = 25
