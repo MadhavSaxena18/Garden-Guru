@@ -304,7 +304,7 @@ class DataControllerGG {
             ],
             diseaseSeason: .rainy
         )
-        
+        //hello madhav bhai
         
         let blight : Diseases = Diseases(
             diseaseName: "Rachis Blight",
