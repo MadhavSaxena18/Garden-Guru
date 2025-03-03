@@ -110,7 +110,7 @@ class DataControllerGG {
             plantName: "Rain Lily",
             plantImage: ["RainLily1.jpg", "RainLily2.jpg"],
             plantBotanicalName: "Spathiphyllum",
-            category: .Ornamental,
+            category: .Flowering,
             plantDescription:
                 "Rain lilies are delicate, perennial flowering plants that bloom after rainfall, hence their name. They produce star-shaped or trumpet-like flowers in shades of pink, yellow, or white. The grass-like, slender green leaves add to their elegant appearance. ",
             favourableSeason: .winter,
