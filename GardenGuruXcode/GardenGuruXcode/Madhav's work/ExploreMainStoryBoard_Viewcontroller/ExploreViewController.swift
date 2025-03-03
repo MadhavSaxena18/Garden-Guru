@@ -230,7 +230,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             forMyPlantCategories = [
                 ("Common Issues in your Plant", Array(allIssues.prefix(5))),
-                ("Common Fertilizers for Parlor Palm", Array(allFertilizers.prefix(5)))
+                ("Common Fertilizers", Array(allFertilizers.prefix(5)))
             ]
             if isSearchActive {
                 filteredForMyPlantCategories = forMyPlantCategories
@@ -286,7 +286,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         }
                         return filteredDiseases.isEmpty ? nil : (category.title, filteredDiseases)
                         
-                    case "Common Fertilizers for Parlor Palm":
+                    case "Common Fertilizers":
                         let filteredFertilizers = category.items.filter { item in
                             guard let fertilizer = item as? Fertilizer else { return false }
                             return fertilizer.fertilizerName.lowercased().contains(searchText)
@@ -440,7 +440,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             case "Common Issues in your Plant":
                 section = self.generateSection1LayoutInForMyPlants()
                 
-            case "Common Fertilizers for Parlor Palm":
+            case "Common Fertilizers":
                 section = self.generateSection1LayoutInForMyPlants()
                 
             default:
@@ -629,19 +629,19 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
                 .instantiateViewController(withIdentifier: "DiseaseDetailViewController") as? DiseaseDetailViewController {
                 detailVC.disease = disease
-                
-                // Check if we're coming from a collection view cell
-                if let _ = collectionView.cellForItem(at: indexPath) {
-                    // Coming from collection view cell tap
-                    detailVC.isModallyPresented = true
-                    let navVC = UINavigationController(rootViewController: detailVC)
-                    present(navVC, animated: true)
-                } else {
-                    // Coming from section header tap
-                    detailVC.isModallyPresented = false
-                    navigationController?.pushViewController(detailVC, animated: true)
-                }
+                detailVC.isModallyPresented = true
+                let navVC = UINavigationController(rootViewController: detailVC)
+                present(navVC, animated: true)
             }
+        } else if let fertilizer = selectedItem as? Fertilizer,
+                  selectedCategory.title == "Common Fertilizers for Parlor Palm" {
+            // Handle fertilizer selection
+            let detailVC = FertilizerDetailViewController()
+            detailVC.fertilizer = fertilizer
+            detailVC.title = "Fertilizer Details"
+            let navVC = UINavigationController(rootViewController: detailVC)
+            navVC.modalPresentationStyle = .formSheet
+            present(navVC, animated: true)
         } else {
             // Show regular CardsDetailViewController for other items
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
@@ -654,7 +654,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
-    
 
     
     @objc func imageTapped() {

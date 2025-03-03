@@ -120,10 +120,15 @@ struct PlantDesign {
 //we have to add fertilizer and make its relation with diseases
 
 struct Fertilizer {
-    var fertilizerName : String
-    var fertilizerId : UUID = UUID() //PK
-    var fertilizerImage : String
-    var fertilizerDescription : String
+    var fertilizerName: String
+    var fertilizerId: UUID = UUID() // Unique ID
+    var fertilizerImage: String
+    var fertilizerDescription: String
+    var type: String // Example: "Organic", "Chemical"
+    var applicationMethod: String // Example: "Mix with soil"
+    var applicationFrequency: String // Example: "Once per 2 weeks"
+    var warningSigns: [String] // Example: ["Leaf burn", "Yellowing leaves"]
+    var alternativeFertilizers: [String] // Example: ["Compost", "Bone meal"]
 }
 
 struct DiseaseFertilizer {

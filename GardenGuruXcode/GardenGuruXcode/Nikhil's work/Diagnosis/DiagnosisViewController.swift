@@ -314,7 +314,13 @@
 
 import UIKit
 
-// Add this at the top of the file, before the DiagnosisViewController class
+
+struct DiagnosisDataModel {
+    var plantName: String
+    var diagnosis: String
+    var botanicalName: String
+    var sectionDetails: [String: [String]]
+}
 
 
 class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
@@ -438,12 +444,40 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 DiagnosisViewController.detailsStackView.addArrangedSubview(label)
             }
 
+
             // Update disease details
             if let diagnosis = selectedPlant?.diagnosis,
                let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
                 selectedPlant?.sectionDetails = diseaseDetails
                 tableView.reloadData()
             }
+
+            print("Diseases update")
+            // Update disease details
+//            if let diagnosis = selectedPlant?.diagnosis,
+//               let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
+//                print("Inside update")
+//                selectedPlant?.sectionDetails = diseaseDetails
+//                print(diseaseDetails)
+//                tableView.reloadData()
+//            }
+            if let diagnosis = selectedPlant?.diagnosis {
+                print("Diagnosis: \(diagnosis)")
+                if let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
+                    print("Inside update")
+                    selectedPlant?.sectionDetails = diseaseDetails
+                    print("Disease Details: \(diseaseDetails)")
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                    }
+                } else {
+                    print("No disease details found for \(diagnosis)")
+                }
+            } else {
+                print("Diagnosis is nil")
+            }
+
+
 
             // Check if plant exists in user's space
             if let firstUser = dataController.getUsers().first {

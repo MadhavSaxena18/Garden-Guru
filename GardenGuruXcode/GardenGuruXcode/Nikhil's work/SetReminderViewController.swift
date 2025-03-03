@@ -309,6 +309,8 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         return button
     }()
     
+    let dataController: DataControllerGG = DataControllerGG()
+    
     // Data for the rows
     private let reminders = [
         ("Watering", "Every week", "water", false),
@@ -346,11 +348,12 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         // Set the title
         title = "Set Reminder"
         
+                
         // Configure the navigation bar appearance
-        navigationController?.navigationBar.isTranslucent = false
+        //navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barTintColor = UIColor.systemGreen
-        navigationController?.navigationBar.tintColor = .white
-        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.tintColor = .black
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
         
         // Add a custom "Cancel" button to the right side
         let cancelButton = UIBarButtonItem(
@@ -416,6 +419,19 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     }
 
    
+    @objc func setReminderButtonTapped() {
+        print("Hello")
+//        guard let firstUser = dataController.getUsers().first,
+ //             let plantName = plantNameLabel.text,
+//              let plant = dataController.getPlantbyName(by: plantName),
+//              let nickname = locationLabel.text else {
+//            return
+//        }
+        
+        guard let firstUser = dataController.getUsers().first else {
+            print("Error: No users found.")
+            return
+        }
 
     @objc func setReminderButtonTapped() {
         print("Hello")
@@ -430,6 +446,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             print("Error: No users found.")
             return
         }
+
 
         guard let plantName = DiagnosisViewController.plantNameLabel.text else {
             print("Error: Plant name is empty.")
