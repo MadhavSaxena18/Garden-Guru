@@ -26,6 +26,8 @@ struct Plant: Equatable {
     var fertilizerFrequency: Int
     var repottingFrequency: Int
     var pruningFrequency: Int
+    let idealTemperature: [Double]  // Array of suitable temperatures
+    let lightRequirement: String 
 }
 
 struct Diseases : Equatable{
@@ -70,18 +72,30 @@ struct UsersPlantDisease {
 }
 
 
-struct CareReminder_ {
+class CareReminder_ {
+    let careReminderID: UUID
     var upcomingReminderForWater: Date
     var upcomingReminderForFertilizers: Date
     var upcomingReminderForRepotted: Date
-    var isWateringCompleted: Bool = false
-    var isFertilizingCompleted: Bool = false
-    var isRepottingCompleted: Bool = false
+    var isWateringCompleted: Bool
+    var isFertilizingCompleted: Bool
+    var isRepottingCompleted: Bool
+    
+    init(upcomingReminderForWater: Date, upcomingReminderForFertilizers: Date, upcomingReminderForRepotted: Date, isWateringCompleted: Bool, isFertilizingCompleted: Bool, isRepottingCompleted: Bool) {
+        self.careReminderID = UUID()
+        self.upcomingReminderForWater = upcomingReminderForWater
+        self.upcomingReminderForFertilizers = upcomingReminderForFertilizers
+        self.upcomingReminderForRepotted = upcomingReminderForRepotted
+        self.isWateringCompleted = isWateringCompleted
+        self.isFertilizingCompleted = isFertilizingCompleted
+        self.isRepottingCompleted = isRepottingCompleted
+    }
 }
 
 struct CareReminderOfUserPlant{
-    var careReminderID : UUID = UUID()
+    var careReminderOfUserPlantID : UUID = UUID()
     var userPlantRelationID : UUID  //FK FOR USER PLANT
+    var careReminderId : UUID //FK FOR CARE REMINDER
 }
 
 enum Season {
@@ -105,3 +119,15 @@ struct PlantDesign {
 
 //we have to add fertilizer and make its relation with diseases
 
+struct Fertilizer {
+    var fertilizerName : String
+    var fertilizerId : UUID = UUID() //PK
+    var fertilizerImage : String
+    var fertilizerDescription : String
+}
+
+struct DiseaseFertilizer {
+    var diseaseFertilizerId : UUID = UUID() //PK
+    var diseaseID : UUID //FK FOR DISEASE
+    var fertilizerId : UUID //FK FOR FETRTILIZER
+}

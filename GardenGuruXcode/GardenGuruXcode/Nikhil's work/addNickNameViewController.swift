@@ -111,7 +111,7 @@ class addNickNameViewController: UIViewController {
         if let navController = navigationController {
                navController.pushViewController(newController, animated: true)
            } else {
-               present(newController, animated: true)  
+               present(newController, animated: true)
            }
         // navigationController?.present(newController, animated: true)
     }

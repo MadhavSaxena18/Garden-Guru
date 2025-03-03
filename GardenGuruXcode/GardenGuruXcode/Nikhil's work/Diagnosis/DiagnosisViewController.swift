@@ -1,14 +1,17 @@
-//
-//
+
+
+
+
+
 //import UIKit
 //
 //class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 //    // UI Elements
 //    private let plantImageView = UIImageView()
 //    private let overlayView = UIView()
-//    private let plantNameLabel = UILabel()
-//    private let diagnosisLabel = UILabel()
-//    private let detailsStackView = UIStackView()
+//    static var plantNameLabel = UILabel()
+//    static var diagnosisLabel = UILabel()
+//    static  var detailsStackView = UIStackView()
 //    private let tableView = UITableView()
 //    private let startCaringButton = UIButton()
 //
@@ -78,22 +81,22 @@
 //        view.addSubview(overlayView)
 //
 //        // Plant Name Label
-//        plantNameLabel.text = selectedPlant?.plantName
-//        plantNameLabel.textColor = .white
-//        plantNameLabel.font = UIFont.boldSystemFont(ofSize: 24)
-//        overlayView.addSubview(plantNameLabel)
+//      //  DiagnosisViewController.plantNameLabel.text = selectedPlant?.plantName
+//        DiagnosisViewController.plantNameLabel.textColor = .white
+//        DiagnosisViewController.plantNameLabel.font = UIFont.boldSystemFont(ofSize: 24)
+//        overlayView.addSubview(DiagnosisViewController.plantNameLabel)
 //
 //        // Diagnosis Label
-//        diagnosisLabel.text = selectedPlant?.diagnosis
-//        diagnosisLabel.textColor = .white
-//        diagnosisLabel.font = UIFont.systemFont(ofSize: 16)
-//        overlayView.addSubview(diagnosisLabel)
+//     //   DiagnosisViewController.diagnosisLabel.text = selectedPlant?.diagnosis
+//        DiagnosisViewController.diagnosisLabel.textColor = .white
+//        DiagnosisViewController.diagnosisLabel.font = UIFont.systemFont(ofSize: 16)
+//        overlayView.addSubview(DiagnosisViewController.diagnosisLabel)
 //
 //        // Details StackView
-//        detailsStackView.axis = .vertical
-//        detailsStackView.alignment = .leading
-//        detailsStackView.spacing = 8
-//        view.addSubview(detailsStackView)
+//        DiagnosisViewController.detailsStackView.axis = .vertical
+//        DiagnosisViewController.detailsStackView.alignment = .leading
+//        DiagnosisViewController.detailsStackView.spacing = 8
+//        view.addSubview(DiagnosisViewController.detailsStackView)
 //
 //        if let plant = selectedPlant {
 //            let generalDetails = [
@@ -108,7 +111,7 @@
 ////                "Category: \(selectedPlant.category)",
 ////                "Favourable Season: \(selectedPlant.favourableSeason)"
 ////            ]
-////            
+////
 ////            print(generalDetails)
 ////        }
 //        
@@ -120,7 +123,7 @@
 //                label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
 //                label.textColor = UIColor(hex: "#005E2C")
 //                label.numberOfLines = 0
-//                detailsStackView.addArrangedSubview(label)
+//                DiagnosisViewController.detailsStackView.addArrangedSubview(label)
 //            }
 //        }
 //
@@ -145,9 +148,9 @@
 //        // Enable Auto Layout
 //        plantImageView.translatesAutoresizingMaskIntoConstraints = false
 //        overlayView.translatesAutoresizingMaskIntoConstraints = false
-//        plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
-//        diagnosisLabel.translatesAutoresizingMaskIntoConstraints = false
-//        detailsStackView.translatesAutoresizingMaskIntoConstraints = false
+//        DiagnosisViewController.plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
+//        DiagnosisViewController.diagnosisLabel.translatesAutoresizingMaskIntoConstraints = false
+//        DiagnosisViewController.detailsStackView.translatesAutoresizingMaskIntoConstraints = false
 //        tableView.translatesAutoresizingMaskIntoConstraints = false
 //        startCaringButton.translatesAutoresizingMaskIntoConstraints = false
 //
@@ -165,20 +168,20 @@
 //            overlayView.heightAnchor.constraint(equalToConstant: 60),
 //
 //            // Plant Name Label
-//            plantNameLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-//            plantNameLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
+//            DiagnosisViewController.plantNameLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
+//            DiagnosisViewController.plantNameLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
 //
 //            // Diagnosis Label
-//            diagnosisLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-//            diagnosisLabel.topAnchor.constraint(equalTo: plantNameLabel.bottomAnchor, constant: 0),
+//            DiagnosisViewController.diagnosisLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
+//            DiagnosisViewController.diagnosisLabel.topAnchor.constraint(equalTo: DiagnosisViewController.plantNameLabel.bottomAnchor, constant: 0),
 //
 //            // Details StackView
-//            detailsStackView.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 16),
-//            detailsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            detailsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            DiagnosisViewController.detailsStackView.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 16),
+//            DiagnosisViewController.detailsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            DiagnosisViewController.detailsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 //
 //            // TableView
-//            tableView.topAnchor.constraint(equalTo: detailsStackView.bottomAnchor, constant: 10),
+//            tableView.topAnchor.constraint(equalTo: DiagnosisViewController.detailsStackView.bottomAnchor, constant: 10),
 //            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
 //            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
 //            tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
@@ -311,6 +314,9 @@
 
 import UIKit
 
+// Add this at the top of the file, before the DiagnosisViewController class
+
+
 class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     // UI Elements
     private let plantImageView = UIImageView()
@@ -328,6 +334,9 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private var sectionTitles: [String] {
         return selectedPlant?.sectionDetails.keys.sorted() ?? []
     }
+
+    // Add this property at the top of the class
+    private var isExistingPlant: Bool = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -387,13 +396,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         view.addSubview(overlayView)
 
         // Plant Name Label
-      //  DiagnosisViewController.plantNameLabel.text = selectedPlant?.plantName
+        DiagnosisViewController.plantNameLabel.text = selectedPlant?.plantName
         DiagnosisViewController.plantNameLabel.textColor = .white
         DiagnosisViewController.plantNameLabel.font = UIFont.boldSystemFont(ofSize: 24)
         overlayView.addSubview(DiagnosisViewController.plantNameLabel)
 
         // Diagnosis Label
-     //   DiagnosisViewController.diagnosisLabel.text = selectedPlant?.diagnosis
+        DiagnosisViewController.diagnosisLabel.text = selectedPlant?.diagnosis
         DiagnosisViewController.diagnosisLabel.textColor = .white
         DiagnosisViewController.diagnosisLabel.font = UIFont.systemFont(ofSize: 16)
         overlayView.addSubview(DiagnosisViewController.diagnosisLabel)
@@ -404,24 +413,21 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         DiagnosisViewController.detailsStackView.spacing = 8
         view.addSubview(DiagnosisViewController.detailsStackView)
 
-        if let plant = selectedPlant {
+        // Get plant details from DataController
+        if let plantName = selectedPlant?.plantName,
+           let plant = dataController.getPlantbyName(by: plantName) {
+            
+            // Update botanical name in selectedPlant
+            selectedPlant?.botanicalName = plant.plantBotanicalName
+            
             let generalDetails = [
-                "Botanical Name: \(plant.botanicalName)",
-                "Category: Ornamental",
-                "Favourable Season: Winter"
+                "Botanical Name: \(plant.plantBotanicalName)",
+                "Category: \(plant.category)",
+                "Favourable Season: \(plant.favourableSeason)"
             ]
-        
-//        if let Plant = dataController.plants.first(where: { $0.plantName == "Parlor Palm" }) {
-//            let generalDetails = [
-//                "Botanical Name: \(selectedPlant.plantBotanicalName)",
-//                "Category: \(selectedPlant.category)",
-//                "Favourable Season: \(selectedPlant.favourableSeason)"
-//            ]
-//
-//            print(generalDetails)
-//        }
-        
-        
+
+            // Clear existing stack view items
+            DiagnosisViewController.detailsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
             generalDetails.forEach { text in
                 let label = UILabel()
@@ -430,6 +436,30 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 label.textColor = UIColor(hex: "#005E2C")
                 label.numberOfLines = 0
                 DiagnosisViewController.detailsStackView.addArrangedSubview(label)
+            }
+
+            // Update disease details
+            if let diagnosis = selectedPlant?.diagnosis,
+               let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
+                selectedPlant?.sectionDetails = diseaseDetails
+                tableView.reloadData()
+            }
+
+            // Check if plant exists in user's space
+            if let firstUser = dataController.getUsers().first {
+                let userPlants = dataController.getUserPlants(for: firstUser.userId)
+                isExistingPlant = userPlants.contains { userPlant in
+                    if let existingPlant = dataController.getPlant(by: userPlant.userplantID) {
+                        return existingPlant.plantName == plantName
+                    }
+                    return false
+                }
+                
+                if isExistingPlant {
+                    showExistingPlantAlert()
+                }
+                
+                startCaringButton.setTitle(isExistingPlant ? "Start Caring" : "Add and Start Caring", for: .normal)
             }
         }
 
@@ -442,7 +472,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         view.addSubview(tableView)
 
         // Start Caring Button
-        startCaringButton.setTitle("Start Caring", for: .normal)
         startCaringButton.setTitleColor(.white, for: .normal)
         startCaringButton.backgroundColor = .systemGreen
         startCaringButton.layer.cornerRadius = 10
@@ -519,6 +548,26 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         alert.addAction(yesAction)
         alert.addAction(noAction)
+        
+        present(alert, animated: true)
+    }
+
+    private func showExistingPlantAlert() {
+        let alert = UIAlertController(
+            title: "Plant Already Exists",
+            message: "Is this the same plant that you already have in your space or a different one?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Same Plant", style: .default) { [weak self] _ in
+            self?.isExistingPlant = true
+            self?.startCaringButton.setTitle("Start Caring", for: .normal)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Different Plant", style: .default) { [weak self] _ in
+            self?.isExistingPlant = false
+            self?.startCaringButton.setTitle("Add and Start Caring", for: .normal)
+        })
         
         present(alert, animated: true)
     }
@@ -610,7 +659,22 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
     
     @objc func startCaringTapped() {
-        let newController = addNickNameViewController()
-        navigationController?.present(newController, animated: true)
+        let reminderVC = addNickNameViewController()
+        
+//        if let plantName = selectedPlant?.plantName {
+//            let nickname = "My \(plantName)"
+//            reminderVC.configure(plantName: plantName, nickname: nickname)
+//        }
+        
+        let navController = UINavigationController(rootViewController: reminderVC)
+        present(navController, animated: true)
+    }
+
+    // Add this method to update disease details
+    func updateDiseaseDetails(with diagnosis: String) {
+        if let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
+            selectedPlant?.sectionDetails = diseaseDetails
+            tableView.reloadData()
+        }
     }
 }

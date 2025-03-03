@@ -30,22 +30,129 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     private var filteredForMyPlantCategories: [(title: String, items: [Any])] = []
     private var isSearchActive: Bool = false
     
+    private let weatherService = WeatherService()
+    private let locationManager = LocationManager()
+    private var currentWeather: WeatherService.WeatherResponse?
+    
+    // Add a function to fetch weather and update plants
+    private func fetchWeatherAndUpdatePlants() async {
+        print("Starting weather fetch...")
+        do {
+            let location = try await locationManager.requestLocation()
+            print("Got location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+            print("Location accuracy: \(location.horizontalAccuracy)m")
+            
+            let weather = try await weatherService.fetchWeather(
+                latitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude
+            )
+            
+            await MainActor.run {
+                print("Got weather for location: \(weather.name ?? "Unknown")")
+                print("Temperature: \(weather.main.temp)°C")
+                print("Weather condition: \(weather.weather.first?.main ?? "Unknown")")
+                self.currentWeather = weather
+                self.updatePlantsForCurrentWeather(weather)
+            }
+        } catch {
+            print("Error in fetchWeatherAndUpdatePlants: \(error)")
+            await MainActor.run {
+                // Handle the error appropriately
+                if (error as NSError).domain == "Location Access Denied" {
+                    // Show alert to user about location access
+                    let alert = UIAlertController(
+                        title: "Location Access Required",
+                        message: "Please enable location access in Settings to see weather-appropriate plants for your area.",
+                        preferredStyle: .alert
+                    )
+                    
+                    alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(settingsURL)
+                        }
+                    })
+                    
+                    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                    
+                    self.present(alert, animated: true)
+                } else {
+                    // Handle other errors
+                    print("Error fetching weather: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func updatePlantsForCurrentWeather(_ weather: WeatherService.WeatherResponse) {
+        // Get temperature and weather condition
+        let temperature = weather.main.temp
+        let condition = weather.weather.first?.main.lowercased() ?? ""
+        
+        // Filter plants based on weather conditions
+        var recommendedPlants: [Plant] = []
+        
+        // Example logic - customize based on your needs
+        if temperature < 10 {
+            recommendedPlants = DataControllerGG().getTopSeasonPlants().filter { plant in
+                plant.idealTemperature.contains(where: { $0 < 15 })
+            }
+        } else if temperature > 25 {
+            recommendedPlants = DataControllerGG().getTopSeasonPlants().filter { plant in
+                plant.idealTemperature.contains(where: { $0 > 20 })
+            }
+        }
+        
+        if condition.contains("rain") {
+            recommendedPlants.append(contentsOf: DataControllerGG().getTopSeasonPlants().filter { plant in
+                plant.lightRequirement == "High"
+            })
+        }
+        
+        // Make sure we have some default plants if none match the weather conditions
+        if recommendedPlants.isEmpty {
+            recommendedPlants = DataControllerGG().getTopSeasonPlants()
+        }
+        
+        // Take only first 5 plants
+        recommendedPlants = Array(recommendedPlants.prefix(5))
+        
+        // Update discover categories while preserving the structure
+        if selectedSegment == 0 { // Only update if we're in the Discover tab
+            discoverCategories = [
+                ("Current Season Plants", recommendedPlants),
+                ("Common Issues", Array(DataControllerGG().getCommonIssues().prefix(5)))
+            ]
+            
+            // Update filtered categories if search is active
+            if isSearchActive {
+                filteredDiscoverCategories = discoverCategories
+            }
+            
+            DispatchQueue.main.async {
+                self.collectionView.reloadData()
+            }
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
        
+        // Initialize categories first
+        updateDataForSelectedSegment()
+        
         plantCarAI.isUserInteractionEnabled = true
-            
-        // Create a tap gesture recognizer
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
         configureSearchController()
-        // Add the gesture recognizer to the image view
         plantCarAI.addGestureRecognizer(tapGesture)
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
         updateSegmentedControlTitles(firstTitle: "Discover", secondTitle: "For My Plants")
         setupSegmentedControl()
-        updateDataForSelectedSegment()
         setUpcollectionView()
         
+        // Fetch weather after everything is set up
+        Task {
+            await fetchWeatherAndUpdatePlants()
+        }
     }
     override func viewWillAppear(_ animated: Bool) {
         updateDataForSelectedSegment()
@@ -101,22 +208,38 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     func updateDataForSelectedSegment() {
         selectedSegment = segmentControlOnExplore.selectedSegmentIndex
+        
         switch segmentControlOnExplore.selectedSegmentIndex {
         case 0: // "Discover"
             identifier = 0
+            let allSeasonPlants = DataControllerGG().getTopSeasonPlants()
+            let allCommonIssues = DataControllerGG().getCommonIssues()
+            
             discoverCategories = [
-                ("Top Summer Plants", DataControllerGG().getTopWinterPlants()),
-                ("Common Issues", DataControllerGG().getCommonIssues())
+                ("Current Season Plants", Array(allSeasonPlants.prefix(5))), // Take only first 5 plants
+                ("Common Issues", Array(allCommonIssues.prefix(5)))  // Take only first 5 issues
             ]
-        case 1: // "For You"
+            if isSearchActive {
+                filteredDiscoverCategories = discoverCategories
+            }
+            
+        case 1: // "For My Plants"
             identifier = 1
+            let allIssues = DataControllerGG().getCommonIssuesForUserPlants()
+            let allFertilizers = DataControllerGG().getCommonFertilizers()
+            
             forMyPlantCategories = [
-                ("Common Issues in your Plant", DataControllerGG().getCommonIssuesForUserPlants()),
-                ("Common Fertilizers for Parlor Palm", DataControllerGG().getCommonFertilizersForParlorPalm())
+                ("Common Issues in your Plant", Array(allIssues.prefix(5))),
+                ("Common Fertilizers for Parlor Palm", Array(allFertilizers.prefix(5)))
             ]
+            if isSearchActive {
+                filteredForMyPlantCategories = forMyPlantCategories
+            }
+            
         default:
             currentData = []
         }
+        
         collectionView.reloadData()
     }
     
@@ -134,7 +257,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             // Keep original category structure but filter items
             filteredDiscoverCategories = discoverCategories.compactMap { category in
                 switch category.title {
-                    case "Top Summer Plants", "Top Winter Plants":
+                    case "Current Season Plants" :
                         let filteredPlants = category.items.filter { item in
                             guard let plant = item as? Plant else { return false }
                             return plant.plantName.lowercased().contains(searchText)
@@ -165,8 +288,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         
                     case "Common Fertilizers for Parlor Palm":
                         let filteredFertilizers = category.items.filter { item in
-                            guard let fertilizer = item as? String else { return false }
-                            return fertilizer.lowercased().contains(searchText)
+                            guard let fertilizer = item as? Fertilizer else { return false }
+                            return fertilizer.fertilizerName.lowercased().contains(searchText)
                         }
                         return filteredFertilizers.isEmpty ? nil : (category.title, filteredFertilizers)
                         
@@ -190,10 +313,11 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        let categories = selectedSegment == 0 ?
-            (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
-            (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
-        return categories.count
+        if selectedSegment == 0 {
+            return isSearchActive ? filteredDiscoverCategories.count : discoverCategories.count
+        } else {
+            return isSearchActive ? filteredForMyPlantCategories.count : forMyPlantCategories.count
+        }
     }
     
     /*
@@ -212,18 +336,25 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let categories = selectedSegment == 0 ?
             (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
             (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
-        return categories[section].items.count
+        
+        guard section < categories.count else { return 0 }
+        return (categories[section].items as? [Any])?.count ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let categories = selectedSegment == 0 ?
             (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
             (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
+        
+        guard indexPath.section < categories.count else {
+            return UICollectionViewCell()
+        }
+        
         let category = categories[indexPath.section]
         let item = category.items[indexPath.row]
 
         // First check the category title to determine which cell to use
-        if category.title == "Top Summer Plants" || category.title == "Top Winter Plants" {
+        if category.title == "Current Season Plants" {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
             if let plant = item as? Plant {
                 cell.configure(with: plant)
@@ -267,7 +398,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 return cell
             } else { // Common Fertile for Parlour Palm
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as!Section2InForMyPlantCollectionViewCell
-                if let fertilizer = item as? String {
+                if let fertilizer = item as? Fertilizer {
                     cell.configure(with: fertilizer)
                 }
                 cell.contentView.layer.cornerRadius = 25
@@ -300,7 +431,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             // Choose layout based on category title instead of section index
             switch categoryTitle {
-            case "Top Summer Plants", "Top Winter Plants":
+            case "Current Season Plants":
                 section = self.generateSection1Layout()
                 
             case "Common Issues":

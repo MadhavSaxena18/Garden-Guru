@@ -90,10 +90,14 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         layoutIfNeeded()
     }
     
-    func configureForFertilizer(with fertilizer: String) {
-        nameLabel.text = fertilizer
-        descriptionLabel.text = "Recommended fertilizer for optimal plant growth"
-        plantImageView.image = UIImage(named: "fertilizer_default") ?? UIImage(systemName: "leaf.fill")
+    // Update the method signature to accept a Fertilizer object
+    func configureForFertilizer(with fertilizer: Fertilizer) {
+        // Configure the cell with fertilizer data
+        nameLabel.text = fertilizer.fertilizerName
+        descriptionLabel.text = fertilizer.fertilizerDescription
+        
+        // Load the fertilizer image
+        plantImageView.image = UIImage(named: fertilizer.fertilizerImage) ?? UIImage(named: "fertilizer_placeholder")
         
         // Ensure labels are visible and properly laid out
         nameLabel.setNeedsLayout()
