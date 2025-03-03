@@ -16,7 +16,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     // Labels
     private let plantNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "Plant Name"
+        label.text = DiagnosisViewController.plantNameLabel.text
         label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -44,6 +44,8 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
         return button
     }()
+    
+    let dataController: DataControllerGG = DataControllerGG()
     
     // Data for the rows
     private let reminders = [
@@ -80,7 +82,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         title = "Set Reminder"
         
         // Configure the navigation bar appearance
-        navigationController?.navigationBar.isTranslucent = false
+        //navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barTintColor = UIColor.systemGreen
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
@@ -149,92 +151,75 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     }
 
    
+    @objc func setReminderButtonTapped() {
+        print("Hello")
+//        guard let firstUser = dataController.getUsers().first,
+ //             let plantName = plantNameLabel.text,
+//              let plant = dataController.getPlantbyName(by: plantName),
+//              let nickname = locationLabel.text else {
+//            return
+//        }
+        
+        guard let firstUser = dataController.getUsers().first else {
+            print("Error: No users found.")
+            return
+        }
 
-    @objc  func setReminderButtonTapped() {
-        print("Set Reminder button tapped!")
-        print("helllooooo oooooo")
-//        Amit sir resolve this but we have to not to do this because of tab switching
-        //      by a button
-//        let storyboard = UIStoryboard(name: "mySpaceTab", bundle: nil)
-//        let careVC = storyboard.instantiateViewController(withIdentifier: "CareReminderViewController")
-//        navigationController?.pushViewController(careVC, animated: true)
+        guard let plantName = DiagnosisViewController.plantNameLabel.text else {
+            print("Error: Plant name is empty.")
+            return
+        }
+       
+        print("Debug: Retrieved plant name - '\(plantName)'")
+        
+
+
+        guard let plant = dataController.getPlantbyName(by: plantName) else {
+            print("Error: No plant found with name \(plantName).")
+            return
+        }
+
+        guard let nickname = locationLabel.text, !nickname.isEmpty else {
+            print("Error: Nickname is empty.")
+            return
+        }
+
+        // Now you have `firstUser`, `plantName`, `plant`, and `nickname` safely unwrapped
+
+        print("inside setreminder")
+        let newUserPlant = UserPlant(
+            userId: firstUser.userId,
+            userplantID: plant.plantID,
+            userPlantNickName: nickname,
+            lastWatered: Date(),
+            lastFertilized: Date(),
+            lastRepotted: Date(),
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        
+        // Add the plant to user's space
+        dataController.addUserPlant(newUserPlant)
+        
+//        print(dataController.userPlant.count)
         
         let alert = UIAlertController(
-                title: "Success!",
-                message: "\(plantNameLabel.text ?? "Plant") added successfully",
-                preferredStyle: .alert
-            )
-            
-            let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-                // Dismiss the current view controller
-                self?.dismiss(animated: true) {
-                    // Switch to explore tab (tab 0)
-                    if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
-                        tabBarController.selectedIndex = 0
-                    }
+            title: "Success!",
+            message: "\(plantName) added successfully",
+            preferredStyle: .alert
+        )
+        
+        let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            self?.dismiss(animated: true) {
+                if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
+                    tabBarController.selectedIndex = 0 // Switch to MySpace tab
                 }
             }
-            
-            alert.addAction(okAction)
-            present(alert, animated: true)
+        }
         
-        
-        
-        
-        
-     //   performSegue(withIdentifier: "unwindToCareReminder", sender: Any?.self)
-        
-        
-        
-        
-//        // Create the CareReminderViewController instance
-//        let reminderController = DiagnosisViewController()
-//                print("ppppp")
-//                // Navigate to the CareReminderViewController
-//                if let navigationController = self.navigationController {
-//                    print(",,,,")
-//                    // Use the existing navigation controller to push the view controller
-//                    navigationController.pushViewController(reminderController, animated: true)
-//                } else {
-//                    print("pppp,,")
-//        
-//                    // If there's no navigation controller, present it modally
-//                    self.present(reminderController, animated: true, completion: nil)
-//                 // self.navigationController?.pushViewController(reminderController, animated: true)
-//                    // show(reminderController, sender: self)
-//                }
-        //
-        //        print("Set reminder")
-        //    }
-        
-        //        let storyboard = UIStoryboard(name: "setRemainder" , bundle: nil)
-        //
-        //        let VC = storyboard.instantiateViewController(withIdentifier: "CareReminderViewController") as! CareReminderViewController
-        //
-        //            //  self.present(VC, animated: true, completion: nil)
-        //            navigationController?.pushViewController(VC, animated: true)
-        //        }
-        //        tabBarController?.selectedIndex = 2
-        //            print("pppppp")
-        //            // Access the navigation controller of the target tab
-        //        if let targetNavController = tabBarController!.viewControllers?[2] as? UINavigationController {
-        //            print("hhhhhh")
-        //                // Create the view controller you want to push
-        //            let targetViewController = CareReminderViewController()
-        //            print(".......")
-        ////            targetNavController.pushViewController(targetViewController, animated: true)
-        //            navigationController?.pushViewController(targetViewController, animated: true)
-        //            }
-        
-        
-        //    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        //            if segue.identifier == "ShowCareReminder" {
-        //                // You can pass data here if needed:
-        //                let destinationVC = segue.destination as! CareReminderViewController
-        //                destinationVC.title = "Care Reminders"
-        //            }
-        //        }
-        //
+        alert.addAction(okAction)
+        present(alert, animated: true)
     }
     // MARK: - UITableViewDataSource
     func numberOfSections(in tableView: UITableView) -> Int {

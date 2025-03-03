@@ -17,7 +17,7 @@ class DataControllerGG {
     private var diseases: [Diseases] = []
     private var plantDiseases: [PlantDisease] = []
     private var user : [userInfo] = []
-    private var userPlant : [UserPlant] = []
+    var userPlant : [UserPlant] = []
     let currentDate = Date()
     private var userPlantDisease : [UsersPlantDisease] = []
     private var careReminders : [CareReminder_] = []
@@ -1191,8 +1191,10 @@ class DataControllerGG {
     
     // Add this method to DataControllerGG
     func addUserPlant(_ userPlant: UserPlant) {
+        //adding user plant
+        print(userPlant)
         self.userPlant.append(userPlant)
-        
+        print(self.userPlant)
         // Create and add care reminder
         let reminder = CareReminder_(
             upcomingReminderForWater: userPlant.lastWatered,

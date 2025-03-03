@@ -53,6 +53,8 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         super.viewWillAppear(animated)
         self.tabBarController?.tabBar.isHidden = true
         
+        DiagnosisViewController.plantNameLabel.text = ""
+        DiagnosisViewController.diagnosisLabel.text = ""
         // Reset everything and start fresh
         resetForNewScan()
         setupCamera()
@@ -202,203 +204,235 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         }
     }
     private func processImages() {
-            print("Starting image processing...")
+        print("Starting image processing...")
         print("Number of captured images: \(scanAndDiagnoseViewController.capturedImages.count)")
-            
-            // Step 1: Run YOLO on all three images
-            var yoloResults: [String] = []
-            
+        
+        // Step 1: Run YOLO on all three images
+        var yoloResults: [String] = []
+        
         for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
-                print("\n--- Processing image \(index + 1) with YOLO ---")
-                if let yoloResult = runYOLOModel(image) {
-                    let lowercaseResult = yoloResult.lowercased()
-                    print("YOLO Result for image \(index + 1): \(lowercaseResult)")
-                    yoloResults.append(lowercaseResult)
-                } else {
-                    print("⚠️ No YOLO result for image \(index + 1)")
-                    yoloResults.append("no objects detected")
-                }
+            print("\n--- Processing image \(index + 1) with YOLO ---")
+            if let yoloResult = runYOLOModel(image) {
+                let lowercaseResult = yoloResult.lowercased()
+                print("YOLO Result for image \(index + 1): \(lowercaseResult)")
+                yoloResults.append(lowercaseResult)
+            } else {
+                print("⚠️ No YOLO result for image \(index + 1)")
+                yoloResults.append("no objects detected")
             }
-            
-            print("\nAll YOLO results: \(yoloResults)")
-            
-            // Check if majority of YOLO results are plants
-            let plantDetections = yoloResults.filter {
-                $0.contains("pottedplant") || $0.contains("vase") || $0.contains("no objects detected")
-            }.count
-            
-            if plantDetections >= 2 {  // At least 2 images detected as plants
-                // Step 2: Run plant classifier on first image only
-                if let firstImage = scanAndDiagnoseViewController.capturedImages.first,
-                   let plantType = runPlantClassifier(firstImage) {
-                    print("Plant Classification Result: \(plantType)")
+        }
+        
+        print("\nAll YOLO results: \(yoloResults)")
+        
+        // Check if majority of YOLO results are plants
+        let plantDetections = yoloResults.filter {
+            $0.contains("pottedplant") || $0.contains("vase") || $0.contains("no objects detected")
+        }.count
+        
+        if plantDetections >= 2 {  // At least 2 images detected as plants
+            // Step 2: Run plant classifier on first image only
+            if let firstImage = scanAndDiagnoseViewController.capturedImages.first,
+               let plantType = runPlantClassifier(firstImage) {
+                print("Plant Classification Result: \(plantType)")
+                
+                // Check if it's a non-plant object
+                if isNonPlantObject(plantType) {
+                    DispatchQueue.main.async {
+                        DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
+                        DiagnosisViewController.diagnosisLabel.text = "No disease detected"
+                        self.showPlantNotIdentifiedAlert()
+                    }
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    DiagnosisViewController.plantNameLabel.text = plantType
+                }
+                
+                // Step 3: Run disease detection on all images
+                var diseaseResults: [String] = []
+                
+                for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
+                    if let diseaseResult = runDiseaseDetection(image) {
+                        print("Disease Detection Result for image \(index + 1): \(diseaseResult)")
+                        diseaseResults.append(diseaseResult)
+                    }
+                }
+                
+                // Get most frequent disease result
+                if !diseaseResults.isEmpty {
+                    let mostFrequentDisease = mostFrequentResult(diseaseResults)
+                    print("Most frequent disease: \(mostFrequentDisease)")
                     
-                    // Check if it's not a non-plant object
-                    if !plantType.lowercased().contains("non plant object") {
-                        DispatchQueue.main.async {
-                            DiagnosisViewController.plantNameLabel.text = plantType
-                        }
-                        
-                        // Step 3: Run disease detection on all images
-                        var diseaseResults: [String] = []
-                        
-                        for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
-                            if let diseaseResult = runDiseaseDetection(image) {
-                                print("Disease Detection Result for image \(index + 1): \(diseaseResult)")
-                                diseaseResults.append(diseaseResult)
-                            }
-                        }
-                        
-                        // Get most frequent disease result
-                        if !diseaseResults.isEmpty {
-                            let mostFrequentDisease = mostFrequentResult(diseaseResults)
-                            print("Most frequent disease: \(mostFrequentDisease)")
-                            
-                            DispatchQueue.main.async {
-                                DiagnosisViewController.diagnosisLabel.text = "Disease: \(mostFrequentDisease)"
-                            }
-                        } else {
-                            DispatchQueue.main.async {
-                                DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                            }
-                        }
-                    } else {
-                        DispatchQueue.main.async {
-                            DiagnosisViewController.plantNameLabel.text = "Please capture a plant image identify"
-                            DiagnosisViewController.diagnosisLabel.text = ""
-                        }
+                    DispatchQueue.main.async {
+                        DiagnosisViewController.diagnosisLabel.text = "Disease: \(mostFrequentDisease)"
                     }
                 } else {
                     DispatchQueue.main.async {
-                        DiagnosisViewController.plantNameLabel.text = "Could not classify plant"
-                        DiagnosisViewController.diagnosisLabel.text = ""
+                        DiagnosisViewController.diagnosisLabel.text = "No disease detected"
                     }
                 }
             } else {
                 DispatchQueue.main.async {
-                    DiagnosisViewController.plantNameLabel.text = "Please capture a plant image Yolo"
-                    DiagnosisViewController.diagnosisLabel.text = ""
+                    DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
+                    DiagnosisViewController.diagnosisLabel.text = "No disease detected"
+                    self.showPlantNotIdentifiedAlert()
                 }
             }
+        } else {
+            DispatchQueue.main.async {
+                DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
+                DiagnosisViewController.diagnosisLabel.text = "No disease detected"
+                self.showPlantNotIdentifiedAlert()
+            }
         }
-        
-        private func runYOLOModel(_ image: UIImage) -> String? {
-            do {
-                print("Initializing YOLO model...")
-                let model = try VNCoreMLModel(for: YOLOv3TinyFP16().model)
-                print("YOLO model initialized successfully")
-                
-                guard let cgImage = image.cgImage else {
-                    print("Failed to get CGImage")
-                    return nil
-                }
-                
-                var resultIdentifier: String?
-                let semaphore = DispatchSemaphore(value: 0)
-                
-                let request = VNCoreMLRequest(model: model) { request, error in
-                    defer { semaphore.signal() }
-                    
-                    guard error == nil else {
-                        print("YOLO Request Error: \(error!.localizedDescription)")
-                        return
-                    }
-                    
-                    guard let observations = request.results as? [VNRecognizedObjectObservation] else {
-                        print("No YOLO observations found")
-                        return
-                    }
-                    
-                    // Sort observations by confidence
-                    let sortedObservations = observations.sorted { $0.confidence > $1.confidence }
-                    
-                    // Print all detections for debugging
-                    for observation in sortedObservations {
-                        for label in observation.labels {
-                            print("YOLO detected: \(label.identifier) with confidence: \(observation.confidence)")
-                        }
-                    }
-                    
-                    // Get the highest confidence detection
-                    if let bestObservation = sortedObservations.first,
-                       let bestLabel = bestObservation.labels.first {
-                        resultIdentifier = bestLabel.identifier
-                        print("Best YOLO detection: \(bestLabel.identifier) with confidence: \(bestObservation.confidence)")
-                    }
-                }
-                
-                // Set image crop and scale option
-                request.imageCropAndScaleOption = .scaleFit
-                
-                // Perform the request
-                let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up, options: [:])
-                try handler.perform([request])
-                
-                semaphore.wait()
-                
-                if let result = resultIdentifier {
-                    print("YOLO returning result: \(result)")
-                } else {
-                    print("YOLO returning nil result")
-                }
-                
-                return resultIdentifier
-                
-            } catch {
-                print("YOLO Model Error: \(error.localizedDescription)")
+    }
+    
+    private func runYOLOModel(_ image: UIImage) -> String? {
+        do {
+            print("Initializing YOLO model...")
+            let model = try VNCoreMLModel(for: YOLOv3TinyFP16().model)
+            print("YOLO model initialized successfully")
+            
+            guard let cgImage = image.cgImage else {
+                print("Failed to get CGImage")
                 return nil
             }
-        }
-        
-        private func runPlantClassifier(_ image: UIImage) -> String? {
-            guard let model = try? VNCoreMLModel(for: PlantIdentify().model),
-                  let cgImage = image.cgImage else { return nil }
             
             var resultIdentifier: String?
             let semaphore = DispatchSemaphore(value: 0)
             
-            let request = VNCoreMLRequest(model: model) { request, _ in
-                if let results = request.results as? [VNClassificationObservation],
-                   let topResult = results.first {
-                    resultIdentifier = topResult.identifier
-                    print("Plant classified as: \(topResult.identifier)")
+            let request = VNCoreMLRequest(model: model) { request, error in
+                defer { semaphore.signal() }
+                
+                guard error == nil else {
+                    print("YOLO Request Error: \(error!.localizedDescription)")
+                    return
                 }
-                semaphore.signal()
-            }
-            
-            try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
-            semaphore.wait()
-            return resultIdentifier
-        }
-        
-        private func runDiseaseDetection(_ image: UIImage) -> String? {
-            guard let model = try? VNCoreMLModel(for: GardenGuruDiseasesDetection_1().model),
-                  let cgImage = image.cgImage else { return nil }
-            
-            var resultIdentifier: String?
-            let semaphore = DispatchSemaphore(value: 0)
-            
-            let request = VNCoreMLRequest(model: model) { request, _ in
-                if let results = request.results as? [VNClassificationObservation],
-                   let topResult = results.first {
-                    resultIdentifier = topResult.identifier
-                    print("Disease detected: \(topResult.identifier)")
+                
+                guard let observations = request.results as? [VNRecognizedObjectObservation] else {
+                    print("No YOLO observations found")
+                    return
                 }
-                semaphore.signal()
+                
+                // Sort observations by confidence
+                let sortedObservations = observations.sorted { $0.confidence > $1.confidence }
+                
+                // Print all detections for debugging
+                for observation in sortedObservations {
+                    for label in observation.labels {
+                        print("YOLO detected: \(label.identifier) with confidence: \(observation.confidence)")
+                    }
+                }
+                
+                // Get the highest confidence detection
+                if let bestObservation = sortedObservations.first,
+                   let bestLabel = bestObservation.labels.first {
+                    resultIdentifier = bestLabel.identifier
+                    print("Best YOLO detection: \(bestLabel.identifier) with confidence: \(bestObservation.confidence)")
+                }
             }
             
-            try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+            // Set image crop and scale option
+            request.imageCropAndScaleOption = .scaleFit
+            
+            // Perform the request
+            let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up, options: [:])
+            try handler.perform([request])
+            
             semaphore.wait()
-            return resultIdentifier
-        }
-        
-        private func mostFrequentResult(_ results: [String]) -> String {
-            let frequency = results.reduce(into: [:]) { counts, result in
-                counts[result, default: 0] += 1
+            
+            if let result = resultIdentifier {
+                print("YOLO returning result: \(result)")
+            } else {
+                print("YOLO returning nil result")
             }
-            return frequency.max(by: { $0.value < $1.value })?.key ?? "no object detected"
+            
+            return resultIdentifier
+            
+        } catch {
+            print("YOLO Model Error: \(error.localizedDescription)")
+            return nil
         }
+    }
     
+    private func runPlantClassifier(_ image: UIImage) -> String? {
+        guard let model = try? VNCoreMLModel(for: PlantIdentify().model),
+              let cgImage = image.cgImage else { return nil }
+        
+        var resultIdentifier: String?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        let request = VNCoreMLRequest(model: model) { request, _ in
+            if let results = request.results as? [VNClassificationObservation],
+               let topResult = results.first {
+                resultIdentifier = topResult.identifier
+                print("Plant classified as: \(topResult.identifier)")
+            }
+            semaphore.signal()
+        }
+        
+        try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        semaphore.wait()
+        return resultIdentifier
+    }
+    
+    private func runDiseaseDetection(_ image: UIImage) -> String? {
+        guard let model = try? VNCoreMLModel(for: GardenGuruDiseasesDetection_1().model),
+              let cgImage = image.cgImage else { return nil }
+        
+        var resultIdentifier: String?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        let request = VNCoreMLRequest(model: model) { request, _ in
+            if let results = request.results as? [VNClassificationObservation],
+               let topResult = results.first {
+                resultIdentifier = topResult.identifier
+                print("Disease detected: \(topResult.identifier)")
+            }
+            semaphore.signal()
+        }
+        
+        try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        semaphore.wait()
+        return resultIdentifier
+    }
+    
+    private func mostFrequentResult(_ results: [String]) -> String {
+        let frequency = results.reduce(into: [:]) { counts, result in
+            counts[result, default: 0] += 1
+        }
+        return frequency.max(by: { $0.value < $1.value })?.key ?? "no object detected"
+    }
+    
+    private func isNonPlantObject(_ result: String) -> Bool {
+        let nonPlantPrefixes = [
+            "Non-Plant Object",
+            "Non plant object",
+            "Non plnat object"  // Including the typo variant
+        ]
+        return nonPlantPrefixes.contains { result.hasPrefix($0) }
+    }
+    
+    private func showPlantNotIdentifiedAlert() {
+        let alert = UIAlertController(
+            title: "Plant Not Identified",
+            message: "We couldn't identify a plant in your images. Please ensure:\n\n• The plant is clearly visible\n• There's good lighting\n• The plant takes up most of the frame\n• You're capturing different angles",
+            preferredStyle: .alert
+        )
+        
+        let retryAction = UIAlertAction(title: "Try Again", style: .default) { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+            self?.navigationController?.popToRootViewController(animated: true)
+        }
+        
+        alert.addAction(retryAction)
+        alert.addAction(cancelAction)
+        present(alert, animated: true)
+    }
     
     private func setupFullScreenScanning() {
         snapImage1.isHidden = true
@@ -434,9 +468,32 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             guard let self = self else { return }
             self.stopScanningAnimation()
             
-            let plant = DiagnosisScreen.diagnosisData[0]
+            let plantName = DiagnosisViewController.plantNameLabel.text ?? "Unknown Plant"
+            
+            // Check if the result is a non-plant object
+            if self.isNonPlantObject(plantName) {
+                self.showPlantNotIdentifiedAlert()
+                return
+            }
+            
+            // Check if plant name is empty or unknown
+            if plantName.isEmpty || plantName == "Unknown Plant" {
+                self.showPlantNotIdentifiedAlert()
+                return
+            }
+            
+            let diagnosis = DiagnosisViewController.diagnosisLabel.text ?? "No disease detected"
+            
+            // Create DiagnosisDataModel with the processed results
+            let diagnosisData = DiagnosisDataModel(
+                plantName: plantName,
+                diagnosis: diagnosis,
+                botanicalName: "", // Will be populated in DiagnosisViewController
+                sectionDetails: [:] // Will be populated in DiagnosisViewController
+            )
+            
             let diagnosisVC = DiagnosisViewController()
-            diagnosisVC.selectedPlant = plant
+            diagnosisVC.selectedPlant = diagnosisData
             self.navigationController?.pushViewController(diagnosisVC, animated: true)
         }
     }
@@ -493,7 +550,6 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         previewLayer?.removeFromSuperlayer()
     }
 }
-
 
 
 
