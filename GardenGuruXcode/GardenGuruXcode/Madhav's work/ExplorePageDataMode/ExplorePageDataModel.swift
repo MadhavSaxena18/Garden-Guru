@@ -77,7 +77,7 @@ class ExploreScreen{
                                                                                     DataOfSection3InDicoverSegment(designImage: UIImage(named: "design3")!, designName: "The Art of Nature🌸"),
                                                                                     DataOfSection3InDicoverSegment(designImage: UIImage(named: "design4")!, designName: "The Art of Nature🌸"),
     ]
-    static var headerData: [String] = ["Top Winter Plants", "Common Issues", "Top Designs"]
+    static var headerData: [String] = ["Current Season Plants", "Common Issues", "Top Designs"]
     
     
     
@@ -101,7 +101,7 @@ class ExploreScreen{
                                                                                         
     ]
     
-    static var headerForInMyPlantSegment: [String] = ["Common Issues in your Plant", "Common fertilizer for Parlor Palm", "Aesthetic Design Idea"]
+    static var headerForInMyPlantSegment: [String] = ["Common Issues in your Plant", "Common fertilizer", "Aesthetic Design Idea"]
     
     static var cardDetailSection1: [CardDetailsSection1] = [
         CardDetailsSection1(imageOfPlant: UIImage(named: "parlor palm")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),

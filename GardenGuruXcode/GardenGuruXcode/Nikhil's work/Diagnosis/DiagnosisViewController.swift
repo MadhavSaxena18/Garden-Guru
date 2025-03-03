@@ -438,13 +438,31 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 label.numberOfLines = 0
                 DiagnosisViewController.detailsStackView.addArrangedSubview(label)
             }
-
+            print("Diseases update")
             // Update disease details
-            if let diagnosis = selectedPlant?.diagnosis,
-               let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
-                selectedPlant?.sectionDetails = diseaseDetails
-                tableView.reloadData()
+//            if let diagnosis = selectedPlant?.diagnosis,
+//               let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
+//                print("Inside update")
+//                selectedPlant?.sectionDetails = diseaseDetails
+//                print(diseaseDetails)
+//                tableView.reloadData()
+//            }
+            if let diagnosis = selectedPlant?.diagnosis {
+                print("Diagnosis: \(diagnosis)")
+                if let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
+                    print("Inside update")
+                    selectedPlant?.sectionDetails = diseaseDetails
+                    print("Disease Details: \(diseaseDetails)")
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                    }
+                } else {
+                    print("No disease details found for \(diagnosis)")
+                }
+            } else {
+                print("Diagnosis is nil")
             }
+
 
             // Check if plant exists in user's space
             if let firstUser = dataController.getUsers().first {

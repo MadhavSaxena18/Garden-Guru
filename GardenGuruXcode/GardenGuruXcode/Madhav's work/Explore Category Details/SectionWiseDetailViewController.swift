@@ -222,7 +222,6 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
                 .instantiateViewController(withIdentifier: "DiseaseDetailViewController") as? DiseaseDetailViewController {
                 detailVC.disease = diseases[indexPath.item]
-                // Since we're pushing from section view, set isModallyPresented to false
                 detailVC.isModallyPresented = false
                 navigationController?.pushViewController(detailVC, animated: true)
             }
@@ -235,11 +234,17 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             }
             
         case .fertilizers:
-            if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
-                .instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
-                detailVC.selectedCardData = fertilizers[indexPath.item]
-                navigationController?.pushViewController(detailVC, animated: true)
-            }
+            let detailVC = FertilizerDetailViewController()
+            detailVC.fertilizer = fertilizers[indexPath.item]
+            //detailVC.title = fertilizers[indexPath.item].fertilizerName
+            detailVC.isPresentedModally = false
+            
+            // Configure back button to show "Explore"
+            let backItem = UIBarButtonItem()
+            backItem.title = "Common Fertilizers"
+            navigationItem.backBarButtonItem = backItem
+            
+            navigationController?.pushViewController(detailVC, animated: true)
         }
     }
 }
