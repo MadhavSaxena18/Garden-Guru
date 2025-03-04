@@ -286,7 +286,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         return label
     }()
     
-     let locationLabel: UILabel = {
+    let locationLabel: UILabel = {
         let label = UILabel()
         // label.text = "Near Sofa"
         label.font = UIFont.systemFont(ofSize: 16)
@@ -320,7 +320,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     ]
     
     // Add this property
-    let dataController: DataControllerGG = DataControllerGG()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -328,27 +328,27 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         view.backgroundColor = UIColor(hex: "#EBF4EB") // Background for overall view
         setupNavigationBar()
         setupViews()
-           if navigationController == nil {
-               print("Navigation controller is not embedded!")
-           }
+        if navigationController == nil {
+            print("Navigation controller is not embedded!")
+        }
+        
     }
-    
     // Navigation Bar Setup
-//    private func setupNavigationBar() {
-//        title = "Set Reminder"
-//
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(
-//            title: "Cancel",
-//            style: .plain,
-//            target: self,
-//            action: #selector(didTapCancel)
-//        )
-//    }
+    //    private func setupNavigationBar() {
+    //        title = "Set Reminder"
+    //
+    //        navigationItem.rightBarButtonItem = UIBarButtonItem(
+    //            title: "Cancel",
+    //            style: .plain,
+    //            target: self,
+    //            action: #selector(didTapCancel)
+    //        )
+    //    }
     private func setupNavigationBar() {
         // Set the title
         title = "Set Reminder"
         
-                
+        
         // Configure the navigation bar appearance
         //navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barTintColor = UIColor.systemGreen
@@ -417,120 +417,110 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     @objc private func didTapCancel() {
         dismiss(animated: true, completion: nil)
     }
-
-   
+    
+    
     @objc func setReminderButtonTapped() {
         print("Hello")
-//        guard let firstUser = dataController.getUsers().first,
- //             let plantName = plantNameLabel.text,
-//              let plant = dataController.getPlantbyName(by: plantName),
-//              let nickname = locationLabel.text else {
-//            return
-//        }
+        //        guard let firstUser = dataController.getUsers().first,
+        //             let plantName = plantNameLabel.text,
+        //              let plant = dataController.getPlantbyName(by: plantName),
+        //              let nickname = locationLabel.text else {
+        //            return
+        //        }
         
         guard let firstUser = dataController.getUsers().first else {
             print("Error: No users found.")
             return
         }
-
-
-    @objc func setReminderButtonTapped() {
-        print("Hello")
-//        guard let firstUser = dataController.getUsers().first,
- //             let plantName = plantNameLabel.text,
-//              let plant = dataController.getPlantbyName(by: plantName),
-//              let nickname = locationLabel.text else {
-//            return
-//        }
         
-        guard let firstUser = dataController.getUsers().first else {
-            print("Error: No users found.")
-            return
-        }
-
-
-        guard let plantName = DiagnosisViewController.plantNameLabel.text else {
-            print("Error: Plant name is empty.")
-            return
-        }
+        
        
-        print("Debug: Retrieved plant name - '\(plantName)'")
-        
-
-
-        guard let plant = dataController.getPlantbyName(by: plantName) else {
-            print("Error: No plant found with name \(plantName).")
-            return
-        }
-
-        guard let nickname = locationLabel.text, !nickname.isEmpty else {
-            print("Error: Nickname is empty.")
-            return
-        }
-
-        // Now you have `firstUser`, `plantName`, `plant`, and `nickname` safely unwrapped
-
-        print("inside setreminder")
-        let newUserPlant = UserPlant(
-            userId: firstUser.userId,
-            userplantID: plant.plantID,
-            userPlantNickName: nickname,
-            lastWatered: Date(),
-            lastFertilized: Date(),
-            lastRepotted: Date(),
-            isWateringCompleted: false,
-            isFertilizingCompleted: false,
-            isRepottingCompleted: false
-        )
-        
-        // Add the plant to user's space
-        dataController.addUserPlant(newUserPlant)
-        
-//        print(dataController.userPlant.count)
-        
-        let alert = UIAlertController(
-            title: "Success!",
-            message: "\(plantName) added successfully",
-            preferredStyle: .alert
-        )
-        
-        let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-            self?.dismiss(animated: true) {
-                if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
-                    tabBarController.selectedIndex = 0 // Switch to MySpace tab
+            
+            
+            guard let plantName = DiagnosisViewController.plantNameLabel.text else {
+                print("Error: Plant name is empty.")
+                return
+            }
+            
+            print("Debug: Retrieved plant name - '\(plantName)'")
+            
+            
+            
+            guard let plant = dataController.getPlantbyName(by: plantName) else {
+                print("Error: No plant found with name \(plantName).")
+                return
+            }
+            
+            guard let nickname = locationLabel.text, !nickname.isEmpty else {
+                print("Error: Nickname is empty.")
+                return
+            }
+            
+            // Now you have `firstUser`, `plantName`, `plant`, and `nickname` safely unwrapped
+            
+            print("inside setreminder")
+            let newUserPlant = UserPlant(
+                userId: firstUser.userId,
+                userplantID: plant.plantID,
+                userPlantNickName: nickname,
+                lastWatered: Date(),
+                lastFertilized: Date(),
+                lastRepotted: Date(),
+                isWateringCompleted: false,
+                isFertilizingCompleted: false,
+                isRepottingCompleted: false
+            )
+            
+            // Add the plant to user's space
+            dataController.addUserPlant(newUserPlant)
+            
+            //        print(dataController.userPlant.count)
+            
+            let alert = UIAlertController(
+                title: "Success!",
+                message: "\(plantName) added successfully",
+                preferredStyle: .alert
+            )
+            
+            let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+                self?.dismiss(animated: true) {
+                    if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
+                        tabBarController.selectedIndex = 0 // Switch to MySpace tab
+                    }
                 }
             }
+            
+            alert.addAction(okAction)
+            present(alert, animated: true)
         }
         
-        alert.addAction(okAction)
-        present(alert, animated: true)
-    }
-    // MARK: - UITableViewDataSource
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return reminders.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ReminderCell", for: indexPath) as! ReminderCell
-        let reminder = reminders[indexPath.row]
-        cell.configure(title: reminder.0, subtitle: reminder.1, iconName: reminder.2, isTimePicker: reminder.3)
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 120 // Card height
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
+        // MARK: - UITableViewDataSource
+        func numberOfSections(in tableView: UITableView) -> Int {
+            return 1
+        }
+        
+        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+            return reminders.count
+        }
+        
+        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "ReminderCell", for: indexPath) as! ReminderCell
+            let reminder = reminders[indexPath.row]
+            cell.configure(title: reminder.0, subtitle: reminder.1, iconName: reminder.2, isTimePicker: reminder.3)
+            return cell
+        }
+        
+        func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+            return 120 // Card height
+        }
+        
+        func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+            tableView.deselectRow(at: indexPath, animated: true)
+        }
+        
+        func configure(plantName: String, nickname: String) {
+            plantNameLabel.text = plantName
+            locationLabel.text = nickname
+        }
     }
 
-    func configure(plantName: String, nickname: String) {
-        plantNameLabel.text = plantName
-        locationLabel.text = nickname
-    }
-}
