@@ -31,7 +31,7 @@ class LoginViewController: UIViewController {
         return button
     }()
     
-    private let dataController = DataControllerGG()
+    private let dataController = DataControllerGG.shared
     
     override func viewDidLoad() {
         super.viewDidLoad()

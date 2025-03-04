@@ -14,7 +14,7 @@ class ProfileTableViewController: UITableViewController {
     @IBOutlet weak var emailLabel: UILabel!
     
     private var userData: userInfo?
-    private let dataController = DataControllerGG()
+    private let dataController = DataControllerGG.shared
     private let locationManager = LocationManager()
     private let weatherService = WeatherService()
     

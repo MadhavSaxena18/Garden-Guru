@@ -7,7 +7,7 @@ class CareReminderViewController: UIViewController {
     @IBOutlet weak var careReminderSegmentedControl: UISegmentedControl!
     @IBOutlet weak var editButton: UIBarButtonItem?
     
-    private let dataController = DataControllerGG()
+    private let dataController = DataControllerGG.shared
     private let reminderTypes = ["Watering", "Fertilization", "Pruning"]
     
     private var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []

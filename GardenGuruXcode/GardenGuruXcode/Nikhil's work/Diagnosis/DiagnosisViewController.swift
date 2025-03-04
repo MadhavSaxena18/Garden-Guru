@@ -17,7 +17,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private let tableView = UITableView()
     private let startCaringButton = UIButton()
 
-    let dataController : DataControllerGG = DataControllerGG()
+    let dataController : DataControllerGG = DataControllerGG.shared
     // Data
     var selectedPlant: DiagnosisDataModel?
     private var expandedSections: Set<Int> = []
