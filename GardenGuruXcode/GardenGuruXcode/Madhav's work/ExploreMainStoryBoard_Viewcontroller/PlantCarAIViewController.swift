@@ -67,6 +67,7 @@ class PlantCarAIViewController: UIViewController {
         return button
     }()
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         hideKeyboardWhenTappedAround()
@@ -89,7 +90,7 @@ class PlantCarAIViewController: UIViewController {
         do {
             let apiKey = try ConfigManager.shared.getGeminiAPIKey()
             print("🔑 Loaded API Key: \(apiKey)")  // Debug print statement
-            model = GenerativeModel(name: "gemini-pro", apiKey: apiKey)
+            model = GenerativeModel(name: "gemini-1.5-flash-002", apiKey: apiKey)
         } catch {
             showAPIKeyError()
         }

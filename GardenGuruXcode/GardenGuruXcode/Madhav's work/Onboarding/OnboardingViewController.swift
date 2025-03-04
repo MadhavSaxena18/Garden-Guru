@@ -113,10 +113,13 @@ class OnboardingViewController: UIViewController {
     
     @objc private func nextButtonTapped() {
         if currentPage == slides.count - 1 {
-            // Navigate to main app
-            let mainVC = UIStoryboard(name: "Main", bundle: nil).instantiateInitialViewController()
-            mainVC?.modalPresentationStyle = .fullScreen
-            present(mainVC!, animated: true)
+            // Show login screen
+            let loginVC = LoginViewController()
+            loginVC.modalPresentationStyle = .fullScreen
+            present(loginVC, animated: true) {
+                // Set flag that onboarding is complete
+                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+            }
         } else {
             currentPage += 1
             let indexPath = IndexPath(item: currentPage, section: 0)
@@ -150,4 +153,4 @@ extension OnboardingViewController: UICollectionViewDelegate, UICollectionViewDa
         let width = scrollView.frame.width
         currentPage = Int(scrollView.contentOffset.x / width)
     }
-} 
+}
