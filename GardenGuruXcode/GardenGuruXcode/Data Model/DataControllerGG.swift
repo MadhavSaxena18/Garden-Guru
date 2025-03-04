@@ -8,6 +8,11 @@ class supaBaseController {
 
 class DataControllerGG {
     
+    static let shared = DataControllerGG()
+    
+    private init(){
+        setupInitialData()
+    }
     
     //    private var plants: [Plant] = []
     //    private var diseases: [Diseases] = []
@@ -34,7 +39,7 @@ class DataControllerGG {
     // Store completion states in memory
     private var reminderCompletionStates: [UUID: [String: Bool]] = [:]
     
-    init() {
+    private func setupInitialData() {
         
         
         let John : userInfo = userInfo(
