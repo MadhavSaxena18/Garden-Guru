@@ -334,43 +334,46 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
     }
     // Navigation Bar Setup
-    //    private func setupNavigationBar() {
-    //        title = "Set Reminder"
-    //
-    //        navigationItem.rightBarButtonItem = UIBarButtonItem(
-    //            title: "Cancel",
-    //            style: .plain,
-    //            target: self,
-    //            action: #selector(didTapCancel)
-    //        )
-    //    }
+
     private func setupNavigationBar() {
         // Set the title
         title = "Set Reminder"
         
         
         // Configure the navigation bar appearance
+
+        if let navigationBar = navigationController?.navigationBar {
+            // Set background color
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithDefaultBackground()
+            
+            // Configure title text attributes with default color
+            appearance.titleTextAttributes = [
+                .font: UIFont.systemFont(ofSize: 20, weight: .semibold)
+            ]
+            
+            // Apply appearance to all navigation bar states
+            navigationBar.standardAppearance = appearance
+            navigationBar.scrollEdgeAppearance = appearance
+            navigationBar.compactAppearance = appearance
+            
+            // Use default tint color
+            navigationBar.tintColor = nil
+        }
+
         //navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barTintColor = UIColor.systemGreen
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
-        
-        // Add a custom "Cancel" button to the right side
+
+        // Add cancel button
         let cancelButton = UIBarButtonItem(
             title: "Cancel",
             style: .plain,
             target: self,
             action: #selector(didTapCancel)
         )
-        navigationItem.rightBarButtonItem = cancelButton
-        
-        // Optionally, you can customize the back button if you want to show a custom icon or text
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "Back",
-            style: .plain,
-            target: self,
-            action: #selector(didTapCancel)
-        )
+        navigationItem.leftBarButtonItem = cancelButton
     }
     
     // Setup Views
@@ -415,11 +418,17 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     
     // Cancel Button
     @objc private func didTapCancel() {
-        dismiss(animated: true, completion: nil)
+        // Dismiss and switch to MySpace tab
+        dismiss(animated: true) {
+            if let tabBarController = self.view.window?.rootViewController as? UITabBarController {
+                tabBarController.selectedIndex = 0 // Switch to MySpace tab
+            }
+        }
     }
     
     
     @objc func setReminderButtonTapped() {
+
         print("Hello")
         //        guard let firstUser = dataController.getUsers().first,
         //             let plantName = plantNameLabel.text,
@@ -487,6 +496,18 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
                     if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
                         tabBarController.selectedIndex = 0 // Switch to MySpace tab
                     }
+
+        let alert = UIAlertController(
+            title: "Success!",
+            message: "Reminders set successfully",
+            preferredStyle: .alert
+        )
+        
+        let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            self?.dismiss(animated: true) {
+                if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
+                    tabBarController.selectedIndex = 0 // Switch to MySpace tab
+
                 }
             }
             

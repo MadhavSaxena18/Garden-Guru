@@ -634,7 +634,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 present(navVC, animated: true)
             }
         } else if let fertilizer = selectedItem as? Fertilizer,
-                  selectedCategory.title == "Common Fertilizers for Parlor Palm" {
+                  selectedCategory.title == "Common Fertilizers" {
             // Handle fertilizer selection
             let detailVC = FertilizerDetailViewController()
             detailVC.fertilizer = fertilizer
@@ -654,6 +654,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
+    
 
     
     @objc func imageTapped() {
