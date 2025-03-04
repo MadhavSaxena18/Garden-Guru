@@ -8,7 +8,11 @@
 import UIKit
 
 class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchResultsUpdating, UICollectionViewDelegateFlowLayout {
-    private let dataController = DataControllerGG()
+    // Static array to store newly added plants
+    static var newlyAddedPlants: [UserPlant] = []
+    
+    // Use shared instance
+    private let dataController = DataControllerGG.shared
     private var userPlants: [(userPlant: UserPlant, plant: Plant)] = []
     private var plantCategories: [String] = []
     private var categorizedPlants: [[UserPlant]] = []
@@ -19,6 +23,9 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     private var filteredPlantCategories: [String] = []
     private var filteredCategorizedPlants: [[UserPlant]] = []
     private var isSearching: Bool = false
+    
+    // Add property to store newly added plant
+    private var newlyAddedPlant: (userPlant: UserPlant, plant: Plant)? = nil
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,8 +50,13 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         // Setup collection view
         setupCollectionView()
         
-        // Load data
-        loadData()
+        // Add observer for new plant
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNewPlantAdded(_:)),
+            name: NSNotification.Name("NewPlantAdded"),
+            object: nil
+        )
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -65,31 +77,46 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     }
     
     private func loadData() {
-        print("=== MySpaceViewController loadData started ===")
+        print("\n=== MySpaceViewController loadData started ===")
         
-        // Get the first user's plants
         let users = dataController.getUsers()
-        print("Found \(users.count) users")
         
         if let firstUser = users.first {
-            print("Found user: \(firstUser.userName)")
+            // Get plants from both sources
+            let dataControllerPlants = dataController.getUserPlants(for: firstUser.userId)
+            let allUserPlants = dataControllerPlants + MySpaceViewController.newlyAddedPlants
             
-            // Get all user plants and care reminders
-            let plantReminders = dataController.getCareReminders(for: firstUser.userId)
-            print("Found \(plantReminders.count) plant reminders")
+            print("\nAll plant IDs:")
+            allUserPlants.forEach { plant in
+                print("Plant: \(plant.userPlantNickName), ID: \(plant.userplantID)")
+            }
             
-            // Map to named tuples
-            let plants = plantReminders.map { (userPlant: $0.userPlant, plant: $0.plant) }
-            print("Mapped to \(plants.count) plants")
+            // Map all plants to tuples with plant data
+            let plants = allUserPlants.compactMap { userPlant -> (userPlant: UserPlant, plant: Plant)? in
+                print("\nLooking up plant with ID: \(userPlant.userplantID)")
+                if let plant = dataController.getPlant(by: userPlant.userplantID) {
+                    print("✅ Found plant: \(plant.plantName)")
+                    return (userPlant: userPlant, plant: plant)
+                } else {
+                    print("❌ No plant found with ID: \(userPlant.userplantID)")
+                    // Print all available plant IDs for debugging
+                    print("Available plant IDs:")
+                    dataController.getPlants().forEach { plant in
+                        print("- \(plant.plantName): \(plant.plantID)")
+                    }
+                    return nil
+                }
+            }
             
-            // Calculate user stats
+            // Calculate user stats with actual count
             let totalPlants = plants.count
-            print("Total plants: \(totalPlants)")
+            print("\nProcessed plants count: \(totalPlants)")
             
             // Count plants by category
             var categoryCount: [Category: Int] = [:]
             plants.forEach { plant in
                 categoryCount[plant.plant.category, default: 0] += 1
+                print("Added \(plant.plant.plantName) to category \(plant.plant.category)")
             }
             
             userStats = [
@@ -98,11 +125,15 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 "Flowering": categoryCount[.Flowering] ?? 0,
                 "Medicinal": categoryCount[.medicinal] ?? 0
             ]
-            print("User stats: \(userStats)")
             
-            // Group plants by name
+            // Group plants by name with debug info
             let groupedPlants = Dictionary(grouping: plants) { tuple in
                 tuple.plant.plantName
+            }
+            
+            print("\nGrouped plants by name:")
+            groupedPlants.forEach { (name, plants) in
+                print("- \(name): \(plants.count) plant(s)")
             }
             
             // Create categories and categorized plants
@@ -111,21 +142,28 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 groupedPlants[plantName]?.map { $0.userPlant } ?? []
             }
             
-            print("Plant categories: \(plantCategories)")
-            print("Categorized plants count: \(categorizedPlants.count)")
-            
-            // Check if we have any data
-            if plants.isEmpty {
-                print("WARNING: No plants found!")
-                // You might want to show a message in the UI here
+            print("\nFinal organization:")
+            print("Categories (\(plantCategories.count)): \(plantCategories)")
+            for (index, category) in plantCategories.enumerated() {
+                print("- \(category): \(categorizedPlants[index].count) plant(s)")
             }
             
-            mySpaceCollectionView.reloadData()
+            // Update UI on main thread
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.mySpaceCollectionView.reloadData()
+                print("\nCollection view updated with:")
+                print("- Number of sections: \(self.numberOfSections(in: self.mySpaceCollectionView))")
+                for section in 0..<self.numberOfSections(in: self.mySpaceCollectionView) {
+                    let items = self.collectionView(self.mySpaceCollectionView, numberOfItemsInSection: section)
+                    print("- Section \(section): \(items) items")
+                }
+            }
         } else {
             print("ERROR: No users found in DataController")
         }
         
-        print("=== MySpaceViewController loadData completed ===")
+        print("=== MySpaceViewController loadData completed ===\n")
     }
     
     // Update the search results
@@ -166,19 +204,23 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     }
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        let sections = (isSearching ? filteredPlantCategories : plantCategories).count + 1
-        print("Number of sections: \(sections)")
-        return sections
+        let plantSections = (isSearching ? filteredPlantCategories : plantCategories).count
+        let totalSections = plantSections + 1 // +1 for stats section
+        print("Number of sections: \(totalSections) (1 stats + \(plantSections) plant categories)")
+        return totalSections
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if section == statsSectionIndex {
-            print("Stats section: 1 item")
+            print("Stats section (0): 1 item")
             return 1
         }
+        
         let plants = isSearching ? filteredCategorizedPlants : categorizedPlants
-        let count = plants[section - 1].count
-        print("Section \(section) has \(count) items")
+        let categoryIndex = section - 1
+        let count = plants[categoryIndex].count
+        let categoryName = plantCategories[categoryIndex]
+        print("Plant section \(section) (\(categoryName)): \(count) items")
         return count
     }
     
@@ -191,7 +233,17 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         
         let plants = isSearching ? filteredCategorizedPlants : categorizedPlants
         let userPlant = plants[indexPath.section - 1][indexPath.item]
-        let plant = dataController.getPlant(by: userPlant.userplantID)!
+        
+        // Get plant data either from newly added plant or from data controller
+        let plant: Plant
+        if let newPlant = newlyAddedPlant, newPlant.userPlant.userPlantRelationID == userPlant.userPlantRelationID {
+            plant = newPlant.plant
+        } else {
+            guard let existingPlant = dataController.getPlant(by: userPlant.userplantID) else {
+                fatalError("Plant not found")
+            }
+            plant = existingPlant
+        }
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewSection1Cell
         cell.configure(with: userPlant, plant: plant)
@@ -317,7 +369,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             mySpaceCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         
-        // Enable swipe to delete
+        // Setup layout
         let layout = UICollectionViewCompositionalLayout { [weak self] (sectionIndex, environment) -> NSCollectionLayoutSection? in
             guard let self = self else { return nil }
             
@@ -329,10 +381,12 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         }
         mySpaceCollectionView.collectionViewLayout = layout
         
-        // Register cells
-        let nib1 = UINib(nibName: "MySpaceCollectionViewSection1Cell", bundle: nil)
-        mySpaceCollectionView.register(nib1, forCellWithReuseIdentifier: "first")
+        // Register cells - Use nib for MySpaceCollectionViewSection1Cell
         mySpaceCollectionView.register(MySpaceStatsCell.self, forCellWithReuseIdentifier: "StatsCell")
+        mySpaceCollectionView.register(
+            UINib(nibName: "MySpaceCollectionViewSection1Cell", bundle: nil),
+            forCellWithReuseIdentifier: "first"
+        )
         
         // Register header
         mySpaceCollectionView.register(
@@ -341,13 +395,13 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             withReuseIdentifier: "MySpaceHeaderCollectionReusableView"
         )
         
-        mySpaceCollectionView.dataSource = self
         mySpaceCollectionView.delegate = self
+        mySpaceCollectionView.dataSource = self
         
         // Ensure the collection view is not hidden
         mySpaceCollectionView.isHidden = false
         
-        print("Collection view setup complete")
+        print("Collection view setup completed")
     }
     
     private func showDeleteConfirmation(for userPlant: UserPlant, at indexPath: IndexPath) {
@@ -437,6 +491,30 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         
         // Present the action sheet
         present(alertController, animated: true)
+    }
+    
+    @objc private func handleNewPlantAdded(_ notification: Notification) {
+        guard let userPlant = notification.userInfo?["userPlant"] as? UserPlant,
+              let plant = notification.userInfo?["plant"] as? Plant else {
+            return
+        }
+        
+        // Add to newlyAddedPlants if not already there
+        if !MySpaceViewController.newlyAddedPlants.contains(where: { $0.userplantID == userPlant.userplantID }) {
+            MySpaceViewController.newlyAddedPlants.append(userPlant)
+        }
+        
+        // Store for UI updates
+        newlyAddedPlant = (userPlant: userPlant, plant: plant)
+        
+        // Update UI
+        loadData()
+        mySpaceCollectionView.reloadData()
+    }
+    
+    // Don't forget to remove observer in deinit
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 

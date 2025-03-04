@@ -10,16 +10,35 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-
+    
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
         
-        // Always show onboarding by setting the root view controller to OnboardingViewController
-        window?.rootViewController = OnboardingViewController()
+        // Always start with onboarding
+        let onboardingVC = OnboardingViewController()
+        window?.rootViewController = onboardingVC
         window?.makeKeyAndVisible()
     }
-
+    
+    func showMainInterface() {
+        let mainStoryboard = UIStoryboard(name: "exploreTab", bundle: nil)
+        if let tabBarController = mainStoryboard.instantiateInitialViewController() {
+            window?.rootViewController = tabBarController
+            window?.makeKeyAndVisible()
+        }
+    }
+    
+    // Add this method to transition from onboarding to login
+    func showLoginAfterOnboarding() {
+        let loginVC = LoginViewController()
+        let navigationController = UINavigationController(rootViewController: loginVC)
+        window?.rootViewController = navigationController
+        
+        // Set flag that onboarding is complete
+        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+    }
+    
     func sceneDidDisconnect(_ scene: UIScene, willBeRemoved: Bool) {
         // Called when the scene is being removed from an active state.
         // This may occur when the scene is being closed or when the scene is being moved from an active state to an inactive state.

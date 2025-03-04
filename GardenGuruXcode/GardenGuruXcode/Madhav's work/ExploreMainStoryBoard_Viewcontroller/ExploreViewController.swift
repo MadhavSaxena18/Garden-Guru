@@ -8,6 +8,7 @@
 import UIKit
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
+    private let dataController = DataControllerGG.shared
     let PlantCarAI = UIImageView()
     
     var identifier = 0
@@ -93,24 +94,24 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         // Example logic - customize based on your needs
         if temperature < 10 {
-            recommendedPlants = DataControllerGG().getTopSeasonPlants().filter { plant in
+            recommendedPlants = dataController.getTopSeasonPlants().filter { plant in
                 plant.idealTemperature.contains(where: { $0 < 15 })
             }
         } else if temperature > 25 {
-            recommendedPlants = DataControllerGG().getTopSeasonPlants().filter { plant in
+            recommendedPlants = dataController.getTopSeasonPlants().filter { plant in
                 plant.idealTemperature.contains(where: { $0 > 20 })
             }
         }
         
         if condition.contains("rain") {
-            recommendedPlants.append(contentsOf: DataControllerGG().getTopSeasonPlants().filter { plant in
+            recommendedPlants.append(contentsOf: dataController.getTopSeasonPlants().filter { plant in
                 plant.lightRequirement == "High"
             })
         }
         
         // Make sure we have some default plants if none match the weather conditions
         if recommendedPlants.isEmpty {
-            recommendedPlants = DataControllerGG().getTopSeasonPlants()
+            recommendedPlants = dataController.getTopSeasonPlants()
         }
         
         // Take only first 5 plants
@@ -120,7 +121,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         if selectedSegment == 0 { // Only update if we're in the Discover tab
             discoverCategories = [
                 ("Current Season Plants", recommendedPlants),
-                ("Common Issues", Array(DataControllerGG().getCommonIssues().prefix(5)))
+                ("Common Issues", Array(dataController.getCommonIssues().prefix(5)))
             ]
             
             // Update filtered categories if search is active
@@ -212,8 +213,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         switch segmentControlOnExplore.selectedSegmentIndex {
         case 0: // "Discover"
             identifier = 0
-            let allSeasonPlants = DataControllerGG().getTopSeasonPlants()
-            let allCommonIssues = DataControllerGG().getCommonIssues()
+            let allSeasonPlants = dataController.getTopSeasonPlants()
+            let allCommonIssues = dataController.getCommonIssues()
             
             discoverCategories = [
                 ("Current Season Plants", Array(allSeasonPlants.prefix(5))), // Take only first 5 plants
@@ -225,8 +226,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
         case 1: // "For My Plants"
             identifier = 1
-            let allIssues = DataControllerGG().getCommonIssuesForUserPlants()
-            let allFertilizers = DataControllerGG().getCommonFertilizers()
+            let allIssues = dataController.getCommonIssuesForUserPlants()
+            let allFertilizers = dataController.getCommonFertilizers()
             
             forMyPlantCategories = [
                 ("Common Issues in your Plant", Array(allIssues.prefix(5))),
@@ -634,7 +635,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 present(navVC, animated: true)
             }
         } else if let fertilizer = selectedItem as? Fertilizer,
-                  selectedCategory.title == "Common Fertilizers for Parlor Palm" {
+                  selectedCategory.title == "Common Fertilizers" {
             // Handle fertilizer selection
             let detailVC = FertilizerDetailViewController()
             detailVC.fertilizer = fertilizer
@@ -654,6 +655,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
+    
 
     
     @objc func imageTapped() {
