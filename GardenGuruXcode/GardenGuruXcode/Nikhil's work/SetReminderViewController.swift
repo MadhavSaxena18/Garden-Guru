@@ -16,7 +16,6 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     // Labels
     private let plantNameLabel: UILabel = {
         let label = UILabel()
-        label.text = DiagnosisViewController.plantNameLabel.text
         label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -40,8 +39,6 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(self, action: #selector(setReminderButtonTapped), for: .touchUpInside)
-        
         return button
     }()
     
@@ -61,29 +58,21 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         view.backgroundColor = UIColor(hex: "#EBF4EB") // Background for overall view
         setupNavigationBar()
         setupViews()
-           if navigationController == nil {
-               print("Navigation controller is not embedded!")
-           }
+        
+        // Add this line to ensure the button action is connected
+        setReminderButton.addTarget(self, action: #selector(setReminderButtonTapped), for: .touchUpInside)
+        
+        if navigationController == nil {
+            print("Navigation controller is not embedded!")
+        }
     }
     
     // Navigation Bar Setup
-//    private func setupNavigationBar() {
-//        title = "Set Reminder"
-//
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(
-//            title: "Cancel",
-//            style: .plain,
-//            target: self,
-//            action: #selector(didTapCancel)
-//        )
-//    }
     private func setupNavigationBar() {
         // Set the title
         title = "Set Reminder"
         
-                
         // Configure the navigation bar appearance
-        //navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barTintColor = UIColor.systemGreen
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
@@ -96,14 +85,6 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             action: #selector(didTapCancel)
         )
         navigationItem.rightBarButtonItem = cancelButton
-        
-        // Optionally, you can customize the back button if you want to show a custom icon or text
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "Back",
-            style: .plain,
-            target: self,
-            action: #selector(didTapCancel)
-        )
     }
     
     // Setup Views
@@ -151,158 +132,140 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         dismiss(animated: true, completion: nil)
     }
 
-   
-//    @objc func setReminderButtonTapped() {
-//        print("Hello")
-////        guard let firstUser = dataController.getUsers().first,
-// //             let plantName = plantNameLabel.text,
-////              let plant = dataController.getPlantbyName(by: plantName),
-////              let nickname = locationLabel.text else {
-////            return
-////        }
-//        
-//        guard let firstUser = dataController.getUsers().first else {
-//            print("Error: No users found.")
-//            return
-//        }
-//
-//        guard let plantName = DiagnosisViewController.plantNameLabel.text else {
-//            print("Error: Plant name is empty.")
-//            return
-//        }
-//       
-//        print("Debug: Retrieved plant name - '\(plantName)'")
-//        
-//
-//
-//        guard let plant = dataController.getPlantbyName(by: plantName) else {
-//            print("Error: No plant found with name \(plantName).")
-//            return
-//        }
-//
-//        guard let nickname = locationLabel.text, !nickname.isEmpty else {
-//            print("Error: Nickname is empty.")
-//            return
-//        }
-//
-//        // Now you have ⁠ firstUser ⁠, ⁠ plantName ⁠, ⁠ plant ⁠, and ⁠ nickname ⁠ safely unwrapped
-//
-//        print("inside setreminder")
-//        let newUserPlant = UserPlant(
-//            userId: firstUser.userId,
-//            userplantID: plant.plantID,
-//            userPlantNickName: nickname,
-//            lastWatered: Date(),
-//            lastFertilized: Date(),
-//            lastRepotted: Date(),
-//            isWateringCompleted: false,
-//            isFertilizingCompleted: false,
-//            isRepottingCompleted: false
-//        )
-//        
-//        // Add the plant to user's space
-//        dataController.addUserPlant(newUserPlant)
-//        
-////        print(dataController.userPlant.count)
-//        
-//        let alert = UIAlertController(
-//            title: "Success!",
-//            message: "\(plantName) added successfully",
-//            preferredStyle: .alert
-//        )
-//        
-//        let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-//            self?.dismiss(animated: true) {
-//                if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
-//                    tabBarController.selectedIndex = 0 // Switch to MySpace tab
-//                }
-//            }
-//        }
-//        
-//        alert.addAction(okAction)
-//        present(alert, animated: true)
-//    }
     @objc func setReminderButtonTapped() {
-            guard let plantName = plantNameLabel.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  let nickname = locationLabel.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !plantName.isEmpty,
-                  !nickname.isEmpty else {
-                print("❌ Invalid plant name or nickname")
-                return
+        print("\n=== Set Reminder Button Tapped ===")
+        print("Current plant name: '\(plantNameLabel.text ?? "nil")'")
+        print("Current nickname: '\(locationLabel.text ?? "nil")'")
+        
+        // Add this to test if the button is actually responding
+        print("Button tapped!")
+        
+        guard let plantName = plantNameLabel.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let nickname = locationLabel.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !plantName.isEmpty,
+              !nickname.isEmpty else {
+            print("❌ Invalid plant name or nickname")
+            print("Plant name: '\(plantNameLabel.text ?? "nil")'")
+            print("Nickname: '\(locationLabel.text ?? "nil")'")
+            return
+        }
+        
+        print("\n=== Adding New Plant ===")
+        print("Looking for plant: '\(plantName)'")
+        
+        guard let existingPlant = dataController.getPlantbyName(by: plantName) else {
+            print("❌ Plant not found in database")
+            print("Available plants:")
+            dataController.getPlants().forEach { plant in
+                print("- \(plant.plantName)")
             }
             
-            print("\n=== Adding New Plant ===")
-            print("Looking for plant: '\(plantName)'")
-            
-            // Get all available plants and find the matching one
-            guard let existingPlant = dataController.getPlantbyName(by: plantName) else {
-                print("❌ Plant not found in database")
-                return
-            }
-            
-            print("✅ Found existing plant:")
-            print("- Name: \(existingPlant.plantName)")
-            print("- ID: \(existingPlant.plantID)")
-            
-            // Create new UserPlant
-            let newUserPlant = UserPlant(
-                userId: dataController.getUsers().first?.userId ?? UUID(),
-                userplantID: existingPlant.plantID,
-                userPlantNickName: nickname,
-                lastWatered: Date(),
-                lastFertilized: Date(),
-                lastRepotted: Date(),
-                isWateringCompleted: false,
-                isFertilizingCompleted: false,
-                isRepottingCompleted: false
-            )
-            
-            print("\nCreated UserPlant with existing plant ID:")
-            print("- Plant ID: \(newUserPlant.userplantID)")
-            print("- Nickname: \(newUserPlant.userPlantNickName)")
-            
-            // Add to DataController only
-            dataController.addUserPlant(newUserPlant)
-            
-            // Create reminder
-            let newReminder = CareReminder_(
-                upcomingReminderForWater: Date(),
-                upcomingReminderForFertilizers: Calendar.current.date(byAdding: .day, value: 7, to: Date())!,
-                upcomingReminderForRepotted: Calendar.current.date(byAdding: .month, value: 1, to: Date())!,
-                isWateringCompleted: false,
-                isFertilizingCompleted: false,
-                isRepottingCompleted: false
-            )
-            
-            // Post notification with the plant data
-            NotificationCenter.default.post(
-                name: NSNotification.Name("NewPlantAdded"),
-                object: nil,
-                userInfo: [
-                    "userPlant": newUserPlant,
-                    "plant": existingPlant,
-                    "reminder": newReminder
-                ]
-            )
-            
-            // Show success alert
+            // Show error alert to user
             let alert = UIAlertController(
-                title: "Success!",
-                message: "Plant '\(existingPlant.plantName)' added with nickname '\(nickname)'",
+                title: "Error",
+                message: "Could not find plant '\(plantName)' in database",
                 preferredStyle: .alert
             )
-            
-            let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-                self?.dismiss(animated: true) {
-                    if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
-                        tabBarController.selectedIndex = 0 // Switch to MySpace tab
-                    }
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        print("✅ Found existing plant:")
+        print("- Name: \(existingPlant.plantName)")
+        print("- ID: \(existingPlant.plantID)")
+        
+        // Create new UserPlant
+        let newUserPlant = UserPlant(
+            userId: dataController.getUsers().first?.userId ?? UUID(),
+            userplantID: existingPlant.plantID,
+            userPlantNickName: nickname,
+            lastWatered: Date(),
+            lastFertilized: Date(),
+            lastRepotted: Date(),
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        
+        // Get switch states and create reminder
+        var isWateringEnabled = false
+        var isFertilizingEnabled = false
+        var isRepottingEnabled = false
+        
+        for index in 0..<reminders.count {
+            let indexPath = IndexPath(row: index, section: 0)
+            if let cell = tableView.cellForRow(at: indexPath) as? ReminderCell {
+                switch index {
+                case 0: // Watering
+                    isWateringEnabled = cell.isReminderEnabled
+                case 1: // Fertilizing
+                    isFertilizingEnabled = cell.isReminderEnabled
+                case 2: // Repotting
+                    isRepottingEnabled = cell.isReminderEnabled
+                default:
+                    break
                 }
             }
-            
-            alert.addAction(okAction)
-            present(alert, animated: true)
         }
+        
+        // Calculate reminder dates based on enabled switches
+        let nextWaterDate = isWateringEnabled ? 
+            Calendar.current.date(byAdding: .day, value: existingPlant.waterFrequency, to: Date()) : nil
+        let nextFertilizerDate = isFertilizingEnabled ? 
+            Calendar.current.date(byAdding: .day, value: existingPlant.fertilizerFrequency, to: Date()) : nil
+        let nextRepottingDate = isRepottingEnabled ? 
+            Calendar.current.date(byAdding: .day, value: existingPlant.repottingFrequency, to: Date()) : nil
+        
+        // Create reminder with only enabled reminders
+        let reminder = CareReminder_(
+            upcomingReminderForWater: nextWaterDate ?? Date.distantFuture,
+            upcomingReminderForFertilizers: nextFertilizerDate ?? Date.distantFuture,
+            upcomingReminderForRepotted: nextRepottingDate ?? Date.distantFuture,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        
+        // Add to DataController with the reminder
+        dataController.addUserPlant(newUserPlant, with: reminder)
+        print("✅ Added plant to DataController")
+        
+        // Post notification with reminder settings
+        NotificationCenter.default.post(
+            name: NSNotification.Name("NewPlantAdded"),
+            object: nil,
+            userInfo: [
+                "userPlant": newUserPlant,
+                "plant": existingPlant,
+                "reminder": reminder,
+                "enabledReminders": [
+                    "watering": isWateringEnabled,
+                    "fertilizing": isFertilizingEnabled,
+                    "repotting": isRepottingEnabled
+                ]
+            ]
+        )
+        
+        // Show success alert and dismiss
+        let alert = UIAlertController(
+            title: "Success!",
+            message: "Plant '\(existingPlant.plantName)' added with nickname '\(nickname)'",
+            preferredStyle: .alert
+        )
+        
+        let okAction = UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            self?.dismiss(animated: true) {
+                if let tabBarController = self?.view.window?.rootViewController as? UITabBarController {
+                    tabBarController.selectedIndex = 0 // Switch to MySpace tab
+                }
+            }
+        }
+        
+        alert.addAction(okAction)
+        present(alert, animated: true)
+    }
+    
     // MARK: - UITableViewDataSource
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
@@ -327,8 +290,20 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         tableView.deselectRow(at: indexPath, animated: true)
     }
 
-    func configure(plantName: String, nickname: String) {
-        plantNameLabel.text = plantName  // Plant name in bold (already styled in the label setup)
-        locationLabel.text = nickname    // Nickname below in gray (already styled in the label setup)
+    // Add public method to set plant name
+    func configure(plantName: String?, nickname: String?) {
+        print("\n=== Configuring SetReminderViewController ===")
+        if let plantName = plantName {
+            self.plantNameLabel.text = plantName
+            print("Setting plant name to: '\(plantName)'")
+        } else {
+            print("❌ No plant name provided to SetReminderViewController")
+        }
+        if let nickname = nickname {
+            self.locationLabel.text = nickname
+            print("Setting nickname to: '\(nickname)'")
+        } else {
+            print("❌ No nickname provided to SetReminderViewController")
+        }
     }
 }

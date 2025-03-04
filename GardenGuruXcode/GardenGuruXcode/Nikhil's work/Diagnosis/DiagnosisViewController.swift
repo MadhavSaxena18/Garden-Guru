@@ -92,6 +92,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
         // Plant Name Label
         DiagnosisViewController.plantNameLabel.text = selectedPlant?.plantName
+        print("Setting diagnosis plant name to: \(selectedPlant?.plantName ?? "nil")")
         DiagnosisViewController.plantNameLabel.textColor = .white
         DiagnosisViewController.plantNameLabel.font = UIFont.boldSystemFont(ofSize: 16)
         overlayView.addSubview(DiagnosisViewController.plantNameLabel)
@@ -396,13 +397,22 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
     
     @objc func startCaringTapped() {
+        guard let plantName = selectedPlant?.plantName else {
+            print("❌ No plant name available")
+            return
+        }
+        
+        print("\n=== Starting Add Plant Flow ===")
+        print("Plant name from DiagnosisViewController: \(plantName)")
+        print("Selected plant details: \(String(describing: selectedPlant))")
+        
         let reminderVC = addNickNameViewController()
         
-//        if let plantName = selectedPlant?.plantName {
-//            let nickname = "My \(plantName)"
-//            reminderVC.configure(plantName: plantName, nickname: nickname)
-//        }
+        // Pass both the plant name and the selected plant
+        reminderVC.plantNameForReminder = plantName
+        reminderVC.selectedPlant = dataController.getPlantbyName(by: plantName)
         
+        // Create navigation controller to present it
         let navController = UINavigationController(rootViewController: reminderVC)
         present(navController, animated: true)
     }

@@ -82,9 +82,8 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         let users = dataController.getUsers()
         
         if let firstUser = users.first {
-            // Get plants from both sources
-            let dataControllerPlants = dataController.getUserPlants(for: firstUser.userId)
-            let allUserPlants = dataControllerPlants + MySpaceViewController.newlyAddedPlants
+            // Get plants only from DataController
+            let allUserPlants = dataController.getUserPlants(for: firstUser.userId)
             
             print("\nAll plant IDs:")
             allUserPlants.forEach { plant in
@@ -499,10 +498,20 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             return
         }
         
-        // Add to newlyAddedPlants if not already there
-        if !MySpaceViewController.newlyAddedPlants.contains(where: { $0.userplantID == userPlant.userplantID }) {
-            MySpaceViewController.newlyAddedPlants.append(userPlant)
+        print("🔍 DEBUG: Handling new plant notification")
+        print("Plant name: \(plant.plantName)")
+        print("Plant ID: \(plant.plantID)")
+        print("UserPlant ID: \(userPlant.userplantID)")
+        
+        // Check if this plant is already in newlyAddedPlants
+        if MySpaceViewController.newlyAddedPlants.contains(where: { $0.userplantID == userPlant.userplantID }) {
+            print("⚠️ Plant already exists in newlyAddedPlants - skipping addition")
+            return
         }
+        
+        // Add to newlyAddedPlants
+        MySpaceViewController.newlyAddedPlants.append(userPlant)
+        print("✅ Added plant to newlyAddedPlants")
         
         // Store for UI updates
         newlyAddedPlant = (userPlant: userPlant, plant: plant)

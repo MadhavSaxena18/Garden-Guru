@@ -123,28 +123,31 @@ class CareReminderViewController: UIViewController {
         upcomingReminders = [[],[],[]]
         
         for reminder in reminders {
-            // Watering reminders
-            if calendar.isDateInToday(reminder.reminder.upcomingReminderForWater) {
-                todayReminders[0].append(reminder)
-            } else if reminder.reminder.upcomingReminderForWater > currentDate && 
-                      !calendar.isDateInToday(reminder.reminder.upcomingReminderForWater) {
-                upcomingReminders[0].append(reminder)
+            // Only add watering reminders if not disabled (not set to distantFuture)
+            if reminder.reminder.upcomingReminderForWater != Date.distantFuture {
+                if calendar.isDateInToday(reminder.reminder.upcomingReminderForWater) {
+                    todayReminders[0].append(reminder)
+                } else if reminder.reminder.upcomingReminderForWater > currentDate {
+                    upcomingReminders[0].append(reminder)
+                }
             }
             
-            // Fertilizing reminders
-            if calendar.isDateInToday(reminder.reminder.upcomingReminderForFertilizers) {
-                todayReminders[1].append(reminder)
-            } else if reminder.reminder.upcomingReminderForFertilizers > currentDate && 
-                      !calendar.isDateInToday(reminder.reminder.upcomingReminderForFertilizers) {
-                upcomingReminders[1].append(reminder)
+            // Only add fertilizing reminders if not disabled
+            if reminder.reminder.upcomingReminderForFertilizers != Date.distantFuture {
+                if calendar.isDateInToday(reminder.reminder.upcomingReminderForFertilizers) {
+                    todayReminders[1].append(reminder)
+                } else if reminder.reminder.upcomingReminderForFertilizers > currentDate {
+                    upcomingReminders[1].append(reminder)
+                }
             }
             
-            // Pruning reminders
-            if calendar.isDateInToday(reminder.reminder.upcomingReminderForRepotted) {
-                todayReminders[2].append(reminder)
-            } else if reminder.reminder.upcomingReminderForRepotted > currentDate && 
-                      !calendar.isDateInToday(reminder.reminder.upcomingReminderForRepotted) {
-                upcomingReminders[2].append(reminder)
+            // Only add repotting reminders if not disabled
+            if reminder.reminder.upcomingReminderForRepotted != Date.distantFuture {
+                if calendar.isDateInToday(reminder.reminder.upcomingReminderForRepotted) {
+                    todayReminders[2].append(reminder)
+                } else if reminder.reminder.upcomingReminderForRepotted > currentDate {
+                    upcomingReminders[2].append(reminder)
+                }
             }
         }
         
