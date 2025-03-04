@@ -579,7 +579,7 @@ class DataControllerGG {
         )
 
         let blackScorch: Diseases = Diseases(
-            diseaseName: "4.⁠ ⁠Black Scorch",
+            diseaseName: "4. Black Scorch",
             diseaseID: UUID(),
             diseaseSymptoms: ["Black necrotic patches on leaves", "Stem cracking", "Dieback of plant parts"],
             diseaseImage: ["black_scorch1.jpg", "black_scorch2.jpg"],
@@ -610,6 +610,36 @@ class DataControllerGG {
 
         let leafSpots: Diseases = Diseases(
             diseaseName: "5.⁠ ⁠Leaf Spots",
+            diseaseID: UUID(),
+            diseaseSymptoms: ["Circular brown spots on leaves", "Yellow halos around spots", "Premature leaf drop"],
+            diseaseImage: ["leaf_spots1.jpg", "leaf_spots2.jpg"],
+            diseaseCure: ["Apply neem oil spray", "Use copper-based fungicides", "Remove affected leaves"],
+            diseaseFertilizers: ["Compost tea", "Nitrogen-rich fertilizers"],
+            cureDuration: 14,
+            diseaseDetail: [
+                "Cure and Treatment": [
+                    "Spray neem oil or copper fungicide.",
+                    "Remove and dispose of infected leaves.",
+                    "Avoid excessive watering to prevent fungal spread."
+                ],
+                "Preventive Measures": [
+                    "Ensure good air circulation around plants.",
+                    "Water plants at the base rather than overhead.",
+                    "Maintain healthy soil with organic matter."
+                ],
+                "Symptoms": [
+                    "Spots on leaves with yellow margins.",
+                    "Leaves may turn brown and fall off prematurely.",
+                    "Stunted plant growth in severe cases."
+                ],
+                "Vitamins Required": ["None (fungal disease)."],
+                "Related Images": ["Leaf Spots affected leaf 1", "Leaf Spots affected leaf 2"],
+                "Video Solution": ["https://youtu.be/example11", "https://youtu.be/example12"]
+            ], diseaseSeason: .summer
+        )
+        
+        let leafsSpots: Diseases = Diseases(
+            diseaseName: "Leaf spot",
             diseaseID: UUID(),
             diseaseSymptoms: ["Circular brown spots on leaves", "Yellow halos around spots", "Premature leaf drop"],
             diseaseImage: ["leaf_spots1.jpg", "leaf_spots2.jpg"],
@@ -701,7 +731,7 @@ class DataControllerGG {
 
 
         
-        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight /*leafSpot*/ , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpots , fusariumWilt , parlatoriaBlanchard])
+        diseases.append(contentsOf: [mosaicVirus, rootRot ,anthracnose ,grayMold ,dampingOff ,rust ,blight /*leafSpot*/, leafsSpots , powderyMildew , potassiumDeficiency , manganeseDeficiency , magnesiumDeficiency , blackScorch , leafSpots , fusariumWilt , parlatoriaBlanchard])
         
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rootRot.diseaseID))
         plantDiseases.append(PlantDisease(plantDiseaseID: UUID(), plantID: parlorPalm.plantID, diseaseID: rust.diseaseID))
