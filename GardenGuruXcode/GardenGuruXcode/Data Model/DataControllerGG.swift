@@ -1135,6 +1135,10 @@ class DataControllerGG {
     func getUsers() -> [userInfo] {
         return user
     }
+    func getUser() -> userInfo? {
+            // Return the first user (you might want to modify this to return a specific user)
+            return user.first
+        }
     
     
     func getUserPlants(for userId: UUID) -> [UserPlant] {

@@ -13,8 +13,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
        func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-           // Artificially increase splash screen time
-           Thread.sleep(forTimeInterval: 2.0) // Adjust the time as needed
+           // Remove the sleep delay if you have it
+           // Thread.sleep(forTimeInterval: 2.0)
            return true
        }
 
@@ -34,4 +34,3 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
 }
-

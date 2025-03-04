@@ -84,8 +84,8 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         
         // Show nickname dialog using existing addNickNameViewController
         let nicknameVC = addNickNameViewController()
-        nicknameVC.modalPresentationStyle = .overCurrentContext
-        nicknameVC.modalTransitionStyle = .crossDissolve
+//        nicknameVC.modalPresentationStyle = .overCurrentContext
+//        nicknameVC.modalTransitionStyle = .crossDissolve
         
         // Add target for the add button
         nicknameVC.addButton.addTarget(self, action: #selector(handleNickname(_:)), for: .touchUpInside)
@@ -117,17 +117,6 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         
         dataController.addUserPlant(newUserPlant)
         print("Added new user plant with nickname: \(nickname)")
-        
-        // Dismiss nickname view controller first
-        nicknameVC.dismiss(animated: true) { [weak self] in
-            guard let self = self else { return }
-            
-            // Create and present SetReminderViewController modally
-            let setReminderVC = SetReminderViewController()
-            setReminderVC.configure(plantName: plant.plantName, nickname: nickname)
-            setReminderVC.modalPresentationStyle = .fullScreen
-            self.present(setReminderVC, animated: true)
-        }
     }
     
     @IBAction func unwindToAddPlantViewController(segue: UIStoryboardSegue) {

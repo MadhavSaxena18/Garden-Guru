@@ -23,7 +23,6 @@ class ConfigManager {
         }
         
         guard let apiKey = dict["API_KEY"] as? String else {
-            print("hhhhhello")
             throw ConfigError.missingKey
         }
         

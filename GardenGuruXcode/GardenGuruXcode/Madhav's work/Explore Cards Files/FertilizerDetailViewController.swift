@@ -122,6 +122,7 @@ class FertilizerDetailViewController: UIViewController {
         setupNavigationBar()
         setupUI()
         configureFertilizerData()
+        view.backgroundColor = UIColor(hex: "#EBF4EB")
     }
     
     private func setupNavigationBar() {
@@ -224,10 +225,13 @@ class FertilizerDetailViewController: UIViewController {
     private func configureFertilizerData() {
         guard let fertilizer = fertilizer else { return }
         
-        if let url = URL(string: fertilizer.fertilizerImage) {
-            // Load image from URL (you might want to use an image loading library)
-            // For now, we'll use a placeholder
+        // Configure image
+        if let image = UIImage(named: fertilizer.fertilizerImage) {
+            headerImageView.image = image
+        } else {
+            // Fallback to a placeholder if image not found
             headerImageView.backgroundColor = .systemGray5
+            print("Could not load image: \(fertilizer.fertilizerImage)")
         }
         
         titleLabel.text = fertilizer.fertilizerName

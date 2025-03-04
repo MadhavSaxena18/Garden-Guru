@@ -315,6 +315,10 @@
 import UIKit
 
 
+
+// Add this at the top of the file, before the DiagnosisViewController class
+
+
 struct DiagnosisDataModel {
     var plantName: String
     var diagnosis: String
@@ -451,6 +455,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 selectedPlant?.sectionDetails = diseaseDetails
                 tableView.reloadData()
             }
+
 
             print("Diseases update")
             // Update disease details
