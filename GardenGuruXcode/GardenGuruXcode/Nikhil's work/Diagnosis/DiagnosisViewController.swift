@@ -408,13 +408,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         // Plant Name Label
         DiagnosisViewController.plantNameLabel.text = selectedPlant?.plantName
         DiagnosisViewController.plantNameLabel.textColor = .white
-        DiagnosisViewController.plantNameLabel.font = UIFont.boldSystemFont(ofSize: 24)
+        DiagnosisViewController.plantNameLabel.font = UIFont.boldSystemFont(ofSize: 16)
         overlayView.addSubview(DiagnosisViewController.plantNameLabel)
 
         // Diagnosis Label
         DiagnosisViewController.diagnosisLabel.text = selectedPlant?.diagnosis
         DiagnosisViewController.diagnosisLabel.textColor = .white
-        DiagnosisViewController.diagnosisLabel.font = UIFont.systemFont(ofSize: 16)
+        DiagnosisViewController.diagnosisLabel.font = UIFont.systemFont(ofSize: 24)
         overlayView.addSubview(DiagnosisViewController.diagnosisLabel)
 
         // Details StackView
@@ -543,11 +543,11 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
             // Plant Name Label
             DiagnosisViewController.plantNameLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-            DiagnosisViewController.plantNameLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
+            DiagnosisViewController.plantNameLabel.topAnchor.constraint(equalTo: DiagnosisViewController.diagnosisLabel.bottomAnchor, constant: 0),
 
             // Diagnosis Label
             DiagnosisViewController.diagnosisLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-            DiagnosisViewController.diagnosisLabel.topAnchor.constraint(equalTo: DiagnosisViewController.plantNameLabel.bottomAnchor, constant: 0),
+            DiagnosisViewController.diagnosisLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
 
             // Details StackView
             DiagnosisViewController.detailsStackView.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 16),
@@ -581,6 +581,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         let noAction = UIAlertAction(title: "No", style: .cancel) { [weak self] _ in
             self?.tabBarController?.tabBar.isHidden = false
+            
             self?.tabBarController?.selectedIndex = 0
             self?.navigationController?.popToRootViewController(animated: false)
         }
