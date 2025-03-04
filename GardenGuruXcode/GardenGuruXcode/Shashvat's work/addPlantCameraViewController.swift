@@ -20,7 +20,7 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     private var captureSession: AVCaptureSession?
     private var videoPreviewLayer: AVCaptureVideoPreviewLayer?
     private var photoOutput: AVCapturePhotoOutput?
-    private let dataController = DataControllerGG()
+    private let dataController = DataControllerGG.shared
     
     // ML model properties
     private var yoloModel: VNCoreMLModel?

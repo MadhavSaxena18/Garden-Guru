@@ -31,7 +31,7 @@ class SectionWiseDetailViewController: UIViewController {
     // MARK: - Dependencies
     var filteredItems: [Any]?
     // MARK: - Dependencies
-    private let dataController = DataControllerGG()  // Changed to initialize without shared
+    private let dataController = DataControllerGG.shared // Changed to initialize without shared
     
     // MARK: - Lifecycle Methods
     override func viewDidLoad() {
