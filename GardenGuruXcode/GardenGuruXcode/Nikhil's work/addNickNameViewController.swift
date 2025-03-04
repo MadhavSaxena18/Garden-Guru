@@ -27,7 +27,7 @@ class addNickNameViewController: UIViewController {
     
     func setupView() {
         view.backgroundColor = UIColor(hex: "#EBF4EB")
-        
+        setupNavigationBar()
         alertView.backgroundColor = UIColor.systemGray5
         alertView.layer.cornerRadius = 16
         alertView.translatesAutoresizingMaskIntoConstraints = false
@@ -39,6 +39,37 @@ class addNickNameViewController: UIViewController {
             alertView.widthAnchor.constraint(equalToConstant: 300),
             alertView.heightAnchor.constraint(equalToConstant: 180)
         ])
+    }
+    private func setupNavigationBar() {
+        // Set the title
+        title = "Set NickName"
+        
+                
+        // Configure the navigation bar appearance
+        //navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barTintColor = UIColor.systemGreen
+        navigationController?.navigationBar.tintColor = .black
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
+        
+        // Add a custom "Cancel" button to the right side
+        let cancelButton = UIBarButtonItem(
+            title: "Cancel",
+            style: .plain,
+            target: self,
+            action: #selector(didTapCancel)
+        )
+        navigationItem.rightBarButtonItem = cancelButton
+        
+        // Optionally, you can customize the back button if you want to show a custom icon or text
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "Back",
+            style: .plain,
+            target: self,
+            action: #selector(didTapCancel)
+        )
+    }
+    @objc private func didTapCancel() {
+        dismiss(animated: true, completion: nil)
     }
     
     func setupAlertBox() {
