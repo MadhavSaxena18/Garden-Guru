@@ -355,7 +355,7 @@ class ChatViewController: UIViewController {
     
     private func setupNavigation() {
             // Set the title
-            self.title = "Read Buddy"
+            self.title = "PlantCarAI"
             
             // Enable large titles
             navigationController?.navigationBar.prefersLargeTitles = true
@@ -434,12 +434,11 @@ class ChatViewController: UIViewController {
         inputTextField.text = ""
         
         let prompt = """
-        Act as an English language teacher. For the following input: "\(text)"
+        Act as a Plant Doctor. For the following input: "\(text)"
         Provide:
         1. Definition
         2. Examples of usage
-        3. Synonyms (if applicable)
-        4. Additional context or tips
+        3. Additional context or tips
         Format the response clearly with headers.
         """
         
@@ -477,14 +476,18 @@ class ChatViewController: UIViewController {
                                                 message: nil,
                                                 preferredStyle: .actionSheet)
         
+//        let actions = [
+//            "What's the meaning of this word?",
+//            "Give me examples of usage",
+//            "What are the synonyms?",
+//            "How do I pronounce this?",
+//            "Explain the grammar"
+//        ]
         let actions = [
             "What's the meaning of this word?",
-            "Give me examples of usage",
-            "What are the synonyms?",
-            "How do I pronounce this?",
-            "Explain the grammar"
+            
         ]
-        
+
         actions.forEach { action in
             alertController.addAction(UIAlertAction(title: action, style: .default) { [weak self] _ in
                 self?.inputTextField.text = action
