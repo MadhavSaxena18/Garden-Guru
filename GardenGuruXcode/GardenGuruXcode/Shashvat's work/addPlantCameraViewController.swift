@@ -26,6 +26,9 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     private var yoloModel: VNCoreMLModel?
     private var plantIdentifyModel: VNCoreMLModel?
     
+    // Add property to store the captured image
+    private var capturedImage: UIImage?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -168,9 +171,13 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         guard let imageData = photo.fileDataRepresentation(),
               let image = UIImage(data: imageData) else {
-            showAlert(message: "Failed to capture image")
+            print("❌ Failed to get image from photo capture")
             return
         }
+        
+        // Store the captured image
+        self.capturedImage = image
+        print("✅ Image captured successfully")
         
         // Process image with ML models
         processImage(image)
@@ -344,6 +351,12 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
               let plant = selectedPlant else {
             print("Failed to get nickname or plant")
             return
+        }
+        
+        // Use the image we captured with camera
+        if let image = capturedImage {
+            print("✅ Adding captured camera image to plant")
+            dataController.updatePlantImages(plantName: plant.plantName, newImage: image)
         }
         
         // Dismiss nickname view controller and show SetReminderViewController

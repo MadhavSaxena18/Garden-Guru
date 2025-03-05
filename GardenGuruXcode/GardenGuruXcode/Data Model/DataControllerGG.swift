@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Supabase
 
 
@@ -1373,5 +1374,17 @@ class DataControllerGG {
             .replacingOccurrences(of: "\u{00A0}", with: " ") // Remove non-breaking spaces
             .replacingOccurrences(of: "\u{200B}", with: "")  // Remove zero-width spaces
             .replacingOccurrences(of: #"[\s]+"#, with: " ", options: .regularExpression) // Normalize multiple spaces
+    }
+    
+    func updatePlantImages(plantName: String, newImage: UIImage) {
+        // Convert image to base64 string
+        if let imageString = newImage.pngData()?.base64EncodedString(),
+           let index = plants.firstIndex(where: { $0.plantName == plantName }) {
+            // Update the plant's image array
+            var updatedPlant = plants[index]
+            updatedPlant.plantImage.append(imageString)
+            plants[index] = updatedPlant
+            print("✅ Added new image to plant: \(plantName)")
+        }
     }
 }
