@@ -113,12 +113,21 @@ class OnboardingViewController: UIViewController {
     
     @objc private func nextButtonTapped() {
         if currentPage == slides.count - 1 {
-            // Show login screen
-            let loginVC = LoginViewController()
-            loginVC.modalPresentationStyle = .fullScreen
-            present(loginVC, animated: true) {
-                // Set flag that onboarding is complete
-                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+            // Set default login status
+            UserDefaults.standard.set(true, forKey: "isLoggedIn")
+            UserDefaults.standard.set("default@gmail.com", forKey: "userEmail")
+            UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+            
+            // Navigate to Explore tab
+            let exploreStoryboard = UIStoryboard(name: "Main", bundle: nil)
+            if let exploreVC = exploreStoryboard.instantiateInitialViewController() {
+                exploreVC.modalPresentationStyle = .fullScreen
+                
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first {
+                    window.rootViewController = exploreVC
+                    window.makeKeyAndVisible()
+                }
             }
         } else {
             currentPage += 1

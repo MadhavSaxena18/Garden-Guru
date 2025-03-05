@@ -77,46 +77,20 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         
         // MARK: - Table View Delegate
         func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-            selectedPlant = filteredPlants[indexPath.row]
-            
-            guard let plant = selectedPlant else { return }
+            let plant = filteredPlants[indexPath.row]
+            print("\n=== Search Flow: Adding Plant ===")
             print("Selected plant: \(plant.plantName)")
             
-            // Show nickname dialog using existing addNickNameViewController
             let nicknameVC = addNickNameViewController()
-    //        nicknameVC.modalPresentationStyle = .overCurrentContext
-    //        nicknameVC.modalTransitionStyle = .crossDissolve
+            nicknameVC.selectedPlant = plant  // Pass the actual Plant object
+            nicknameVC.plantNameForReminder = plant.plantName  // Pass the exact plant name
             
-            // Add target for the add button
-            nicknameVC.addButton.addTarget(self, action: #selector(handleNickname(_:)), for: .touchUpInside)
+            // Create navigation controller
+            let navController = UINavigationController(rootViewController: nicknameVC)
             
-            present(nicknameVC, animated: true)
-        }
-        
-        @objc private func handleNickname(_ sender: UIButton) {
-            guard let nicknameVC = presentedViewController as? addNickNameViewController,
-                  let nickname = nicknameVC.textField.text,
-                  !nickname.isEmpty,
-                  let plant = selectedPlant else {
-                print("Failed to get nickname or plant")
-                return
-            }
-            
-            // Create new UserPlant and add to data controller
-            let newUserPlant = UserPlant(
-                userId: dataController.getUsers().first!.userId,
-                userplantID: plant.plantID,
-                userPlantNickName: nickname,
-                lastWatered: Date(),
-                lastFertilized: Date(),
-                lastRepotted: Date(),
-                isWateringCompleted: false,
-                isFertilizingCompleted: false,
-                isRepottingCompleted: false
-            )
-            
-//            dataController.addUserPlant(newUserPlant)
-//            print("Added new user plant with nickname: \(nickname)")
+            // Present modally
+            navController.modalPresentationStyle = .formSheet
+            present(navController, animated: true)
         }
         
         @IBAction func unwindToAddPlantViewController(segue: UIStoryboardSegue) {

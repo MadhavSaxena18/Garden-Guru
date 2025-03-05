@@ -25,7 +25,19 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
                   isUpcoming: Bool,
                   isTomorrow: Bool,
                   shouldEnableCheckbox: Bool) {
-        careReminderPlantImageView.image = UIImage(named: reminderData.plant.plantImage[0])
+        
+        // Try to get the last image which might be a base64 encoded captured image
+        if let lastImage = reminderData.plant.plantImage.last,
+           let imageData = Data(base64Encoded: lastImage),
+           let image = UIImage(data: imageData) {
+            print("✅ Using captured image in care reminder")
+            careReminderPlantImageView.image = image
+        } else if !reminderData.plant.plantImage.isEmpty {
+            // Fall back to the first (default) image
+            print("✅ Using default image in care reminder: \(reminderData.plant.plantImage[0])")
+            careReminderPlantImageView.image = UIImage(named: reminderData.plant.plantImage[0])
+        }
+        
         plantNameCareReminderLabel.text = reminderData.plant.plantName
         nickNameCareReminderLabel.text = reminderData.userPlant.userPlantNickName
         

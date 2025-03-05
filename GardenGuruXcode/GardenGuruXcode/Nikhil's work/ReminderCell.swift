@@ -87,14 +87,19 @@ class ReminderCell: UITableViewCell {
         ])
     }
     
+    var isReminderEnabled: Bool {
+        return toggleSwitch.isOn
+    }
+    
     func configure(title: String, subtitle: String, iconName: String, isTimePicker: Bool) {
         titleLabel.text = title
         subtitleLabel.text = subtitle
-      // iconImageView.image = UIImage(systemName: iconName)
         iconImageView.image = UIImage(named: iconName)
-        
         toggleSwitch.isHidden = isTimePicker
         timePicker.isHidden = !isTimePicker
+        
+        // Default to on for all switches
+        toggleSwitch.isOn = true
     }
 }
 

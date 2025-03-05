@@ -73,12 +73,12 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
     
     // Override the back button action
-    override func willMove(toParent parent: UIViewController?) {
-        super.willMove(toParent: parent)
-        if parent == nil { // This means we're being popped
-            showBackAlert()
-        }
-    }
+//    override func willMove(toParent parent: UIViewController?) {
+//        super.willMove(toParent: parent)
+//        if parent == nil { // This means we're being popped
+//            showBackAlert()
+//        }
+//    }
     
     private func setupUI() {
         // Plant Image
@@ -94,6 +94,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
         // Plant Name Label
         DiagnosisViewController.plantNameLabel.text = selectedPlant?.plantName
+        print("Setting diagnosis plant name to: \(selectedPlant?.plantName ?? "nil")")
         DiagnosisViewController.plantNameLabel.textColor = .white
         DiagnosisViewController.plantNameLabel.font = UIFont.boldSystemFont(ofSize: 16)
         overlayView.addSubview(DiagnosisViewController.plantNameLabel)
@@ -181,13 +182,34 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                     return false
                 }
                 
+                
                 if isExistingPlant {
                     showExistingPlantAlert()
+                   // startCaringButton.isHidden = true
                 }
                 
                 startCaringButton.setTitle(isExistingPlant ? "Start Caring" : "Add and Start Caring", for: .normal)
             }
         }
+//            if let firstUser = dataController.getUsers().first {
+//                let userPlants = dataController.getUserPlants(for: firstUser.userId)
+//                
+//                isExistingPlant = userPlants.contains { userPlant in
+//                    guard let existingPlant = dataController.getPlant(by: userPlant.userplantID) else {
+//                        return false
+//                    }
+//                    return existingPlant.plantName == plantName
+//                }
+//
+//                if isExistingPlant {
+//                    showExistingPlantAlert()
+//                    startCaringButton.isHidden = true  // Hide the button if plant exists
+//                } else {
+//                    startCaringButton.isHidden = false
+//                    startCaringButton.setTitle("Add and Start Caring", for: .normal)
+//                }
+//            }
+
 
         // TableView
         tableView.delegate = self
@@ -267,29 +289,29 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         ])
     }
     
-    private func showBackAlert() {
-        let alert = UIAlertController(
-            title: "Scan Another Plant?",
-            message: "Would you like to scan another plant?",
-            preferredStyle: .alert
-        )
-        
-        let yesAction = UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
-            self?.navigationController?.popToRootViewController(animated: true)
-        }
-        
-        let noAction = UIAlertAction(title: "No", style: .cancel) { [weak self] _ in
-            self?.tabBarController?.tabBar.isHidden = false
-            
-            self?.tabBarController?.selectedIndex = 0
-            self?.navigationController?.popToRootViewController(animated: false)
-        }
-        
-        alert.addAction(yesAction)
-        alert.addAction(noAction)
-        
-        present(alert, animated: true)
-    }
+//    private func showBackAlert() {
+//        let alert = UIAlertController(
+//            title: "Scan Another Plant?",
+//            message: "Would you like to scan another plant?",
+//            preferredStyle: .alert
+//        )
+//        
+//        let yesAction = UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
+//            self?.navigationController?.popToRootViewController(animated: true)
+//        }
+//        
+//        let noAction = UIAlertAction(title: "No", style: .cancel) { [weak self] _ in
+//            self?.tabBarController?.tabBar.isHidden = false
+//            
+//            self?.tabBarController?.selectedIndex = 0
+//            self?.navigationController?.popToRootViewController(animated: false)
+//        }
+//        
+//        alert.addAction(yesAction)
+//        alert.addAction(noAction)
+//        
+//        present(alert, animated: true)
+//    }
 
     private func showExistingPlantAlert() {
         let alert = UIAlertController(
@@ -300,7 +322,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         alert.addAction(UIAlertAction(title: "Same Plant", style: .default) { [weak self] _ in
             self?.isExistingPlant = true
-            self?.startCaringButton.setTitle("Start Caring", for: .normal)
+            self?.startCaringButton.isHidden = true
+           // self?.startCaringButton.setTitle("Start Caring", for: .normal)
         })
         
         alert.addAction(UIAlertAction(title: "Different Plant", style: .default) { [weak self] _ in
@@ -398,13 +421,30 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
     
     @objc func startCaringTapped() {
+        guard let plantName = selectedPlant?.plantName else {
+            print("❌ No plant name available")
+            return
+        }
+        
+        print("\n=== Starting Add Plant Flow ===")
+        print("Plant name from DiagnosisViewController: \(plantName)")
+        
         let reminderVC = addNickNameViewController()
         
-//        if let plantName = selectedPlant?.plantName {
-//            let nickname = "My \(plantName)"
-//            reminderVC.configure(plantName: plantName, nickname: nickname)
-//        }
+        // Pass both the plant name and the selected plant
+        reminderVC.plantNameForReminder = plantName
+        if let plant = dataController.getPlantbyName(by: plantName) {
+            // Get the image we're currently displaying in the diagnosis view
+            if let diagnosisImage = plantImageView.image {
+                print("✅ Adding diagnosis image to plant")
+                dataController.updatePlantImages(plantName: plantName, newImage: diagnosisImage)
+            } else {
+                print("❌ No diagnosis image available")
+            }
+            reminderVC.selectedPlant = plant
+        }
         
+        // Create navigation controller to present it
         let navController = UINavigationController(rootViewController: reminderVC)
         present(navController, animated: true)
     }

@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Supabase
 
 
@@ -1263,28 +1264,48 @@ class DataControllerGG {
     }
     
     // Add this method to DataControllerGG
-    func addUserPlant(_ userPlant: UserPlant) {
-        //adding user plant
-        print(userPlant)
+    func addUserPlant(_ userPlant: UserPlant, with reminder: CareReminder_) {
+        // Get the plant details to set up proper reminder frequencies
+        guard let plant = getPlant(by: userPlant.userplantID) else {
+            print("❌ Could not find plant details for ID: \(userPlant.userplantID)")
+            return
+        }
+        
+        print("\n=== Adding New Plant with Reminders ===")
+        print("Plant: \(plant.plantName)")
+        
+        // Add user plant
         self.userPlant.append(userPlant)
-        print(self.userPlant)
-        // Create and add care reminder
-        let reminder = CareReminder_(
-            upcomingReminderForWater: userPlant.lastWatered,
-            upcomingReminderForFertilizers: userPlant.lastFertilized,
-            upcomingReminderForRepotted: userPlant.lastRepotted,
-            isWateringCompleted: false,
-            isFertilizingCompleted: false,
-            isRepottingCompleted: false
-        )
+        
+        // Add the reminder as is (with disabled reminders set to distantFuture)
         careReminders.append(reminder)
         
         // Create relationship
         let relationship = CareReminderOfUserPlant(
             careReminderOfUserPlantID: UUID(),
-            userPlantRelationID: userPlant.userPlantRelationID, careReminderId: UUID()
+            userPlantRelationID: userPlant.userPlantRelationID,
+            careReminderId: reminder.careReminderID
         )
         reminderOfUserPlant.append(relationship)
+        
+        print("\n✅ Added plant with reminders:")
+        if reminder.upcomingReminderForWater != Date.distantFuture {
+            print("Next water: \(reminder.upcomingReminderForWater)")
+        } else {
+            print("Watering reminders disabled")
+        }
+        
+        if reminder.upcomingReminderForFertilizers != Date.distantFuture {
+            print("Next fertilizer: \(reminder.upcomingReminderForFertilizers)")
+        } else {
+            print("Fertilizer reminders disabled")
+        }
+        
+        if reminder.upcomingReminderForRepotted != Date.distantFuture {
+            print("Next repotting: \(reminder.upcomingReminderForRepotted)")
+        } else {
+            print("Repotting reminders disabled")
+        }
     }
     
     func getDisease(byName diseaseName: String) -> Diseases? {
@@ -1353,5 +1374,17 @@ class DataControllerGG {
             .replacingOccurrences(of: "\u{00A0}", with: " ") // Remove non-breaking spaces
             .replacingOccurrences(of: "\u{200B}", with: "")  // Remove zero-width spaces
             .replacingOccurrences(of: #"[\s]+"#, with: " ", options: .regularExpression) // Normalize multiple spaces
+    }
+    
+    func updatePlantImages(plantName: String, newImage: UIImage) {
+        // Convert image to base64 string
+        if let imageString = newImage.pngData()?.base64EncodedString(),
+           let index = plants.firstIndex(where: { $0.plantName == plantName }) {
+            // Update the plant's image array
+            var updatedPlant = plants[index]
+            updatedPlant.plantImage.append(imageString)
+            plants[index] = updatedPlant
+            print("✅ Added new image to plant: \(plantName)")
+        }
     }
 }
