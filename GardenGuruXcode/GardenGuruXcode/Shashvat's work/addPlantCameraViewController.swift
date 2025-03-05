@@ -323,8 +323,8 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     private func showNicknameViewController(for plant: Plant) {
         // Create and show nickname dialog
         let nicknameVC = addNickNameViewController()
-        nicknameVC.modalPresentationStyle = .overCurrentContext
-        nicknameVC.modalTransitionStyle = .crossDissolve
+        // nicknameVC.modalPresentationStyle = .overCurrentContext
+        // nicknameVC.modalTransitionStyle = .crossDissolve
         
         // Add target for the add button
         nicknameVC.addButton.addTarget(self, action: #selector(handleNickname(_:)), for: .touchUpInside)
@@ -346,29 +346,13 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
             return
         }
         
-        // Create new UserPlant
-        let newUserPlant = UserPlant(
-            userId: dataController.getUsers().first!.userId,
-            userplantID: plant.plantID,
-            userPlantNickName: nickname,
-            lastWatered: Date(),
-            lastFertilized: Date(),
-            lastRepotted: Date(),
-            isWateringCompleted: false,
-            isFertilizingCompleted: false,
-            isRepottingCompleted: false
-        )
-        
-        dataController.addUserPlant(newUserPlant)
-        print("Added new user plant with nickname: \(nickname)")
-        
-        // Dismiss nickname view controller
+        // Dismiss nickname view controller and show SetReminderViewController
         nicknameVC.dismiss(animated: true) { [weak self] in
-            // Show SetReminderViewController
             let setReminderVC = SetReminderViewController()
             setReminderVC.configure(plantName: plant.plantName, nickname: nickname)
-            setReminderVC.modalPresentationStyle = .fullScreen
-            self?.present(setReminderVC, animated: true)
+            
+            let navController = UINavigationController(rootViewController: setReminderVC)
+            self?.present(navController, animated: true)
         }
     }
     

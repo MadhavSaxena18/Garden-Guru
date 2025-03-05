@@ -1263,28 +1263,48 @@ class DataControllerGG {
     }
     
     // Add this method to DataControllerGG
-    func addUserPlant(_ userPlant: UserPlant) {
-        //adding user plant
-        print(userPlant)
+    func addUserPlant(_ userPlant: UserPlant, with reminder: CareReminder_) {
+        // Get the plant details to set up proper reminder frequencies
+        guard let plant = getPlant(by: userPlant.userplantID) else {
+            print("❌ Could not find plant details for ID: \(userPlant.userplantID)")
+            return
+        }
+        
+        print("\n=== Adding New Plant with Reminders ===")
+        print("Plant: \(plant.plantName)")
+        
+        // Add user plant
         self.userPlant.append(userPlant)
-        print(self.userPlant)
-        // Create and add care reminder
-        let reminder = CareReminder_(
-            upcomingReminderForWater: userPlant.lastWatered,
-            upcomingReminderForFertilizers: userPlant.lastFertilized,
-            upcomingReminderForRepotted: userPlant.lastRepotted,
-            isWateringCompleted: false,
-            isFertilizingCompleted: false,
-            isRepottingCompleted: false
-        )
+        
+        // Add the reminder as is (with disabled reminders set to distantFuture)
         careReminders.append(reminder)
         
         // Create relationship
         let relationship = CareReminderOfUserPlant(
             careReminderOfUserPlantID: UUID(),
-            userPlantRelationID: userPlant.userPlantRelationID, careReminderId: UUID()
+            userPlantRelationID: userPlant.userPlantRelationID,
+            careReminderId: reminder.careReminderID
         )
         reminderOfUserPlant.append(relationship)
+        
+        print("\n✅ Added plant with reminders:")
+        if reminder.upcomingReminderForWater != Date.distantFuture {
+            print("Next water: \(reminder.upcomingReminderForWater)")
+        } else {
+            print("Watering reminders disabled")
+        }
+        
+        if reminder.upcomingReminderForFertilizers != Date.distantFuture {
+            print("Next fertilizer: \(reminder.upcomingReminderForFertilizers)")
+        } else {
+            print("Fertilizer reminders disabled")
+        }
+        
+        if reminder.upcomingReminderForRepotted != Date.distantFuture {
+            print("Next repotting: \(reminder.upcomingReminderForRepotted)")
+        } else {
+            print("Repotting reminders disabled")
+        }
     }
     
     func getDisease(byName diseaseName: String) -> Diseases? {

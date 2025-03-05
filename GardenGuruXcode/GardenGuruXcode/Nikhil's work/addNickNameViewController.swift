@@ -14,6 +14,11 @@ class addNickNameViewController: UIViewController {
     let cancelButton = UIButton(type: .system)
     let addButton = UIButton(type: .system)
     
+    // Add property to store selected plant
+    var selectedPlant: Plant?
+    
+    var plantNameForReminder: String?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(hex: "#EBF4EB")
@@ -44,9 +49,7 @@ class addNickNameViewController: UIViewController {
         // Set the title
         title = "Set NickName"
         
-                
         // Configure the navigation bar appearance
-        //navigationController?.navigationBar.isTranslucent = false
         navigationController?.navigationBar.barTintColor = UIColor.systemGreen
         navigationController?.navigationBar.tintColor = .black
         navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
@@ -59,14 +62,6 @@ class addNickNameViewController: UIViewController {
             action: #selector(didTapCancel)
         )
         navigationItem.rightBarButtonItem = cancelButton
-        
-        // Optionally, you can customize the back button if you want to show a custom icon or text
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "Back",
-            style: .plain,
-            target: self,
-            action: #selector(didTapCancel)
-        )
     }
     @objc private func didTapCancel() {
         dismiss(animated: true, completion: nil)
@@ -133,19 +128,38 @@ class addNickNameViewController: UIViewController {
     }
     
     @objc func addTapped() {
-        guard let nickname = textField.text, !nickname.isEmpty else { return }
-        print("Nickname saved: \(nickname)")
+        guard let nickname = textField.text, !nickname.isEmpty else {
+            print("❌ No nickname entered")
+            return
+        }
         
-
-        let newController = SetReminderViewController()
-        newController.locationLabel.text = nickname
-        if let navController = navigationController {
-               navController.pushViewController(newController, animated: true)
-           } else {
-               present(newController, animated: true)
-           }
-        // navigationController?.present(newController, animated: true)
-
+        print("\n=== Adding Plant with Nickname ===")
+        print("Selected plant: \(selectedPlant?.plantName ?? "nil")")
+        print("Plant name from reminder: \(plantNameForReminder ?? "nil")")
+        print("Nickname: \(nickname)")
+        
+        // Get the plant name from either source
+        let plantName = selectedPlant?.plantName ?? plantNameForReminder
+        
+        guard let finalPlantName = plantName else {
+            print("❌ No plant name available")
+            return
+        }
+        
+        // First dismiss this view controller, then present SetReminderViewController
+        dismiss(animated: true) { [weak self] in
+            let setReminderVC = SetReminderViewController()
+            setReminderVC.configure(plantName: finalPlantName, nickname: nickname)
+            
+            let navController = UINavigationController(rootViewController: setReminderVC)
+            
+            // Get the root view controller to present from
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let rootVC = window.rootViewController {
+                rootVC.present(navController, animated: true)
+            }
+        }
     }
    
 
