@@ -71,12 +71,12 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
     
     // Override the back button action
-    override func willMove(toParent parent: UIViewController?) {
-        super.willMove(toParent: parent)
-        if parent == nil { // This means we're being popped
-            showBackAlert()
-        }
-    }
+//    override func willMove(toParent parent: UIViewController?) {
+//        super.willMove(toParent: parent)
+//        if parent == nil { // This means we're being popped
+//            showBackAlert()
+//        }
+//    }
     
     private func setupUI() {
         // Plant Image
@@ -180,13 +180,34 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                     return false
                 }
                 
+                
                 if isExistingPlant {
                     showExistingPlantAlert()
+                   // startCaringButton.isHidden = true
                 }
                 
                 startCaringButton.setTitle(isExistingPlant ? "Start Caring" : "Add and Start Caring", for: .normal)
             }
         }
+//            if let firstUser = dataController.getUsers().first {
+//                let userPlants = dataController.getUserPlants(for: firstUser.userId)
+//                
+//                isExistingPlant = userPlants.contains { userPlant in
+//                    guard let existingPlant = dataController.getPlant(by: userPlant.userplantID) else {
+//                        return false
+//                    }
+//                    return existingPlant.plantName == plantName
+//                }
+//
+//                if isExistingPlant {
+//                    showExistingPlantAlert()
+//                    startCaringButton.isHidden = true  // Hide the button if plant exists
+//                } else {
+//                    startCaringButton.isHidden = false
+//                    startCaringButton.setTitle("Add and Start Caring", for: .normal)
+//                }
+//            }
+
 
         // TableView
         tableView.delegate = self
@@ -266,29 +287,29 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         ])
     }
     
-    private func showBackAlert() {
-        let alert = UIAlertController(
-            title: "Scan Another Plant?",
-            message: "Would you like to scan another plant?",
-            preferredStyle: .alert
-        )
-        
-        let yesAction = UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
-            self?.navigationController?.popToRootViewController(animated: true)
-        }
-        
-        let noAction = UIAlertAction(title: "No", style: .cancel) { [weak self] _ in
-            self?.tabBarController?.tabBar.isHidden = false
-            
-            self?.tabBarController?.selectedIndex = 0
-            self?.navigationController?.popToRootViewController(animated: false)
-        }
-        
-        alert.addAction(yesAction)
-        alert.addAction(noAction)
-        
-        present(alert, animated: true)
-    }
+//    private func showBackAlert() {
+//        let alert = UIAlertController(
+//            title: "Scan Another Plant?",
+//            message: "Would you like to scan another plant?",
+//            preferredStyle: .alert
+//        )
+//        
+//        let yesAction = UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
+//            self?.navigationController?.popToRootViewController(animated: true)
+//        }
+//        
+//        let noAction = UIAlertAction(title: "No", style: .cancel) { [weak self] _ in
+//            self?.tabBarController?.tabBar.isHidden = false
+//            
+//            self?.tabBarController?.selectedIndex = 0
+//            self?.navigationController?.popToRootViewController(animated: false)
+//        }
+//        
+//        alert.addAction(yesAction)
+//        alert.addAction(noAction)
+//        
+//        present(alert, animated: true)
+//    }
 
     private func showExistingPlantAlert() {
         let alert = UIAlertController(
@@ -299,7 +320,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         alert.addAction(UIAlertAction(title: "Same Plant", style: .default) { [weak self] _ in
             self?.isExistingPlant = true
-            self?.startCaringButton.setTitle("Start Caring", for: .normal)
+            self?.startCaringButton.isHidden = true
+           // self?.startCaringButton.setTitle("Start Caring", for: .normal)
         })
         
         alert.addAction(UIAlertAction(title: "Different Plant", style: .default) { [weak self] _ in
