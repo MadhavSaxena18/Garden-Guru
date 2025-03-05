@@ -426,13 +426,21 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         print("\n=== Starting Add Plant Flow ===")
         print("Plant name from DiagnosisViewController: \(plantName)")
-        print("Selected plant details: \(String(describing: selectedPlant))")
         
         let reminderVC = addNickNameViewController()
         
         // Pass both the plant name and the selected plant
         reminderVC.plantNameForReminder = plantName
-        reminderVC.selectedPlant = dataController.getPlantbyName(by: plantName)
+        if let plant = dataController.getPlantbyName(by: plantName) {
+            // Get the image we're currently displaying in the diagnosis view
+            if let diagnosisImage = plantImageView.image {
+                print("✅ Adding diagnosis image to plant")
+                dataController.updatePlantImages(plantName: plantName, newImage: diagnosisImage)
+            } else {
+                print("❌ No diagnosis image available")
+            }
+            reminderVC.selectedPlant = plant
+        }
         
         // Create navigation controller to present it
         let navController = UINavigationController(rootViewController: reminderVC)
