@@ -8,7 +8,7 @@ class CareReminderViewController: UIViewController {
     @IBOutlet weak var editButton: UIBarButtonItem?
     
     private let dataController = DataControllerGG.shared
-    private let reminderTypes = ["Watering", "Fertilization", "Pruning"]
+    private let reminderTypes = ["Watering", "Fertilization", "Repotting"]
     
     private var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
     private var todayReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
@@ -254,7 +254,7 @@ class CareReminderViewController: UIViewController {
                             if sectionIndex == 1 {
                                 todayReminders[sectionIndex][index].reminder.isFertilizingCompleted = isCompleted
                             }
-                        case "Pruning":
+                        case "Repotting":
                             if sectionIndex == 2 {
                                 todayReminders[sectionIndex][index].reminder.isRepottingCompleted = isCompleted
                             }
@@ -278,7 +278,7 @@ class CareReminderViewController: UIViewController {
                             if sectionIndex == 1 {
                                 upcomingReminders[sectionIndex][index].reminder.isFertilizingCompleted = isCompleted
                             }
-                        case "Pruning":
+                        case "Repotting":
                             if sectionIndex == 2 {
                                 upcomingReminders[sectionIndex][index].reminder.isRepottingCompleted = isCompleted
                             }
@@ -297,7 +297,7 @@ class CareReminderViewController: UIViewController {
                         reminders[index].reminder.isWateringCompleted = isCompleted
                     case "Fertilization":
                         reminders[index].reminder.isFertilizingCompleted = isCompleted
-                    case "Pruning":
+                    case "Repotting":
                         reminders[index].reminder.isRepottingCompleted = isCompleted
                     default:
                         break
@@ -368,7 +368,7 @@ class CareReminderViewController: UIViewController {
                 case 1:
                     reminderType = "Fertilization"
                 case 2:
-                    reminderType = "Pruning"
+                    reminderType = "Repotting"
                 default:
                     continue
                 }
@@ -512,7 +512,7 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             isCompleted = reminder.reminder.isRepottingCompleted
             dataController.updateCareReminderStatus(
                 for: reminder.userPlant.userPlantRelationID,
-                reminderType: "Pruning",
+                reminderType: "Repotting",
                 isCompleted: !isCompleted,
                 currentDate: currentDate
             )
