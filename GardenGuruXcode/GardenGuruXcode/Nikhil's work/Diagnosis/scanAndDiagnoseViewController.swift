@@ -240,7 +240,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                     DispatchQueue.main.async {
                         DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
                         DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                        self.showPlantNotIdentifiedAlert()
+                      //  self.showPlantNotIdentifiedAlert()
                     }
                     return
                 }
@@ -276,14 +276,14 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 DispatchQueue.main.async {
                     DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
                     DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                    self.showPlantNotIdentifiedAlert()
+                   // self.showPlantNotIdentifiedAlert()
                 }
             }
         } else {
             DispatchQueue.main.async {
                 DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
                 DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                self.showPlantNotIdentifiedAlert()
+              //  self.showPlantNotIdentifiedAlert()
             }
         }
     }
@@ -422,7 +422,10 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         )
         
         let retryAction = UIAlertAction(title: "Try Again", style: .default) { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
+         //   self?.navigationController?.popViewController(animated: true)
+            self?.resetForNewScan()
+            self?.resetState()
+            
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
