@@ -52,6 +52,9 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         ("Set Time", "Default time: 5:00 pm", "clock1", true)
     ]
     
+    // Add this property at the top of the class
+    private var existingPlant: Plant?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -153,7 +156,12 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         print("\n=== Adding New Plant ===")
         print("Looking for plant: '\(plantName)'")
         
-        guard let existingPlant = dataController.getPlantbyName(by: plantName) else {
+        if let plant = DataControllerGG.shared.getPlantbyNameSync(name: plantName) {
+            self.existingPlant = plant
+            print("✅ Found existing plant:")
+            print("- Name: \(plant.plantName)")
+            print("- ID: \(plant.plantID)")
+        } else {
             print("❌ Plant not found in database")
             print("Available plants:")
             dataController.getPlants().forEach { plant in
@@ -171,21 +179,21 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             return
         }
         
-        print("✅ Found existing plant:")
-        print("- Name: \(existingPlant.plantName)")
-        print("- ID: \(existingPlant.plantID)")
-        
         // Create new UserPlant
+        guard let plant = existingPlant,
+              let user = dataController.getUserSync() else { 
+            print("❌ Missing plant or user information")
+            return 
+        }
+        
         let newUserPlant = UserPlant(
-            userId: dataController.getUsers().first?.userId ?? UUID(),
-            userplantID: existingPlant.plantID,
+            userPlantRelationID: UUID(),
+            userplantID: plant.plantID,
+            userId: user.userEmail,  // Using email as userId
             userPlantNickName: nickname,
             lastWatered: Date(),
             lastFertilized: Date(),
-            lastRepotted: Date(),
-            isWateringCompleted: false,
-            isFertilizingCompleted: false,
-            isRepottingCompleted: false
+            lastRepotted: Date()
         )
         
         // Get switch states and create reminder
@@ -211,33 +219,31 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
         // Calculate reminder dates based on enabled switches
         let nextWaterDate = isWateringEnabled ? 
-            Calendar.current.date(byAdding: .day, value: existingPlant.waterFrequency, to: Date()) : nil
+            Calendar.current.date(byAdding: .day, value: plant.waterFrequency, to: Date()) : nil
         let nextFertilizerDate = isFertilizingEnabled ? 
-            Calendar.current.date(byAdding: .day, value: existingPlant.fertilizerFrequency, to: Date()) : nil
+            Calendar.current.date(byAdding: .day, value: plant.fertilizerFrequency, to: Date()) : nil
         let nextRepottingDate = isRepottingEnabled ? 
-            Calendar.current.date(byAdding: .day, value: existingPlant.repottingFrequency, to: Date()) : nil
+            Calendar.current.date(byAdding: .day, value: plant.repottingFrequency, to: Date()) : nil
         
         // Create reminder with only enabled reminders
         let reminder = CareReminder_(
-            upcomingReminderForWater: nextWaterDate ?? Date.distantFuture,
-            upcomingReminderForFertilizers: nextFertilizerDate ?? Date.distantFuture,
-            upcomingReminderForRepotted: nextRepottingDate ?? Date.distantFuture,
-            isWateringCompleted: false,
-            isFertilizingCompleted: false,
-            isRepottingCompleted: false
+            userPlantID: newUserPlant.userPlantRelationID,
+            wateringDate: nextWaterDate,
+            fertilizingDate: nextFertilizerDate,
+            repottingDate: nextRepottingDate
         )
         
         // Add to DataController with the reminder
-        dataController.addUserPlant(newUserPlant, with: reminder)
+        dataController.addUserPlantSync(userPlant: newUserPlant)
         print("✅ Added plant to DataController")
         
-        // Post notification with reminder settings
+        // Post notification
         NotificationCenter.default.post(
-            name: NSNotification.Name("NewPlantAdded"),
+            name: .plantAdded,
             object: nil,
             userInfo: [
                 "userPlant": newUserPlant,
-                "plant": existingPlant,
+                "plant": plant,
                 "reminder": reminder,
                 "enabledReminders": [
                     "watering": isWateringEnabled,
@@ -250,7 +256,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         // Show success alert and dismiss
         let alert = UIAlertController(
             title: "Success!",
-            message: "Plant '\(existingPlant.plantName)' added with nickname '\(nickname)'",
+            message: "Plant '\(plant.plantName)' added with nickname '\(nickname)'",
             preferredStyle: .alert
         )
         

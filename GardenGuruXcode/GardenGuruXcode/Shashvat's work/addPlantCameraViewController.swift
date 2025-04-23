@@ -302,70 +302,26 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
     }
     
     private func handleIdentifiedPlant(_ plantName: String) {
-        // Check if the plant exists in our database
-        if let plant = getPlantFromIdentification(name: plantName) {
-            // Show confirmation alert with confidence
-            let alert = UIAlertController(
-                title: "Plant Identified",
-                message: "Is this a \(plantName)?",
-                preferredStyle: .alert
-            )
-            
-            alert.addAction(UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
-                self?.showNicknameViewController(for: plant)
-            })
-            
-            alert.addAction(UIAlertAction(title: "No", style: .cancel))
-            
-            present(alert, animated: true)
-        } else {
-            showAlert(message: "Sorry, this plant is not in our database")
-        }
-    }
-    
-    private func getPlantFromIdentification(name: String) -> Plant? {
-        return dataController.getPlants().first { $0.plantName.lowercased() == name.lowercased() }
-    }
-    
-    private func showNicknameViewController(for plant: Plant) {
-        // Create and show nickname dialog
-        let nicknameVC = addNickNameViewController()
-        // nicknameVC.modalPresentationStyle = .overCurrentContext
-        // nicknameVC.modalTransitionStyle = .crossDissolve
-        
-        // Add target for the add button
-        nicknameVC.addButton.addTarget(self, action: #selector(handleNickname(_:)), for: .touchUpInside)
-        
-        // Store selected plant for later use
-        selectedPlant = plant
-        
-        present(nicknameVC, animated: true)
-    }
-    
-    private var selectedPlant: Plant?
-    
-    @objc private func handleNickname(_ sender: UIButton) {
-        guard let nicknameVC = presentedViewController as? addNickNameViewController,
-              let nickname = nicknameVC.textField.text,
-              !nickname.isEmpty,
-              let plant = selectedPlant else {
-            print("Failed to get nickname or plant")
-            return
-        }
-        
-        // Use the image we captured with camera
-        if let image = capturedImage {
-            print("✅ Adding captured camera image to plant")
-            dataController.updatePlantImages(plantName: plant.plantName, newImage: image)
-        }
-        
-        // Dismiss nickname view controller and show SetReminderViewController
-        nicknameVC.dismiss(animated: true) { [weak self] in
-            let setReminderVC = SetReminderViewController()
-            setReminderVC.configure(plantName: plant.plantName, nickname: nickname)
-            
-            let navController = UINavigationController(rootViewController: setReminderVC)
-            self?.present(navController, animated: true)
+        Task {
+            do {
+                if let plant = try await dataController.getPlantByName(by: plantName) {
+                    // Plant found in database
+                    let nicknameVC = addNickNameViewController()
+                    nicknameVC.selectedPlant = plant
+                    nicknameVC.plantNameForReminder = plant.plantName
+                    
+                    // Create navigation controller
+                    let navController = UINavigationController(rootViewController: nicknameVC)
+                    
+                    // Present modally
+                    navController.modalPresentationStyle = .formSheet
+                    present(navController, animated: true)
+                } else {
+                    showAlert(message: "Plant not found in database")
+                }
+            } catch {
+                showAlert(message: "Error finding plant: \(error.localizedDescription)")
+            }
         }
     }
     

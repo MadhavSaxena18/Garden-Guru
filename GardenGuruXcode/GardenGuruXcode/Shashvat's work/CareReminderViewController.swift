@@ -6,6 +6,14 @@ class CareReminderViewController: UIViewController {
     @IBOutlet weak var careReminderCollectionView: UICollectionView!
     @IBOutlet weak var careReminderSegmentedControl: UISegmentedControl!
     @IBOutlet weak var editButton: UIBarButtonItem?
+    @IBOutlet weak var plantImageView: UIImageView!
+    @IBOutlet weak var plantNameLabel: UILabel!
+    @IBOutlet weak var wateringButton: UIButton!
+    @IBOutlet weak var fertilizingButton: UIButton!
+    @IBOutlet weak var repottingButton: UIButton!
+    @IBOutlet weak var wateringDateLabel: UILabel!
+    @IBOutlet weak var fertilizingDateLabel: UILabel!
+    @IBOutlet weak var repottingDateLabel: UILabel!
     
     private let dataController = DataControllerGG.shared
     private let reminderTypes = ["Watering", "Fertilization", "Repotting"]
@@ -34,6 +42,11 @@ class CareReminderViewController: UIViewController {
         view.isHidden = true
         return view
     }()
+    
+    var userPlantID: UUID!
+    var plantName: String!
+    var plantImage: String!
+    private var userPlantDetails: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
     
     // MARK: - Lifecycle Methods
     override func viewDidLoad() {
@@ -87,6 +100,24 @@ class CareReminderViewController: UIViewController {
         )
         
         updateEditButtonVisibility()
+        
+        plantNameLabel.text = plantName
+        if let imageURL = URL(string: plantImage) {
+            // Load image from URL using your preferred method
+            // For example, using URLSession:
+            URLSession.shared.dataTask(with: imageURL) { [weak self] data, _, error in
+                if let data = data, let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        self?.plantImageView.image = image
+                    }
+                }
+            }.resume()
+        }
+        
+        // Setup buttons
+        setupButton(wateringButton, title: "Water Plant")
+        setupButton(fertilizingButton, title: "Add Fertilizer")
+        setupButton(repottingButton, title: "Repot Plant")
     }
     
     private func setupCollectionView() {
@@ -108,8 +139,8 @@ class CareReminderViewController: UIViewController {
     
     // MARK: - Data Loading
     private func loadData() {
-        guard let firstUser = dataController.getUsers().first else { return }
-        reminders = dataController.getCareReminders(for: firstUser.userId)
+        guard let firstUser = dataController.getUserSync() else { return }
+        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail)
         sortReminders()
         careReminderCollectionView.reloadData()
     }
@@ -217,8 +248,8 @@ class CareReminderViewController: UIViewController {
         upcomingReminders = [[],[],[]]
         
         // Reload data from scratch
-        guard let firstUser = dataController.getUsers().first else { return }
-        reminders = dataController.getCareReminders(for: firstUser.userId)
+        guard let firstUser = dataController.getUserSync() else { return }
+        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail)
         
         // Resort and refresh UI
         sortReminders()
@@ -364,20 +395,19 @@ class CareReminderViewController: UIViewController {
                 let reminderType: String
                 switch type {
                 case 0:
-                    reminderType = "Watering"
+                    reminderType = "water"
                 case 1:
-                    reminderType = "Fertilization"
+                    reminderType = "fertilizer"
                 case 2:
-                    reminderType = "Repotting"
+                    reminderType = "repot"
                 default:
                     continue
                 }
                 
-                dataController.updateCareReminderStatus(
-                    for: reminder.userPlant.userPlantRelationID,
-                    reminderType: reminderType,
-                    isCompleted: true,
-                    currentDate: currentDate
+                dataController.updateCareReminderStatusSync(
+                    userPlantID: reminder.userPlant.userPlantRelationID,
+                    type: reminderType,
+                    isCompleted: true
                 )
             }
         }
@@ -388,6 +418,64 @@ class CareReminderViewController: UIViewController {
     // Make sure to remove observer when view controller is deallocated
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func setupButton(_ button: UIButton, title: String) {
+        button.setTitle(title, for: .normal)
+        button.layer.cornerRadius = 10
+        button.clipsToBounds = true
+    }
+    
+    private func loadCareReminders() {
+        guard let userPlantID = userPlantID else { return }
+        
+        if let reminder = dataController.getCareRemindersSync(for: userPlantID) {
+            updateUI(with: reminder)
+        }
+    }
+    
+    private func updateUI(with reminder: CareReminder_) {
+        // Update date labels
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .short
+        
+        wateringDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForWater))"
+        fertilizingDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForFertilizers))"
+        repottingDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForRepotted))"
+        
+        // Update button states
+        updateButtonState(wateringButton, isCompleted: reminder.isWateringCompleted)
+        updateButtonState(fertilizingButton, isCompleted: reminder.isFertilizingCompleted)
+        updateButtonState(repottingButton, isCompleted: reminder.isRepottingCompleted)
+    }
+    
+    private func updateButtonState(_ button: UIButton, isCompleted: Bool) {
+        button.backgroundColor = isCompleted ? .systemGreen : .systemBlue
+    }
+    
+    @IBAction func wateringButtonTapped(_ sender: UIButton) {
+        guard let userPlantID = userPlantID else { return }
+        let isCompleted = !sender.backgroundColor!.isEqual(UIColor.systemGreen)
+        
+        dataController.updateCareReminderStatusSync(userPlantID: userPlantID, type: "water", isCompleted: isCompleted)
+        loadCareReminders()
+    }
+    
+    @IBAction func fertilizingButtonTapped(_ sender: UIButton) {
+        guard let userPlantID = userPlantID else { return }
+        let isCompleted = !sender.backgroundColor!.isEqual(UIColor.systemGreen)
+        
+        dataController.updateCareReminderStatusSync(userPlantID: userPlantID, type: "fertilizer", isCompleted: isCompleted)
+        loadCareReminders()
+    }
+    
+    @IBAction func repottingButtonTapped(_ sender: UIButton) {
+        guard let userPlantID = userPlantID else { return }
+        let isCompleted = !sender.backgroundColor!.isEqual(UIColor.systemGreen)
+        
+        dataController.updateCareReminderStatusSync(userPlantID: userPlantID, type: "repot", isCompleted: isCompleted)
+        loadCareReminders()
     }
 }
 
@@ -488,39 +576,30 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
     }
     
     private func handleCheckboxToggle(for reminder: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), type: Int) {
-        let currentDate = Date()
         let isCompleted: Bool
+        let reminderType: String
         
         switch type {
         case 0:
             isCompleted = reminder.reminder.isWateringCompleted
-            dataController.updateCareReminderStatus(
-                for: reminder.userPlant.userPlantRelationID,
-                reminderType: "Watering",
-                isCompleted: !isCompleted,
-                currentDate: currentDate
-            )
+            reminderType = "water"
         case 1:
             isCompleted = reminder.reminder.isFertilizingCompleted
-            dataController.updateCareReminderStatus(
-                for: reminder.userPlant.userPlantRelationID,
-                reminderType: "Fertilization",
-                isCompleted: !isCompleted,
-                currentDate: currentDate
-            )
+            reminderType = "fertilizer"
         case 2:
             isCompleted = reminder.reminder.isRepottingCompleted
-            dataController.updateCareReminderStatus(
-                for: reminder.userPlant.userPlantRelationID,
-                reminderType: "Repotting",
-                isCompleted: !isCompleted,
-                currentDate: currentDate
-            )
+            reminderType = "repot"
         default:
             return
         }
         
-        // Don't call loadData() here as we're handling updates in refreshAfterStatusUpdate
+        dataController.updateCareReminderStatusSync(
+            userPlantID: reminder.userPlant.userPlantRelationID,
+            type: reminderType,
+            isCompleted: !isCompleted
+        )
+        
+        loadData()
     }
 }
 

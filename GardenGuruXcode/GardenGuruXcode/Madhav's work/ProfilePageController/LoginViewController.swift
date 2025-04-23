@@ -2,10 +2,46 @@ import UIKit
 
 class LoginViewController: UIViewController {
     
+    private let containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 20
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 6
+        view.layer.shadowOpacity = 0.1
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Welcome to Garden Guru"
+        label.font = .systemFont(ofSize: 24, weight: .bold)
+        label.textColor = UIColor(hex: "284329")
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Sign in to continue"
+        label.font = .systemFont(ofSize: 16)
+        label.textColor = .systemGray
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private let emailTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Email"
-        textField.borderStyle = .roundedRect
+        textField.borderStyle = .none
+        textField.backgroundColor = UIColor(hex: "F5F9F5")
+        textField.layer.cornerRadius = 12
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 0))
+        textField.leftViewMode = .always
         textField.autocapitalizationType = .none
         textField.keyboardType = .emailAddress
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -15,7 +51,11 @@ class LoginViewController: UIViewController {
     private let passwordTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Password"
-        textField.borderStyle = .roundedRect
+        textField.borderStyle = .none
+        textField.backgroundColor = UIColor(hex: "F5F9F5")
+        textField.layer.cornerRadius = 12
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 0))
+        textField.leftViewMode = .always
         textField.isSecureTextEntry = true
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
@@ -23,12 +63,21 @@ class LoginViewController: UIViewController {
     
     private let loginButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Login", for: .normal)
-        button.backgroundColor = UIColor(red: 0.92, green: 0.95, blue: 0.92, alpha: 1.0)
-        button.setTitleColor(.black, for: .normal)
-        button.layer.cornerRadius = 10
+        button.setTitle("Sign In", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        button.backgroundColor = UIColor(hex: "284329")
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 12
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }()
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.hidesWhenStopped = true
+        indicator.color = .white
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
     }()
     
     private let dataController = DataControllerGG.shared
@@ -39,27 +88,47 @@ class LoginViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(hex: "EBF4EB")
         
-        view.addSubview(emailTextField)
-        view.addSubview(passwordTextField)
-        view.addSubview(loginButton)
+        view.addSubview(containerView)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(subtitleLabel)
+        containerView.addSubview(emailTextField)
+        containerView.addSubview(passwordTextField)
+        containerView.addSubview(loginButton)
+        loginButton.addSubview(loadingIndicator)
         
         NSLayoutConstraint.activate([
-            emailTextField.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -50),
-            emailTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            emailTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            containerView.heightAnchor.constraint(equalToConstant: 400),
+            
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 30),
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            
+            emailTextField.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 40),
+            emailTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            emailTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             emailTextField.heightAnchor.constraint(equalToConstant: 50),
             
             passwordTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 20),
-            passwordTextField.leadingAnchor.constraint(equalTo: emailTextField.leadingAnchor),
-            passwordTextField.trailingAnchor.constraint(equalTo: emailTextField.trailingAnchor),
+            passwordTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            passwordTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             passwordTextField.heightAnchor.constraint(equalToConstant: 50),
             
-            loginButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 30),
-            loginButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loginButton.widthAnchor.constraint(equalToConstant: 200),
-            loginButton.heightAnchor.constraint(equalToConstant: 50)
+            loginButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 40),
+            loginButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            loginButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            loginButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: loginButton.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: loginButton.centerYAnchor)
         ])
         
         loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
@@ -72,21 +141,48 @@ class LoginViewController: UIViewController {
             return
         }
         
-        // Validate email format
-        if !email.hasSuffix("@gmail.com") {
-            showAlert(message: "Please enter a valid Gmail address")
-            return
+        // Start loading
+        loadingIndicator.startAnimating()
+        loginButton.setTitle("", for: .normal)
+        
+        // Attempt to sign in with Supabase
+        Task {
+            do {
+                let (session, userData) = try await dataController.signIn(email: email, password: password)
+                
+                if session.user != nil {
+                    // Store user email
+                    UserDefaults.standard.set(email, forKey: "userEmail")
+                    UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                    
+                    if userData == nil {
+                        print("⚠️ Warning: User authenticated but no profile data found in UserTable")
+                    }
+                    
+                    // Show success and navigate
+                    DispatchQueue.main.async { [weak self] in
+                        self?.showSuccessAndNavigate()
+                    }
+                } else {
+                    throw NSError(domain: "LoginError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid credentials"])
+                }
+            } catch {
+                DispatchQueue.main.async { [weak self] in
+                    self?.loadingIndicator.stopAnimating()
+                    self?.loginButton.setTitle("Sign In", for: .normal)
+                    self?.showAlert(message: "Invalid email or password")
+                }
+            }
         }
-        
-        UserDefaults.standard.set(true, forKey: "isLoggedIn")
-        UserDefaults.standard.set(email, forKey: "userEmail")
-        
-        // Show success alert that auto-dismisses
+    }
+    
+    private func showSuccessAndNavigate() {
+        // Show success alert
         let alert = UIAlertController(title: "Success", message: "Login successful!", preferredStyle: .alert)
         present(alert, animated: true)
         
-        // Dismiss alert after 2 seconds and navigate
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+        // Dismiss alert after 1 second and navigate
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             alert.dismiss(animated: true) {
                 let mainStoryboard = UIStoryboard(name: "Main", bundle: nil)
                 if let tabBarController = mainStoryboard.instantiateViewController(withIdentifier: "TabBarController") as? UITabBarController {

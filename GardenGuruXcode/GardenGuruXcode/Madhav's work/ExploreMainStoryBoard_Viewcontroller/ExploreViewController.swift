@@ -207,7 +207,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         updateDataForSelectedSegment()
     }
     
-    func updateDataForSelectedSegment() {
+    private func updateDataForSelectedSegment() {
         selectedSegment = segmentControlOnExplore.selectedSegmentIndex
         
         switch segmentControlOnExplore.selectedSegmentIndex {

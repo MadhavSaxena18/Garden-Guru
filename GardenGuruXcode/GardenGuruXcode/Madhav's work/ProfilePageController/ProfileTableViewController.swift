@@ -22,7 +22,7 @@ class ProfileTableViewController: UITableViewController {
         super.viewDidLoad()
         
         // Get user data and update username
-        if let user = dataController.getUser() {
+        if let user = DataControllerGG.shared.getUserSync() {
             userData = user
             userNameLabel.text = user.userName
         }

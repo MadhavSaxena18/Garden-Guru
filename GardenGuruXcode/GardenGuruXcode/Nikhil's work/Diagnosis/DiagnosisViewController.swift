@@ -111,7 +111,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
         // Get plant details from DataController
         if let plantName = selectedPlant?.plantName,
-           let plant = dataController.getPlantbyName(by: plantName) {
+           let plant = dataController.getPlantbyNameSync(name: plantName) {
             
             // Update botanical name in selectedPlant
             selectedPlant?.botanicalName = plant.plantBotanicalName
@@ -137,9 +137,9 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
             // Update disease details
             if let diagnosis = selectedPlant?.diagnosis,
-               let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
-                selectedPlant?.sectionDetails = diseaseDetails
-                tableView.reloadData()
+               let diseaseID = UUID(uuidString: diagnosis),
+               let diseaseDetails = dataController.getDiseaseDetailsSync(diseaseID: diseaseID) {
+                updateDiseaseDetails(with: diseaseDetails)
             }
 
 
@@ -154,13 +154,10 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 //            }
             if let diagnosis = selectedPlant?.diagnosis {
                 print("Diagnosis: \(diagnosis)")
-                if let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
+                if let diseaseID = UUID(uuidString: diagnosis),
+                   let diseaseDetails = dataController.getDiseaseDetailsSync(diseaseID: diseaseID) {
                     print("Inside update")
-                    selectedPlant?.sectionDetails = diseaseDetails
-                    print("Disease Details: \(diseaseDetails)")
-                    DispatchQueue.main.async {
-                        self.tableView.reloadData()
-                    }
+                    updateDiseaseDetails(with: diseaseDetails)
                 } else {
                     print("No disease details found for \(diagnosis)")
                 }
@@ -171,19 +168,17 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
 
             // Check if plant exists in user's space
-            if let firstUser = dataController.getUsers().first {
-                let userPlants = dataController.getUserPlants(for: firstUser.userId)
+            if let firstUser = dataController.getUserSync() {
+                let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
                 isExistingPlant = userPlants.contains { userPlant in
-                    if let existingPlant = dataController.getPlant(by: userPlant.userplantID) {
+                    if let existingPlant = dataController.getPlantSync(by: userPlant.userplantID) {
                         return existingPlant.plantName == plantName
                     }
                     return false
                 }
                 
-                
                 if isExistingPlant {
                     showExistingPlantAlert()
-                   // startCaringButton.isHidden = true
                 }
                 
                 startCaringButton.setTitle(isExistingPlant ? "Start Caring" : "Add and Start Caring", for: .normal)
@@ -431,7 +426,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         // Pass both the plant name and the selected plant
         reminderVC.plantNameForReminder = plantName
-        if let plant = dataController.getPlantbyName(by: plantName) {
+        if let plant = dataController.getPlantbyNameSync(name: plantName) {
             // Get the image we're currently displaying in the diagnosis view
             if let diagnosisImage = plantImageView.image {
                 print("✅ Adding diagnosis image to plant")
@@ -447,12 +442,37 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         present(navController, animated: true)
     }
 
-    // Add this method to update disease details
-    func updateDiseaseDetails(with diagnosis: String) {
-        if let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
-            selectedPlant?.sectionDetails = diseaseDetails
-            tableView.reloadData()
+    // Helper function to convert Diseases to dictionary format
+    private func convertDiseaseToDictionary(_ disease: Diseases) -> [String: [String]] {
+        var dict: [String: [String]] = [:]
+        
+        // Add symptoms
+        if !disease.symptoms.isEmpty {
+            dict["Symptoms"] = disease.symptoms
         }
+        
+        // Add causes
+        if !disease.causes.isEmpty {
+            dict["Causes"] = disease.causes
+        }
+        
+        // Add treatments
+        if !disease.treatment.isEmpty {
+            dict["Treatment"] = disease.treatment
+        }
+        
+        // Add prevention
+        if !disease.prevention.isEmpty {
+            dict["Prevention"] = disease.prevention
+        }
+        
+        return dict
+    }
+
+    // Update the disease details handling
+    private func updateDiseaseDetails(with disease: Diseases) {
+        selectedPlant?.sectionDetails = convertDiseaseToDictionary(disease)
+        tableView.reloadData()
     }
 
     // Add this method after setupUI()
