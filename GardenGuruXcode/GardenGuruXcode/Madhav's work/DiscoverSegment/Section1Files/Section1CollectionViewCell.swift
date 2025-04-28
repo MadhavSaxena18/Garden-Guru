@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class Section1CollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var plantImage: UIImageView!
@@ -43,18 +44,15 @@ class Section1CollectionViewCell: UICollectionViewCell {
     private func updateUI() {
         guard let plant = plant else { return }
         
-        // Load image from URL
+        // Load image from URL using SDWebImage
         if let imageURL = URL(string: plant.image) {
-            URLSession.shared.dataTask(with: imageURL) { [weak self] data, response, error in
-                guard let data = data, error == nil else { return }
-                DispatchQueue.main.async {
-                    self?.plantImage.image = UIImage(data: data)
-                }
-            }.resume()
+            plantImage.sd_setImage(with: imageURL, placeholderImage: UIImage(named: "placeholder_plant"))
+        } else {
+            plantImage.image = UIImage(named: "placeholder_plant")
         }
         
         plantNameLabel.text = plant.plantName
         plantDescriptionLabel.text = plant.plantDescription
-        }
+    }
 }
 

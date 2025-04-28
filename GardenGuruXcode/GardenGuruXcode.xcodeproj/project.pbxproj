@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		8E5A16822D6D8FAD00B10410 /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = 8E5A16812D6D8FAD00B10410 /* GoogleGenerativeAI */; };
+		8EC1D9FC2DBF7A410089ED5A /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8EC1D9FB2DBF7A410089ED5A /* SDWebImage */; };
+		8EC1D9FE2DBF7A410089ED5A /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8EC1D9FD2DBF7A410089ED5A /* SDWebImageMapKit */; };
 		DBE902872D7602620083691A /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = DBE902862D7602620083691A /* Auth */; };
 		DBE902892D7602620083691A /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = DBE902882D7602620083691A /* Functions */; };
 		DBE9028B2D7602620083691A /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = DBE9028A2D7602620083691A /* PostgREST */; };
@@ -47,7 +49,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				DBE902922D7602750083691A /* Supabase in Frameworks */,
+				8EC1D9FE2DBF7A410089ED5A /* SDWebImageMapKit in Frameworks */,
 				DBE9028F2D7602620083691A /* Storage in Frameworks */,
+				8EC1D9FC2DBF7A410089ED5A /* SDWebImage in Frameworks */,
 				DBE9028B2D7602620083691A /* PostgREST in Frameworks */,
 				DBE902892D7602620083691A /* Functions in Frameworks */,
 				DBE902872D7602620083691A /* Auth in Frameworks */,
@@ -110,6 +114,8 @@
 				DBE9028C2D7602620083691A /* Realtime */,
 				DBE9028E2D7602620083691A /* Storage */,
 				DBE902912D7602750083691A /* Supabase */,
+				8EC1D9FB2DBF7A410089ED5A /* SDWebImage */,
+				8EC1D9FD2DBF7A410089ED5A /* SDWebImageMapKit */,
 			);
 			productName = GardenGuruXcode;
 			productReference = 8EB683392D311C110091572C /* GardenGuruXcode.app */;
@@ -142,6 +148,7 @@
 			packageReferences = (
 				8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */,
 				DBE902852D7602620083691A /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				8EC1D9FA2DBF7A410089ED5A /* XCRemoteSwiftPackageReference "SDWebImage" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8EB6833A2D311C110091572C /* Products */;
@@ -389,6 +396,14 @@
 				minimumVersion = 0.5.6;
 			};
 		};
+		8EC1D9FA2DBF7A410089ED5A /* XCRemoteSwiftPackageReference "SDWebImage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImage";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.21.0;
+			};
+		};
 		DBE902852D7602620083691A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift.git";
@@ -404,6 +419,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */;
 			productName = GoogleGenerativeAI;
+		};
+		8EC1D9FB2DBF7A410089ED5A /* SDWebImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8EC1D9FA2DBF7A410089ED5A /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImage;
+		};
+		8EC1D9FD2DBF7A410089ED5A /* SDWebImageMapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8EC1D9FA2DBF7A410089ED5A /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImageMapKit;
 		};
 		DBE902862D7602620083691A /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;

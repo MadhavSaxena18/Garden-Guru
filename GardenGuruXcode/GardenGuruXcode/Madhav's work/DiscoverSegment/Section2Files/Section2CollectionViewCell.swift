@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class Section2CollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var imageViewLabel: UIImageView!
@@ -44,14 +45,19 @@ class Section2CollectionViewCell: UICollectionViewCell {
     private func updateUI() {
         guard let disease = disease else { return }
         
-        // Load image from URL
+        // Debug print statement
+        print("[DEBUG] Loading image for disease: \(disease.diseaseName), image URL: \(disease.image)")
+        
+        // Load image from URL using SDWebImage
         if let imageURL = URL(string: disease.image) {
-            URLSession.shared.dataTask(with: imageURL) { [weak self] data, response, error in
-                guard let data = data, error == nil else { return }
-                DispatchQueue.main.async {
-                    self?.imageViewLabel.image = UIImage(data: data)
+            imageViewLabel.sd_setImage(with: imageURL, placeholderImage: UIImage(named: "placeholder_disease"), options: [], completed: { [weak self] image, error, _, _ in
+                if let error = error {
+                    print("[DEBUG] Error loading image for disease \(disease.diseaseName):", error)
                 }
-            }.resume()
+            })
+        } else {
+            print("[DEBUG] No valid image URL for disease: \(disease.diseaseName)")
+            imageViewLabel.image = UIImage(named: "placeholder_disease")
         }
         
         diseaseNameLabel.text = disease.diseaseName

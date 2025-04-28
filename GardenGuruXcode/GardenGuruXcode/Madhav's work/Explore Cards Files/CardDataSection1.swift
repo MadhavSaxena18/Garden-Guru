@@ -31,9 +31,19 @@ class CardDataSection1: UICollectionViewCell {
         }
 
         if let plant = data as? Plant {
-            // Set plant image
-            if let imageName = plant.plantImage {
-                plantImageOutlet.image = UIImage(named: imageName)
+            // Set plant image from URL if available
+            if let urlString = plant.plantImage, let url = URL(string: urlString) {
+                URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+                    guard let self = self, let data = data, error == nil else {
+                        DispatchQueue.main.async {
+                            self?.plantImageOutlet.image = UIImage(named: "defaultPlantImage")
+                        }
+                        return
+                    }
+                    DispatchQueue.main.async {
+                        self.plantImageOutlet.image = UIImage(data: data)
+                    }
+                }.resume()
             } else {
                 plantImageOutlet.image = UIImage(named: "defaultPlantImage")
             }
@@ -54,8 +64,18 @@ class CardDataSection1: UICollectionViewCell {
             }
             
         } else if let disease = data as? Diseases {
-            if let imageName = disease.diseaseImage {
-                plantImageOutlet.image = UIImage(named: imageName)
+            if let urlString = disease.diseaseImage, let url = URL(string: urlString) {
+                URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+                    guard let self = self, let data = data, error == nil else {
+                        DispatchQueue.main.async {
+                            self?.plantImageOutlet.image = UIImage(named: "defaultDiseaseImage")
+                        }
+                        return
+                    }
+                    DispatchQueue.main.async {
+                        self.plantImageOutlet.image = UIImage(data: data)
+                    }
+                }.resume()
             } else {
                 plantImageOutlet.image = UIImage(named: "defaultDiseaseImage")
             }
