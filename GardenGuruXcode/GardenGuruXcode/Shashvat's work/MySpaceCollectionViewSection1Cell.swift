@@ -1,0 +1,90 @@
+//
+//  MySpaceCollectionViewCell.swift
+//  GardenGuruXcode
+//
+//  Created by Batch - 1 on 15/01/25.
+//
+
+import UIKit
+import Foundation
+class MySpaceCollectionViewSection1Cell: UICollectionViewCell {
+    @IBOutlet weak var section1PlantImageView: UIImageView!
+    @IBOutlet var section1NickNameLabel: UILabel!
+    
+    var optionsHandler: (() -> Void)?
+    
+    private lazy var optionsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "ellipsis"), for: .normal)
+        button.tintColor = UIColor(hex: "284329")
+        button.backgroundColor = .white
+        button.layer.cornerRadius = 15
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(optionsButtonTapped), for: .touchUpInside)
+        return button
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupCell()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupCell()
+    }
+    
+    private func setupCell() {
+        isUserInteractionEnabled = true
+        contentView.isUserInteractionEnabled = true
+        setupOptionsButton()
+    }
+    
+    private func setupOptionsButton() {
+        contentView.addSubview(optionsButton)
+        
+        NSLayoutConstraint.activate([
+            optionsButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            optionsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            optionsButton.widthAnchor.constraint(equalToConstant: 30),
+            optionsButton.heightAnchor.constraint(equalToConstant: 30)
+        ])
+    }
+    
+    @objc private func optionsButtonTapped() {
+        optionsHandler?()
+    }
+    
+    func configure(with userPlant: UserPlant, plant: Plant) {
+        print("Configuring cell for plant: \(plant.plantName)")
+        print("Available images: \(plant.plantImage.count)")
+        
+        // Try to get the last image which might be a base64 encoded captured image
+        if let lastImage = plant.plantImage.last,
+           let imageData = Data(base64Encoded: lastImage),
+           let image = UIImage(data: imageData) {
+            print("✅ Using captured image")
+            section1PlantImageView.image = image
+        } else if !plant.plantImage.isEmpty {
+            // Fall back to the first (default) image
+            print("✅ Using default image: \(plant.plantImage[0])")
+            section1PlantImageView.image = UIImage(named: plant.plantImage[0])
+        } else {
+            // Use a placeholder if no images available
+            print("⚠️ No images available, using placeholder")
+            section1PlantImageView.image = UIImage(named: "plant_placeholder")
+        }
+        
+        section1NickNameLabel.text = userPlant.userPlantNickName
+        section1PlantImageView.contentMode = .scaleAspectFill
+        section1PlantImageView.clipsToBounds = true
+        
+        backgroundColor = .white
+        layer.cornerRadius = 25
+        
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOffset = CGSize(width: 0, height: 2)
+        layer.shadowRadius = 4
+        layer.shadowOpacity = 0.1
+    }
+}

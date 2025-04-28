@@ -1,5 +1,8 @@
 {
+
   "originHash" : "ecd3def9dce20f8d176e85be12929d6095a2025dcb22a8df906049b1023cefa7",
+  "originHash" : "e00d5aca5ba1f853d21dfbdba0cd2715cab76e88e5378f4ce70fc9c7b883f655",
+
   "pins" : [
     {
       "identity" : "generative-ai-swift",
@@ -11,6 +14,7 @@
       }
     },
     {
+
       "identity" : "sdwebimage",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SDWebImage/SDWebImage",
@@ -20,6 +24,8 @@
       }
     },
     {
+
+
       "identity" : "supabase-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/supabase/supabase-swift.git",

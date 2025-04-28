@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="JQR-jl-RUK">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Tab Bar Controller-->
+        <scene sceneID="D8w-OZ-EX3">
+            <objects>
+                <tabBarController storyboardIdentifier="TabBarController" automaticallyAdjustsScrollViewInsets="NO" id="JQR-jl-RUK" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="NfH-3I-xEu">
+                        <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="tintColor" red="0.15686274510000001" green="0.26274509800000001" blue="0.16078431369999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <color key="selectedImageTintColor" red="0.28114051039999999" green="0.47898145559999999" blue="0.1607843041" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <tabBarAppearance key="scrollEdgeAppearance"/>
+                    </tabBar>
+                    <connections>
+                        <segue destination="oQH-AN-bBh" kind="relationship" relationship="viewControllers" id="Mp9-4V-epG"/>
+                        <segue destination="XD5-aF-xam" kind="relationship" relationship="viewControllers" id="owh-zF-hUg"/>
+                        <segue destination="SwI-P9-8aM" kind="relationship" relationship="viewControllers" id="bkh-Vz-vo7"/>
+                    </connections>
+                </tabBarController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="s7n-DK-KWs" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="67.938931297709928" y="3.5211267605633805"/>
+        </scene>
+        <!--exploreTab-->
+        <scene sceneID="9MU-8n-4Ph">
+            <objects>
+                <viewControllerPlaceholder storyboardName="exploreTab" id="oQH-AN-bBh" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="rZt-8i-u88"/>
+                </viewControllerPlaceholder>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="EX7-9A-xaw" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1137" y="-229"/>
+        </scene>
+        <!--scanAndDiagnoseTab-->
+        <scene sceneID="vwW-V2-wmh">
+            <objects>
+                <viewControllerPlaceholder storyboardName="scanAndDiagnoseTab" id="XD5-aF-xam" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" image="camera" catalog="system" id="9S8-YL-adn"/>
+                </viewControllerPlaceholder>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="v5S-Rl-RCk" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1137" y="-162"/>
+        </scene>
+        <!--mySpaceTab-->
+        <scene sceneID="wbD-hq-ufg">
+            <objects>
+                <viewControllerPlaceholder storyboardName="mySpaceTab" id="SwI-P9-8aM" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="dBO-kP-OAd"/>
+                </viewControllerPlaceholder>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="JLV-H1-gld" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1137" y="-75"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="camera" catalog="system" width="128" height="93"/>
+    </resources>
+</document>

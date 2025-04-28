@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_12" orientation="landscape" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="CareReminderCell" id="gTV-IL-0wX" customClass="CareReminderCollectionViewCell" customModule="GardenGuruXcode" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="360" height="130"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                <rect key="frame" x="0.0" y="0.0" width="360" height="130"/>
+                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="al5-gu-947">
+                        <rect key="frame" x="185" y="25" width="37.333333333333343" height="18"/>
+                        <fontDescription key="fontDescription" style="UICTFontTextStyleSubhead"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qhU-PM-WnM">
+                        <rect key="frame" x="331" y="58" width="24" height="14"/>
+                        <state key="normal" title="Button"/>
+                        <buttonConfiguration key="configuration" style="plain" title=""/>
+                        <connections>
+                            <action selector="checkBoxCareReminderButtonTapped:" destination="gTV-IL-0wX" eventType="touchUpInside" id="h0A-hI-xLi"/>
+                        </connections>
+                    </button>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="252" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TJ6-gu-upZ">
+                        <rect key="frame" x="185" y="48" width="31" height="14.333333333333336"/>
+                        <fontDescription key="fontDescription" style="UICTFontTextStyleCaption1"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Btb-ST-reA">
+                        <rect key="frame" x="7" y="9" width="163" height="112"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="163" id="cs4-Ft-jCQ"/>
+                        </constraints>
+                        <userDefinedRuntimeAttributes>
+                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                <integer key="value" value="15"/>
+                            </userDefinedRuntimeAttribute>
+                        </userDefinedRuntimeAttributes>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Completed" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ap9-2O-tp3">
+                        <rect key="frame" x="185" y="72.333333333333329" width="75.333333333333314" height="18"/>
+                        <fontDescription key="fontDescription" style="UICTFontTextStyleSubhead"/>
+                        <color key="textColor" red="0.0" green="0.30588235289999999" blue="0.019607843140000001" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+            </view>
+            <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="qhU-PM-WnM" secondAttribute="trailing" constant="5" id="Arb-JC-2L1"/>
+                <constraint firstItem="TJ6-gu-upZ" firstAttribute="top" secondItem="al5-gu-947" secondAttribute="bottom" constant="5" id="P7f-aF-bN2"/>
+                <constraint firstItem="al5-gu-947" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="Q3b-Z5-vbh"/>
+                <constraint firstItem="al5-gu-947" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="25" id="RLZ-Kq-vFD"/>
+                <constraint firstItem="ap9-2O-tp3" firstAttribute="top" secondItem="TJ6-gu-upZ" secondAttribute="bottom" constant="10" id="TQ9-B6-iMc"/>
+                <constraint firstItem="qhU-PM-WnM" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="ZrX-Ks-5bR"/>
+                <constraint firstItem="Btb-ST-reA" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="7" id="b5U-cc-Cjk"/>
+                <constraint firstItem="Btb-ST-reA" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="9" id="e3p-Ps-pa2"/>
+                <constraint firstItem="TJ6-gu-upZ" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="gnm-lV-0UM"/>
+                <constraint firstItem="ap9-2O-tp3" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="mFt-7Q-ber"/>
+                <constraint firstAttribute="bottom" secondItem="Btb-ST-reA" secondAttribute="bottom" constant="9" id="uSv-Lo-rjK"/>
+            </constraints>
+            <size key="customSize" width="325" height="130"/>
+            <connections>
+                <outlet property="careReminderPlantImageView" destination="Btb-ST-reA" id="hPr-X5-zR6"/>
+                <outlet property="checkBoxCareReminderButton" destination="qhU-PM-WnM" id="N80-S8-U1r"/>
+                <outlet property="dueDateCareReminder" destination="ap9-2O-tp3" id="gQ8-jr-uzq"/>
+                <outlet property="nickNameCareReminderLabel" destination="TJ6-gu-upZ" id="pMX-IQ-Nsh"/>
+                <outlet property="plantNameCareReminderLabel" destination="al5-gu-947" id="4P5-Xa-C66"/>
+            </connections>
+            <point key="canvasLocation" x="342.95774647887328" y="35.114503816793892"/>
+        </collectionViewCell>
+    </objects>
+</document>
