@@ -57,25 +57,16 @@ class MySpaceCollectionViewSection1Cell: UICollectionViewCell {
     
     func configure(with userPlant: UserPlant, plant: Plant) {
         print("Configuring cell for plant: \(plant.plantName)")
-        print("Available images: \(plant.plantImage.count)")
         
-        // Try to get the last image which might be a base64 encoded captured image
-        if let lastImage = plant.plantImage.last,
-           let imageData = Data(base64Encoded: lastImage),
-           let image = UIImage(data: imageData) {
-            print("✅ Using captured image")
-            section1PlantImageView.image = image
-        } else if !plant.plantImage.isEmpty {
-            // Fall back to the first (default) image
-            print("✅ Using default image: \(plant.plantImage[0])")
-            section1PlantImageView.image = UIImage(named: plant.plantImage[0])
+        // Set plant image
+        if let imageName = plant.plantImage {
+            section1PlantImageView.image = UIImage(named: imageName)
         } else {
-            // Use a placeholder if no images available
-            print("⚠️ No images available, using placeholder")
             section1PlantImageView.image = UIImage(named: "plant_placeholder")
         }
         
-        section1NickNameLabel.text = userPlant.userPlantNickName
+        // Set plant name
+        section1NickNameLabel.text = plant.plantName
         section1PlantImageView.contentMode = .scaleAspectFill
         section1PlantImageView.clipsToBounds = true
         

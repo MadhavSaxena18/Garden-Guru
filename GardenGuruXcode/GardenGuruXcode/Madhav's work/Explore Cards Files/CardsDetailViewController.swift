@@ -191,10 +191,14 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             var images: [UIImage] = []
             
             // Get images based on the data type
-            if let plant = selectedData as? Plant {
-                images = plant.plantImage.compactMap { UIImage(named: $0) }
-            } else if let disease = selectedData as? Diseases {
-                images = disease.diseaseImage.compactMap { UIImage(named: $0) }
+            if let plant = selectedData as? Plant, let imageName = plant.plantImage {
+                if let image = UIImage(named: imageName) {
+                    images = [image]
+                }
+            } else if let disease = selectedData as? Diseases, let imageName = disease.diseaseImage {
+                if let image = UIImage(named: imageName) {
+                    images = [image]
+                }
             }
             
             // Configure and present the full-screen viewer

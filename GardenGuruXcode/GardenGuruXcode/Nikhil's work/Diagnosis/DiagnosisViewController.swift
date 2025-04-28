@@ -114,12 +114,12 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
            let plant = dataController.getPlantbyNameSync(name: plantName) {
             
             // Update botanical name in selectedPlant
-            selectedPlant?.botanicalName = plant.plantBotanicalName
+            selectedPlant?.botanicalName = plant.plantBotanicalName ?? ""
             
             let generalDetails = [
-                "Botanical Name: \(plant.plantBotanicalName)",
-                "Category: \(plant.category)",
-                "Favourable Season: \(plant.favourableSeason)"
+                "Botanical Name: \(plant.plantBotanicalName ?? "Not specified")",
+                "Category: \(plant.category?.rawValue ?? "Not specified")",
+                "Favourable Season: \(plant.favourableSeason?.rawValue ?? "Not specified")"
             ]
 
             // Clear existing stack view items
@@ -134,44 +134,27 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 DiagnosisViewController.detailsStackView.addArrangedSubview(label)
             }
 
-
             // Update disease details
-            if let diagnosis = selectedPlant?.diagnosis,
-               let diseaseID = UUID(uuidString: diagnosis),
-               let diseaseDetails = dataController.getDiseaseDetailsSync(diseaseID: diseaseID) {
-                updateDiseaseDetails(with: diseaseDetails)
-            }
-
-
-            print("Diseases update")
-            // Update disease details
-//            if let diagnosis = selectedPlant?.diagnosis,
-//               let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
-//                print("Inside update")
-//                selectedPlant?.sectionDetails = diseaseDetails
-//                print(diseaseDetails)
-//                tableView.reloadData()
-//            }
             if let diagnosis = selectedPlant?.diagnosis {
-                print("Diagnosis: \(diagnosis)")
-                if let diseaseID = UUID(uuidString: diagnosis),
-                   let diseaseDetails = dataController.getDiseaseDetailsSync(diseaseID: diseaseID) {
-                    print("Inside update")
+                if let diseaseID = UUID(uuidString: diagnosis) {
+                if let diseaseDetails = dataController.getDiseaseDetailsSync(diseaseID: diseaseID) {
                     updateDiseaseDetails(with: diseaseDetails)
                 } else {
                     print("No disease details found for \(diagnosis)")
                 }
             } else {
+                    print("Invalid UUID format: \(diagnosis)")
+                }
+            } else {
                 print("Diagnosis is nil")
             }
-
-
 
             // Check if plant exists in user's space
             if let firstUser = dataController.getUserSync() {
                 let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
                 isExistingPlant = userPlants.contains { userPlant in
-                    if let existingPlant = dataController.getPlantSync(by: userPlant.userplantID) {
+                    if let plantID = userPlant.userplantID,
+                       let existingPlant = dataController.getPlantSync(by: plantID) {
                         return existingPlant.plantName == plantName
                     }
                     return false
@@ -184,25 +167,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
                 startCaringButton.setTitle(isExistingPlant ? "Start Caring" : "Add and Start Caring", for: .normal)
             }
         }
-//            if let firstUser = dataController.getUsers().first {
-//                let userPlants = dataController.getUserPlants(for: firstUser.userId)
-//                
-//                isExistingPlant = userPlants.contains { userPlant in
-//                    guard let existingPlant = dataController.getPlant(by: userPlant.userplantID) else {
-//                        return false
-//                    }
-//                    return existingPlant.plantName == plantName
-//                }
-//
-//                if isExistingPlant {
-//                    showExistingPlantAlert()
-//                    startCaringButton.isHidden = true  // Hide the button if plant exists
-//                } else {
-//                    startCaringButton.isHidden = false
-//                    startCaringButton.setTitle("Add and Start Caring", for: .normal)
-//                }
-//            }
-
 
         // TableView
         tableView.delegate = self
@@ -447,23 +411,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         var dict: [String: [String]] = [:]
         
         // Add symptoms
-        if !disease.symptoms.isEmpty {
-            dict["Symptoms"] = disease.symptoms
-        }
-        
-        // Add causes
-        if !disease.causes.isEmpty {
-            dict["Causes"] = disease.causes
+        if let symptoms = disease.diseaseSymptoms {
+            dict["Symptoms"] = [symptoms]
         }
         
         // Add treatments
-        if !disease.treatment.isEmpty {
-            dict["Treatment"] = disease.treatment
-        }
-        
-        // Add prevention
-        if !disease.prevention.isEmpty {
-            dict["Prevention"] = disease.prevention
+        if let treatment = disease.diseaseCure {
+            dict["Treatment"] = [treatment]
         }
         
         return dict

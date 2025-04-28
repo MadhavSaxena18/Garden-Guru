@@ -113,27 +113,28 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .from("UserTable")
             .select()
             .eq("user_email", value: userEmail)
-            .single()
             .execute()
         
-        guard let userData = userResponse.data as? [String: Any],
-              let userIdString = userData["id"] as? String,
-              let userId = UUID(uuidString: userIdString) else {
+        print("📡 Raw user response: \(String(describing: userResponse.data))")
+        
+        guard let jsonObject = userResponse.data as? [[String: Any]],
+              let firstUser = jsonObject.first,
+              let userIdString = firstUser["id"] as? String else {
             print("❌ Could not find user ID for email: \(userEmail)")
             return []
         }
         
-        print("📍 Found user ID: \(userId.uuidString)")
+        print("📍 Found user ID: \(userIdString)")
         
         // Now get the user's plants using the correct ID
         let response = try await supabase
             .database
             .from("UserPlant")
             .select()
-            .eq("userId", value: userId.uuidString)
+            .eq("userId", value: userIdString)
             .execute()
         
-        print("📡 Raw user plants response data: \(String(describing: response.data))")
+        print("📡 Raw user plants response: \(String(describing: response.data))")
         
         if let jsonObject = response.data as? [[String: Any]] {
             let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
@@ -195,13 +196,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Plant Functions
     
-    func getPlants() -> [Plant] {
-        var plants: [Plant] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
-            do {
-                print("🔍 Fetching all plants...")
+    func getPlants() async throws -> [Plant] {
+        print("🔍 Fetching all plants from Supabase...")
                 let response = try await supabase
                     .database
                     .from("Plant")
@@ -209,20 +205,37 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     .execute()
                 
                 print("📡 Raw plants response: \(String(describing: response.data))")
+        print("📡 Response type: \(type(of: response.data))")
                 
-                if let jsonObject = response.data as? [[String: Any]] {
-                    let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-                    plants = try JSONDecoder().decode([Plant].self, from: jsonData)
+        if let data = response.data as? Data {
+            print("✅ Successfully got Data response")
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let plants = try decoder.decode([Plant].self, from: data)
                     print("✅ Successfully decoded \(plants.count) plants")
-                }
+                return plants
             } catch {
-                print("❌ Error fetching plants: \(error)")
+                print("❌ Decoding error: \(error)")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: expected \(type) at path: \(context.codingPath)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: expected \(type) at path: \(context.codingPath)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key) at path: \(context.codingPath)")
+                    case .dataCorrupted(let context):
+                        print("Data corrupted at path: \(context.codingPath)")
+                    @unknown default:
+                        print("Unknown decoding error")
+                    }
+                }
+                throw error
             }
-            semaphore.signal()
         }
-        
-        _ = semaphore.wait(timeout: .now() + 5)
-        return plants
+        print("❌ Failed to get Data from response")
+        return []
     }
     
     // Function to get a single plant by ID
@@ -265,6 +278,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Disease Functions
     
     func getDiseases(for plantID: UUID) async throws -> [Diseases] {
+        print("🔍 Fetching diseases for plant ID: \(plantID)")
+        
+        // First get the plant-disease relationships
         let plantDiseasesResponse = try await supabase
             .database
             .from("PlantDisease")
@@ -272,26 +288,39 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("plantID", value: plantID.uuidString)
             .execute()
         
-        if let jsonData = plantDiseasesResponse.data as? Data {
-            let plantDiseases = try JSONDecoder().decode([PlantDisease].self, from: jsonData)
+        print("📡 Raw plant diseases response: \(String(describing: plantDiseasesResponse.data))")
+        
+        var diseases: [Diseases] = []
+        
+        if let jsonObject = plantDiseasesResponse.data as? [[String: Any]] {
+            print("✅ Found \(jsonObject.count) plant-disease relationships")
             
-            var diseases: [Diseases] = []
-            for plantDisease in plantDiseases {
+            for plantDisease in jsonObject {
+                guard let diseaseIDString = plantDisease["diseaseID"] as? String,
+                      let diseaseID = UUID(uuidString: diseaseIDString) else {
+                    print("⚠️ Invalid disease ID in plant disease relationship")
+                    continue
+                }
+                
+                // Get disease details
                 let diseaseResponse = try await supabase
                     .database
                     .from("Diseases")
                     .select()
-                    .eq("diseaseID", value: plantDisease.diseaseID.uuidString)
+                    .eq("diseaseID", value: diseaseID.uuidString)
                     .execute()
                 
-                if let diseaseData = diseaseResponse.data as? Data,
-                   let disease = try JSONDecoder().decode([Diseases].self, from: diseaseData).first {
+                if let diseaseJsonObject = diseaseResponse.data as? [[String: Any]],
+                   let diseaseData = try? JSONSerialization.data(withJSONObject: diseaseJsonObject.first ?? [:]),
+                   let disease = try? JSONDecoder().decode(Diseases.self, from: diseaseData) {
                     diseases.append(disease)
+                    print("✅ Added disease: \(disease.diseaseName)")
                 }
             }
-            return diseases
         }
-        return []
+        
+        print("✅ Total diseases found: \(diseases.count)")
+        return diseases
     }
     
     // Function to get disease details
@@ -335,13 +364,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Common Issues Functions
     
-    func getCommonIssues() -> [Diseases] {
-        var diseases: [Diseases] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
-            do {
-                print("🔍 Fetching all diseases...")
+    func getCommonIssues() async throws -> [Diseases] {
+        print("🔍 Fetching common issues from Supabase...")
                 let response = try await supabase
                     .database
                     .from("Diseases")
@@ -349,20 +373,49 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     .execute()
                 
                 print("📡 Raw diseases response: \(String(describing: response.data))")
-                
-                if let jsonObject = response.data as? [[String: Any]] {
-                    let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-                    diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
+        print("📡 Response type: \(type(of: response.data))")
+        
+        if let jsonData = response.data as? Data {
+            print("✅ Successfully got Data response")
+            do {
+                let diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
                     print("✅ Successfully decoded \(diseases.count) diseases")
-                }
+                return diseases
             } catch {
-                print("❌ Error fetching diseases: \(error)")
+                print("❌ Decoding error: \(error)")
+                print("Error details: \(error.localizedDescription)")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .dataCorrupted(let context):
+                        print("Data corrupted: \(context.debugDescription)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key.stringValue), context: \(context.debugDescription)")
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: \(type), context: \(context.debugDescription)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: \(type), context: \(context.debugDescription)")
+                    @unknown default:
+                        print("Unknown decoding error")
+                    }
+                }
+                return []
             }
-            semaphore.signal()
+        } else if let jsonObject = response.data as? [[String: Any]] {
+            print("✅ Successfully got JSON object array")
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
+                print("✅ Successfully decoded \(diseases.count) diseases")
+                return diseases
+            } catch {
+                print("❌ JSON serialization/decoding error: \(error)")
+                print("Error details: \(error.localizedDescription)")
+                return []
+            }
         }
         
-        _ = semaphore.wait(timeout: .now() + 5)
-        return diseases
+        print("❌ Failed to decode diseases data - unexpected response type")
+        return []
     }
     
     // MARK: - User Plant Functions
@@ -391,26 +444,46 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Fertilizer Functions
     
-    func getCommonFertilizers() -> [Fertilizer] {
-        // This is a synchronous wrapper for UI that can't handle async
-        var fertilizers: [Fertilizer] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
+    func getCommonFertilizers() async throws -> [Fertilizer] {
+        print("🔍 Fetching common fertilizers from Supabase...")
             let response = try await supabase
                 .database
                 .from("Fertilizer")
                 .select()
                 .execute()
             
-            if let jsonData = response.data as? Data {
-                fertilizers = try JSONDecoder().decode([Fertilizer].self, from: jsonData)
-            }
-            semaphore.signal()
-        }
+        print("📡 Raw fertilizers response: \(String(describing: response.data))")
+        print("📡 Response type: \(type(of: response.data))")
         
-        _ = semaphore.wait(timeout: .now() + 5)
+        if let data = response.data as? Data {
+            print("✅ Successfully got Data response")
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let fertilizers = try decoder.decode([Fertilizer].self, from: data)
+                print("✅ Successfully decoded \(fertilizers.count) fertilizers")
         return fertilizers
+            } catch {
+                print("❌ Decoding error: \(error)")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: expected \(type) at path: \(context.codingPath)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: expected \(type) at path: \(context.codingPath)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key) at path: \(context.codingPath)")
+                    case .dataCorrupted(let context):
+                        print("Data corrupted at path: \(context.codingPath)")
+                    @unknown default:
+                        print("Unknown decoding error")
+                    }
+                }
+                throw error
+            }
+        }
+        print("❌ Failed to get Data from response")
+        return []
     }
     
     // Helper method to determine season based on date and location
@@ -425,13 +498,13 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         switch month {
         case 3...5:
-            return isNorthernHemisphere ? .spring : .autumn
+            return isNorthernHemisphere ? .Spring : .Autumn
         case 6...8:
-            return isNorthernHemisphere ? .summer : .winter
+            return isNorthernHemisphere ? .Summer : .Winter
         case 9...11:
-            return isNorthernHemisphere ? .autumn : .spring
+            return isNorthernHemisphere ? .Autumn : .Spring
         default: // 12, 1, 2
-            return isNorthernHemisphere ? .winter : .summer
+            return isNorthernHemisphere ? .Winter : .Summer
         }
     }
     
@@ -540,7 +613,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         var result: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
         
         for userPlant in userPlants {
-            if let plant = try await getPlant(by: userPlant.userplantID) {
+            if let plant = try await getPlant(by: userPlant.userplantID!) {
                 let reminder = try await getCareReminders(for: userPlant.userPlantRelationID)
                 if let existingReminder = reminder {
                     result.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
@@ -587,7 +660,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         for userPlant in userPlants {
             print("🌿 Looking up plant for userPlant ID: \(userPlant.userplantID)")
-            if let plant = try await getPlant(by: userPlant.userplantID) {
+            if let plant = try await getPlant(by: userPlant.userplantID!) {
                 print("✅ Found plant: \(plant.plantName)")
                 result.append((userPlant: userPlant, plant: plant))
             } else {
@@ -1177,6 +1250,23 @@ extension DataControllerGG {
         }
         
         _ = semaphore.wait(timeout: .now() + 5)
+    }
+    
+    func getDiseasesSync(for plantID: UUID) -> [Diseases] {
+        var diseases: [Diseases] = []
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                diseases = try await getDiseases(for: plantID)
+            } catch {
+                print("Error getting diseases: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return diseases
     }
 }
 

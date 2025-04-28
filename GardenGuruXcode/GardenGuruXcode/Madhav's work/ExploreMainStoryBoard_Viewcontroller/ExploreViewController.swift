@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreLocation
 
 class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICollectionViewDelegate , UISearchResultsUpdating{
     private let dataController = DataControllerGG.shared
@@ -34,6 +35,13 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     private let weatherService = WeatherService()
     private let locationManager = LocationManager()
     private var currentWeather: WeatherService.WeatherResponse?
+    
+    // Add missing properties
+    private var plants: [Plant] = []
+    private var diseases: [Diseases] = []
+    private var fertilizers: [Fertilizer] = []
+    
+    @IBOutlet weak var tableView: UITableView!
     
     // Add a function to fetch weather and update plants
     private func fetchWeatherAndUpdatePlants() async {
@@ -89,29 +97,38 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let temperature = weather.main.temp
         let condition = weather.weather.first?.main.lowercased() ?? ""
         
+        // Start async task to fetch and update plants
+        Task {
+            do {
+                // Fetch plants asynchronously
+                let allPlants = try await dataController.getPlants()
+                
+                // Fetch all diseases using a zero UUID
+                let allCommonIssues = try await dataController.getDiseases(for: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!)
+        
         // Filter plants based on weather conditions
         var recommendedPlants: [Plant] = []
         
         // Example logic - customize based on your needs
         if temperature < 10 {
-            recommendedPlants = dataController.getTopSeasonPlants().filter { plant in
-                plant.idealTemperature.contains(where: { $0 < 15 })
+                    recommendedPlants = allPlants.filter { plant in
+                        plant.favourableSeason == .Winter
             }
         } else if temperature > 25 {
-            recommendedPlants = dataController.getTopSeasonPlants().filter { plant in
-                plant.idealTemperature.contains(where: { $0 > 20 })
+                    recommendedPlants = allPlants.filter { plant in
+                        plant.favourableSeason == .Summer
             }
         }
         
         if condition.contains("rain") {
-            recommendedPlants.append(contentsOf: dataController.getTopSeasonPlants().filter { plant in
-                plant.lightRequirement == "High"
+                    recommendedPlants.append(contentsOf: allPlants.filter { plant in
+                        plant.favourableSeason == .Spring || plant.favourableSeason == .Autumn
             })
         }
         
         // Make sure we have some default plants if none match the weather conditions
         if recommendedPlants.isEmpty {
-            recommendedPlants = dataController.getTopSeasonPlants()
+                    recommendedPlants = allPlants
         }
         
         // Take only first 5 plants
@@ -119,9 +136,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         // Update discover categories while preserving the structure
         if selectedSegment == 0 { // Only update if we're in the Discover tab
+                    await MainActor.run {
             discoverCategories = [
                 ("Current Season Plants", recommendedPlants),
-                ("Common Issues", Array(dataController.getCommonIssues().prefix(5)))
+                            ("Common Issues", allCommonIssues)
             ]
             
             // Update filtered categories if search is active
@@ -129,8 +147,20 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 filteredDiscoverCategories = discoverCategories
             }
             
-            DispatchQueue.main.async {
-                self.collectionView.reloadData()
+                        collectionView.reloadData()
+                    }
+                }
+            } catch {
+                print("Error updating plants for weather: \(error)")
+                await MainActor.run {
+                    let alert = UIAlertController(
+                        title: "Error",
+                        message: "Failed to load plant data. Please try again later.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
             }
         }
     }
@@ -150,9 +180,30 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         setupSegmentedControl()
         setUpcollectionView()
         
-        // Fetch weather after everything is set up
+        // Request location authorization first
         Task {
+            let authStatus = locationManager.getAuthorizationStatus() // Use the new public method
+            if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
+                // Only fetch weather after we have location authorization
             await fetchWeatherAndUpdatePlants()
+            } else {
+                print("⚠️ Location access not granted. Authorization status: \(authStatus)")
+                // Handle the case where location access is not granted
+                await MainActor.run {
+                    let alert = UIAlertController(
+                        title: "Location Access Required",
+                        message: "Please enable location access in Settings to see weather-appropriate plants for your area.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(settingsURL)
+                        }
+                    })
+                    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                    self.present(alert, animated: true)
+                }
+            }
         }
     }
     override func viewWillAppear(_ animated: Bool) {
@@ -207,41 +258,79 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         updateDataForSelectedSegment()
     }
     
+    private func fetchDataFromSupabase() async {
+        print("🔄 Starting data fetch from Supabase...")
+        do {
+            // Fetch plants
+            print("🌿 Fetching plants...")
+            let plants = try await dataController.getPlants()
+            print("✅ Successfully fetched \(plants.count) plants")
+            self.plants = plants
+            
+            // Fetch diseases using getCommonIssues()
+            print("🦠 Fetching common issues...")
+            let diseases = try await dataController.getCommonIssues()
+            print("✅ Successfully fetched \(diseases.count) diseases")
+            self.diseases = diseases
+            
+            // Fetch fertilizers
+            print("🌱 Fetching fertilizers...")
+            let fertilizers = try await dataController.getCommonFertilizers()
+            print("✅ Successfully fetched \(fertilizers.count) fertilizers")
+            self.fertilizers = fertilizers
+            
+            await MainActor.run {
+                print("📊 Updating UI with fetched data:")
+                print("   - Plants: \(self.plants.count)")
+                print("   - Diseases: \(self.diseases.count)")
+                print("   - Fertilizers: \(self.fertilizers.count)")
+                
+                // Update discover categories
+                self.discoverCategories = [
+                    ("Current Season Plants", self.plants),
+                    ("Common Issues", self.diseases)
+                ]
+                
+                // Update for my plant categories
+                self.forMyPlantCategories = [
+                    ("Common Issues in your Plant", self.diseases),
+                    ("Common Fertilizers", self.fertilizers)
+                ]
+                
+                // Update filtered categories if search is active
+                if self.isSearchActive {
+                    self.filteredDiscoverCategories = self.discoverCategories
+                    self.filteredForMyPlantCategories = self.forMyPlantCategories
+            }
+            
+                // Reload collection view
+                self.collectionView.reloadData()
+                print("✅ UI update complete")
+            }
+        } catch {
+            print("❌ Error fetching data: \(error.localizedDescription)")
+            print("Error details: \(error)")
+            await MainActor.run {
+                let alert = UIAlertController(
+                    title: "Error",
+                    message: "Could not load data. Please check your internet connection and try again.",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+            }
+        }
+    }
+    
     private func updateDataForSelectedSegment() {
+        print("🔄 Updating data for segment: \(selectedSegment)")
         selectedSegment = segmentControlOnExplore.selectedSegmentIndex
         
-        switch segmentControlOnExplore.selectedSegmentIndex {
-        case 0: // "Discover"
-            identifier = 0
-            let allSeasonPlants = dataController.getTopSeasonPlants()
-            let allCommonIssues = dataController.getCommonIssues()
-            
-            discoverCategories = [
-                ("Current Season Plants", Array(allSeasonPlants.prefix(5))), // Take only first 5 plants
-                ("Common Issues", Array(allCommonIssues.prefix(5)))  // Take only first 5 issues
-            ]
-            if isSearchActive {
-                filteredDiscoverCategories = discoverCategories
-            }
-            
-        case 1: // "For My Plants"
-            identifier = 1
-            let allIssues = dataController.getCommonIssuesForUserPlants()
-            let allFertilizers = dataController.getCommonFertilizers()
-            
-            forMyPlantCategories = [
-                ("Common Issues in your Plant", Array(allIssues.prefix(5))),
-                ("Common Fertilizers", Array(allFertilizers.prefix(5)))
-            ]
-            if isSearchActive {
-                filteredForMyPlantCategories = forMyPlantCategories
-            }
-            
-        default:
-            currentData = []
+        // Start loading data
+        Task {
+            print("🚀 Starting async data fetch...")
+            await fetchDataFromSupabase()
         }
-        
-        collectionView.reloadData()
     }
     
     func updateSearchResults(for searchController: UISearchController) {
@@ -358,7 +447,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         if category.title == "Current Season Plants" {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
             if let plant = item as? Plant {
-                cell.configure(with: plant)
+                cell.plant = DataOfSection1InDicoverSegment(from: plant)
             }
             cell.contentView.layer.masksToBounds = true
             cell.layer.cornerRadius = 11
@@ -371,7 +460,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         } else if category.title == "Common Issues" {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
             if let disease = item as? Diseases {
-                cell.configure(with: disease)
+                cell.disease = DataOfSection2InDiscoverSegment(from: disease)
             }
             cell.contentView.layer.masksToBounds = true
             cell.layer.cornerRadius = 11

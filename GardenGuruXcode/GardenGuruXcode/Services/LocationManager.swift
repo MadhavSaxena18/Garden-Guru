@@ -4,6 +4,11 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var locationCompletion: ((Result<CLLocation, Error>) -> Void)?
     
+    // Add public method to check authorization status
+    func getAuthorizationStatus() -> CLAuthorizationStatus {
+        return manager.authorizationStatus
+    }
+    
     override init() {
         super.init()
         manager.delegate = self

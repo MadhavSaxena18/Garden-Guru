@@ -111,8 +111,10 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         // Count plants by category
         var categoryCount: [Category: Int] = [:]
         plantsWithDetails.forEach { plantWithDetails in
-            categoryCount[plantWithDetails.plant.category, default: 0] += 1
-            print("Added \(plantWithDetails.plant.plantName) to category \(plantWithDetails.plant.category)")
+            if let category = plantWithDetails.plant.category {
+                categoryCount[category, default: 0] += 1
+                print("Added \(plantWithDetails.plant.plantName) to category \(category)")
+            }
         }
         
         userStats = [
@@ -178,11 +180,13 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         let filteredPairs = categoryPlantPairs.compactMap { category, plants -> (String, [UserPlant])? in
             let filteredPlants = plants.filter { userPlant in
                 // Get the plant details using sync wrapper
-                guard let plant = dataController.getPlantSync(by: userPlant.userplantID) else { return false }
-                
+                if let plantID = userPlant.userplantID,
+                   let plant = dataController.getPlantSync(by: plantID) {
                 // Check if either nickname or plant name contains the search text
-                return userPlant.userPlantNickName.lowercased().contains(searchText) ||
+                    return (userPlant.userPlantNickName?.lowercased().contains(searchText))! ||
                        plant.plantName.lowercased().contains(searchText)
+                }
+                return false
             }
             
             // Only include categories that have matching plants
@@ -228,15 +232,16 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         let userPlant = plants[indexPath.section - 1][indexPath.item]
         
         // Get plant data using sync wrapper
-        if let plant = dataController.getPlantSync(by: userPlant.userplantID) {
+        guard let plantID = userPlant.userplantID,
+              let plant = dataController.getPlantSync(by: plantID) else {
+            // Return empty cell if plant data not found
+            return UICollectionViewCell()
+        }
+        
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlantCell", for: indexPath) as! MySpacePlantCell
             cell.configure(with: userPlant, plant: plant)
             cell.deleteButton.addTarget(self, action: #selector(handleDeletePlant(_:)), for: UIControl.Event.touchUpInside)
             return cell
-        }
-        
-        // Return empty cell if plant data not found
-        return UICollectionViewCell()
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -421,7 +426,11 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         print("UserPlant ID: \(userPlant.userplantID)")
         
         // Check if this plant is already in newlyAddedPlants
-        if MySpaceViewController.newlyAddedPlants.contains(where: { $0.userplantID == userPlant.userplantID }) {
+        let isDuplicate = MySpaceViewController.newlyAddedPlants.contains { existingPlant in
+            existingPlant.userplantID == userPlant.userplantID
+        }
+        
+        if isDuplicate {
             print("⚠️ Plant already exists in newlyAddedPlants - skipping addition")
             return
         }
@@ -547,19 +556,23 @@ class MySpacePlantCell: UICollectionViewCell {
     
     func configure(with userPlant: UserPlant, plant: Plant) {
         nameLabel.text = plant.plantName
-        nicknameLabel.text = userPlant.userPlantNickName
+        nicknameLabel.text = userPlant.userPlantNickName ?? ""
         
         // Load image if available
-        if let lastImage = plant.plantImage.last,
-           let imageData = Data(base64Encoded: lastImage),
+        if let plantImage = plant.plantImage, !plantImage.isEmpty {
+            if let imageData = Data(base64Encoded: plantImage),
            let image = UIImage(data: imageData) {
-            // If the last image is a base64 encoded image (from camera)
+                // If the image is a base64 encoded image (from camera)
+                imageView.image = image
+            } else if let image = UIImage(named: plantImage) {
+                // If the image is a named image
             imageView.image = image
-        } else if !plant.plantImage.isEmpty {
-            // Use the first image from the array
-            imageView.image = UIImage(named: plant.plantImage[0])
+            } else {
+                // Use placeholder if image loading fails
+                imageView.image = UIImage(named: "plant_placeholder")
+            }
         } else {
-            // Use a placeholder if no images available
+            // Use a placeholder if no image available
             imageView.image = UIImage(named: "plant_placeholder")
         }
     }

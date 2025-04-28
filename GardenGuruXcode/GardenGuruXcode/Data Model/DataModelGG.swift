@@ -23,141 +23,100 @@ struct userInfo: Codable, Hashable {
         case reminderAllowed
         case id
     }
-    
-    init(userEmail: String, userName: String, location: String, reminderAllowed: Bool, id: String = UUID().uuidString) {
-        self.userEmail = userEmail
-        self.userName = userName
-        self.location = location
-        self.reminderAllowed = reminderAllowed
-        self.id = id
-    }
 }
 
 struct Plant: Codable, Hashable, Equatable {
-    var plantID: UUID = UUID() // Primary Key FOR PLANT
+    var plantID: UUID
     var plantName: String
-    var plantImage: [String]
-    var plantBotanicalName: String
-    var category: Category
-    var plantDescription: String
-    var favourableSeason: Season
-    var waterFrequency: Int
-    var fertilizerFrequency: Int
-    var repottingFrequency: Int
-    var pruningFrequency: Int
-    let idealTemperature: [Double]  // Array of suitable temperatures
-    let lightRequirement: String 
+    var plantImage: String?
+    var plantBotanicalName: String?
+    var plantDescription: String?
+    var waterFrequency: Int64?
+    var fertilizerFrequency: Int64?
+    var repottingFrequency: Int64?
+    var pruningFrequency: Int64?
+    var favourableSeason: Season?
+    var category: Category?
+    
+    enum CodingKeys: String, CodingKey {
+        case plantID
+        case plantName
+        case plantImage
+        case plantBotanicalName
+        case plantDescription
+        case waterFrequency
+        case fertilizerFrequency
+        case repottingFrequency
+        case pruningFrequency
+        case favourableSeason
+        case category
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Handle UUID decoding
+        if let uuidString = try? container.decode(String.self, forKey: .plantID) {
+            plantID = UUID(uuidString: uuidString) ?? UUID()
+        } else {
+            plantID = UUID()
+        }
+        
+        // Decode other properties
+        plantName = try container.decode(String.self, forKey: .plantName)
+        plantImage = try container.decodeIfPresent(String.self, forKey: .plantImage)
+        plantBotanicalName = try container.decodeIfPresent(String.self, forKey: .plantBotanicalName)
+        plantDescription = try container.decodeIfPresent(String.self, forKey: .plantDescription)
+        waterFrequency = try container.decodeIfPresent(Int64.self, forKey: .waterFrequency)
+        fertilizerFrequency = try container.decodeIfPresent(Int64.self, forKey: .fertilizerFrequency)
+        repottingFrequency = try container.decodeIfPresent(Int64.self, forKey: .repottingFrequency)
+        pruningFrequency = try container.decodeIfPresent(Int64.self, forKey: .pruningFrequency)
+        favourableSeason = try container.decodeIfPresent(Season.self, forKey: .favourableSeason)
+        category = try container.decodeIfPresent(Category.self, forKey: .category)
+    }
 }
 
 struct Diseases: Codable, Hashable {
     let diseaseID: UUID
     let diseaseName: String
-    let diseaseDescription: String
-    let diseaseImage: [String]
-    let diseaseSymptoms: [String]
-    let symptoms: [String]
-    let causes: [String]
-    let treatment: [String]
-    let prevention: [String]
-    let diseaseSeason: Season
-    let diseaseCure: [String]
-    let diseaseFertilizers: [String]
-    let cureDuration: Int
-    let diseaseDetail: [String: [String]]
+    var diseaseSymptoms: String?
+    var diseaseImage: String?
+    var diseaseCure: String?
+    var diseaseFertilizers: String?
+    var cureDuration: Int64?
+    var diseaseSeason: Season?
     
-    // Add memberwise initializer
-    init(diseaseID: UUID = UUID(),
-         diseaseName: String,
-         diseaseDescription: String = "",
-         diseaseImage: [String] = [],
-         diseaseSymptoms: [String] = [],
-         symptoms: [String] = [],
-         causes: [String] = [],
-         treatment: [String] = [],
-         prevention: [String] = [],
-         diseaseSeason: Season,
-         diseaseCure: [String] = [],
-         diseaseFertilizers: [String] = [],
-         cureDuration: Int = 0,
-         diseaseDetail: [String: [String]] = [:]) {
-        self.diseaseID = diseaseID
-        self.diseaseName = diseaseName
-        self.diseaseDescription = diseaseDescription
-        self.diseaseImage = diseaseImage
-        self.diseaseSymptoms = diseaseSymptoms
-        self.symptoms = symptoms
-        self.causes = causes
-        self.treatment = treatment
-        self.prevention = prevention
-        self.diseaseSeason = diseaseSeason
-        self.diseaseCure = diseaseCure
-        self.diseaseFertilizers = diseaseFertilizers
-        self.cureDuration = cureDuration
-        self.diseaseDetail = diseaseDetail
-    }
-    
-    // Add computed properties to maintain compatibility
-    var diseaseSymptomsList: [String] {
-        return diseaseSymptoms.isEmpty ? symptoms : diseaseSymptoms
-    }
-    
-    var diseaseCauses: [String] {
-        return causes
-    }
-    
-    var diseaseTreatment: [String] {
-        return treatment.isEmpty ? diseaseCure : treatment
-    }
-    
-    var diseasePrevention: [String] {
-        return prevention
-    }
-    
-    // Custom coding keys to handle both old and new property names
-    private enum CodingKeys: String, CodingKey {
+    enum CodingKeys: String, CodingKey {
         case diseaseID
         case diseaseName
-        case diseaseDescription
-        case diseaseImage
         case diseaseSymptoms
-        case symptoms
-        case causes
-        case treatment
-        case prevention
-        case diseaseSeason
+        case diseaseImage
         case diseaseCure
         case diseaseFertilizers
         case cureDuration
-        case diseaseDetail
+        case diseaseSeason
     }
     
-    // Custom initializer to set default values
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        diseaseID = try container.decode(UUID.self, forKey: .diseaseID)
-        diseaseName = try container.decode(String.self, forKey: .diseaseName)
-        diseaseDescription = try container.decodeIfPresent(String.self, forKey: .diseaseDescription) ?? ""
-        diseaseImage = try container.decodeIfPresent([String].self, forKey: .diseaseImage) ?? []
-        
-        // Handle both old and new symptom properties
-        if let oldSymptoms = try? container.decode([String].self, forKey: .diseaseSymptoms) {
-            diseaseSymptoms = oldSymptoms
-            symptoms = oldSymptoms
+        // Handle UUID decoding
+        if let uuidString = try? container.decode(String.self, forKey: .diseaseID) {
+            diseaseID = UUID(uuidString: uuidString) ?? UUID()
         } else {
-            let newSymptoms = try container.decodeIfPresent([String].self, forKey: .symptoms) ?? []
-            diseaseSymptoms = newSymptoms
-            symptoms = newSymptoms
+            diseaseID = UUID()
         }
         
-        causes = try container.decodeIfPresent([String].self, forKey: .causes) ?? []
-        treatment = try container.decodeIfPresent([String].self, forKey: .treatment) ?? []
-        prevention = try container.decodeIfPresent([String].self, forKey: .prevention) ?? []
-        diseaseSeason = try container.decode(Season.self, forKey: .diseaseSeason)
-        diseaseCure = try container.decodeIfPresent([String].self, forKey: .diseaseCure) ?? []
-        diseaseFertilizers = try container.decodeIfPresent([String].self, forKey: .diseaseFertilizers) ?? []
-        cureDuration = try container.decodeIfPresent(Int.self, forKey: .cureDuration) ?? 0
-        diseaseDetail = try container.decodeIfPresent([String: [String]].self, forKey: .diseaseDetail) ?? [:]
+        // Decode required fields
+        diseaseName = try container.decode(String.self, forKey: .diseaseName)
+        
+        // Decode optional fields
+        diseaseSymptoms = try container.decodeIfPresent(String.self, forKey: .diseaseSymptoms)
+        diseaseImage = try container.decodeIfPresent(String.self, forKey: .diseaseImage)
+        diseaseCure = try container.decodeIfPresent(String.self, forKey: .diseaseCure)
+        diseaseFertilizers = try container.decodeIfPresent(String.self, forKey: .diseaseFertilizers)
+        cureDuration = try container.decodeIfPresent(Int64.self, forKey: .cureDuration)
+        diseaseSeason = try container.decodeIfPresent(Season.self, forKey: .diseaseSeason)
     }
 }
 
@@ -169,15 +128,71 @@ struct PlantDisease: Codable, Hashable {
 
 struct UserPlant: Codable, Hashable {
     var userPlantRelationID: UUID
-    var userplantID: UUID
-    var userId: String  // Changed from UUID to String to match database schema
-    var userPlantNickName: String
-    var lastWatered: Date
-    var lastFertilized: Date
-    var lastRepotted: Date
-    var isWateringCompleted: Bool = false
-    var isFertilizingCompleted: Bool = false
-    var isRepottingCompleted: Bool = false
+    var userId: UUID
+    var userplantID: UUID?
+    var userPlantNickName: String?
+    var lastWatered: Date?
+    var lastFertilized: Date?
+    var lastRepotted: Date?
+    
+    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil) {
+        self.userPlantRelationID = userPlantRelationID
+        self.userId = userId
+        self.userplantID = userplantID
+        self.userPlantNickName = userPlantNickName
+        self.lastWatered = lastWatered
+        self.lastFertilized = lastFertilized
+        self.lastRepotted = lastRepotted
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case userPlantRelationID
+        case userId
+        case userplantID
+        case userPlantNickName
+        case lastWatered
+        case lastFertilized
+        case lastRepotted
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Handle UUID decoding
+        if let relationIDString = try? container.decode(String.self, forKey: .userPlantRelationID) {
+            userPlantRelationID = UUID(uuidString: relationIDString) ?? UUID()
+        } else {
+            userPlantRelationID = UUID()
+        }
+        
+        if let userIDString = try? container.decode(String.self, forKey: .userId) {
+            userId = UUID(uuidString: userIDString) ?? UUID()
+        } else {
+            userId = UUID()
+        }
+        
+        // Decode optional UUID
+        if let plantIDString = try container.decodeIfPresent(String.self, forKey: .userplantID) {
+            userplantID = UUID(uuidString: plantIDString)
+        }
+        
+        // Decode other properties
+        userPlantNickName = try container.decodeIfPresent(String.self, forKey: .userPlantNickName)
+        
+        // Handle date decoding with custom date formatter
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        if let lastWateredString = try container.decodeIfPresent(String.self, forKey: .lastWatered) {
+            lastWatered = dateFormatter.date(from: lastWateredString)
+        }
+        if let lastFertilizedString = try container.decodeIfPresent(String.self, forKey: .lastFertilized) {
+            lastFertilized = dateFormatter.date(from: lastFertilizedString)
+        }
+        if let lastRepottedString = try container.decodeIfPresent(String.self, forKey: .lastRepotted) {
+            lastRepotted = dateFormatter.date(from: lastRepottedString)
+        }
+    }
 }
 
 struct UsersPlantDisease: Codable, Hashable {
@@ -187,39 +202,26 @@ struct UsersPlantDisease: Codable, Hashable {
     var detectedDate: Date = .now
 }
 
-class CareReminder_: Codable {
-    let careReminderID: UUID
+struct CareReminder_: Codable, Hashable {
+    var careReminderID: UUID
     var upcomingReminderForWater: Date
-    var upcomingReminderForFertilizers: Date
-    var upcomingReminderForRepotted: Date
-    var isWateringCompleted: Bool
-    var isFertilizingCompleted: Bool
-    var isRepottingCompleted: Bool
+    var upcomingReminderForFertilizers: Date?
+    var upcomingReminderForRepotted: Date?
+    var isWateringCompleted: Bool?
+    var isFertilizingCompleted: Bool?
+    var isRepottingCompleted: Bool?
     
-    init(userPlantID: UUID, wateringDate: Date?, fertilizingDate: Date?, repottingDate: Date?) {
-        self.careReminderID = userPlantID
-        self.upcomingReminderForWater = wateringDate ?? Date.distantFuture
-        self.upcomingReminderForFertilizers = fertilizingDate ?? Date.distantFuture
-        self.upcomingReminderForRepotted = repottingDate ?? Date.distantFuture
-        self.isWateringCompleted = false
-        self.isFertilizingCompleted = false
-        self.isRepottingCompleted = false
+    init(careReminderID: UUID, upcomingReminderForWater: Date, upcomingReminderForFertilizers: Date? = nil, upcomingReminderForRepotted: Date? = nil, isWateringCompleted: Bool? = nil, isFertilizingCompleted: Bool? = nil, isRepottingCompleted: Bool? = nil) {
+        self.careReminderID = careReminderID
+        self.upcomingReminderForWater = upcomingReminderForWater
+        self.upcomingReminderForFertilizers = upcomingReminderForFertilizers
+        self.upcomingReminderForRepotted = upcomingReminderForRepotted
+        self.isWateringCompleted = isWateringCompleted
+        self.isFertilizingCompleted = isFertilizingCompleted
+        self.isRepottingCompleted = isRepottingCompleted
     }
     
-    // Required for Codable when using a class
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        careReminderID = try container.decode(UUID.self, forKey: .careReminderID)
-        upcomingReminderForWater = try container.decode(Date.self, forKey: .upcomingReminderForWater)
-        upcomingReminderForFertilizers = try container.decode(Date.self, forKey: .upcomingReminderForFertilizers)
-        upcomingReminderForRepotted = try container.decode(Date.self, forKey: .upcomingReminderForRepotted)
-        isWateringCompleted = try container.decode(Bool.self, forKey: .isWateringCompleted)
-        isFertilizingCompleted = try container.decode(Bool.self, forKey: .isFertilizingCompleted)
-        isRepottingCompleted = try container.decode(Bool.self, forKey: .isRepottingCompleted)
-    }
-    
-    // CodingKeys to match the database column names
-    private enum CodingKeys: String, CodingKey {
+    enum CodingKeys: String, CodingKey {
         case careReminderID
         case upcomingReminderForWater
         case upcomingReminderForFertilizers
@@ -227,6 +229,17 @@ class CareReminder_: Codable {
         case isWateringCompleted
         case isFertilizingCompleted
         case isRepottingCompleted
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        careReminderID = try container.decode(UUID.self, forKey: .careReminderID)
+        upcomingReminderForWater = try container.decode(Date.self, forKey: .upcomingReminderForWater)
+        upcomingReminderForFertilizers = try container.decodeIfPresent(Date.self, forKey: .upcomingReminderForFertilizers)
+        upcomingReminderForRepotted = try container.decodeIfPresent(Date.self, forKey: .upcomingReminderForRepotted)
+        isWateringCompleted = try container.decodeIfPresent(Bool.self, forKey: .isWateringCompleted)
+        isFertilizingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isFertilizingCompleted)
+        isRepottingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isRepottingCompleted)
     }
 }
 
@@ -237,7 +250,10 @@ struct CareReminderOfUserPlant: Codable, Hashable {
 }
 
 enum Season: String, Codable, Hashable {
-    case winter, summer, spring, autumn
+    case Winter = "winter"
+    case Summer = "summer"
+    case Spring = "spring"
+    case Autumn = "autumn"
 }
 
 enum Category: String, Codable, Hashable {
@@ -258,15 +274,35 @@ struct PlantDesign: Codable, Hashable {
 }
 
 struct Fertilizer: Codable, Hashable {
+    var fertilizerId: UUID
     var fertilizerName: String
-    var fertilizerId: UUID = UUID() // Unique ID
-    var fertilizerImage: String
-    var fertilizerDescription: String
-    var type: String // Example: "Organic", "Chemical"
-    var applicationMethod: String // Example: "Mix with soil"
-    var applicationFrequency: String // Example: "Once per 2 weeks"
-    var warningSigns: [String] // Example: ["Leaf burn", "Yellowing leaves"]
-    var alternativeFertilizers: [String] // Example: ["Compost", "Bone meal"]
+    var fertilizerImage: String?
+    var fertilizerDescription: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case fertilizerId
+        case fertilizerName
+        case fertilizerImage
+        case fertilizerDescription
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Handle UUID decoding
+        if let uuidString = try? container.decode(String.self, forKey: .fertilizerId) {
+            fertilizerId = UUID(uuidString: uuidString) ?? UUID()
+        } else {
+            fertilizerId = UUID()
+        }
+        
+        // Decode required fields
+        fertilizerName = try container.decode(String.self, forKey: .fertilizerName)
+        
+        // Decode optional fields
+        fertilizerImage = try container.decodeIfPresent(String.self, forKey: .fertilizerImage)
+        fertilizerDescription = try container.decodeIfPresent(String.self, forKey: .fertilizerDescription)
+    }
 }
 
 struct DiseaseFertilizer: Codable, Hashable {

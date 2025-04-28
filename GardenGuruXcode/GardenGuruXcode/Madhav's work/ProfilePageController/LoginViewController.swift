@@ -141,17 +141,29 @@ class LoginViewController: UIViewController {
             return
         }
         
+        print("🔑 Attempting login with email: \(email)")
+        
         // Start loading
         loadingIndicator.startAnimating()
         loginButton.setTitle("", for: .normal)
         
-        // Attempt to sign in with Supabase
+        // Attempt to sign in with Supabase with retry logic
         Task {
+            var retryCount = 0
+            let maxRetries = 3
+            
+            while retryCount < maxRetries {
             do {
+                    print("📡 Starting Supabase authentication (Attempt \(retryCount + 1))...")
                 let (session, userData) = try await dataController.signIn(email: email, password: password)
+                    
+                    print("✅ Authentication response received")
+                    print("📱 Session user: \(String(describing: session.user))")
+                    print("👤 User data: \(String(describing: userData))")
                 
                 if session.user != nil {
-                    // Store user email
+                        print("✅ User authenticated successfully")
+                        // Store the email for future use
                     UserDefaults.standard.set(email, forKey: "userEmail")
                     UserDefaults.standard.set(true, forKey: "isLoggedIn")
                     
@@ -163,15 +175,39 @@ class LoginViewController: UIViewController {
                     DispatchQueue.main.async { [weak self] in
                         self?.showSuccessAndNavigate()
                     }
+                        return // Exit the retry loop on success
                 } else {
+                        print("❌ Authentication failed: No user in session")
                     throw NSError(domain: "LoginError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid credentials"])
                 }
+                } catch let error as NSError where error.domain == NSURLErrorDomain && error.code == -1005 {
+                    // Network connection lost error
+                    retryCount += 1
+                    if retryCount < maxRetries {
+                        print("🔄 Network connection lost. Retrying in 2 seconds... (Attempt \(retryCount + 1) of \(maxRetries))")
+                        try await Task.sleep(nanoseconds: 2_000_000_000) // Wait 2 seconds before retrying
+                        continue
+                    }
             } catch {
+                    print("❌ Login error: \(error)")
                 DispatchQueue.main.async { [weak self] in
                     self?.loadingIndicator.stopAnimating()
                     self?.loginButton.setTitle("Sign In", for: .normal)
+                        if let urlError = error as? URLError {
+                            self?.showAlert(message: "Network error: \(urlError.localizedDescription)")
+                        } else {
                     self?.showAlert(message: "Invalid email or password")
                 }
+                    }
+                    return
+                }
+            }
+            
+            // If we've exhausted all retries
+            DispatchQueue.main.async { [weak self] in
+                self?.loadingIndicator.stopAnimating()
+                self?.loginButton.setTitle("Sign In", for: .normal)
+                self?.showAlert(message: "Unable to connect to the server. Please check your internet connection and try again.")
             }
         }
     }

@@ -23,11 +23,10 @@ class Section1InForMyPlantSegmentCollectionViewCell: UICollectionViewCell {
 //    }
     
     func configure(with disease: Diseases) {
-//            titleLabel.text = disease.diseaseName
-        if let firstImage = disease.diseaseImage.first {
-                imageViewForMyPlantSegment.image = UIImage(named: firstImage)
+        if let imageName = disease.diseaseImage {
+            imageViewForMyPlantSegment.image = UIImage(named: imageName)
             } else {
-                imageViewForMyPlantSegment.image = UIImage(named: "placeholder") // Default image
+            imageViewForMyPlantSegment.image = UIImage(named: "placeholder")
             }
         descriptionLabelForMyPlantSegment.text = disease.diseaseName
         }

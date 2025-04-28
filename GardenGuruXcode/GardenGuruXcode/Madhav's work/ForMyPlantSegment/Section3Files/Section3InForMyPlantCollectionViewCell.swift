@@ -18,7 +18,7 @@ class Section3InForMyPlantCollectionViewCell: UICollectionViewCell {
     }
     
     func updateDataOfSection3InForMyPlantSegment(with indexPath: IndexPath){
-        imageViewInforMyPlantSegment.image = ExploreScreen.dataOfSection3InforMyPlantSection[indexPath.row].image
+        //imageViewInforMyPlantSegment.image = ExploreScreen.dataOfSection3InforMyPlantSection[indexPath.row].image
     
         
     }

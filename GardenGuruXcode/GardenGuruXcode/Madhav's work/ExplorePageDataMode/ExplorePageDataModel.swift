@@ -7,53 +7,108 @@
 
 import Foundation
 import UIKit
-struct DataOfSection1InDicoverSegment{
-    var image: UIImage
+
+// MARK: - Discover Segment Models
+struct DataOfSection1InDicoverSegment {
+    var image: String
     var plantName: String
     var plantDescription: String
-}
-
-struct DataOfSection2InDiscoverSegment{
-    var image: UIImage
-    var diseaseName: String
-    var plantName: String
-    var plantDescription: String
-}
-
-struct DataOfSection3InDicoverSegment {
-    var designImage: UIImage
-    var designName: String
-}
-
-
-struct DataOfSection1InforMyPlantSegment{
-    var image: UIImage
-    var discription: String
-}
-
-struct DataOfSection2InforMyPlantSegment{
-    var image: UIImage
-    var discription: String
-}
-
-struct DataOfSection3InforMyPlantSegment{
-    var image: UIImage
+    var plantID: UUID
+    var waterFrequency: Int64?
+    var fertilizerFrequency: Int64?
+    var repottingFrequency: Int64?
+    var pruningFrequency: Int64?
+    var favourableSeason: Season?
+    var category: Category?
     
+    init(from plant: Plant) {
+        self.image = plant.plantImage ?? ""
+        self.plantName = plant.plantName
+        self.plantDescription = plant.plantDescription ?? ""
+        self.plantID = plant.plantID
+        self.waterFrequency = plant.waterFrequency
+        self.fertilizerFrequency = plant.fertilizerFrequency
+        self.repottingFrequency = plant.repottingFrequency
+        self.pruningFrequency = plant.pruningFrequency
+        self.favourableSeason = plant.favourableSeason
+        self.category = plant.category
+    }
 }
 
-struct CardDetailsSection1{
-    var imageOfPlant: UIImage
-    var imageOfLable1: UIImage
-    var info1: String
-    var imageOfLable2: UIImage
-    var info2: String
-    var imageOfLable3: UIImage
-    var info3: String
+struct DataOfSection2InDiscoverSegment {
+    var image: String  // Changed to String to match database schema
+    var diseaseName: String
+    var diseaseID: UUID
+    var diseaseSymptoms: String?
+    var diseaseCure: String?
+    var diseaseSeason: Season?
+    
+    init(from disease: Diseases) {
+        self.image = disease.diseaseImage ?? ""
+        self.diseaseName = disease.diseaseName
+        self.diseaseID = disease.diseaseID
+        self.diseaseSymptoms = disease.diseaseSymptoms
+        self.diseaseCure = disease.diseaseCure
+        self.diseaseSeason = disease.diseaseSeason
+    }
 }
 
-struct CardDetailsSection2{
+// MARK: - For My Plant Segment Models
+struct DataOfSection1InforMyPlantSegment {
+    var image: String
+    var diseaseName: String
+    var diseaseID: UUID
+    var detectedDate: Date?
+    
+    init(from userDisease: UsersPlantDisease, disease: Diseases) {
+        self.image = disease.diseaseImage ?? ""
+        self.diseaseName = disease.diseaseName
+        self.diseaseID = disease.diseaseID
+        self.detectedDate = userDisease.detectedDate
+    }
+}
+
+struct DataOfSection2InforMyPlantSegment {
+    var image: String
+    var fertilizerName: String
+    var fertilizerDescription: String?
+    var fertilizerID: UUID
+    
+    init(from fertilizer: Fertilizer) {
+        self.image = fertilizer.fertilizerImage ?? ""
+        self.fertilizerName = fertilizer.fertilizerName
+        self.fertilizerDescription = fertilizer.fertilizerDescription
+        self.fertilizerID = fertilizer.fertilizerId
+    }
+}
+
+// MARK: - Card Detail Models
+struct CardDetailsSection1 {
+    var plantImage: String
+    var waterFrequency: Int64?
+    var fertilizerFrequency: Int64?
+    var repottingFrequency: Int64?
+    var pruningFrequency: Int64?
+    
+    init(from plant: Plant) {
+        self.plantImage = plant.plantImage ?? ""
+        self.waterFrequency = plant.waterFrequency
+        self.fertilizerFrequency = plant.fertilizerFrequency
+        self.repottingFrequency = plant.repottingFrequency
+        self.pruningFrequency = plant.pruningFrequency
+    }
+}
+
+struct CardDetailsSection2 {
     var plantName: String
-    var description: String
+    var botanicalName: String?
+    var description: String?
+    
+    init(from plant: Plant) {
+        self.plantName = plant.plantName
+        self.botanicalName = plant.plantBotanicalName
+        self.description = plant.plantDescription
+    }
 }
 
 struct CardDetailsSection3{
@@ -61,58 +116,80 @@ struct CardDetailsSection3{
 }
 
 class ExploreScreen{
-    static var dataOfSection1InDiscoverSegment: [DataOfSection1InDicoverSegment] = [DataOfSection1InDicoverSegment(image: UIImage(named: "parlor palm")!, plantName: "Parlor Palm", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                   DataOfSection1InDicoverSegment(image:  UIImage(named: "string of pearls")!, plantName: "String of Pearls", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                   DataOfSection1InDicoverSegment(image:  UIImage(named: "rose plant")!, plantName: "Rose Plant", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                   DataOfSection1InDicoverSegment(image: UIImage(named: "Hibiscus")!, plantName: "Hibiscus", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                   ]
+    private static let dataController = DataControllerGG.shared
     
-    static var dataOfSection2InDiscoverSegment: [DataOfSection2InDiscoverSegment] = [DataOfSection2InDiscoverSegment(image: UIImage(named: "root rot in string of pearls")!, diseaseName: "Root rot", plantName: "String of Pearls", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                                                     DataOfSection2InDiscoverSegment(image:  UIImage(named: "yellowing leaves in parlor palm")!, diseaseName: "Yellowing leaves", plantName: "Parlor Palm", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                                                     DataOfSection2InDiscoverSegment(image:  UIImage(named: "black spots in rose")!, diseaseName: "Black Spots", plantName: "Rose", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                                                     DataOfSection2InDiscoverSegment(image: UIImage(named: "bud drop in hiobiscus")!, diseaseName: "Bud Drop", plantName: "Hibiscus", plantDescription: "This unique and attractive succulent plant scientifically known as Senecio rowleyanus (recently reclassified as Curio rowleyanus)."),
-                                                   ]
-    static var dataOfSection3InDiscoverSegment: [DataOfSection3InDicoverSegment] = [DataOfSection3InDicoverSegment(designImage: UIImage(named: "design2")!, designName: "The Art of Nature🌸"),
-                                                   DataOfSection3InDicoverSegment(designImage: UIImage(named: "design1")!, designName: "The Art of Nature🌸"),
-                                                                                    DataOfSection3InDicoverSegment(designImage: UIImage(named: "design3")!, designName: "The Art of Nature🌸"),
-                                                                                    DataOfSection3InDicoverSegment(designImage: UIImage(named: "design4")!, designName: "The Art of Nature🌸"),
-    ]
-    static var headerData: [String] = ["Current Season Plants", "Common Issues", "Top Designs"]
+    static var headerData: [String] = ["Current Season Plants", "Common Issues"]
+    static var headerForInMyPlantSegment: [String] = ["Common Issues in your Plant", "Common fertilizer"]
     
-    
-    
-    
-    // "For My plant" segment
-    
-    static var dataOfSection1InforMyPlantSection: [DataOfSection1InforMyPlantSegment] = [DataOfSection1InforMyPlantSegment(image: UIImage(named: "black spots in rose")!, discription: "Black Spots: A Call for Help"),
-                                                                                         DataOfSection1InforMyPlantSegment(image: UIImage(named: "root rot in string of pearls")!, discription: "Root Rot: The Silent Threat"),
-                                                                                         DataOfSection1InforMyPlantSegment(image: UIImage(named: "black spots in rose")!, discription: "Black Spots: A Call for Help"),
-                                                                                                                                                                              DataOfSection1InforMyPlantSegment(image: UIImage(named: "root rot in string of pearls")!, discription: "Root Rot: The Silent Threat"),
-    ]
-    
-    
-    static var dataOfSection2InforMyPlantSection: [DataOfSection2InforMyPlantSegment] = [DataOfSection2InforMyPlantSegment(image: UIImage(named: "f2")!, discription: "Osmocote Smart-Release Plant: Balanced nutrient"),
-                                                                                         DataOfSection2InforMyPlantSegment(image: UIImage(named: "f1")!, discription: "Root Rot: The Silent Threat"),
-    ]
-    
-    static var dataOfSection3InforMyPlantSection: [DataOfSection3InforMyPlantSegment] = [
-        DataOfSection3InforMyPlantSegment(image: UIImage(named: "design3")!),
-        DataOfSection3InforMyPlantSegment(image: UIImage(named: "design4")!),
-                                                                                        
-    ]
-    
-    static var headerForInMyPlantSegment: [String] = ["Common Issues in your Plant", "Common fertilizer", "Aesthetic Design Idea"]
-    
-    static var cardDetailSection1: [CardDetailsSection1] = [
-        CardDetailsSection1(imageOfPlant: UIImage(named: "parlor palm")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
-//        CardDetailsSection1(imageOfPlant: UIImage(named: "string of pearls")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
-//        CardDetailsSection1(imageOfPlant: UIImage(named: "string of pearls")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
-//        CardDetailsSection1(imageOfPlant: UIImage(named: "string of pearls")!, imageOfLable1: UIImage(named: "watering")!, info1: "once a day", imageOfLable2: UIImage(named: "fertilizer")!, info2: "once a week", imageOfLable3: UIImage(named: "watering")!, info3: "Part-Full"),
-//        
+    // MARK: - Data Fetching Methods
+    static func fetchDiscoverSegmentData() async throws -> (plants: [DataOfSection1InDicoverSegment], diseases: [DataOfSection2InDiscoverSegment]) {
+        print("🔄 Starting to fetch discover segment data...")
+        let plants = try await dataController.getPlants()
+        print("✅ Fetched \(plants.count) plants")
         
-        ]
-    static var cardDetailSection2: [CardDetailsSection2] = [CardDetailsSection2(plantName: "Parlor Palm" , description: "Parlor Palms (scientifically known as Chamaedorea elegans) are small, elegant indoor plants that are popular for their attractive, feathery foliage and ease of care. Native to the tropical regions of Central America, they thrive in low to medium light conditions, making them perfect for indoor spaces")]
+        let diseases = try await dataController.getDiseases(for: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!)
+        print("✅ Fetched \(diseases.count) diseases")
+        
+        let plantModels = plants.map { DataOfSection1InDicoverSegment(from: $0) }
+        let diseaseModels = diseases.map { DataOfSection2InDiscoverSegment(from: $0) }
+        
+        print("📊 Discover segment data prepared:")
+        print("   - Plant models: \(plantModels.count)")
+        print("   - Disease models: \(diseaseModels.count)")
+        
+        return (plantModels, diseaseModels)
+    }
     
-    static var cardDetailSection3: [CardDetailsSection3] = [CardDetailsSection3(plantImage: UIImage(named: "parlor palm1")!), CardDetailsSection3(plantImage: UIImage(named: "parlor palm2")!), CardDetailsSection3(plantImage: UIImage(named: "parlor palm")!), CardDetailsSection3(plantImage: UIImage(named: "parlor palm1")!)]
+    static func fetchForMyPlantSegmentData(userEmail: String) async throws -> (userDiseases: [DataOfSection1InforMyPlantSegment], fertilizers: [DataOfSection2InforMyPlantSegment]) {
+        print("🔄 Starting to fetch 'For My Plant' segment data...")
+        print("📧 User email: \(userEmail)")
+        
+        // First get the user's plants
+        let userPlants = try await dataController.getUserPlants(for: userEmail)
+        print("✅ Fetched \(userPlants.count) user plants")
+        
+        // Get all diseases for these plants through PlantDisease relationship
+        var userDiseases: [DataOfSection1InforMyPlantSegment] = []
+        
+        for userPlant in userPlants {
+            guard let plantID = userPlant.userplantID else {
+                print("⚠️ No plant ID for user plant: \(userPlant.userPlantNickName ?? "unnamed")")
+                continue
+            }
+            
+            print("🌱 Processing plant: \(userPlant.userPlantNickName ?? "Unnamed") with ID: \(plantID)")
+            
+            // Get diseases through PlantDisease relationship
+            let diseases = try await dataController.getDiseases(for: plantID)
+            print("   - Found \(diseases.count) diseases for this plant")
+            
+            for disease in diseases {
+                let userDisease = UsersPlantDisease(
+                    usersPlantDisease: UUID(),
+                    usersPlantRelationID: userPlant.userPlantRelationID,
+                    diseaseID: disease.diseaseID,
+                    detectedDate: Date()
+                )
+                userDiseases.append(DataOfSection1InforMyPlantSegment(from: userDisease, disease: disease))
+            }
+        }
+        
+        // Get fertilizers
+        print("🌱 Fetching fertilizers...")
+        let fertilizers = try await dataController.getCommonFertilizers()
+        print("✅ Fetched \(fertilizers.count) fertilizers")
+        let fertilizerModels = fertilizers.map { DataOfSection2InforMyPlantSegment(from: $0) }
+        
+        print("📊 'For My Plant' segment data prepared:")
+        print("   - User diseases: \(userDiseases.count)")
+        print("   - Fertilizer models: \(fertilizerModels.count)")
+        
+        return (userDiseases, fertilizerModels)
+    }
+    
+    static func fetchCardDetails(for plantID: UUID) async throws -> (section1: CardDetailsSection1, section2: CardDetailsSection2) {
+        let plant = try await dataController.getPlant(by: plantID)
+        return (CardDetailsSection1(from: plant!), CardDetailsSection2(from: plant!))
+    }
 }
     

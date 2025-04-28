@@ -63,8 +63,10 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         nameLabel.text = plant.plantName
         descriptionLabel.text = plant.plantDescription
         
-        if let imageName = plant.plantImage.first {
-            plantImageView.image = UIImage(named: imageName)
+        if let plantImages = plant.plantImage, let firstImage = plantImages.first {
+            plantImageView.image = UIImage(named: String(firstImage))
+        } else {
+            plantImageView.image = UIImage(named: "placeholder_plant")
         }
         
         // Ensure labels are visible and properly laid out
@@ -77,11 +79,17 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         nameLabel.text = disease.diseaseName
         
         // Format symptoms with bullet points
-        let symptomsText = disease.diseaseSymptoms.map { "• \($0)" }.joined(separator: "\n")
+        if let symptoms = disease.diseaseSymptoms {
+            let symptomsText = symptoms.map { "• \($0)" }.joined(separator: "\n")
         descriptionLabel.text = symptomsText
+        } else {
+            descriptionLabel.text = "No symptoms available"
+        }
         
-        if let imageName = disease.diseaseImage.first {
-            plantImageView.image = UIImage(named: imageName)
+        if let diseaseImages = disease.diseaseImage, let firstImage = diseaseImages.first {
+            plantImageView.image = UIImage(named: String(firstImage))
+        } else {
+            plantImageView.image = UIImage(named: "placeholder_disease")
         }
         
         // Ensure labels are visible and properly laid out
@@ -94,10 +102,14 @@ class AllDataCollectionViewCell: UICollectionViewCell {
     func configureForFertilizer(with fertilizer: Fertilizer) {
         // Configure the cell with fertilizer data
         nameLabel.text = fertilizer.fertilizerName
-        descriptionLabel.text = fertilizer.fertilizerDescription
+        descriptionLabel.text = fertilizer.fertilizerDescription ?? "No description available"
         
         // Load the fertilizer image
-        plantImageView.image = UIImage(named: fertilizer.fertilizerImage) ?? UIImage(named: "fertilizer_placeholder")
+        if let imageName = fertilizer.fertilizerImage {
+            plantImageView.image = UIImage(named: imageName) ?? UIImage(named: "fertilizer_placeholder")
+        } else {
+            plantImageView.image = UIImage(named: "fertilizer_placeholder")
+        }
         
         // Ensure labels are visible and properly laid out
         nameLabel.setNeedsLayout()

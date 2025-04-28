@@ -43,13 +43,17 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         }
         
         // MARK: - Search Bar Delegate
-        func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) async {
             if searchText.isEmpty {
                 filteredPlants = []
                 searchResultsTableView.isHidden = true
-            } else {
+            searchResultsTableView.reloadData()
+            return
+        }
+        
+        do {
                 // Get all plants using the proper method
-                let allPlants = dataController.getPlants()
+            let allPlants = try await dataController.getPlants()
                 print("Found \(allPlants.count) total plants")
                 
                 filteredPlants = allPlants.filter {
@@ -57,9 +61,27 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
                 }
                 print("Filtered to \(filteredPlants.count) plants matching '\(searchText)'")
                 
+            await MainActor.run {
                 searchResultsTableView.isHidden = filteredPlants.isEmpty
+                searchResultsTableView.reloadData()
             }
+        } catch {
+            print("Error fetching plants: \(error)")
+            await MainActor.run {
+                let alert = UIAlertController(
+                    title: "Error",
+                    message: "Failed to search plants. Please try again later.",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+                
+                // Clear results and hide table view
+                filteredPlants = []
+                searchResultsTableView.isHidden = true
             searchResultsTableView.reloadData()
+            }
+        }
         }
         
         // MARK: - Table View Data Source

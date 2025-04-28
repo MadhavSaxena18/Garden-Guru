@@ -226,37 +226,26 @@ class FertilizerDetailViewController: UIViewController {
         guard let fertilizer = fertilizer else { return }
         
         // Configure image
-        if let image = UIImage(named: fertilizer.fertilizerImage) {
+        if let imageName = fertilizer.fertilizerImage, let image = UIImage(named: imageName) {
             headerImageView.image = image
         } else {
             // Fallback to a placeholder if image not found
             headerImageView.backgroundColor = .systemGray5
-            print("Could not load image: \(fertilizer.fertilizerImage)")
+            print("Could not load fertilizer image")
         }
         
         titleLabel.text = fertilizer.fertilizerName
-        typeLabel.text = "Type: \(fertilizer.type)"
-        descriptionLabel.text = fertilizer.fertilizerDescription
-        applicationMethodLabel.text = fertilizer.applicationMethod
-        frequencyLabel.text = fertilizer.applicationFrequency
+        descriptionLabel.text = fertilizer.fertilizerDescription ?? "No description available"
         
-        // Configure warning signs
-        warningsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        fertilizer.warningSigns.forEach { warning in
-            let label = UILabel()
-            label.text = "• \(warning)"
-            label.numberOfLines = 0
-            label.font = .systemFont(ofSize: 16)
-            warningsStackView.addArrangedSubview(label)
-        }
-        
-        // Configure alternatives
-        alternativesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        fertilizer.alternativeFertilizers.forEach { alternative in
-            let label = UILabel()
-            label.text = "• \(alternative)"
-            label.font = .systemFont(ofSize: 16)
-            alternativesStackView.addArrangedSubview(label)
-        }
+        // Hide or remove sections that don't have corresponding data
+        typeLabel.isHidden = true
+        applicationMethodTitleLabel.isHidden = true
+        applicationMethodLabel.isHidden = true
+        frequencyTitleLabel.isHidden = true
+        frequencyLabel.isHidden = true
+        warningsTitleLabel.isHidden = true
+        warningsStackView.isHidden = true
+        alternativesTitleLabel.isHidden = true
+        alternativesStackView.isHidden = true
     }
 }

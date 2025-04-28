@@ -101,22 +101,25 @@ class SectionWiseDetailViewController: UIViewController {
         
         print("Loading data for segment: \(segmentIndex), section: \(section)")
         
+        // Start async task to fetch data
+        Task {
+            do {
         switch segmentIndex {
         case 0: // Discover
             switch section {
             case 0: // Top Winter Plants
                 dataType = .plants
-                plants = dataController.getTopSeasonPlants()
+                        plants = try await dataController.getPlants()
                 print("Loaded winter plants: \(plants.count)")
                 
             case 1: // Common Issues
                 dataType = .diseases
-                diseases = dataController.getCommonIssues()
+                        diseases = try await dataController.getCommonIssues()
                 print("Loaded common issues: \(diseases.count)")
                 
             case 2: // Common Fertilizers
                 dataType = .fertilizers
-                fertilizers = dataController.getCommonFertilizers() // This now correctly assigns [Fertilizer]
+                        fertilizers = try await dataController.getCommonFertilizers()
                 print("Loaded fertilizers: \(fertilizers.count)")
                 
             default:
@@ -127,13 +130,13 @@ class SectionWiseDetailViewController: UIViewController {
             switch section {
             case 0: // Common Issues for User Plants
                 dataType = .diseases
-                diseases = dataController.getCommonIssuesForUserPlants()
+                        diseases = try await dataController.getCommonIssues()
                 print("Loaded user plant diseases: \(diseases.count)")
                 print("Disease names: \(diseases.map { $0.diseaseName })")
                 
             case 1: // Common Fertilizers
                 dataType = .fertilizers
-                fertilizers = dataController.getCommonFertilizers()
+                        fertilizers = try await dataController.getCommonFertilizers()
                 print("Loaded fertilizers: \(fertilizers.count)")
                 print("Fertilizers: \(fertilizers)")
                 
@@ -152,12 +155,24 @@ class SectionWiseDetailViewController: UIViewController {
         if let filteredData = filteredItems {
             // Use the filtered data
             // Example: diseases = filteredData as? [Diseases] ?? []
-        } else {
-            // Use regular data setup
         }
         
-        DispatchQueue.main.async {
+                // Update UI on main thread
+                await MainActor.run {
             self.collectionView.reloadData()
+                }
+            } catch {
+                print("Error loading data: \(error)")
+                await MainActor.run {
+                    let alert = UIAlertController(
+                        title: "Error",
+                        message: "Failed to load data. Please try again later.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
+            }
         }
     }
 }

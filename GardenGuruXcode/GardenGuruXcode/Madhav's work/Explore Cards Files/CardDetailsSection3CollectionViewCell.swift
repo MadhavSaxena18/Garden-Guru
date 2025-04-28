@@ -48,14 +48,20 @@ class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
         }
         
         func updateWithPlantInfo(_ plant: Plant) {
-            let plantImages = plant.plantImage.compactMap { UIImage(named: $0) }
-            self.images = plantImages
+            if let imageName = plant.plantImage, let image = UIImage(named: imageName) {
+                self.images = [image]
+            } else {
+                self.images = []
+            }
             reloadCollectionView()
         }
         
         func updateWithDiseaseInfo(_ disease: Diseases) {
-            let diseaseImages = disease.diseaseImage.compactMap { UIImage(named: $0) }
-            self.images = diseaseImages
+            if let imageName = disease.diseaseImage, let image = UIImage(named: imageName) {
+                self.images = [image]
+            } else {
+                self.images = []
+            }
             reloadCollectionView()
         }
         

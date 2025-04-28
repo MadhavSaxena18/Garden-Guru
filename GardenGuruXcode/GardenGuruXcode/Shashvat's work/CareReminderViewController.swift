@@ -154,29 +154,28 @@ class CareReminderViewController: UIViewController {
         upcomingReminders = [[],[],[]]
         
         for reminder in reminders {
-            // Only add watering reminders if not disabled (not set to distantFuture)
-            if reminder.reminder.upcomingReminderForWater != Date.distantFuture {
-                if calendar.isDateInToday(reminder.reminder.upcomingReminderForWater) {
+            // Only add watering reminders if not disabled
+            let waterDate = reminder.reminder.upcomingReminderForWater
+            if calendar.isDateInToday(waterDate) {
                     todayReminders[0].append(reminder)
-                } else if reminder.reminder.upcomingReminderForWater > currentDate {
+            } else if waterDate > currentDate {
                     upcomingReminders[0].append(reminder)
-                }
             }
             
             // Only add fertilizing reminders if not disabled
-            if reminder.reminder.upcomingReminderForFertilizers != Date.distantFuture {
-                if calendar.isDateInToday(reminder.reminder.upcomingReminderForFertilizers) {
+            if let fertilizerDate = reminder.reminder.upcomingReminderForFertilizers {
+                if calendar.isDateInToday(fertilizerDate) {
                     todayReminders[1].append(reminder)
-                } else if reminder.reminder.upcomingReminderForFertilizers > currentDate {
+                } else if fertilizerDate > currentDate {
                     upcomingReminders[1].append(reminder)
                 }
             }
             
             // Only add repotting reminders if not disabled
-            if reminder.reminder.upcomingReminderForRepotted != Date.distantFuture {
-                if calendar.isDateInToday(reminder.reminder.upcomingReminderForRepotted) {
+            if let repotDate = reminder.reminder.upcomingReminderForRepotted {
+                if calendar.isDateInToday(repotDate) {
                     todayReminders[2].append(reminder)
-                } else if reminder.reminder.upcomingReminderForRepotted > currentDate {
+                } else if repotDate > currentDate {
                     upcomingReminders[2].append(reminder)
                 }
             }
@@ -189,9 +188,17 @@ class CareReminderViewController: UIViewController {
                 case 0:
                     return first.reminder.upcomingReminderForWater < second.reminder.upcomingReminderForWater
                 case 1:
-                    return first.reminder.upcomingReminderForFertilizers < second.reminder.upcomingReminderForFertilizers
+                    if let firstDate = first.reminder.upcomingReminderForFertilizers,
+                       let secondDate = second.reminder.upcomingReminderForFertilizers {
+                        return firstDate < secondDate
+                    }
+                    return false
                 case 2:
-                    return first.reminder.upcomingReminderForRepotted < second.reminder.upcomingReminderForRepotted
+                    if let firstDate = first.reminder.upcomingReminderForRepotted,
+                       let secondDate = second.reminder.upcomingReminderForRepotted {
+                        return firstDate < secondDate
+                    }
+                    return false
                 default:
                     return false
                 }
@@ -202,9 +209,17 @@ class CareReminderViewController: UIViewController {
                 case 0:
                     return first.reminder.upcomingReminderForWater < second.reminder.upcomingReminderForWater
                 case 1:
-                    return first.reminder.upcomingReminderForFertilizers < second.reminder.upcomingReminderForFertilizers
+                    if let firstDate = first.reminder.upcomingReminderForFertilizers,
+                       let secondDate = second.reminder.upcomingReminderForFertilizers {
+                        return firstDate < secondDate
+                    }
+                    return false
                 case 2:
-                    return first.reminder.upcomingReminderForRepotted < second.reminder.upcomingReminderForRepotted
+                    if let firstDate = first.reminder.upcomingReminderForRepotted,
+                       let secondDate = second.reminder.upcomingReminderForRepotted {
+                        return firstDate < secondDate
+                    }
+                    return false
                 default:
                     return false
                 }
@@ -441,13 +456,13 @@ class CareReminderViewController: UIViewController {
         dateFormatter.timeStyle = .short
         
         wateringDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForWater))"
-        fertilizingDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForFertilizers))"
-        repottingDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForRepotted))"
+        fertilizingDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForFertilizers!))"
+        repottingDateLabel.text = "Next: \(dateFormatter.string(from: reminder.upcomingReminderForRepotted!))"
         
         // Update button states
-        updateButtonState(wateringButton, isCompleted: reminder.isWateringCompleted)
-        updateButtonState(fertilizingButton, isCompleted: reminder.isFertilizingCompleted)
-        updateButtonState(repottingButton, isCompleted: reminder.isRepottingCompleted)
+        updateButtonState(wateringButton, isCompleted: reminder.isWateringCompleted ?? false)
+        updateButtonState(fertilizingButton, isCompleted: reminder.isFertilizingCompleted ?? false)
+        updateButtonState(repottingButton, isCompleted: reminder.isRepottingCompleted ?? false)
     }
     
     private func updateButtonState(_ button: UIButton, isCompleted: Bool) {
@@ -515,14 +530,14 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         
         switch sectionType {
         case 0:
-            isCompleted = reminder.reminder.isWateringCompleted
-            dueDate = reminder.reminder.upcomingReminderForWater
+            isCompleted = reminder.reminder.isWateringCompleted ?? false
+            dueDate = reminder.reminder.upcomingReminderForWater ?? Date()
         case 1:
-            isCompleted = reminder.reminder.isFertilizingCompleted
-            dueDate = reminder.reminder.upcomingReminderForFertilizers
+            isCompleted = reminder.reminder.isFertilizingCompleted ?? false
+            dueDate = reminder.reminder.upcomingReminderForFertilizers ?? Date()
         case 2:
-            isCompleted = reminder.reminder.isRepottingCompleted
-            dueDate = reminder.reminder.upcomingReminderForRepotted
+            isCompleted = reminder.reminder.isRepottingCompleted ?? false
+            dueDate = reminder.reminder.upcomingReminderForRepotted ?? Date()
         default:
             isCompleted = false
             dueDate = Date()
@@ -536,9 +551,7 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         let shouldEnableCheckbox = isInToday || (isTomorrow && !isToday)
         
         cell.configure(
-            with: reminder,
-            isCompleted: isCompleted,
-            dueDate: dueDate,
+            with: reminder.reminder,
             isUpcoming: careReminderSegmentedControl.selectedSegmentIndex == 1,
             isTomorrow: isTomorrow,
             shouldEnableCheckbox: shouldEnableCheckbox
@@ -581,13 +594,13 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         
         switch type {
         case 0:
-            isCompleted = reminder.reminder.isWateringCompleted
+            isCompleted = reminder.reminder.isWateringCompleted ?? false
             reminderType = "water"
         case 1:
-            isCompleted = reminder.reminder.isFertilizingCompleted
+            isCompleted = reminder.reminder.isFertilizingCompleted ?? false
             reminderType = "fertilizer"
         case 2:
-            isCompleted = reminder.reminder.isRepottingCompleted
+            isCompleted = reminder.reminder.isRepottingCompleted ?? false
             reminderType = "repot"
         default:
             return
