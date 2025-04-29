@@ -1141,6 +1141,100 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             print("❌ Error fetching users: \(error)")
         }
     }
+
+    // Function to get disease by name with better error handling
+    func getDiseaseByName(name: String) async throws -> Diseases? {
+        print("🔍 Fetching disease with name: \(name)")
+        
+        // Clean up the disease name
+        let cleanedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        print("🔍 Cleaned disease name: \(cleanedName)")
+        
+        let response = try await supabase
+            .database
+            .from("Diseases")
+            .select()
+            .execute()
+        
+        print("📡 Response data type: \(type(of: response.data))")
+        
+        if let data = response.data as? Data {
+            print("📡 Attempting to decode Data response")
+            do {
+                // First try to convert Data to JSON array
+                if let jsonArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                    print("✅ Successfully parsed JSON array with \(jsonArray.count) items")
+                    
+                    // Look for a disease with matching name
+                    for item in jsonArray {
+                        if let diseaseName = item["diseaseName"] as? String,
+                           diseaseName.lowercased() == cleanedName.lowercased() {
+                            print("✅ Found matching disease: \(diseaseName)")
+                            
+                            // Convert back to JSON data for decoding
+                            let itemData = try JSONSerialization.data(withJSONObject: item)
+                            let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
+                            print("✅ Successfully decoded disease")
+                            return disease
+                        }
+                    }
+                }
+            } catch {
+                print("❌ Error parsing JSON: \(error)")
+            }
+        } else if let jsonArray = response.data as? [[String: Any]] {
+            print("📡 Got direct JSON array with \(jsonArray.count) items")
+            
+            // Look for a disease with matching name
+            for item in jsonArray {
+                if let diseaseName = item["diseaseName"] as? String,
+                   diseaseName.lowercased() == cleanedName.lowercased() {
+                    print("✅ Found matching disease: \(diseaseName)")
+                    
+                    do {
+                        let itemData = try JSONSerialization.data(withJSONObject: item)
+                        let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
+                        print("✅ Successfully decoded disease")
+                        return disease
+                    } catch {
+                        print("❌ Error decoding disease: \(error)")
+                    }
+                }
+            }
+        }
+        
+        print("❌ No disease found with name: \(cleanedName)")
+        return nil
+    }
+
+    // Synchronous wrapper with better error handling
+    func getDiseaseByNameSync(name: String) -> Diseases? {
+        print("\n=== Getting Disease By Name Synchronously ===")
+        print("🔍 Looking for disease: \(name)")
+        
+        var disease: Diseases?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                disease = try await getDiseaseByName(name: name)
+                if let disease = disease {
+                    print("✅ Found disease: \(disease.diseaseName)")
+                    print("   Symptoms: \(disease.diseaseSymptoms ?? "None")")
+                    print("   Cure: \(disease.diseaseCure ?? "None")")
+                } else {
+                    print("❌ Disease not found")
+                }
+            } catch {
+                print("❌ Error getting disease: \(error.localizedDescription)")
+                print("❌ Error details: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return disease
+    }
 }
 
 // Helper struct for decoding nested JSON response
