@@ -27,7 +27,7 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
             searchResultsTableView = UITableView()
             searchResultsTableView.delegate = self
             searchResultsTableView.dataSource = self
-            searchResultsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "PlantCell")
+            searchResultsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "first")
             searchResultsTableView.isHidden = true
             searchResultsTableView.translatesAutoresizingMaskIntoConstraints = false
             searchResultsTableView.backgroundColor = UIColor(hex: "EBF4EB")
@@ -90,7 +90,7 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         }
         
         func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "PlantCell", for: indexPath)
+            let cell = tableView.dequeueReusableCell(withIdentifier: "first", for: indexPath)
             let plant = filteredPlants[indexPath.row]
             cell.textLabel?.text = plant.plantName
             cell.backgroundColor = .white
