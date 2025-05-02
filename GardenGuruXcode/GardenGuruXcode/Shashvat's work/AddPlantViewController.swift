@@ -43,30 +43,31 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         }
         
         // MARK: - Search Bar Delegate
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) async {
-            if searchText.isEmpty {
-                filteredPlants = []
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        Task { [weak self] in
+            await self?.performSearch(with: searchText)
+        }
+    }
+
+    private func performSearch(with searchText: String) async {
+        if searchText.isEmpty {
+            filteredPlants = []
+            await MainActor.run {
                 searchResultsTableView.isHidden = true
-            searchResultsTableView.reloadData()
+                searchResultsTableView.reloadData()
+            }
             return
         }
-        
         do {
-                // Get all plants using the proper method
             let allPlants = try await dataController.getPlants()
-                print("Found \(allPlants.count) total plants")
-                
-                filteredPlants = allPlants.filter {
-                    $0.plantName.lowercased().contains(searchText.lowercased())
-                }
-                print("Filtered to \(filteredPlants.count) plants matching '\(searchText)'")
-                
+            filteredPlants = allPlants.filter {
+                $0.plantName.lowercased().contains(searchText.lowercased())
+            }
             await MainActor.run {
                 searchResultsTableView.isHidden = filteredPlants.isEmpty
                 searchResultsTableView.reloadData()
             }
         } catch {
-            print("Error fetching plants: \(error)")
             await MainActor.run {
                 let alert = UIAlertController(
                     title: "Error",
@@ -75,14 +76,12 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
                 )
                 alert.addAction(UIAlertAction(title: "OK", style: .default))
                 self.present(alert, animated: true)
-                
-                // Clear results and hide table view
                 filteredPlants = []
                 searchResultsTableView.isHidden = true
-            searchResultsTableView.reloadData()
+                searchResultsTableView.reloadData()
             }
         }
-        }
+    }
         
         // MARK: - Table View Data Source
         func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
