@@ -35,7 +35,9 @@ class FullScreenImageViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        if images.count > 0 {
         collectionView.scrollToItem(at: IndexPath(item: currentIndex, section: 0), at: .centeredHorizontally, animated: false)
+        }
     }
     
     private func setupUI() {
