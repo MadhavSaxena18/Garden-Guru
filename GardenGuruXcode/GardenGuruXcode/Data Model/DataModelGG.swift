@@ -88,36 +88,72 @@ struct Diseases: Codable, Hashable {
     var diseaseSeason: Season?
     
     enum CodingKeys: String, CodingKey {
-        case diseaseID
-        case diseaseName
-        case diseaseSymptoms
-        case diseaseImage
-        case diseaseCure
-        case diseaseFertilizers
-        case cureDuration
-        case diseaseSeason
+        case diseaseID = "diseaseID"
+        case diseaseName = "diseaseName"
+        case diseaseSymptoms = "diseaseSymptoms"
+        case diseaseImage = "diseaseImage"
+        case diseaseCure = "diseaseCure"
+        case diseaseFertilizers = "diseaseFertilizers"
+        case cureDuration = "cureDuration"
+        case diseaseSeason = "diseaseSeason"
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Handle UUID decoding
+        // Handle UUID decoding with better error handling
         if let uuidString = try? container.decode(String.self, forKey: .diseaseID) {
+            print("📝 Decoded diseaseID: \(uuidString)")
             diseaseID = UUID(uuidString: uuidString) ?? UUID()
         } else {
+            print("⚠️ Failed to decode diseaseID, using new UUID")
             diseaseID = UUID()
         }
         
-        // Decode required fields
-        diseaseName = try container.decode(String.self, forKey: .diseaseName)
+        // Decode required fields with error handling
+        do {
+            diseaseName = try container.decode(String.self, forKey: .diseaseName)
+            print("📝 Decoded diseaseName: \(diseaseName)")
+        } catch {
+            print("❌ Error decoding diseaseName: \(error)")
+            throw error
+        }
         
-        // Decode optional fields
-        diseaseSymptoms = try container.decodeIfPresent(String.self, forKey: .diseaseSymptoms)
-        diseaseImage = try container.decodeIfPresent(String.self, forKey: .diseaseImage)
-        diseaseCure = try container.decodeIfPresent(String.self, forKey: .diseaseCure)
-        diseaseFertilizers = try container.decodeIfPresent(String.self, forKey: .diseaseFertilizers)
-        cureDuration = try container.decodeIfPresent(Int64.self, forKey: .cureDuration)
-        diseaseSeason = try container.decodeIfPresent(Season.self, forKey: .diseaseSeason)
+        // Decode optional fields with better error handling
+        do {
+            if let symptoms = try container.decodeIfPresent(String.self, forKey: .diseaseSymptoms) {
+                print("📝 Decoded symptoms: \(symptoms)")
+                diseaseSymptoms = symptoms
+            }
+            
+            if let image = try container.decodeIfPresent(String.self, forKey: .diseaseImage) {
+                print("📝 Decoded image URL: \(image)")
+                diseaseImage = image
+            }
+            
+            if let cure = try container.decodeIfPresent(String.self, forKey: .diseaseCure) {
+                print("📝 Decoded cure: \(cure)")
+                diseaseCure = cure
+            }
+            
+            if let fertilizers = try container.decodeIfPresent(String.self, forKey: .diseaseFertilizers) {
+                print("📝 Decoded fertilizers: \(fertilizers)")
+                diseaseFertilizers = fertilizers
+            }
+            
+            if let duration = try container.decodeIfPresent(Int64.self, forKey: .cureDuration) {
+                print("📝 Decoded duration: \(duration)")
+                cureDuration = duration
+            }
+            
+            if let season = try container.decodeIfPresent(Season.self, forKey: .diseaseSeason) {
+                print("📝 Decoded season: \(season)")
+                diseaseSeason = season
+            }
+        } catch {
+            print("⚠️ Error decoding optional fields: \(error)")
+            // Don't throw here, just continue with nil values
+        }
     }
 }
 
@@ -135,8 +171,9 @@ struct UserPlant: Codable, Hashable {
     var lastWatered: Date?
     var lastFertilized: Date?
     var lastRepotted: Date?
+    var userPlantImage: String?
     
-    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil) {
+    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil, userPlantImage: String? = nil) {
         self.userPlantRelationID = userPlantRelationID
         self.userId = userId
         self.userplantID = userplantID
@@ -144,6 +181,7 @@ struct UserPlant: Codable, Hashable {
         self.lastWatered = lastWatered
         self.lastFertilized = lastFertilized
         self.lastRepotted = lastRepotted
+        self.userPlantImage = userPlantImage
     }
     
     enum CodingKeys: String, CodingKey {
@@ -154,6 +192,7 @@ struct UserPlant: Codable, Hashable {
         case lastWatered
         case lastFertilized
         case lastRepotted
+        case userPlantImage
     }
     
     init(from decoder: Decoder) throws {
@@ -193,6 +232,7 @@ struct UserPlant: Codable, Hashable {
         if let lastRepottedString = try container.decodeIfPresent(String.self, forKey: .lastRepotted) {
             lastRepotted = dateFormatter.date(from: lastRepottedString)
         }
+        userPlantImage = try container.decodeIfPresent(String.self, forKey: .userPlantImage)
     }
 }
 

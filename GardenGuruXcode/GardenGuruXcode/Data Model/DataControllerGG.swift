@@ -117,30 +117,57 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         print("📡 Raw user response: \(String(describing: userResponse.data))")
         
-        guard let jsonObject = userResponse.data as? [[String: Any]],
-              let firstUser = jsonObject.first,
-              let userIdString = firstUser["id"] as? String else {
+        // Try to decode the response data
+        var userIdString: String?
+        if let data = userResponse.data as? Data {
+            do {
+                let users = try JSONDecoder().decode([userInfo].self, from: data)
+                if let firstUser = users.first {
+                    userIdString = firstUser.id
+                    print("✅ Found user ID: \(firstUser.id)")
+                }
+            } catch {
+                print("❌ Error decoding user data: \(error)")
+            }
+        } else if let jsonObject = userResponse.data as? [[String: Any]],
+                  let firstUser = jsonObject.first,
+                  let id = firstUser["id"] as? String {
+            userIdString = id
+            print("✅ Found user ID: \(id)")
+        }
+        
+        guard let userId = userIdString else {
             print("❌ Could not find user ID for email: \(userEmail)")
             return []
         }
-        
-        print("📍 Found user ID: \(userIdString)")
         
         // Now get the user's plants using the correct ID
         let response = try await supabase
             .database
             .from("UserPlant")
             .select()
-            .eq("userId", value: userIdString)
+            .eq("userId", value: userId)
             .execute()
         
         print("📡 Raw user plants response: \(String(describing: response.data))")
         
-        if let jsonObject = response.data as? [[String: Any]] {
-            let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-            let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
-            print("✅ Decoded user plants count: \(userPlants.count)")
-            return userPlants
+        if let data = response.data as? Data {
+            do {
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: data)
+                print("✅ Decoded user plants count: \(userPlants.count)")
+                return userPlants
+            } catch {
+                print("❌ Error decoding user plants: \(error)")
+            }
+        } else if let jsonObject = response.data as? [[String: Any]] {
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded user plants count: \(userPlants.count)")
+                return userPlants
+            } catch {
+                print("❌ Error decoding user plants: \(error)")
+            }
         }
         
         print("❌ Failed to decode user plants data")
@@ -656,32 +683,58 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         let userPlants = try await getUserPlants(for: userEmail)
         print("📱 Found \(userPlants.count) user plants")
         
-        var result: [(userPlant: UserPlant, plant: Plant)] = []
-        
-        for userPlant in userPlants {
-            print("🌿 Looking up plant for userPlant ID: \(userPlant.userplantID)")
-            if let plant = try await getPlant(by: userPlant.userplantID!) {
-                print("✅ Found plant: \(plant.plantName)")
-                result.append((userPlant: userPlant, plant: plant))
+        if userPlants.isEmpty {
+            print("⚠️ No user plants found for email: \(userEmail)")
+            print("🔍 Checking if user exists in UserTable...")
+            if let user = try await getUser() {
+                print("✅ User exists: \(user.userEmail)")
             } else {
-                print("⚠️ No plant found for ID: \(userPlant.userplantID)")
+                print("❌ User not found in UserTable")
             }
         }
         
-        print("✅ Final result count: \(result.count) plants with details")
+        var result: [(userPlant: UserPlant, plant: Plant)] = []
+        
+        for userPlant in userPlants {
+            print("\n🌿 Processing user plant:")
+            print("- Relation ID: \(userPlant.userPlantRelationID)")
+            print("- Plant ID: \(userPlant.userplantID?.uuidString ?? "nil")")
+            print("- Nickname: \(userPlant.userPlantNickName ?? "nil")")
+            
+            if let plantID = userPlant.userplantID {
+                print("🔍 Looking up plant with ID: \(plantID)")
+                if let plant = try await getPlant(by: plantID) {
+                    print("✅ Found plant: \(plant.plantName)")
+                    result.append((userPlant: userPlant, plant: plant))
+                } else {
+                    print("❌ No plant found for ID: \(plantID)")
+                }
+            } else {
+                print("⚠️ User plant has no plant ID")
+            }
+        }
+        
+        print("\n📊 Final Results:")
+        print("Total user plants processed: \(userPlants.count)")
+        print("Successfully matched plants: \(result.count)")
+        
         return result
     }
     
     // Synchronous wrapper for getUserPlantsWithBasicDetails
     func getUserPlantsWithBasicDetailsSync(for userEmail: String) -> [(userPlant: UserPlant, plant: Plant)]? {
+        print("\n=== Getting User Plants with Basic Details (Sync) ===")
+        print("📧 User email: \(userEmail)")
+        
         var result: [(userPlant: UserPlant, plant: Plant)]?
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
                 result = try await getUserPlantsWithBasicDetails(for: userEmail)
+                print("✅ Successfully fetched \(result?.count ?? 0) plants")
             } catch {
-                print("Error getting user plants with basic details: \(error)")
+                print("❌ Error getting user plants: \(error)")
             }
             semaphore.signal()
         }
@@ -1140,6 +1193,100 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         } catch {
             print("❌ Error fetching users: \(error)")
         }
+    }
+
+    // Function to get disease by name with better error handling
+    func getDiseaseByName(name: String) async throws -> Diseases? {
+        print("🔍 Fetching disease with name: \(name)")
+        
+        // Clean up the disease name
+        let cleanedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        print("🔍 Cleaned disease name: \(cleanedName)")
+        
+        let response = try await supabase
+            .database
+            .from("Diseases")
+            .select()
+            .execute()
+        
+        print("📡 Response data type: \(type(of: response.data))")
+        
+        if let data = response.data as? Data {
+            print("📡 Attempting to decode Data response")
+            do {
+                // First try to convert Data to JSON array
+                if let jsonArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                    print("✅ Successfully parsed JSON array with \(jsonArray.count) items")
+                    
+                    // Look for a disease with matching name
+                    for item in jsonArray {
+                        if let diseaseName = item["diseaseName"] as? String,
+                           diseaseName.lowercased() == cleanedName.lowercased() {
+                            print("✅ Found matching disease: \(diseaseName)")
+                            
+                            // Convert back to JSON data for decoding
+                            let itemData = try JSONSerialization.data(withJSONObject: item)
+                            let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
+                            print("✅ Successfully decoded disease")
+                            return disease
+                        }
+                    }
+                }
+            } catch {
+                print("❌ Error parsing JSON: \(error)")
+            }
+        } else if let jsonArray = response.data as? [[String: Any]] {
+            print("📡 Got direct JSON array with \(jsonArray.count) items")
+            
+            // Look for a disease with matching name
+            for item in jsonArray {
+                if let diseaseName = item["diseaseName"] as? String,
+                   diseaseName.lowercased() == cleanedName.lowercased() {
+                    print("✅ Found matching disease: \(diseaseName)")
+                    
+                    do {
+                        let itemData = try JSONSerialization.data(withJSONObject: item)
+                        let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
+                        print("✅ Successfully decoded disease")
+                        return disease
+                    } catch {
+                        print("❌ Error decoding disease: \(error)")
+                    }
+                }
+            }
+        }
+        
+        print("❌ No disease found with name: \(cleanedName)")
+        return nil
+    }
+
+    // Synchronous wrapper with better error handling
+    func getDiseaseByNameSync(name: String) -> Diseases? {
+        print("\n=== Getting Disease By Name Synchronously ===")
+        print("🔍 Looking for disease: \(name)")
+        
+        var disease: Diseases?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                disease = try await getDiseaseByName(name: name)
+                if let disease = disease {
+                    print("✅ Found disease: \(disease.diseaseName)")
+                    print("   Symptoms: \(disease.diseaseSymptoms ?? "None")")
+                    print("   Cure: \(disease.diseaseCure ?? "None")")
+                } else {
+                    print("❌ Disease not found")
+                }
+            } catch {
+                print("❌ Error getting disease: \(error.localizedDescription)")
+                print("❌ Error details: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return disease
     }
 }
 

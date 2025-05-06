@@ -30,6 +30,8 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     var counter: Int = 0
     static var capturedImages: [UIImage] = []
     
+    private let dataController = DataControllerGG.shared
+    
     private var fullScreenScanningView: UIView!
     private var scanningLine: UIView!
     private var processingLabel: UILabel!
@@ -240,7 +242,17 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                     DispatchQueue.main.async {
                         DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
                         DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                      //  self.showPlantNotIdentifiedAlert()
+                        self.showPlantNotIdentifiedAlert()
+                    }
+                    return
+                }
+                
+                // Check if plant exists in database before proceeding
+                if findPlantCaseInsensitive(name: plantType) == nil {
+                    DispatchQueue.main.async {
+                        DiagnosisViewController.plantNameLabel.text = plantType
+                        DiagnosisViewController.diagnosisLabel.text = "No disease detected"
+                        self.showPlantNotFoundAlert()
                     }
                     return
                 }
@@ -382,27 +394,55 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
               let cgImage = image.cgImage else { return nil }
         
         var resultIdentifier: String?
+        var resultConfidence: Float = 0.0
         let semaphore = DispatchSemaphore(value: 0)
         
         let request = VNCoreMLRequest(model: model) { request, _ in
             if let results = request.results as? [VNClassificationObservation],
                let topResult = results.first {
-                resultIdentifier = topResult.identifier
-                print("Disease detected: \(topResult.identifier)")
+                // Only accept results with confidence above 0.5
+                if topResult.confidence > 0.5 {
+                    resultIdentifier = topResult.identifier
+                    resultConfidence = topResult.confidence
+                }
+                print("Disease detection: \(topResult.identifier) with confidence: \(topResult.confidence)")
             }
             semaphore.signal()
         }
         
         try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
         semaphore.wait()
-        return resultIdentifier
+        
+        // If confidence is too low, return nil instead of a potentially incorrect result
+        return resultConfidence > 0.5 ? resultIdentifier : nil
     }
     
     private func mostFrequentResult(_ results: [String]) -> String {
-        let frequency = results.reduce(into: [:]) { counts, result in
+        // Filter out nil and empty results
+        let validResults = results.filter { !$0.isEmpty }
+        
+        // If no valid results, return healthy
+        if validResults.isEmpty {
+            return "Healthy"
+        }
+        
+        // Count frequency of each result
+        let frequency = validResults.reduce(into: [:]) { counts, result in
             counts[result, default: 0] += 1
         }
-        return frequency.max(by: { $0.value < $1.value })?.key ?? "no object detected"
+        
+        // Get the most frequent result
+        if let (result, count) = frequency.max(by: { $0.value < $1.value }) {
+            // Only return disease if it appears in more than one image
+            if count > 1 && !result.lowercased().contains("healthy") {
+                return result
+            } else {
+                // If disease only appears once or result is "healthy", return healthy
+                return "Healthy"
+            }
+        }
+        
+        return "Healthy"
     }
     
     private func isNonPlantObject(_ result: String) -> Bool {
@@ -426,6 +466,27 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             self?.resetForNewScan()
             self?.resetState()
             
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+            self?.navigationController?.popToRootViewController(animated: true)
+        }
+        
+        alert.addAction(retryAction)
+        alert.addAction(cancelAction)
+        present(alert, animated: true)
+    }
+    
+    private func showPlantNotFoundAlert() {
+        let alert = UIAlertController(
+            title: "Plant Not Found",
+            message: "Sorry, we couldn't find this plant in our database. Please try scanning a different plant.",
+            preferredStyle: .alert
+        )
+        
+        let retryAction = UIAlertAction(title: "Try Again", style: .default) { [weak self] _ in
+            self?.resetForNewScan()
+            self?.resetState()
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
@@ -485,6 +546,12 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 return
             }
             
+            // Check if plant exists in database
+            if findPlantCaseInsensitive(name: plantName) == nil {
+                self.showPlantNotFoundAlert()
+                return
+            }
+            
             let diagnosis = DiagnosisViewController.diagnosisLabel.text ?? "No disease detected"
             
             // Create DiagnosisDataModel with the processed results
@@ -495,9 +562,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 sectionDetails: [:] // Will be populated in DiagnosisViewController
             )
             
-            let diagnosisVC = DiagnosisViewController()
-            diagnosisVC.selectedPlant = diagnosisData
-            self.navigationController?.pushViewController(diagnosisVC, animated: true)
+            self.navigateToDiagnosisView(with: diagnosis)
         }
     }
     
@@ -551,6 +616,58 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         // Remove preview layer if it exists
         previewLayer?.removeFromSuperlayer()
+    }
+    
+    private func navigateToDiagnosisView(with diseaseName: String) {
+        let diagnosisVC = DiagnosisViewController()
+        
+        // Get the plant name that was detected
+        let plantName = DiagnosisViewController.plantNameLabel.text ?? "Unknown Plant"
+        
+        // Get plant details from database using case-insensitive search
+        if let plant = findPlantCaseInsensitive(name: plantName) {
+            // Create diagnosis data model with plant details
+            diagnosisVC.selectedPlant = DiagnosisDataModel(
+                plantName: plant.plantName,
+                diagnosis: diseaseName,
+                botanicalName: plant.plantBotanicalName ?? "",
+                sectionDetails: [:]
+            )
+            
+            // Fetch disease details
+            diagnosisVC.fetchAndUpdateDiseaseDetails(diseaseName: diseaseName)
+            
+            // Navigate to the diagnosis view
+            navigationController?.pushViewController(diagnosisVC, animated: true)
+        } else {
+            print("Error: Plant not found in database")
+            showPlantNotFoundAlert()
+        }
+    }
+    
+    // Helper function to find plant with case-insensitive search
+    private func findPlantCaseInsensitive(name: String) -> Plant? {
+        // Try exact match first
+        if let plant = dataController.getPlantbyNameSync(name: name) {
+            return plant
+        }
+        
+        // Try lowercase
+        if let plant = dataController.getPlantbyNameSync(name: name.lowercased()) {
+            return plant
+        }
+        
+        // Try uppercase
+        if let plant = dataController.getPlantbyNameSync(name: name.uppercased()) {
+            return plant
+        }
+        
+        // Try capitalized (first letter uppercase, rest lowercase)
+        if let plant = dataController.getPlantbyNameSync(name: name.capitalized) {
+            return plant
+        }
+        
+        return nil
     }
 }
 
