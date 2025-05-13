@@ -1348,6 +1348,18 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         _ = semaphore.wait(timeout: .now() + 5)
         return disease
     }
+
+    // Add this method in the DataControllerGG class
+    func updateUsername(email: String, newUsername: String) async throws {
+        print("🔄 Updating username for email: \(email)")
+        try await supabase
+            .database
+            .from("UserTable")
+            .update(["userName": newUsername])
+            .eq("user_email", value: email)
+            .execute()
+        print("✅ Username updated successfully in Supabase")
+    }
 }
 
 // Helper struct for decoding nested JSON response
