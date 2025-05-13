@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class CareReminderCollectionViewCell: UICollectionViewCell {
 
@@ -18,66 +19,69 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     
     var onCheckboxToggle: (() -> Void)?
     
-    
-    func configure(with reminder: CareReminder_,
+    func configure(with reminderData: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), 
+                  isCompleted: Bool, 
+                  dueDate: Date?, 
                   isUpcoming: Bool,
                   isTomorrow: Bool,
                   shouldEnableCheckbox: Bool) {
+        // Configure plant image
+        if let imageUrlString = reminderData.plant.plantImage,
+           let imageUrl = URL(string: imageUrlString) {
+            careReminderPlantImageView.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder_plant"))
+        } else {
+            careReminderPlantImageView.image = UIImage(named: "placeholder_plant")
+        }
         
-        // Set plant image (using a placeholder since CareReminder_ doesn't have plant info)
-        careReminderPlantImageView.image = UIImage(named: "placeholder_plant")
+        // Configure plant name and nickname
+        plantNameCareReminderLabel.text = reminderData.plant.plantName
+        nickNameCareReminderLabel.text = reminderData.userPlant.userPlantNickName ?? reminderData.plant.plantName
         
-        // Set plant name and nickname (using placeholders since CareReminder_ doesn't have plant info)
-        plantNameCareReminderLabel.text = "Plant Care Reminder"
-        nickNameCareReminderLabel.text = "Care Task"
-        
-        // Enable/disable checkbox based on parameter
+        // Configure checkbox state
         checkBoxCareReminderButton.isEnabled = shouldEnableCheckbox
+        checkBoxCareReminderButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
         
-        // Set checkbox state based on completion status
-        let isCompleted: Bool
-        if let wateringCompleted = reminder.isWateringCompleted {
-            isCompleted = wateringCompleted
-        } else if let fertilizingCompleted = reminder.isFertilizingCompleted {
-            isCompleted = fertilizingCompleted
-        } else if let repottingCompleted = reminder.isRepottingCompleted {
-            isCompleted = repottingCompleted
-        } else {
-            isCompleted = false
-        }
+        let checkBoxImage = isCompleted ? 
+            UIImage(systemName: "checkmark.square.fill")?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal) :
+            UIImage(systemName: "square")
+        checkBoxCareReminderButton.setImage(checkBoxImage, for: .normal)
         
-        checkBoxCareReminderButton.isSelected = isCompleted
-        
-        // Set due date
-        let dueDate: Date
-        if let fertilizingDate = reminder.upcomingReminderForFertilizers {
-            dueDate = fertilizingDate
-        } else if let repottingDate = reminder.upcomingReminderForRepotted {
-            dueDate = repottingDate
-        } else {
-            dueDate = reminder.upcomingReminderForWater
-        }
-        
-        // Format date
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-        dueDateCareReminder.text = dateFormatter.string(from: dueDate)
-        
-        // Update UI based on completion status
-        updateUIForCompletionStatus(isCompleted)
+        // Configure due date label
+        configureDueDate(dueDate: dueDate, isCompleted: isCompleted, isUpcoming: isUpcoming, isTomorrow: isTomorrow)
     }
     
-    private func updateUIForCompletionStatus(_ isCompleted: Bool) {
-        // Update visual appearance based on completion status
-        checkBoxCareReminderButton.isSelected = isCompleted
-        // Add any additional UI updates here
+    private func configureDueDate(dueDate: Date?, isCompleted: Bool, isUpcoming: Bool, isTomorrow: Bool) {
+        guard let dueDate = dueDate else {
+            dueDateCareReminder.text = "Not scheduled"
+            dueDateCareReminder.textColor = .gray
+            return
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        
+        if isUpcoming {
+            if isTomorrow {
+                dueDateCareReminder.text = "Due Tomorrow"
+                dueDateCareReminder.textColor = .systemOrange
+            } else {
+                dueDateCareReminder.text = "Due: \(formatter.string(from: dueDate))"
+                dueDateCareReminder.textColor = .systemBlue
+            }
+        } else {
+            if isCompleted {
+                dueDateCareReminder.text = "Completed"
+                dueDateCareReminder.textColor = UIColor(hex: "004E05") // Dark green color
+            } else {
+                dueDateCareReminder.text = "Due Today"
+                dueDateCareReminder.textColor = .systemRed
+            }
+        }
     }
     
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
-        
     }
     @IBAction func checkBoxCareReminderButtonTapped(_ sender: Any) {
         onCheckboxToggle?()
