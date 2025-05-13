@@ -1,7 +1,10 @@
 import UIKit
+import SDWebImage
+
 protocol CardDetailsSection3CollectionViewCellDelegate: AnyObject {
-    func didTapImage(at index: Int)
+    func didTapImage(at index: Int, images: [UIImage])
 }
+
 class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
     
     @IBOutlet weak var cardImageSection3: UIImageView?
@@ -48,21 +51,39 @@ class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
         }
         
         func updateWithPlantInfo(_ plant: Plant) {
-            if let imageName = plant.plantImage, let image = UIImage(named: imageName) {
-                self.images = [image]
+            if let imageString = plant.plantImage?.components(separatedBy: ";").first?.trimmingCharacters(in: .whitespacesAndNewlines),
+               let url = URL(string: imageString), !imageString.isEmpty {
+                // Use SDWebImage to fetch the image from URL
+                SDWebImageManager.shared.loadImage(with: url, options: [], progress: nil) { [weak self] image, _, error, _, _, _ in
+                    if let image = image {
+                        self?.images = [image]
+                    } else {
+                        self?.images = []
+                    }
+                    self?.reloadCollectionView()
+                }
             } else {
                 self.images = []
+                self.reloadCollectionView()
             }
-            reloadCollectionView()
         }
         
         func updateWithDiseaseInfo(_ disease: Diseases) {
-            if let imageName = disease.diseaseImage, let image = UIImage(named: imageName) {
-                self.images = [image]
+            if let imageString = disease.diseaseImage?.components(separatedBy: ";").first?.trimmingCharacters(in: .whitespacesAndNewlines),
+               let url = URL(string: imageString), !imageString.isEmpty {
+                // Use SDWebImage to fetch the image from URL
+                SDWebImageManager.shared.loadImage(with: url, options: [], progress: nil) { [weak self] image, _, error, _, _, _ in
+                    if let image = image {
+                        self?.images = [image]
+                    } else {
+                        self?.images = []
+                    }
+                    self?.reloadCollectionView()
+                }
             } else {
                 self.images = []
+                self.reloadCollectionView()
             }
-            reloadCollectionView()
         }
         
         private func reloadCollectionView() {
@@ -89,7 +110,7 @@ class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
         }
         
         func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-            delegate?.didTapImage(at: indexPath.item)
+            delegate?.didTapImage(at: indexPath.item, images: self.images)
         }
     }
 

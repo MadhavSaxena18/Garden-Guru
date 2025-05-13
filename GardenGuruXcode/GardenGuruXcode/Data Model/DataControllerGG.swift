@@ -117,7 +117,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         print("📡 Raw user response: \(String(describing: userResponse.data))")
         
-        if let jsonData = userResponse.data as? Data,
+       if let jsonData = userResponse.data as? Data,
            let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
            let user = users.first {
             print("✅ Found user ID: \(user.id)")
@@ -145,6 +145,62 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
         
         print("❌ No user plants found")
+
+        // Try to decode the response data
+        var userIdString: String?
+        if let data = userResponse.data as? Data {
+            do {
+                let users = try JSONDecoder().decode([userInfo].self, from: data)
+                if let firstUser = users.first {
+                    userIdString = firstUser.id
+                    print("✅ Found user ID: \(firstUser.id)")
+                }
+            } catch {
+                print("❌ Error decoding user data: \(error)")
+            }
+        } else if let jsonObject = userResponse.data as? [[String: Any]],
+                  let firstUser = jsonObject.first,
+                  let id = firstUser["id"] as? String {
+            userIdString = id
+            print("✅ Found user ID: \(id)")
+        }
+        
+        guard let userId = userIdString else {
+            print("❌ Could not find user ID for email: \(userEmail)")
+            return []
+        }
+        
+        // Now get the user's plants using the correct ID
+        let response = try await supabase
+            .database
+            .from("UserPlant")
+            .select()
+            .eq("userId", value: userId)
+            .execute()
+        
+        print("📡 Raw user plants response: \(String(describing: response.data))")
+        
+        if let data = response.data as? Data {
+            do {
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: data)
+                print("✅ Decoded user plants count: \(userPlants.count)")
+                return userPlants
+            } catch {
+                print("❌ Error decoding user plants: \(error)")
+            }
+        } else if let jsonObject = response.data as? [[String: Any]] {
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded user plants count: \(userPlants.count)")
+                return userPlants
+            } catch {
+                print("❌ Error decoding user plants: \(error)")
+            }
+        }
+        
+        print("❌ Failed to decode user plants data")
+
         return []
     }
     
@@ -674,32 +730,58 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         let userPlants = try await getUserPlants(for: userEmail)
         print("📱 Found \(userPlants.count) user plants")
         
-        var result: [(userPlant: UserPlant, plant: Plant)] = []
-        
-        for userPlant in userPlants {
-            print("🌿 Looking up plant for userPlant ID: \(userPlant.userplantID)")
-            if let plant = try await getPlant(by: userPlant.userplantID!) {
-                print("✅ Found plant: \(plant.plantName)")
-                result.append((userPlant: userPlant, plant: plant))
+        if userPlants.isEmpty {
+            print("⚠️ No user plants found for email: \(userEmail)")
+            print("🔍 Checking if user exists in UserTable...")
+            if let user = try await getUser() {
+                print("✅ User exists: \(user.userEmail)")
             } else {
-                print("⚠️ No plant found for ID: \(userPlant.userplantID)")
+                print("❌ User not found in UserTable")
             }
         }
         
-        print("✅ Final result count: \(result.count) plants with details")
+        var result: [(userPlant: UserPlant, plant: Plant)] = []
+        
+        for userPlant in userPlants {
+            print("\n🌿 Processing user plant:")
+            print("- Relation ID: \(userPlant.userPlantRelationID)")
+            print("- Plant ID: \(userPlant.userplantID?.uuidString ?? "nil")")
+            print("- Nickname: \(userPlant.userPlantNickName ?? "nil")")
+            
+            if let plantID = userPlant.userplantID {
+                print("🔍 Looking up plant with ID: \(plantID)")
+                if let plant = try await getPlant(by: plantID) {
+                    print("✅ Found plant: \(plant.plantName)")
+                    result.append((userPlant: userPlant, plant: plant))
+                } else {
+                    print("❌ No plant found for ID: \(plantID)")
+                }
+            } else {
+                print("⚠️ User plant has no plant ID")
+            }
+        }
+        
+        print("\n📊 Final Results:")
+        print("Total user plants processed: \(userPlants.count)")
+        print("Successfully matched plants: \(result.count)")
+        
         return result
     }
     
     // Synchronous wrapper for getUserPlantsWithBasicDetails
     func getUserPlantsWithBasicDetailsSync(for userEmail: String) -> [(userPlant: UserPlant, plant: Plant)]? {
+        print("\n=== Getting User Plants with Basic Details (Sync) ===")
+        print("📧 User email: \(userEmail)")
+        
         var result: [(userPlant: UserPlant, plant: Plant)]?
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
                 result = try await getUserPlantsWithBasicDetails(for: userEmail)
+                print("✅ Successfully fetched \(result?.count ?? 0) plants")
             } catch {
-                print("Error getting user plants with basic details: \(error)")
+                print("❌ Error getting user plants: \(error)")
             }
             semaphore.signal()
         }

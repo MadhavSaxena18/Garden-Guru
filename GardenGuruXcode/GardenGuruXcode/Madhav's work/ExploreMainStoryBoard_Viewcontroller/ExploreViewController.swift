@@ -43,6 +43,18 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     @IBOutlet weak var tableView: UITableView!
     
+    // Add a label to show when there are no plants in 'For My Plants'
+    private let noPlantsLabel: UILabel = {
+        let label = UILabel()
+        label.text = "No plants added yet"
+        label.textAlignment = .center
+        label.textColor = UIColor.gray
+        label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+    
     // Add a function to fetch weather and update plants
     private func fetchWeatherAndUpdatePlants() async {
         print("Starting weather fetch...")
@@ -137,17 +149,17 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         // Update discover categories while preserving the structure
         if selectedSegment == 0 { // Only update if we're in the Discover tab
                     await MainActor.run {
-            discoverCategories = [
+            self.discoverCategories = [
                 ("Current Season Plants", recommendedPlants),
                             ("Common Issues", allCommonIssues)
             ]
             
             // Update filtered categories if search is active
-            if isSearchActive {
-                filteredDiscoverCategories = discoverCategories
+            if self.isSearchActive {
+                self.filteredDiscoverCategories = self.discoverCategories
             }
             
-                        collectionView.reloadData()
+                        self.collectionView.reloadData()
                     }
                 }
             } catch {
@@ -205,6 +217,16 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 }
             }
         }
+        
+        // Add the noPlantsLabel above the collection view
+        view.addSubview(noPlantsLabel)
+        noPlantsLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            noPlantsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            noPlantsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            noPlantsLabel.topAnchor.constraint(equalTo: segmentControlOnExplore.bottomAnchor, constant: 24),
+            noPlantsLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 40)
+        ])
     }
     override func viewWillAppear(_ animated: Bool) {
         updateDataForSelectedSegment()
@@ -278,6 +300,59 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             let fertilizers = try await dataController.getCommonFertilizers()
             print("✅ Successfully fetched \(fertilizers.count) fertilizers")
             self.fertilizers = fertilizers
+
+            // Debug: Print user email and user id before fetching UserPlant
+            var userPlants: [UserPlant] = []
+            if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
+                print("[DEBUG] Current user email: \(userEmail)")
+                
+                // First try to get existing user
+                var currentUser: userInfo? = nil
+                do {
+                    currentUser = try await dataController.getUser()
+                    if let user = currentUser {
+                        print("✅ Found existing user with ID: \(user.id)")
+                        UserDefaults.standard.set(user.id, forKey: "userId")
+                    }
+                } catch {
+                    print("❌ Error fetching user: \(error)")
+                }
+                
+                if currentUser == nil {
+                    print("❌ No existing user found. Attempting to create one...")
+                    // Try to create new user
+                    do {
+                        currentUser = try await dataController.createUser(email: userEmail, userName: "Garden Guru User")
+                        print("✅ Successfully created new user")
+                        // Store the new user ID
+                        if let userId = currentUser?.id {
+                            UserDefaults.standard.set(userId, forKey: "userId")
+                            print("[DEBUG] Stored new user ID: \(userId)")
+                        }
+                    } catch {
+                        print("❌ Failed to create user: \(error)")
+                        currentUser = nil
+                    }
+                }
+                
+                // Try to fetch user plants if we have a valid user
+                if let user = currentUser {
+                    print("[DEBUG] Using user with ID: \(user.id)")
+                    do {
+                        // Use the user ID directly from the current user object
+                        userPlants = try await dataController.getUserPlants(for: user.id)
+                        print("[DEBUG] Fetched userPlants count: \(userPlants.count)")
+                        print("[DEBUG] userPlants: \(userPlants)")
+                    } catch {
+                        print("❌ Error fetching user plants: \(error)")
+                        userPlants = []
+                    }
+                } else {
+                    print("❌ No valid user available to fetch plants")
+                }
+            } else {
+                print("❌ No user email found in UserDefaults")
+            }
             
             await MainActor.run {
                 print("📊 Updating UI with fetched data:")
@@ -291,21 +366,45 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                     ("Common Issues", self.diseases)
                 ]
                 
-                // Update for my plant categories
-                self.forMyPlantCategories = [
-                    ("Common Issues in your Plant", self.diseases),
-                    ("Common Fertilizers", self.fertilizers)
-                ]
-                
-                // Update filtered categories if search is active
-                if self.isSearchActive {
-                    self.filteredDiscoverCategories = self.discoverCategories
-                    self.filteredForMyPlantCategories = self.forMyPlantCategories
-            }
-            
-                // Reload collection view
-                self.collectionView.reloadData()
-                print("✅ UI update complete")
+                // Only show forMyPlantCategories if user has UserPlant records
+                if !userPlants.isEmpty {
+                    Task {
+                        var userActualPlants: [Plant] = []
+                        for userPlant in userPlants {
+                            if let plantId = userPlant.userplantID,
+                               let plant = try? await self.dataController.getPlant(by: plantId) {
+                                userActualPlants.append(plant)
+                            }
+                        }
+                        
+                        await MainActor.run {
+                            self.forMyPlantCategories = [
+                                ("My Plants", userActualPlants),
+                                ("Common Issues in your Plant", self.diseases),
+                                ("Common Fertilizers", self.fertilizers)
+                            ]
+                            
+                            if self.isSearchActive {
+                                self.filteredDiscoverCategories = self.discoverCategories
+                                self.filteredForMyPlantCategories = self.forMyPlantCategories
+                            }
+                            
+                            self.collectionView.reloadData()
+                            self.updateNoPlantsLabelVisibility()
+                            print("✅ UI update complete")
+                        }
+                    }
+                } else {
+                    self.forMyPlantCategories = []
+                    if self.isSearchActive {
+                        self.filteredDiscoverCategories = self.discoverCategories
+                        self.filteredForMyPlantCategories = self.forMyPlantCategories
+                    }
+                    
+                    self.collectionView.reloadData()
+                    self.updateNoPlantsLabelVisibility()
+                    print("✅ UI update complete")
+                }
             }
         } catch {
             print("❌ Error fetching data: \(error.localizedDescription)")
@@ -330,6 +429,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         Task {
             print("🚀 Starting async data fetch...")
             await fetchDataFromSupabase()
+            self.updateNoPlantsLabelVisibility()
         }
     }
     
@@ -390,6 +490,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         }
         
         collectionView.reloadData()
+        updateNoPlantsLabelVisibility()
     }
     
     
@@ -444,7 +545,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let item = category.items[indexPath.row]
 
         // First check the category title to determine which cell to use
-        if category.title == "Current Season Plants" {
+        if category.title == "Current Season Plants" || category.title == "My Plants" {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
             if let plant = item as? Plant {
                 cell.plant = DataOfSection1InDicoverSegment(from: plant)
@@ -486,8 +587,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 cell.layer.shadowOpacity = 0.2
                 cell.layer.masksToBounds = false
                 return cell
-            } else { // Common Fertile for Parlour Palm
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as!Section2InForMyPlantCollectionViewCell
+            } else { // Common Fertilizers
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
                 if let fertilizer = item as? Fertilizer {
                     cell.configure(with: fertilizer)
                 }
@@ -521,7 +622,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             // Choose layout based on category title instead of section index
             switch categoryTitle {
-            case "Current Season Plants":
+            case "Current Season Plants", "My Plants":
                 section = self.generateSection1Layout()
                 
             case "Common Issues":
@@ -761,6 +862,17 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         present(navController, animated: true)
     }
     
+    private func updateNoPlantsLabelVisibility() {
+        // Only show for 'For My Plants' segment
+        if selectedSegment == 1 {
+            let categories = isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories
+            // If both categories are empty or all items arrays are empty, show the label
+            let isEmpty = categories.isEmpty || categories.allSatisfy { ($0.items as? [Any])?.isEmpty ?? true }
+            noPlantsLabel.isHidden = !isEmpty
+        } else {
+            noPlantsLabel.isHidden = true
+        }
+    }
   }
     
 

@@ -80,7 +80,7 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         
         if let symptoms = disease.diseaseSymptoms {
             let symptomsText = symptoms.map { "• \($0)" }.joined(separator: "\n")
-            descriptionLabel.text = symptomsText
+        descriptionLabel.text = symptomsText
         } else {
             descriptionLabel.text = "No symptoms available"
         }

@@ -171,8 +171,9 @@ struct UserPlant: Codable, Hashable {
     var lastWatered: Date?
     var lastFertilized: Date?
     var lastRepotted: Date?
+    var userPlantImage: String?
     
-    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil) {
+    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil, userPlantImage: String? = nil) {
         self.userPlantRelationID = userPlantRelationID
         self.userId = userId
         self.userplantID = userplantID
@@ -180,6 +181,7 @@ struct UserPlant: Codable, Hashable {
         self.lastWatered = lastWatered
         self.lastFertilized = lastFertilized
         self.lastRepotted = lastRepotted
+        self.userPlantImage = userPlantImage
     }
     
     enum CodingKeys: String, CodingKey {
@@ -190,6 +192,7 @@ struct UserPlant: Codable, Hashable {
         case lastWatered
         case lastFertilized
         case lastRepotted
+        case userPlantImage
     }
     
     init(from decoder: Decoder) throws {
@@ -229,6 +232,7 @@ struct UserPlant: Codable, Hashable {
         if let lastRepottedString = try container.decodeIfPresent(String.self, forKey: .lastRepotted) {
             lastRepotted = dateFormatter.date(from: lastRepottedString)
         }
+        userPlantImage = try container.decodeIfPresent(String.self, forKey: .userPlantImage)
     }
 }
 

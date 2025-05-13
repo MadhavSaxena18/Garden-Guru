@@ -78,4 +78,16 @@ class MySpaceCollectionViewSection1Cell: UICollectionViewCell {
         layer.shadowRadius = 4
         layer.shadowOpacity = 0.1
     }
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        contentView.layer.cornerRadius = 25
+        contentView.layer.masksToBounds = true
+        // Optional: Add shadow for a more card-like look
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOffset = CGSize(width: 0, height: 2)
+        layer.shadowRadius = 4
+        layer.shadowOpacity = 0.1
+        layer.masksToBounds = false
+    }
 }
