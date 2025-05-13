@@ -1160,24 +1160,45 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         return (session, userData)
     }
 
+    // MARK: - Error Types
+    
+    struct APIError: Error {
+        let message: String
+        let errorCode: String?
+        
+        init(message: String, errorCode: String? = nil) {
+            self.message = message
+            self.errorCode = errorCode
+        }
+    }
+
     // MARK: - Auth Errors
 
     enum AuthError: LocalizedError {
         case noAuthenticatedUser
         case invalidCredentials
         case networkError
+        case rateLimitExceeded
+        case invalidOTP
+        case passwordUpdateFailed
         case unknown(Error)
         
         var errorDescription: String? {
             switch self {
             case .noAuthenticatedUser:
-                return "No authenticated user found"
+                return "No account found with this email address"
             case .invalidCredentials:
                 return "Invalid email or password"
             case .networkError:
                 return "Network error during authentication"
+            case .rateLimitExceeded:
+                return "Please wait a minute before trying again"
+            case .invalidOTP:
+                return "Invalid verification code"
+            case .passwordUpdateFailed:
+                return "Failed to update password. Please try again"
             case .unknown(let error):
-                return "Unknown error: \(error.localizedDescription)"
+                return "Error: \(error.localizedDescription)"
             }
         }
     }
@@ -1347,6 +1368,57 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         _ = semaphore.wait(timeout: .now() + 5)
         return disease
+    }
+
+    // MARK: - Password Reset Functions
+
+    func sendPasswordResetOTP(email: String) async throws {
+        print("📧 Attempting to send reset OTP to: \(email)")
+        
+        // Clean up the email
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        do {
+            // Send OTP email for password reset
+            try await supabase.auth.resetPasswordForEmail(cleanEmail)
+            print("✅ Reset OTP sent successfully")
+        } catch {
+            print("❌ Error sending reset OTP: \(error)")
+            if error.localizedDescription.contains("rate limit") {
+                throw AuthError.rateLimitExceeded
+            }
+            throw AuthError.unknown(error)
+        }
+    }
+
+    func verifyPasswordResetOTP(email: String, otp: String) async throws {
+        print("🔐 Verifying reset OTP for email: \(email)")
+        
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        do {
+            try await supabase.auth.verifyOTP(
+                email: cleanEmail,
+                token: otp,
+                type: .recovery
+            )
+            print("✅ Reset OTP verified successfully")
+        } catch {
+            print("❌ Reset OTP verification failed: \(error)")
+            throw AuthError.invalidOTP
+        }
+    }
+
+    func updatePassword(newPassword: String) async throws {
+        print("🔄 Updating password")
+        
+        do {
+            try await supabase.auth.update(user: UserAttributes(password: newPassword))
+            print("✅ Password updated successfully")
+        } catch {
+            print("❌ Password update failed: \(error)")
+            throw AuthError.passwordUpdateFailed
+        }
     }
 }
 

@@ -110,6 +110,7 @@ class LoginViewController: UIViewController {
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 14
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
         return button
     }()
     
@@ -122,7 +123,7 @@ class LoginViewController: UIViewController {
     
     private let orLabel: UILabel = {
         let label = UILabel()
-        label.text = "OR"
+        label.text = "--------------------- OR ---------------------"
         label.font = .systemFont(ofSize: 14, weight: .medium)
         label.textColor = .systemGray
         label.backgroundColor = UIColor(hex: "F5F9F5")
@@ -142,6 +143,24 @@ class LoginViewController: UIViewController {
         button.layer.cornerRadius = 14
         button.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 0)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        return button
+    }()
+    
+    private let signInWithGoogleButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .white
+        button.setTitle("Sign in with Google", for: .normal)
+        button.setImage(UIImage(named: "google2"), for: .normal)
+        button.tintColor = .black
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        button.layer.cornerRadius = 14
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.systemGray5.cgColor
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 0)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
         return button
     }()
     
@@ -205,9 +224,9 @@ class LoginViewController: UIViewController {
         containerView.addSubview(loginButton)
         loginButton.addSubview(loadingIndicator)
         
-        contentView.addSubview(dividerView)
         contentView.addSubview(orLabel)
         contentView.addSubview(signInWithAppleButton)
+        contentView.addSubview(signInWithGoogleButton)
         
         contentView.addSubview(signUpContainer)
         signUpContainer.addSubview(signUpLabel)
@@ -225,10 +244,10 @@ class LoginViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            logoImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 60),
+            logoImageView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 20),
             logoImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            logoImageView.widthAnchor.constraint(equalToConstant: 120),
-            logoImageView.heightAnchor.constraint(equalToConstant: 120),
+            logoImageView.widthAnchor.constraint(equalToConstant: 100),
+            logoImageView.heightAnchor.constraint(equalToConstant: 100),
             
             titleLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 20),
             titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
@@ -237,10 +256,10 @@ class LoginViewController: UIViewController {
             subtitleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
             containerView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 32),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            emailTextField.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
+            emailTextField.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
             emailTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             emailTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             emailTextField.heightAnchor.constraint(equalToConstant: 50),
@@ -261,37 +280,36 @@ class LoginViewController: UIViewController {
             loginButton.topAnchor.constraint(equalTo: forgotPasswordButton.bottomAnchor, constant: 24),
             loginButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             loginButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            loginButton.heightAnchor.constraint(equalToConstant: 50),
-            loginButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
+            loginButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
             
             loadingIndicator.centerXAnchor.constraint(equalTo: loginButton.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: loginButton.centerYAnchor),
             
-            dividerView.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 32),
-            dividerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            dividerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            dividerView.heightAnchor.constraint(equalToConstant: 1),
-            
-            orLabel.centerYAnchor.constraint(equalTo: dividerView.centerYAnchor),
+            orLabel.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 24),
             orLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            orLabel.widthAnchor.constraint(equalToConstant: 50),
             
-            signInWithAppleButton.topAnchor.constraint(equalTo: dividerView.bottomAnchor, constant: 32),
-            signInWithAppleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            signInWithAppleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            signInWithAppleButton.heightAnchor.constraint(equalToConstant: 50),
+            signInWithAppleButton.topAnchor.constraint(equalTo: orLabel.bottomAnchor, constant: 24),
+            signInWithAppleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            signInWithAppleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            signUpContainer.topAnchor.constraint(equalTo: signInWithAppleButton.bottomAnchor, constant: 32),
-            signUpContainer.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            signUpContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -32),
+            signInWithGoogleButton.topAnchor.constraint(equalTo: signInWithAppleButton.bottomAnchor, constant: 16),
+            signInWithGoogleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            signInWithGoogleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            signUpLabel.leadingAnchor.constraint(equalTo: signUpContainer.leadingAnchor),
+            signUpContainer.topAnchor.constraint(equalTo: signInWithGoogleButton.bottomAnchor, constant: 24),
+            signUpContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            signUpContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            signUpContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+            
             signUpLabel.centerYAnchor.constraint(equalTo: signUpContainer.centerYAnchor),
+            signUpLabel.centerXAnchor.constraint(equalTo: signUpContainer.centerXAnchor, constant: -30),
             
-            signUpButton.leadingAnchor.constraint(equalTo: signUpLabel.trailingAnchor),
             signUpButton.centerYAnchor.constraint(equalTo: signUpContainer.centerYAnchor),
-            signUpButton.trailingAnchor.constraint(equalTo: signUpContainer.trailingAnchor)
+            signUpButton.leadingAnchor.constraint(equalTo: signUpLabel.trailingAnchor, constant: 4)
         ])
+        
+        // Remove any divider views
+        dividerView.removeFromSuperview()
         
         // Add tap gesture to dismiss keyboard
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
@@ -301,6 +319,7 @@ class LoginViewController: UIViewController {
     private func setupActions() {
         loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         showPasswordButton.addTarget(self, action: #selector(togglePasswordVisibility), for: .touchUpInside)
+        forgotPasswordButton.addTarget(self, action: #selector(forgotPasswordButtonTapped), for: .touchUpInside)
         
         // Add text field delegates
         emailTextField.delegate = self
@@ -311,6 +330,23 @@ class LoginViewController: UIViewController {
         passwordTextField.isSecureTextEntry.toggle()
         let imageName = passwordTextField.isSecureTextEntry ? "eye.slash.fill" : "eye.fill"
         showPasswordButton.setImage(UIImage(systemName: imageName), for: .normal)
+    }
+    
+    @objc private func forgotPasswordButtonTapped() {
+        let forgotPasswordVC = ForgotPasswordViewController()
+        let navigationController = UINavigationController(rootViewController: forgotPasswordVC)
+        navigationController.modalPresentationStyle = .fullScreen
+        navigationController.navigationBar.prefersLargeTitles = false
+        
+        // Configure navigation bar appearance
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(hex: "F5F9F5")
+        appearance.shadowColor = nil // Remove the shadow line
+        navigationController.navigationBar.standardAppearance = appearance
+        navigationController.navigationBar.scrollEdgeAppearance = appearance
+        
+        present(navigationController, animated: true)
     }
     
     @objc internal override func dismissKeyboard() {
