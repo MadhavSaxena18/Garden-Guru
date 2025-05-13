@@ -208,14 +208,15 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             return 
         }
         
+        let userPlantID = UUID()
         let newUserPlant = UserPlant(
-            userPlantRelationID: UUID(),
+            userPlantRelationID: userPlantID,
             userId: UUID(uuidString: user.id) ?? UUID(),
             userplantID: plant.plantID,
             userPlantNickName: nickname
         )
         
-        // Get switch states and create reminder
+        // Get switch states for reminders
         var isWateringEnabled = false
         var isFertilizingEnabled = false
         var isRepottingEnabled = false
@@ -236,28 +237,33 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             }
         }
         
-        // Calculate reminder dates based on enabled switches
-        let nextWaterDate = isWateringEnabled ? 
-            Calendar.current.date(byAdding: .day, value: Int(plant.waterFrequency ?? 7), to: Date()) : nil
-        let nextFertilizerDate = isFertilizingEnabled ? 
-            Calendar.current.date(byAdding: .day, value: Int(plant.fertilizerFrequency ?? 30), to: Date()) : nil
-        let nextRepottingDate = isRepottingEnabled ? 
-            Calendar.current.date(byAdding: .day, value: Int(plant.repottingFrequency ?? 365), to: Date()) : nil
+        // Calculate reminder dates based on enabled switches and plant frequencies
+        let currentDate = Date()
+        let waterDate = isWateringEnabled ? 
+            Calendar.current.date(byAdding: .day, value: Int(plant.waterFrequency ?? 7), to: currentDate) : currentDate
+        let fertilizerDate = isFertilizingEnabled ? 
+            Calendar.current.date(byAdding: .day, value: Int(plant.fertilizerFrequency ?? 30), to: currentDate) : nil
+        let repottingDate = isRepottingEnabled ? 
+            Calendar.current.date(byAdding: .day, value: Int(plant.repottingFrequency ?? 365), to: currentDate) : nil
         
-        // Create reminder with only enabled reminders
+        // Create reminder with enabled reminders
         let reminder = CareReminder_(
-            careReminderID: UUID(),
-            upcomingReminderForWater: nextWaterDate ?? Date(),
-            upcomingReminderForFertilizers: nextFertilizerDate,
-            upcomingReminderForRepotted: nextRepottingDate,
+            careReminderID: userPlantID, // Use same ID as userPlant for easy linking
+            upcomingReminderForWater: waterDate ?? currentDate,
+            upcomingReminderForFertilizers: fertilizerDate,
+            upcomingReminderForRepotted: repottingDate,
             isWateringCompleted: false,
             isFertilizingCompleted: false,
             isRepottingCompleted: false
         )
         
-        // Add to DataController with the reminder
+        // Add UserPlant to database
         dataController.addUserPlantSync(userPlant: newUserPlant)
         print("✅ Added plant to DataController")
+        
+        // Add CareReminder to database
+        dataController.addCareReminderSync(userPlantID: userPlantID, reminderAllowed: isWateringEnabled || isFertilizingEnabled || isRepottingEnabled)
+        print("✅ Added care reminder to DataController")
         
         // Post notification
         NotificationCenter.default.post(

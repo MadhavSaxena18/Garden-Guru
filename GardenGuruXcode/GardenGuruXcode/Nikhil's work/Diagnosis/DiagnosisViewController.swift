@@ -52,17 +52,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         plantDetailsLabel.isHidden = true
         
         setupUI()
-        
-        // Check if plant exists and update UI
-        if let plantName = selectedPlant?.plantName {
-            print("📝 Selected plant name: \(plantName)")
-            updatePlantDetails(plantName: plantName)
-        } else {
-            print("⚠️ No plant name available in selectedPlant")
-            showPlantNotFoundAlert()
-        }
-        
         setupConstraints()
+        
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.title = "Diagnosis"
         
@@ -75,6 +66,9 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         tableView.reloadData()
         
         self.tabBarController?.tabBar.isHidden = true
+        
+        // Initialize plant check
+        initializePlantCheck()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -165,17 +159,19 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         startCaringButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
         view.addSubview(startCaringButton)
         startCaringButton.addTarget(self, action: #selector(startCaringTapped), for: .touchUpInside)
-
-        // Update plant details immediately if we have the plant name
-        if let plantName = selectedPlant?.plantName {
-            updatePlantDetails(plantName: plantName)
-        }
     }
     
-    private func updatePlantDetails(plantName: String) {
-        print("\n=== Updating Plant Details ===")
-        print("🔍 Looking for plant with name: \(plantName)")
+    private func initializePlantCheck() {
+        guard let plantName = selectedPlant?.plantName else {
+            print("⚠️ No plant name available in selectedPlant")
+            showPlantNotFoundAlert()
+            return
+        }
         
+        print("\n=== Initializing Plant Check ===")
+        print("📝 Selected plant name: \(plantName)")
+        
+        // First get the plant from database
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
             print("✅ Found plant in database")
             print("📝 Plant details:")
@@ -184,29 +180,34 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             print("   - Category: \(plant.category?.rawValue ?? "Not specified")")
             print("   - Season: \(plant.favourableSeason?.rawValue ?? "Not specified")")
             
-            // Update the plant details in the model
-            selectedPlant?.plantName = plant.plantName
-            selectedPlant?.botanicalName = plant.plantBotanicalName ?? "Not specified"
+            // Update UI with plant details
+            updatePlantUI(plant: plant)
             
-            // Create a more detailed and formatted plant details string
-            let details = """
-                
-                • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
-                • Category: \(plant.category?.rawValue ?? "Not specified")
-                • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
-                """
-            
-            // Update the UI
-            plantDetailsLabel.text = details
-            plantDetailsLabel.isHidden = false
-            print("✅ Updated plant details label with text: \n\(details)")
-            
-            // Check if plant exists in user's garden
+            // Check if user has this plant
             checkIfPlantExists(plantName: plantName)
         } else {
             print("⚠️ Plant not found in database: \(plantName)")
             showPlantNotFoundAlert()
         }
+    }
+    
+    private func updatePlantUI(plant: Plant) {
+        // Update the plant details in the model
+        selectedPlant?.plantName = plant.plantName
+        selectedPlant?.botanicalName = plant.plantBotanicalName ?? "Not specified"
+        
+        // Create a more detailed and formatted plant details string
+        let details = """
+            
+            • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
+            • Category: \(plant.category?.rawValue ?? "Not specified")
+            • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
+            """
+        
+        // Update the UI
+        plantDetailsLabel.text = details
+        plantDetailsLabel.isHidden = false
+        print("✅ Updated plant details label")
     }
 
     private func showPlantNotFoundAlert() {
@@ -233,24 +234,38 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     private func checkIfPlantExists(plantName: String) {
         print("\n=== Checking if plant exists ===")
-        if let firstUser = dataController.getUserSync() {
-            let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
-            isExistingPlant = userPlants.contains { userPlant in
-                if let plantID = userPlant.userplantID,
-                   let existingPlant = dataController.getPlantSync(by: plantID) {
-                    return existingPlant.plantName == plantName
-                }
-                return false
+        
+        guard let firstUser = dataController.getUserSync() else {
+            print("❌ No user found")
+            startCaringButton.isHidden = false
+            startCaringButton.setTitle("Add and Start Caring", for: .normal)
+            return
+        }
+        
+        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
+        print("📝 Found \(userPlants.count) user plants")
+        
+        isExistingPlant = userPlants.contains { userPlant in
+            if let plantID = userPlant.userplantID,
+               let existingPlant = dataController.getPlantSync(by: plantID) {
+                return existingPlant.plantName == plantName
             }
-            
-            if isExistingPlant {
-                print("✅ Plant already exists in user's garden")
-                showExistingPlantAlert()
-            } else {
-                print("📝 New plant - showing add button")
-                startCaringButton.isHidden = false
-                startCaringButton.setTitle("Add and Start Caring", for: .normal)
+            return false
+        }
+        
+        if isExistingPlant {
+            print("✅ Plant already exists in user's garden")
+            hasUserResponded = false
+            startCaringButton.isHidden = true
+            DispatchQueue.main.async {
+                self.showExistingPlantAlert()
             }
+        } else {
+            print("📝 New plant - showing add button")
+            hasUserResponded = true
+            isExistingPlant = false
+            startCaringButton.isHidden = false
+            startCaringButton.setTitle("Add and Start Caring", for: .normal)
         }
     }
 
@@ -266,7 +281,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             self.hasUserResponded = true
             self.isExistingPlant = true
             
-            // Hide the add button for same plant
+            // Keep the button hidden for same plant
             self.startCaringButton.isHidden = true
             
             // Show confirmation message
@@ -388,9 +403,16 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             return
         }
         
-        // If user hasn't responded to the existing plant alert yet
+        // If user hasn't responded to the existing plant alert yet and it's an existing plant
         if isExistingPlant && !hasUserResponded {
+            print("⚠️ User needs to respond to existing plant alert first")
             showExistingPlantAlert()
+            return
+        }
+        
+        // If it's an existing plant and user chose "Same Plant", don't proceed
+        if isExistingPlant && hasUserResponded && startCaringButton.isHidden {
+            print("ℹ️ User chose 'Same Plant' - not adding duplicate")
             return
         }
         
@@ -478,7 +500,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             
             // Update plant details if we have the plant name
             if let plantName = selectedPlant?.plantName {
-                updatePlantDetails(plantName: plantName)
+                initializePlantCheck()
             }
             
             return
@@ -514,7 +536,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             
             // Update plant details
             if let plantName = selectedPlant?.plantName {
-                updatePlantDetails(plantName: plantName)
+                initializePlantCheck()
             }
         } else {
             print("⚠️ No specific condition detected")
@@ -528,7 +550,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             
             // Update plant details
             if let plantName = selectedPlant?.plantName {
-                updatePlantDetails(plantName: plantName)
+                initializePlantCheck()
             }
         }
     }

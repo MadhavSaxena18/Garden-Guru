@@ -117,33 +117,34 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         print("📡 Raw user response: \(String(describing: userResponse.data))")
         
-        guard let jsonObject = userResponse.data as? [[String: Any]],
-              let firstUser = jsonObject.first,
-              let userIdString = firstUser["id"] as? String else {
-            print("❌ Could not find user ID for email: \(userEmail)")
-            return []
+        if let jsonData = userResponse.data as? Data,
+           let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
+           let user = users.first {
+            print("✅ Found user ID: \(user.id)")
+            
+            // Now get the user's plants using the correct ID
+            let response = try await supabase
+                .database
+                .from("UserPlant")
+                .select()
+                .eq("userId", value: user.id)
+                .execute()
+            
+            print("📡 Raw user plants response: \(String(describing: response.data))")
+            
+            if let jsonData = response.data as? Data {
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded \(userPlants.count) user plants")
+                return userPlants
+            } else if let jsonObject = response.data as? [[String: Any]] {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded \(userPlants.count) user plants")
+                return userPlants
+            }
         }
         
-        print("📍 Found user ID: \(userIdString)")
-        
-        // Now get the user's plants using the correct ID
-        let response = try await supabase
-            .database
-            .from("UserPlant")
-            .select()
-            .eq("userId", value: userIdString)
-            .execute()
-        
-        print("📡 Raw user plants response: \(String(describing: response.data))")
-        
-        if let jsonObject = response.data as? [[String: Any]] {
-            let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-            let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
-            print("✅ Decoded user plants count: \(userPlants.count)")
-            return userPlants
-        }
-        
-        print("❌ Failed to decode user plants data")
+        print("❌ No user plants found")
         return []
     }
     
@@ -152,7 +153,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     func getCareReminders(for userPlantID: UUID) async throws -> CareReminder_? {
         let response = try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .select()
             .eq("careReminderID", value: userPlantID.uuidString)
             .single()
@@ -179,13 +180,30 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .update(updateData)
             .eq("careReminderID", value: userPlantID.uuidString)
             .execute()
     }
     
     func deleteUserPlant(userPlantID: UUID) async throws {
+        // First delete the care reminder linking record
+        try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .delete()
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
+            
+        // Then delete the care reminder
+        try await supabase
+            .database
+            .from("CareReminder_")
+            .delete()
+            .eq("careReminderID", value: userPlantID.uuidString)
+            .execute()
+            
+        // Finally delete the user plant
         try await supabase
             .database
             .from("UserPlant")
@@ -714,7 +732,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .update(updateData)
             .eq("careReminderID", value: userPlantID.uuidString)
             .execute()
@@ -749,7 +767,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         // First insert the basic reminder data
         try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .insert(careReminder)
             .execute()
             
@@ -762,9 +780,22 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .update(booleanData)
             .eq("careReminderID", value: userPlantID.uuidString)
+            .execute()
+            
+        // Create the linking record in CareReminderOfUserPlant
+        let linkingRecord: [String: String] = [
+            "careReminderOfUserPlantID": UUID().uuidString,
+            "userPlantRelationID": userPlantID.uuidString,
+            "careReminderId": userPlantID.uuidString
+        ]
+        
+        try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .insert(linkingRecord)
             .execute()
     }
     
