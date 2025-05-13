@@ -326,25 +326,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             let text = sectionData[indexPath.row]
             cell.textLabel?.text = text
             cell.textLabel?.numberOfLines = 0
-            
-            if text.starts(with: "http") {
-                cell.textLabel?.textColor = .systemBlue
-                cell.textLabel?.isUserInteractionEnabled = true
-                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openLink(_:)))
-                cell.textLabel?.addGestureRecognizer(tapGesture)
-            } else {
-                cell.textLabel?.textColor = UIColor(hex: "#004E05")
-                cell.textLabel?.isUserInteractionEnabled = false
-            }
+            cell.textLabel?.textColor = UIColor(hex: "#004E05")
         }
         return cell
     }
 
-    @objc func openLink(_ sender: UITapGestureRecognizer) {
-        guard let label = sender.view as? UILabel,
-              let text = label.text,
-              let url = URL(string: text) else { return }
-        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
     }
 
     // MARK: - UITableViewDelegate
@@ -440,23 +428,35 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private func updateDiseaseDetails(with disease: Diseases) {
         var dict: [String: [String]] = [:]
         
-        // Add only the required sections
+        // 1. Add symptoms section
         if let symptoms = disease.diseaseSymptoms {
             dict["Symptoms"] = symptoms.components(separatedBy: "; ")
         }
         
+        // 2. Add treatment section
         if let treatment = disease.diseaseCure {
             dict["Treatment"] = treatment.components(separatedBy: "; ")
         }
         
+        // 3. Add preventive measures section
+        if let preventiveMeasures = disease.diseasePreventiveMeasures {
+            dict["Preventive Measures"] = preventiveMeasures.components(separatedBy: "; ")
+        }
+        
+        // 4. Add fertilizers section
         if let fertilizers = disease.diseaseFertilizers {
             dict["Recommended Fertilizers"] = fertilizers.components(separatedBy: "; ")
+        }
+        
+        // 5. Add video solution section if available
+        if let videoSolution = disease.diseaseVideoSolution {
+            dict["Video Guide"] = [videoSolution]
         }
         
         selectedPlant?.sectionDetails = dict
         DiagnosisViewController.diagnosisLabel.text = disease.diseaseName
 
-        // Update plant details
+        // Update plant details with season information
         if let plant = dataController.getPlantbyNameSync(name: selectedPlant?.plantName ?? "") {
             let details = """
                 Plant: \(plant.plantName)
@@ -469,7 +469,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         // Ensure table view is visible and reload
         tableView.isHidden = false
         if !sectionTitles.isEmpty {
-            expandedSections.insert(0)
+            expandedSections.insert(0)  // Expand first section by default
         }
         tableView.reloadData()
     }
@@ -508,36 +508,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         if let disease = dataController.getDiseaseByNameSync(name: cleanName) {
             print("✅ Found disease in database")
-            var details: [String: [String]] = [:]
-            
-            // Only include the required sections
-            if let symptoms = disease.diseaseSymptoms {
-                details["Symptoms"] = symptoms.components(separatedBy: "; ")
-            }
-            
-            if let cure = disease.diseaseCure {
-                details["Treatment"] = cure.components(separatedBy: "; ")
-            }
-            
-            if let fertilizers = disease.diseaseFertilizers {
-                details["Recommended Fertilizers"] = fertilizers.components(separatedBy: "; ")
-            }
-            
-            // Update the model and UI
-            selectedPlant?.sectionDetails = details
-            DiagnosisViewController.diagnosisLabel.text = disease.diseaseName
-            
-            // Show table view for diseased plants
-            tableView.isHidden = false
-            if !sectionTitles.isEmpty {
-                expandedSections.insert(0)
-            }
-            tableView.reloadData()
-            
-            // Update plant details
-            if let plantName = selectedPlant?.plantName {
-                initializePlantCheck()
-            }
+            updateDiseaseDetails(with: disease)
         } else {
             print("⚠️ No specific condition detected")
             // Hide table view
@@ -682,6 +653,14 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         UIView.animate(withDuration: 0.5, delay: 0.2, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5, options: [], animations: {
             self.checkmarkImageView.transform = .identity
         })
+    }
+
+    @objc func openLink(_ sender: UITapGestureRecognizer) {
+        guard let label = sender.view as? UILabel,
+              let text = label.text,
+              let urlText = text.components(separatedBy: ": ").last,
+              let url = URL(string: urlText) else { return }
+        UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 
     private func setupConstraints() {
