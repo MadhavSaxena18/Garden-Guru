@@ -35,7 +35,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - User Functions
     
     func getUser() async throws -> userInfo? {
-        print("🔍 Fetching first user from Supabase...")
+        print("🔍 Fetching user data from UserTable")
         
         // Try to get the email from UserDefaults
         guard let email = UserDefaults.standard.string(forKey: "userEmail") else {
@@ -43,30 +43,16 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             return nil
         }
         
-        let response = try await supabase
-            .database
-            .from("UserTable")
-            .select()
-            .eq("user_email", value: email)
-            .execute()
+        print("[DEBUG] Current user email: \(email)")
         
-        print("📡 Raw response data: \(String(describing: response.data))")
-        
-        guard let jsonObject = response.data as? [[String: Any]],
-              let firstUser = jsonObject.first else {
-            print("❌ No user data found")
-            return nil
-        }
-        
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: firstUser)
-            let user = try JSONDecoder().decode(userInfo.self, from: jsonData)
-            print("✅ Successfully decoded user with email: \(user.userEmail)")
+        // Try to get the existing user
+        if let user = try await initializeUser(email: email) {
+            print("✅ User data found in UserTable")
             return user
-        } catch {
-            print("❌ Failed to decode user data: \(error)")
-            return nil
         }
+        
+        print("⚠️ No user data found in UserTable")
+        return nil
     }
     
     func getUsers() async throws -> [userInfo] {
@@ -105,7 +91,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     }
     
     func getUserPlants(for userEmail: String) async throws -> [UserPlant] {
-        print("🔍 Fetching user plants for user email: \(userEmail)")
+        print("🔍 Fetching user plants for email: \(userEmail)")
         
         // First get the user's ID from UserTable
         let userResponse = try await supabase
@@ -117,37 +103,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         print("📡 Raw user response: \(String(describing: userResponse.data))")
         
-       if let jsonData = userResponse.data as? Data,
-           let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
-           let user = users.first {
-            print("✅ Found user ID: \(user.id)")
-            
-            // Now get the user's plants using the correct ID
-            let response = try await supabase
-                .database
-                .from("UserPlant")
-                .select()
-                .eq("userId", value: user.id)
-                .execute()
-            
-            print("📡 Raw user plants response: \(String(describing: response.data))")
-            
-            if let jsonData = response.data as? Data {
-                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
-                print("✅ Decoded \(userPlants.count) user plants")
-                return userPlants
-            } else if let jsonObject = response.data as? [[String: Any]] {
-                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
-                print("✅ Decoded \(userPlants.count) user plants")
-                return userPlants
-            }
-        }
-        
-        print("❌ No user plants found")
-
-        // Try to decode the response data
+        // Try to decode the user data
         var userIdString: String?
+        
         if let data = userResponse.data as? Data {
             do {
                 let users = try JSONDecoder().decode([userInfo].self, from: data)
@@ -157,12 +115,21 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 }
             } catch {
                 print("❌ Error decoding user data: \(error)")
+                
+                // Try parsing as JSON array if direct decoding fails
+                if let jsonString = String(data: data, encoding: .utf8),
+                   let jsonData = jsonString.data(using: .utf8),
+                   let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
+                   let user = users.first {
+                    userIdString = user.id
+                    print("✅ Found user ID from JSON string: \(user.id)")
+                }
             }
-        } else if let jsonObject = userResponse.data as? [[String: Any]],
-                  let firstUser = jsonObject.first,
+        } else if let jsonArray = userResponse.data as? [[String: Any]],
+                  let firstUser = jsonArray.first,
                   let id = firstUser["id"] as? String {
             userIdString = id
-            print("✅ Found user ID: \(id)")
+            print("✅ Found user ID from JSON array: \(id)")
         }
         
         guard let userId = userIdString else {
@@ -171,6 +138,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
         
         // Now get the user's plants using the correct ID
+        print("🔍 Fetching plants for user ID: \(userId)")
         let response = try await supabase
             .database
             .from("UserPlant")
@@ -183,24 +151,31 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         if let data = response.data as? Data {
             do {
                 let userPlants = try JSONDecoder().decode([UserPlant].self, from: data)
-                print("✅ Decoded user plants count: \(userPlants.count)")
+                print("✅ Successfully decoded \(userPlants.count) user plants")
                 return userPlants
             } catch {
-                print("❌ Error decoding user plants: \(error)")
+                print("❌ Error decoding user plants from Data: \(error)")
+                
+                // Try parsing as JSON array if direct decoding fails
+                if let jsonString = String(data: data, encoding: .utf8),
+                   let jsonData = jsonString.data(using: .utf8),
+                   let userPlants = try? JSONDecoder().decode([UserPlant].self, from: jsonData) {
+                    print("✅ Successfully decoded \(userPlants.count) user plants from JSON string")
+                    return userPlants
+                }
             }
-        } else if let jsonObject = response.data as? [[String: Any]] {
+        } else if let jsonArray = response.data as? [[String: Any]] {
             do {
-                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonArray)
                 let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
-                print("✅ Decoded user plants count: \(userPlants.count)")
+                print("✅ Successfully decoded \(userPlants.count) user plants from JSON array")
                 return userPlants
             } catch {
-                print("❌ Error decoding user plants: \(error)")
+                print("❌ Error decoding user plants from JSON array: \(error)")
             }
         }
         
         print("❌ Failed to decode user plants data")
-
         return []
     }
     
@@ -520,25 +495,41 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     func getCommonFertilizers() async throws -> [Fertilizer] {
         print("🔍 Fetching common fertilizers from Supabase...")
-            let response = try await supabase
-                .database
-                .from("Fertilizer")
-                .select()
-                .execute()
+        let response = try await supabase
+            .database
+            .from("Fertilizer")
+            .select()
+            .execute()
             
         print("📡 Raw fertilizers response: \(String(describing: response.data))")
         print("📡 Response type: \(type(of: response.data))")
         
+        // First try to decode as Data
         if let data = response.data as? Data {
-            print("✅ Successfully got Data response")
+            print("✅ Got Data response, attempting to decode...")
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let fertilizers = try decoder.decode([Fertilizer].self, from: data)
-                print("✅ Successfully decoded \(fertilizers.count) fertilizers")
-        return fertilizers
+                print("✅ Successfully decoded \(fertilizers.count) fertilizers from Data")
+                return fertilizers
             } catch {
-                print("❌ Decoding error: \(error)")
+                print("❌ Failed to decode Data response: \(error)")
+            }
+        }
+        
+        // If Data decoding fails, try JSON array
+        if let jsonArray = response.data as? [[String: Any]] {
+            print("✅ Got JSON array response with \(jsonArray.count) items")
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonArray)
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let fertilizers = try decoder.decode([Fertilizer].self, from: jsonData)
+                print("✅ Successfully decoded \(fertilizers.count) fertilizers from JSON array")
+                return fertilizers
+            } catch {
+                print("❌ Failed to decode JSON array: \(error)")
                 if let decodingError = error as? DecodingError {
                     switch decodingError {
                     case .typeMismatch(let type, let context):
@@ -556,8 +547,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 throw error
             }
         }
-        print("❌ Failed to get Data from response")
-        return []
+        
+        print("❌ Unexpected response format")
+        throw NSError(domain: "DataController", code: 500, userInfo: [NSLocalizedDescriptionKey: "Unexpected response format from Supabase"])
     }
     
     // Helper method to determine season based on date and location
@@ -917,32 +909,54 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             let response = try await supabase
                 .database
                 .from("UserTable")
-                .select("id, user_email, userName, location, reminderAllowed")
+                .select()
                 .eq("user_email", value: email)
                 .execute()
             
             print("📡 Raw response type: \(type(of: response.data))")
             
-            // Convert Data to JSON string for debugging
-            if let data = response.data as? Data,
-               let jsonString = String(data: data, encoding: .utf8) {
-                print("📡 JSON String: \(jsonString)")
+            // Try to decode the response data
+            if let data = response.data as? Data {
+                do {
+                    let users = try JSONDecoder().decode([userInfo].self, from: data)
+                    if let user = users.first {
+                        print("✅ Successfully decoded user: \(user.userName)")
+                        return user
+                    }
+                } catch {
+                    print("❌ Error decoding user data: \(error)")
+                    
+                    // Try parsing as JSON array if direct decoding fails
+                    if let jsonString = String(data: data, encoding: .utf8),
+                       let jsonData = jsonString.data(using: .utf8),
+                       let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
+                       let user = users.first {
+                        print("✅ Successfully decoded user from JSON string: \(user.userName)")
+                        return user
+                    }
+                }
+            } else if let jsonArray = response.data as? [[String: Any]] {
+                print("📡 JSON Array: \(jsonArray)")
                 
-                // Try to decode directly from the Data
-                if let users = try? JSONDecoder().decode([userInfo].self, from: data),
-                   let user = users.first {
-                    print("✅ Successfully decoded user: \(user.userName)")
-                    return user
+                if !jsonArray.isEmpty {
+                    do {
+                        let jsonData = try JSONSerialization.data(withJSONObject: jsonArray[0])
+                        let user = try JSONDecoder().decode(userInfo.self, from: jsonData)
+                        print("✅ Successfully decoded user: \(user.userName)")
+                        return user
+                    } catch {
+                        print("❌ Error decoding user data: \(error)")
+                    }
                 }
             }
             
-            print("❌ Could not decode user data")
+            print("❌ No existing user found")
+            return nil
+            
         } catch {
-            print("ℹ️ Error fetching user data: \(error.localizedDescription)")
+            print("❌ Error fetching user data: \(error)")
+            return nil
         }
-        
-        print("❌ User not found and creation is disabled")
-        return nil
     }
     
     // Synchronous wrapper for getting user
@@ -1206,11 +1220,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         print("✅ Created user data in UserTable")
         
         return userInfo(
-            userEmail: email,
+            id: userId,
             userName: userName,
             location: location,
             reminderAllowed: true,
-            id: userId
+            userEmail: email
         )
     }
 
@@ -1359,6 +1373,96 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("user_email", value: email)
             .execute()
         print("✅ Username updated successfully in Supabase")
+    }
+
+    // Get plant diseases for a specific plant
+    func getPlantDiseases(for plantId: UUID) async throws -> [PlantDisease] {
+        print("🔍 Fetching diseases for plant ID: \(plantId)")
+        let response = try await supabase.database
+            .from("PlantDisease")
+            .select()
+            .eq("plantID", value: plantId.uuidString)
+            .execute()
+        
+        print("📡 Raw plant diseases response: \(String(describing: response.data))")
+        print("📡 Response type: \(type(of: response.data))")
+        
+        // First try to decode as Data
+        if let data = response.data as? Data {
+            print("✅ Got Data response, attempting to decode...")
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let plantDiseases = try decoder.decode([PlantDisease].self, from: data)
+                print("✅ Successfully decoded \(plantDiseases.count) plant diseases from Data")
+                return plantDiseases
+            } catch {
+                print("❌ Failed to decode Data response: \(error)")
+                // If direct decoding fails, try parsing as JSON string
+                if let jsonString = String(data: data, encoding: .utf8),
+                   let jsonData = jsonString.data(using: .utf8) {
+                    do {
+                        let plantDiseases = try JSONDecoder().decode([PlantDisease].self, from: jsonData)
+                        print("✅ Successfully decoded \(plantDiseases.count) plant diseases from JSON string")
+                        return plantDiseases
+                    } catch {
+                        print("❌ Failed to decode JSON string: \(error)")
+                    }
+                }
+            }
+        }
+        
+        // If Data decoding fails, try JSON array
+        if let jsonArray = response.data as? [[String: Any]] {
+            print("✅ Got JSON array response with \(jsonArray.count) items")
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonArray)
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let plantDiseases = try decoder.decode([PlantDisease].self, from: jsonData)
+                print("✅ Successfully decoded \(plantDiseases.count) plant diseases from JSON array")
+                return plantDiseases
+            } catch {
+                print("❌ Failed to decode JSON array: \(error)")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: expected \(type) at path: \(context.codingPath)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: expected \(type) at path: \(context.codingPath)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key) at path: \(context.codingPath)")
+                    case .dataCorrupted(let context):
+                        print("Data corrupted at path: \(context.codingPath)")
+                    @unknown default:
+                        print("Unknown decoding error")
+                    }
+                }
+            }
+        }
+        
+        print("❌ Could not decode response in any format")
+        return []
+    }
+    
+    // Get specific disease by ID
+    func getDisease(by diseaseId: UUID) async throws -> Diseases {
+        print("🔍 Fetching disease with ID: \(diseaseId)")
+        let response = try await supabase.database
+            .from("Diseases")
+            .select()
+            .eq("diseaseID", value: diseaseId.uuidString)
+            .single()
+            .execute()
+        
+        guard let jsonObject = response.data as? [String: Any] else {
+            throw NSError(domain: "DataController", code: 500, userInfo: [NSLocalizedDescriptionKey: "Unexpected response format"])
+        }
+        
+        let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+        let disease = try JSONDecoder().decode(Diseases.self, from: jsonData)
+        print("✅ Successfully fetched disease with ID: \(diseaseId)")
+        return disease
     }
 }
 

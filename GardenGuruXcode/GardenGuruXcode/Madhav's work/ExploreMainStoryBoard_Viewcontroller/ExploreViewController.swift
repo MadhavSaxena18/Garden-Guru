@@ -289,7 +289,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             print("✅ Successfully fetched \(plants.count) plants")
             self.plants = plants
             
-            // Fetch diseases using getCommonIssues()
+            // Fetch all diseases for Discover tab
             print("🦠 Fetching common issues...")
             let diseases = try await dataController.getCommonIssues()
             print("✅ Successfully fetched \(diseases.count) diseases")
@@ -297,12 +297,14 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             // Fetch fertilizers
             print("🌱 Fetching fertilizers...")
-            let fertilizers = try await dataController.getCommonFertilizers()
+            var fertilizers = try await dataController.getCommonFertilizers()
             print("✅ Successfully fetched \(fertilizers.count) fertilizers")
             self.fertilizers = fertilizers
-
+            
             // Debug: Print user email and user id before fetching UserPlant
             var userPlants: [UserPlant] = []
+            var userSpecificDiseases: [Diseases] = []
+            
             if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
                 print("[DEBUG] Current user email: \(userEmail)")
                 
@@ -320,11 +322,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 
                 if currentUser == nil {
                     print("❌ No existing user found. Attempting to create one...")
-                    // Try to create new user
                     do {
                         currentUser = try await dataController.createUser(email: userEmail, userName: "Garden Guru User")
                         print("✅ Successfully created new user")
-                        // Store the new user ID
                         if let userId = currentUser?.id {
                             UserDefaults.standard.set(userId, forKey: "userId")
                             print("[DEBUG] Stored new user ID: \(userId)")
@@ -339,13 +339,67 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 if let user = currentUser {
                     print("[DEBUG] Using user with ID: \(user.id)")
                     do {
-                        // Use the user ID directly from the current user object
-                        userPlants = try await dataController.getUserPlants(for: user.id)
+                        // 1. Get user's plants
+                        userPlants = try await dataController.getUserPlants(for: user.userEmail ?? "")
                         print("[DEBUG] Fetched userPlants count: \(userPlants.count)")
-                        print("[DEBUG] userPlants: \(userPlants)")
+                        
+                        // 2. Get all diseases for user's plants
+                        var allDiseases = Set<Diseases>()  // Using Set to avoid duplicates
+                        for userPlant in userPlants {
+                            if let plantId = userPlant.userplantID {
+                                print("[DEBUG] Fetching diseases for plant: \(userPlant.userPlantNickName ?? "unnamed")")
+                                let plantDiseases = try await dataController.getDiseases(for: plantId)
+                                allDiseases.formUnion(plantDiseases)
+                                print("[DEBUG] Found \(plantDiseases.count) diseases for plant: \(userPlant.userPlantNickName ?? "unnamed")")
+                            }
+                        }
+                        
+                        // Convert Set back to array and store in userSpecificDiseases
+                        userSpecificDiseases = Array(allDiseases)
+                        print("[DEBUG] Total unique diseases found for user's plants: \(userSpecificDiseases.count)")
+                        
+                        // 3. Get fertilizers
+                        print("🌱 Fetching fertilizers...")
+                        fertilizers = try await dataController.getCommonFertilizers()
+                        print("✅ Successfully fetched \(fertilizers.count) fertilizers")
+                        
+                        // 4. Get plants for user's plant relationships
+                        var userActualPlants: [Plant] = []
+                        for userPlant in userPlants {
+                            if let plantId = userPlant.userplantID,
+                               let plant = try? await dataController.getPlant(by: plantId) {
+                                userActualPlants.append(plant)
+                            }
+                        }
+                        
+                        await MainActor.run {
+                            print("📊 Updating UI with fetched data:")
+                            print("   - User's Plants: \(userPlants.count)")
+                            print("   - Plant-specific Diseases: \(userSpecificDiseases.count)")
+                            print("   - Fertilizers: \(fertilizers.count)")
+                            
+                            // Update forMyPlantCategories with the fetched data
+                            if !userPlants.isEmpty {
+                                self.forMyPlantCategories = [
+                                    ("My Plants", userActualPlants),
+                                    ("Common Issues in your Plant", userSpecificDiseases),
+                                    ("Common Fertilizers", fertilizers)
+                                ]
+                            } else {
+                                self.forMyPlantCategories = []
+                            }
+                            
+                            if self.isSearchActive {
+                                self.filteredForMyPlantCategories = self.forMyPlantCategories
+                            }
+                            
+                            self.collectionView.reloadData()
+                            self.updateNoPlantsLabelVisibility()
+                        }
                     } catch {
-                        print("❌ Error fetching user plants: \(error)")
+                        print("❌ Error fetching user plants and diseases: \(error)")
                         userPlants = []
+                        userSpecificDiseases = []
                     }
                 } else {
                     print("❌ No valid user available to fetch plants")
@@ -357,7 +411,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             await MainActor.run {
                 print("📊 Updating UI with fetched data:")
                 print("   - Plants: \(self.plants.count)")
-                print("   - Diseases: \(self.diseases.count)")
+                print("   - All Diseases: \(self.diseases.count)")
+                print("   - User's Plant Diseases: \(userSpecificDiseases.count)")
                 print("   - Fertilizers: \(self.fertilizers.count)")
                 
                 // Update discover categories
@@ -380,7 +435,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         await MainActor.run {
                             self.forMyPlantCategories = [
                                 ("My Plants", userActualPlants),
-                                ("Common Issues in your Plant", self.diseases),
+                                ("Common Issues in your Plant", userSpecificDiseases),
                                 ("Common Fertilizers", self.fertilizers)
                             ]
                             
@@ -400,7 +455,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         self.filteredDiscoverCategories = self.discoverCategories
                         self.filteredForMyPlantCategories = self.forMyPlantCategories
                     }
-                    
                     self.collectionView.reloadData()
                     self.updateNoPlantsLabelVisibility()
                     print("✅ UI update complete")

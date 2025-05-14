@@ -11,18 +11,39 @@ import SDWebImage
 // MARK: - Data Models
 
 struct userInfo: Codable, Hashable {
-    var userEmail: String
-    var userName: String
-    var location: String
-    var reminderAllowed: Bool
     var id: String
+    var userName: String
+    var location: String?
+    var reminderAllowed: Bool?
+    var userEmail: String?
     
     enum CodingKeys: String, CodingKey {
-        case userEmail = "user_email"
+        case id
         case userName
         case location
         case reminderAllowed
-        case id
+        case userEmail = "user_email"
+    }
+    
+    init(id: String, userName: String, location: String? = nil, reminderAllowed: Bool? = nil, userEmail: String? = nil) {
+        self.id = id
+        self.userName = userName
+        self.location = location
+        self.reminderAllowed = reminderAllowed
+        self.userEmail = userEmail
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Required fields
+        id = try container.decode(String.self, forKey: .id)
+        userName = try container.decode(String.self, forKey: .userName)
+        
+        // Optional fields
+        location = try container.decodeIfPresent(String.self, forKey: .location)
+        reminderAllowed = try container.decodeIfPresent(Bool.self, forKey: .reminderAllowed)
+        userEmail = try container.decodeIfPresent(String.self, forKey: .userEmail)
     }
 }
 
@@ -155,12 +176,6 @@ struct Diseases: Codable, Hashable {
             // Don't throw here, just continue with nil values
         }
     }
-}
-
-struct PlantDisease: Codable, Hashable {
-    var plantDiseaseID: UUID
-    var plantID: UUID //FK FOR PLANT
-    var diseaseID: UUID //FK FOR DISEASE
 }
 
 struct UserPlant: Codable, Hashable {

@@ -140,7 +140,7 @@ class CareReminderViewController: UIViewController {
     // MARK: - Data Loading
     private func loadData() {
         guard let firstUser = dataController.getUserSync() else { return }
-        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail)
+        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
         sortReminders()
         careReminderCollectionView.reloadData()
     }
@@ -264,7 +264,7 @@ class CareReminderViewController: UIViewController {
         
         // Reload data from scratch
         guard let firstUser = dataController.getUserSync() else { return }
-        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail)
+        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
         
         // Resort and refresh UI
         sortReminders()
