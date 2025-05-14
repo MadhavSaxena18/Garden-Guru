@@ -245,14 +245,20 @@ struct UsersPlantDisease: Codable, Hashable {
 
 struct CareReminder_: Codable, Hashable {
     var careReminderID: UUID
-    var upcomingReminderForWater: Date
+    var upcomingReminderForWater: Date?
     var upcomingReminderForFertilizers: Date?
     var upcomingReminderForRepotted: Date?
     var isWateringCompleted: Bool?
     var isFertilizingCompleted: Bool?
     var isRepottingCompleted: Bool?
     
-    init(careReminderID: UUID, upcomingReminderForWater: Date, upcomingReminderForFertilizers: Date? = nil, upcomingReminderForRepotted: Date? = nil, isWateringCompleted: Bool? = nil, isFertilizingCompleted: Bool? = nil, isRepottingCompleted: Bool? = nil) {
+    init(careReminderID: UUID,
+         upcomingReminderForWater: Date? = nil,
+         upcomingReminderForFertilizers: Date? = nil,
+         upcomingReminderForRepotted: Date? = nil,
+         isWateringCompleted: Bool? = nil,
+         isFertilizingCompleted: Bool? = nil,
+         isRepottingCompleted: Bool? = nil) {
         self.careReminderID = careReminderID
         self.upcomingReminderForWater = upcomingReminderForWater
         self.upcomingReminderForFertilizers = upcomingReminderForFertilizers
@@ -274,14 +280,43 @@ struct CareReminder_: Codable, Hashable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        careReminderID = try container.decode(UUID.self, forKey: .careReminderID)
-        upcomingReminderForWater = try container.decode(Date.self, forKey: .upcomingReminderForWater)
-        upcomingReminderForFertilizers = try container.decodeIfPresent(Date.self, forKey: .upcomingReminderForFertilizers)
-        upcomingReminderForRepotted = try container.decodeIfPresent(Date.self, forKey: .upcomingReminderForRepotted)
+        
+        // Handle UUID decoding
+        if let uuidString = try? container.decode(String.self, forKey: .careReminderID) {
+            careReminderID = UUID(uuidString: uuidString) ?? UUID()
+        } else {
+            careReminderID = UUID()
+        }
+        
+        // Create date formatters for different possible formats
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        // Function to parse date string
+        func parseDate(_ dateString: String?) -> Date? {
+            guard let dateString = dateString else { return nil }
+            return dateFormatter.date(from: dateString)
+        }
+        
+        // Decode date fields
+        upcomingReminderForWater = parseDate(try container.decodeIfPresent(String.self, forKey: .upcomingReminderForWater))
+        upcomingReminderForFertilizers = parseDate(try container.decodeIfPresent(String.self, forKey: .upcomingReminderForFertilizers))
+        upcomingReminderForRepotted = parseDate(try container.decodeIfPresent(String.self, forKey: .upcomingReminderForRepotted))
+        
+        // Decode boolean fields
         isWateringCompleted = try container.decodeIfPresent(Bool.self, forKey: .isWateringCompleted)
         isFertilizingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isFertilizingCompleted)
         isRepottingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isRepottingCompleted)
     }
+}
+
+struct CareReminderUpdate: Encodable {
+    var upcomingReminderForWater: String?
+    var upcomingReminderForFertilizers: String?
+    var upcomingReminderForRepotted: String?
+    var isWateringCompleted: Bool?
+    var isFertilizingCompleted: Bool?
+    var isRepottingCompleted: Bool?
 }
 
 struct CareReminderOfUserPlant: Codable, Hashable {

@@ -22,6 +22,15 @@ class supaBaseController {
     }
 }
 
+// Add this struct near the top of the file with other model definitions
+private struct UserTableInsert: Encodable {
+    let id: String
+    let user_email: String
+    let userName: String
+    let location: String
+    let reminderAllowed: Bool
+}
+
 class DataControllerGG: NSObject, CLLocationManagerDelegate {
     static let shared = DataControllerGG()
     private let supabase = supaBaseController.shared.client
@@ -177,38 +186,136 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Care Reminder Functions
     
     func getCareReminders(for userPlantID: UUID) async throws -> CareReminder_? {
-        let response = try await supabase
+        print("\n=== Fetching Care Reminder ===")
+        print("🔍 Looking for reminder with userPlantID: \(userPlantID)")
+        
+        // First get the care reminder link
+        print("📡 Querying CareReminderOfUserPlant table...")
+        let linkResponse = try await supabase
             .database
-            .from("CareReminder")
-            .select()
-            .eq("careReminderID", value: userPlantID.uuidString)
-            .single()
+            .from("CareReminderOfUserPlant")
+            .select("careReminderId")
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
             .execute()
         
-        if let jsonData = response.data as? Data {
-            return try JSONDecoder().decode(CareReminder_.self, from: jsonData)
+        print("📡 Raw link response type: \(type(of: linkResponse.data))")
+        
+        // Handle Data response
+        guard let data = linkResponse.data as? Data,
+              let jsonString = String(data: data, encoding: .utf8) else {
+            print("❌ Could not get data from response")
+            return nil
         }
+        
+        print("📡 Response as string: \(jsonString)")
+        
+        // Parse the JSON string
+        guard let jsonData = jsonString.data(using: .utf8),
+              let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+              let firstLink = jsonArray.first,
+              let careReminderId = firstLink["careReminderId"] as? String else {
+            print("❌ No care reminder link found")
+            return nil
+        }
+        
+        print("✅ Found careReminderId: \(careReminderId)")
+        
+        // Then get the actual care reminder
+        print("\n📡 Querying CareReminder_ table for ID: \(careReminderId)")
+        let reminderResponse = try await supabase
+            .database
+            .from("CareReminder_")
+            .select()
+            .eq("careReminderID", value: careReminderId)
+            .execute()
+        
+        print("📡 Raw reminder response type: \(type(of: reminderResponse.data))")
+        
+        // Handle reminder Data response
+        guard let reminderData = reminderResponse.data as? Data,
+              let reminderString = String(data: reminderData, encoding: .utf8) else {
+            print("❌ Could not get reminder data")
+            return nil
+        }
+        
+        print("📡 Reminder response as string: \(reminderString)")
+        
+        // Parse the reminder JSON
+        if let reminderJsonData = reminderString.data(using: .utf8) {
+            do {
+                let reminders = try JSONDecoder().decode([CareReminder_].self, from: reminderJsonData)
+                print("✅ Successfully decoded \(reminders.count) reminders")
+                return reminders.first
+            } catch {
+                print("❌ Failed to decode reminder: \(error)")
+            }
+        }
+        
+        print("❌ No care reminder found")
         return nil
     }
     
     func updateCareReminderStatus(userPlantID: UUID, type: String, isCompleted: Bool) async throws {
-        var updateData: [String: Bool] = [:]
+        // First get the plant details to know the frequency
+        let userPlants = try await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? "")
+        guard let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }) else {
+            print("❌ Plant not found for updating reminder")
+            return
+        }
+        
+        // Get the care reminder
+        guard let reminder = try await getCareReminders(for: userPlantID) else {
+            print("❌ Care reminder not found")
+            return
+        }
+        
+        // Create a properly typed update object
+        var update = CareReminderUpdate()
+        let calendar = Calendar.current
+        let dateFormatter = ISO8601DateFormatter()
+        let currentDate = Date()
+        
         switch type.lowercased() {
         case "water":
-            updateData["isWateringCompleted"] = isCompleted
+            update.isWateringCompleted = isCompleted
+            if isCompleted {
+                if let waterFreq = userPlant.plant.waterFrequency {
+                    // Set next water date based on frequency
+                    if let nextDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: currentDate) {
+                        update.upcomingReminderForWater = dateFormatter.string(from: nextDate)
+                    }
+                }
+            }
         case "fertilizer":
-            updateData["isFertilizingCompleted"] = isCompleted
+            update.isFertilizingCompleted = isCompleted
+            if isCompleted {
+                if let fertFreq = userPlant.plant.fertilizerFrequency {
+                    // Set next fertilizer date based on frequency
+                    if let nextDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: currentDate) {
+                        update.upcomingReminderForFertilizers = dateFormatter.string(from: nextDate)
+                    }
+                }
+            }
         case "repot":
-            updateData["isRepottingCompleted"] = isCompleted
+            update.isRepottingCompleted = isCompleted
+            if isCompleted {
+                if let repotFreq = userPlant.plant.repottingFrequency {
+                    // Set next repotting date based on frequency
+                    if let nextDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: currentDate) {
+                        update.upcomingReminderForRepotted = dateFormatter.string(from: nextDate)
+                    }
+                }
+            }
         default:
             break
         }
         
+        // Update the reminder status and next date if completed
         try await supabase
             .database
-            .from("CareReminder")
-            .update(updateData)
-            .eq("careReminderID", value: userPlantID.uuidString)
+            .from("CareReminder_")
+            .update(update)
+            .eq("careReminderID", value: reminder.careReminderID.uuidString)
             .execute()
     }
     
@@ -636,23 +743,40 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Complex Data Fetching
     
     func getUserPlantsWithDetails(for userId: String) async throws -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
+        print("\n=== Getting User Plants With Details ===")
+        print("🔍 Fetching details for user ID: \(userId)")
+        
         let userPlants = try await getUserPlants(for: userId)
+        print("✅ Found \(userPlants.count) user plants")
+        
         var result: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
         
         for userPlant in userPlants {
-            if let plant = try await getPlant(by: userPlant.userplantID!) {
-                let reminder = try await getCareReminders(for: userPlant.userPlantRelationID)
-                if let existingReminder = reminder {
-                    result.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
-                } else {
-                    // Create new reminder if it doesn't exist
-                    try await addCareReminder(userPlantID: userPlant.userPlantRelationID, reminderAllowed: true)
-                    if let newReminder = try await getCareReminders(for: userPlant.userPlantRelationID) {
-                        result.append((userPlant: userPlant, plant: plant, reminder: newReminder))
+            print("\n🌿 Processing plant with relation ID: \(userPlant.userPlantRelationID)")
+            
+            if let plantId = userPlant.userplantID {
+                print("🔍 Looking up plant with ID: \(plantId)")
+                if let plant = try await getPlant(by: plantId) {
+                    print("✅ Found plant: \(plant.plantName)")
+                    
+                    print("🔍 Looking up care reminder...")
+                    if let reminder = try await getCareReminders(for: userPlant.userPlantRelationID) {
+                        print("✅ Found existing reminder")
+                        result.append((userPlant: userPlant, plant: plant, reminder: reminder))
+                    } else {
+                        print("ℹ️ No reminder found for this plant")
                     }
+                } else {
+                    print("❌ Plant not found for ID: \(plantId)")
                 }
+            } else {
+                print("❌ User plant has no plant ID")
             }
         }
+        
+        print("\n📊 Final Results:")
+        print("Total user plants: \(userPlants.count)")
+        print("Successfully processed with reminders: \(result.count)")
         
         return result
     }
@@ -753,22 +877,22 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         let nextReminderString = ISO8601DateFormatter().string(from: nextReminderDate)
         
         // Create update data with proper type
-        let updateData: [String: String]
+        var update = CareReminderUpdate()
         switch type.lowercased() {
         case "water":
-            updateData = ["upcomingReminderForWater": nextReminderString]
+            update.upcomingReminderForWater = nextReminderString
         case "fertilizer":
-            updateData = ["upcomingReminderForFertilizers": nextReminderString]
+            update.upcomingReminderForFertilizers = nextReminderString
         case "repot":
-            updateData = ["upcomingReminderForRepotted": nextReminderString]
+            update.upcomingReminderForRepotted = nextReminderString
         default:
             return
         }
         
         try await supabase
             .database
-            .from("CareReminder")
-            .update(updateData)
+            .from("CareReminder_")
+            .update(update)
             .eq("careReminderID", value: userPlantID.uuidString)
             .execute()
     }
@@ -791,22 +915,25 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
 
     // Function to add a new care reminder
     func addCareReminder(userPlantID: UUID, reminderAllowed: Bool) async throws {
+        let careReminderId = UUID()
         let currentDate = ISO8601DateFormatter().string(from: Date())
+        
+        // First create the care reminder
         let careReminder: [String: String] = [
-            "careReminderID": userPlantID.uuidString,
+            "careReminderID": careReminderId.uuidString,
             "upcomingReminderForWater": currentDate,
             "upcomingReminderForFertilizers": currentDate,
             "upcomingReminderForRepotted": currentDate
         ]
         
-        // First insert the basic reminder data
+        // Insert the care reminder
         try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .insert(careReminder)
             .execute()
             
-        // Then update the boolean fields separately
+        // Update the boolean fields
         let booleanData: [String: Bool] = [
             "isWateringCompleted": false,
             "isFertilizingCompleted": false,
@@ -815,9 +942,22 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .update(booleanData)
-            .eq("careReminderID", value: userPlantID.uuidString)
+            .eq("careReminderID", value: careReminderId.uuidString)
+            .execute()
+            
+        // Then create the link in CareReminderOfUserPlant
+        let link: [String: String] = [
+            "careReminderOfUserPlantID": UUID().uuidString,
+            "userPlantRelationID": userPlantID.uuidString,
+            "careReminderId": careReminderId.uuidString
+        ]
+        
+        try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .insert(link)
             .execute()
     }
     
@@ -838,15 +978,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     }
 
     // MARK: - User Management
-    
-    // Add this struct near the top of the file, after other model definitions
-    private struct UserTableInsert: Encodable {
-        let id: String
-        let user_email: String
-        let userName: String
-        let location: String
-        let reminderAllowed: Bool
-    }
     
     func initializeUser(email: String) async throws -> userInfo? {
         print("\n=== Checking User Data ===")

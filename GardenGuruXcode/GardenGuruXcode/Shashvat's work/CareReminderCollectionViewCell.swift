@@ -25,7 +25,7 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
                   isUpcoming: Bool,
                   isTomorrow: Bool,
                   shouldEnableCheckbox: Bool) {
-        // Configure plant image
+        
         if let imageUrlString = reminderData.plant.plantImage,
            let imageUrl = URL(string: imageUrlString) {
             careReminderPlantImageView.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder_plant"))
@@ -37,17 +37,20 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         plantNameCareReminderLabel.text = reminderData.plant.plantName
         nickNameCareReminderLabel.text = reminderData.userPlant.userPlantNickName ?? reminderData.plant.plantName
         
-        // Configure checkbox state
+        // Configure checkbox state and appearance
         checkBoxCareReminderButton.isEnabled = shouldEnableCheckbox
         checkBoxCareReminderButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
         
         let checkBoxImage = isCompleted ? 
             UIImage(systemName: "checkmark.square.fill")?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal) :
-            UIImage(systemName: "square")
+            UIImage(systemName: "square")?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
         checkBoxCareReminderButton.setImage(checkBoxImage, for: .normal)
         
-        // Configure due date label
+        // Configure due date label with appropriate color and text
         configureDueDate(dueDate: dueDate, isCompleted: isCompleted, isUpcoming: isUpcoming, isTomorrow: isTomorrow)
+        
+        // Add tap gesture to the whole cell for better touch response
+        isUserInteractionEnabled = true
     }
     
     private func configureDueDate(dueDate: Date?, isCompleted: Bool, isUpcoming: Bool, isTomorrow: Bool) {
@@ -81,8 +84,13 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        // Initialization code
+        // Set up the checkbox button
+        checkBoxCareReminderButton.tintColor = .systemGreen
+        checkBoxCareReminderButton.imageView?.contentMode = .scaleAspectFit
+        checkBoxCareReminderButton.contentHorizontalAlignment = .center
+        checkBoxCareReminderButton.contentVerticalAlignment = .center
     }
+    
     @IBAction func checkBoxCareReminderButtonTapped(_ sender: Any) {
         onCheckboxToggle?()
     }

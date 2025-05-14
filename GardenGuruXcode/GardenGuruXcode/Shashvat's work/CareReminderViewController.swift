@@ -108,16 +108,37 @@ class CareReminderViewController: UIViewController {
     
     // MARK: - Data Loading
     private func loadData() {
-        guard let firstUser = dataController.getUserSync() else { return }
-        guard let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail) else { return }
+        print("\n=== Loading Care Reminder Data ===")
+        
+        guard let firstUser = dataController.getUserSync() else {
+            print("❌ No user found")
+            return
+        }
+        print("✅ Found user: \(firstUser.userEmail)")
+        
+        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
+        print("📱 Found \(userPlants.count) user plants")
         
         reminders = []
         for userPlant in userPlants {
-            if let plant = dataController.getPlantSync(by: userPlant.userplantID ?? UUID()),
-               let reminder = dataController.getCareRemindersSync(for: userPlant.userPlantRelationID) {
-                reminders.append((userPlant: userPlant, plant: plant, reminder: reminder))
+            print("\n🌿 Processing plant: \(userPlant.userPlantNickName ?? "Unknown")")
+            if let plant = dataController.getPlantSync(by: userPlant.userplantID ?? UUID()) {
+                print("✅ Found plant: \(plant.plantName)")
+                if let reminder = dataController.getCareRemindersSync(for: userPlant.userPlantRelationID) {
+                    print("✅ Found reminder with ID: \(reminder.careReminderID)")
+                    print("- Water date: \(reminder.upcomingReminderForWater?.description ?? "nil")")
+                    print("- Fertilizer date: \(reminder.upcomingReminderForFertilizers?.description ?? "nil")")
+                    print("- Repot date: \(reminder.upcomingReminderForRepotted?.description ?? "nil")")
+                    reminders.append((userPlant: userPlant, plant: plant, reminder: reminder))
+                } else {
+                    print("❌ No reminder found for plant")
+                }
+            } else {
+                print("❌ Could not find plant details")
             }
         }
+        
+        print("\n📊 Total reminders loaded: \(reminders.count)")
         sortReminders()
         careReminderCollectionView.reloadData()
     }
@@ -126,33 +147,58 @@ class CareReminderViewController: UIViewController {
         let calendar = Calendar.current
         let currentDate = Date()
         
+        print("\n=== Sorting Reminders ===")
+        print("Total reminders to sort: \(reminders.count)")
+        
         // Clear existing arrays
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
         
         for reminder in reminders {
+            print("\nProcessing reminder for plant: \(reminder.plant.plantName)")
+            
             // Watering reminders
             if let waterDate = reminder.reminder.upcomingReminderForWater {
-                if calendar.isDateInToday(waterDate) && !(reminder.reminder.isWateringCompleted ?? false) {
-                    todayReminders[0].append(reminder)
-                } else if waterDate > currentDate && !calendar.isDateInToday(waterDate) {
-                    upcomingReminders[0].append(reminder)
+                print("Water date: \(waterDate)")
+                if calendar.isDateInToday(waterDate) {
+                    print("- Water reminder is for today")
+                    todayReminders[0].append(reminder)  // Always show today's reminders
+                } else if waterDate > currentDate {
+                    print("- Water reminder is upcoming")
+                    // Only add to upcoming if not completed
+                    if !(reminder.reminder.isWateringCompleted ?? false) {
+                        upcomingReminders[0].append(reminder)
+                    }
                 }
             }
+            
             // Fertilizing reminders
             if let fertDate = reminder.reminder.upcomingReminderForFertilizers {
-                if calendar.isDateInToday(fertDate) && !(reminder.reminder.isFertilizingCompleted ?? false) {
-                    todayReminders[1].append(reminder)
-                } else if fertDate > currentDate && !calendar.isDateInToday(fertDate) {
-                    upcomingReminders[1].append(reminder)
+                print("Fertilizer date: \(fertDate)")
+                if calendar.isDateInToday(fertDate) {
+                    print("- Fertilizer reminder is for today")
+                    todayReminders[1].append(reminder)  // Always show today's reminders
+                } else if fertDate > currentDate {
+                    print("- Fertilizer reminder is upcoming")
+                    // Only add to upcoming if not completed
+                    if !(reminder.reminder.isFertilizingCompleted ?? false) {
+                        upcomingReminders[1].append(reminder)
+                    }
                 }
             }
+            
             // Pruning reminders
             if let pruneDate = reminder.reminder.upcomingReminderForRepotted {
-                if calendar.isDateInToday(pruneDate) && !(reminder.reminder.isRepottingCompleted ?? false) {
-                    todayReminders[2].append(reminder)
-                } else if pruneDate > currentDate && !calendar.isDateInToday(pruneDate) {
-                    upcomingReminders[2].append(reminder)
+                print("Pruning date: \(pruneDate)")
+                if calendar.isDateInToday(pruneDate) {
+                    print("- Pruning reminder is for today")
+                    todayReminders[2].append(reminder)  // Always show today's reminders
+                } else if pruneDate > currentDate {
+                    print("- Pruning reminder is upcoming")
+                    // Only add to upcoming if not completed
+                    if !(reminder.reminder.isRepottingCompleted ?? false) {
+                        upcomingReminders[2].append(reminder)
+                    }
                 }
             }
         }
@@ -204,10 +250,26 @@ class CareReminderViewController: UIViewController {
             }
         }
         
-        // Update UI state
+        // Print summary
+        print("\n=== Reminder Sort Summary ===")
+        print("Today's reminders:")
+        print("- Watering: \(todayReminders[0].count)")
+        print("- Fertilizing: \(todayReminders[1].count)")
+        print("- Pruning: \(todayReminders[2].count)")
+        print("\nUpcoming reminders:")
+        print("- Watering: \(upcomingReminders[0].count)")
+        print("- Fertilizing: \(upcomingReminders[1].count)")
+        print("- Pruning: \(upcomingReminders[2].count)")
+        
+        // Update UI visibility
         let hasReminders = careReminderSegmentedControl.selectedSegmentIndex == 0 ?
             todayReminders.contains(where: { !$0.isEmpty }) :
             upcomingReminders.contains(where: { !$0.isEmpty })
+        
+        print("\nUI Visibility:")
+        print("Has reminders: \(hasReminders)")
+        print("Selected segment: \(careReminderSegmentedControl.selectedSegmentIndex)")
+        
         noRemindersView.isHidden = hasReminders
         careReminderCollectionView.isHidden = !hasReminders
     }
@@ -233,7 +295,7 @@ class CareReminderViewController: UIViewController {
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
         guard let firstUser = dataController.getUserSync() else { return }
-        guard let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail) else { return }
+        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
         
         for userPlant in userPlants {
             if let plant = dataController.getPlantSync(by: userPlant.userplantID ?? UUID()),
@@ -483,12 +545,26 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             return
         }
         
+        // Update the database
         dataController.updateCareReminderStatusSync(
             userPlantID: reminder.userPlant.userPlantRelationID,
             type: reminderType,
             isCompleted: !isCompleted
         )
-        // Don't call loadData() here as we're handling updates in refreshAfterStatusUpdate
+        
+        // Post notification to trigger UI update
+        NotificationCenter.default.post(
+            name: NSNotification.Name("ReminderStatusUpdated"),
+            object: nil,
+            userInfo: [
+                "reminderId": reminder.reminder.careReminderID,
+                "reminderType": reminderType.capitalized,
+                "isCompleted": !isCompleted
+            ]
+        )
+        
+        // Reload data to refresh the UI
+        loadData()
     }
 }
 

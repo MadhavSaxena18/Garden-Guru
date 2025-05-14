@@ -247,9 +247,9 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         // Create reminder with only enabled reminders
         let reminder = CareReminder_(
             careReminderID: UUID(),
-            upcomingReminderForWater: nextWaterDate ?? Date(),
-            upcomingReminderForFertilizers: nextFertilizerDate,
-            upcomingReminderForRepotted: nextRepottingDate,
+            upcomingReminderForWater: isWateringEnabled ? nextWaterDate : nil,
+            upcomingReminderForFertilizers: isFertilizingEnabled ? nextFertilizerDate : nil,
+            upcomingReminderForRepotted: isRepottingEnabled ? nextRepottingDate : nil,
             isWateringCompleted: false,
             isFertilizingCompleted: false,
             isRepottingCompleted: false
