@@ -126,6 +126,35 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         print("📡 Raw user response: \(String(describing: userResponse.data))")
         
+       if let jsonData = userResponse.data as? Data,
+           let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
+           let user = users.first {
+            print("✅ Found user ID: \(user.id)")
+            
+            // Now get the user's plants using the correct ID
+            let response = try await supabase
+                .database
+                .from("UserPlant")
+                .select()
+                .eq("userId", value: user.id)
+                .execute()
+            
+            print("📡 Raw user plants response: \(String(describing: response.data))")
+            
+            if let jsonData = response.data as? Data {
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded \(userPlants.count) user plants")
+                return userPlants
+            } else if let jsonObject = response.data as? [[String: Any]] {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded \(userPlants.count) user plants")
+                return userPlants
+            }
+        }
+        
+        print("❌ No user plants found")
+
         // Try to decode the response data
         var userIdString: String?
         if let data = userResponse.data as? Data {
@@ -180,6 +209,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
         
         print("❌ Failed to decode user plants data")
+
         return []
     }
     
@@ -193,9 +223,16 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         print("📡 Querying CareReminderOfUserPlant table...")
         let linkResponse = try await supabase
             .database
+
             .from("CareReminderOfUserPlant")
             .select("careReminderId")
             .eq("userPlantRelationID", value: userPlantID.uuidString)
+
+//            .from("CareReminder_")
+//            .select()
+//            .eq("careReminderID", value: userPlantID.uuidString)
+//            .single()
+
             .execute()
         
         print("📡 Raw link response type: \(type(of: linkResponse.data))")
@@ -314,12 +351,34 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         try await supabase
             .database
             .from("CareReminder_")
+
             .update(update)
             .eq("careReminderID", value: reminder.careReminderID.uuidString)
+
+//            .update(updateData)
+//            .eq("careReminderID", value: userPlantID.uuidString)
+
             .execute()
     }
     
     func deleteUserPlant(userPlantID: UUID) async throws {
+        // First delete the care reminder linking record
+        try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .delete()
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
+            
+        // Then delete the care reminder
+        try await supabase
+            .database
+            .from("CareReminder_")
+            .delete()
+            .eq("careReminderID", value: userPlantID.uuidString)
+            .execute()
+            
+        // Finally delete the user plant
         try await supabase
             .database
             .from("UserPlant")
@@ -892,7 +951,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         try await supabase
             .database
             .from("CareReminder_")
+
             .update(update)
+
+//            .update(updateData)
+
             .eq("careReminderID", value: userPlantID.uuidString)
             .execute()
     }
@@ -958,6 +1021,19 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .database
             .from("CareReminderOfUserPlant")
             .insert(link)
+            .execute()
+            
+        // Create the linking record in CareReminderOfUserPlant
+        let linkingRecord: [String: String] = [
+            "careReminderOfUserPlantID": UUID().uuidString,
+            "userPlantRelationID": userPlantID.uuidString,
+            "careReminderId": userPlantID.uuidString
+        ]
+        
+        try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .insert(linkingRecord)
             .execute()
     }
     
@@ -1231,24 +1307,73 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         return (session, userData)
     }
 
+    // Add this function after the signIn function
+    func signUp(email: String, password: String, userName: String) async throws -> (AuthResponse, userInfo?) {
+        print("\n=== Signing Up New User ===")
+        print("🔑 Attempting to sign up with email: \(email)")
+        
+        // First create the auth user in Supabase with email verification disabled
+        let authResponse = try await supabase.auth.signUp(
+            email: email,
+            password: password,
+            data: ["email_confirm": true] // This disables email verification
+        )
+        
+        print("✅ Authentication successful")
+        
+        // Store the email for future use
+        UserDefaults.standard.set(email, forKey: "userEmail")
+        
+        // Create user in UserTable with provided name
+        print("📝 Creating user in UserTable")
+        let userData = try await createUser(
+            email: email,
+            userName: userName
+        )
+        
+        print("✅ User created in UserTable")
+        return (authResponse, userData)
+    }
+
+    // MARK: - Error Types
+    
+    struct APIError: Error {
+        let message: String
+        let errorCode: String?
+        
+        init(message: String, errorCode: String? = nil) {
+            self.message = message
+            self.errorCode = errorCode
+        }
+    }
+
     // MARK: - Auth Errors
 
     enum AuthError: LocalizedError {
         case noAuthenticatedUser
         case invalidCredentials
         case networkError
+        case rateLimitExceeded
+        case invalidOTP
+        case passwordUpdateFailed
         case unknown(Error)
         
         var errorDescription: String? {
             switch self {
             case .noAuthenticatedUser:
-                return "No authenticated user found"
+                return "No account found with this email address"
             case .invalidCredentials:
                 return "Invalid email or password"
             case .networkError:
                 return "Network error during authentication"
+            case .rateLimitExceeded:
+                return "Please wait a minute before trying again"
+            case .invalidOTP:
+                return "Invalid verification code"
+            case .passwordUpdateFailed:
+                return "Failed to update password. Please try again"
             case .unknown(let error):
-                return "Unknown error: \(error.localizedDescription)"
+                return "Error: \(error.localizedDescription)"
             }
         }
     }
@@ -1418,6 +1543,71 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         _ = semaphore.wait(timeout: .now() + 5)
         return disease
+    }
+
+
+    // MARK: - Password Reset Functions
+
+    func sendPasswordResetOTP(email: String) async throws {
+        print("📧 Attempting to send reset OTP to: \(email)")
+        
+        // Clean up the email
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        do {
+            // Send OTP email for password reset
+            try await supabase.auth.resetPasswordForEmail(cleanEmail)
+            print("✅ Reset OTP sent successfully")
+        } catch {
+            print("❌ Error sending reset OTP: \(error)")
+            if error.localizedDescription.contains("rate limit") {
+                throw AuthError.rateLimitExceeded
+            }
+            throw AuthError.unknown(error)
+        }
+    }
+
+    func verifyPasswordResetOTP(email: String, otp: String) async throws {
+        print("🔐 Verifying reset OTP for email: \(email)")
+        
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        do {
+            try await supabase.auth.verifyOTP(
+                email: cleanEmail,
+                token: otp,
+                type: .recovery
+            )
+            print("✅ Reset OTP verified successfully")
+        } catch {
+            print("❌ Reset OTP verification failed: \(error)")
+            throw AuthError.invalidOTP
+        }
+    }
+
+    func updatePassword(newPassword: String) async throws {
+        print("🔄 Updating password")
+        
+        do {
+            try await supabase.auth.update(user: UserAttributes(password: newPassword))
+            print("✅ Password updated successfully")
+        } catch {
+            print("❌ Password update failed: \(error)")
+            throw AuthError.passwordUpdateFailed
+        }
+    }
+
+    // Add this method in the DataControllerGG class
+    func updateUsername(email: String, newUsername: String) async throws {
+        print("🔄 Updating username for email: \(email)")
+        try await supabase
+            .database
+            .from("UserTable")
+            .update(["userName": newUsername])
+            .eq("user_email", value: email)
+            .execute()
+        print("✅ Username updated successfully in Supabase")
+
     }
 }
 

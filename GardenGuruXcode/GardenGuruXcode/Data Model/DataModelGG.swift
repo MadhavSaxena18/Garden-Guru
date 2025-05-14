@@ -86,6 +86,8 @@ struct Diseases: Codable, Hashable {
     var diseaseFertilizers: String?
     var cureDuration: Int64?
     var diseaseSeason: Season?
+    var diseasePreventiveMeasures: String?
+    var diseaseVideoSolution: String?
     
     enum CodingKeys: String, CodingKey {
         case diseaseID = "diseaseID"
@@ -96,6 +98,8 @@ struct Diseases: Codable, Hashable {
         case diseaseFertilizers = "diseaseFertilizers"
         case cureDuration = "cureDuration"
         case diseaseSeason = "diseaseSeason"
+        case diseasePreventiveMeasures = "diseasePreventiveMeasures"
+        case diseaseVideoSolution = "diseaseVideoSolution"
     }
     
     init(from decoder: Decoder) throws {
@@ -149,6 +153,16 @@ struct Diseases: Codable, Hashable {
             if let season = try container.decodeIfPresent(Season.self, forKey: .diseaseSeason) {
                 print("📝 Decoded season: \(season)")
                 diseaseSeason = season
+            }
+            
+            if let preventiveMeasures = try container.decodeIfPresent(String.self, forKey: .diseasePreventiveMeasures) {
+                print("📝 Decoded preventive measures: \(preventiveMeasures)")
+                diseasePreventiveMeasures = preventiveMeasures
+            }
+            
+            if let videoSolution = try container.decodeIfPresent(String.self, forKey: .diseaseVideoSolution) {
+                print("📝 Decoded video solution: \(videoSolution)")
+                diseaseVideoSolution = videoSolution
             }
         } catch {
             print("⚠️ Error decoding optional fields: \(error)")

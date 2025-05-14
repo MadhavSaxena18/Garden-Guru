@@ -52,17 +52,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         plantDetailsLabel.isHidden = true
         
         setupUI()
-        
-        // Check if plant exists and update UI
-        if let plantName = selectedPlant?.plantName {
-            print("📝 Selected plant name: \(plantName)")
-            updatePlantDetails(plantName: plantName)
-        } else {
-            print("⚠️ No plant name available in selectedPlant")
-            showPlantNotFoundAlert()
-        }
-        
         setupConstraints()
+        
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.title = "Diagnosis"
         
@@ -75,6 +66,9 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         tableView.reloadData()
         
         self.tabBarController?.tabBar.isHidden = true
+        
+        // Initialize plant check
+        initializePlantCheck()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -165,17 +159,19 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         startCaringButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
         view.addSubview(startCaringButton)
         startCaringButton.addTarget(self, action: #selector(startCaringTapped), for: .touchUpInside)
-
-        // Update plant details immediately if we have the plant name
-        if let plantName = selectedPlant?.plantName {
-            updatePlantDetails(plantName: plantName)
-        }
     }
     
-    private func updatePlantDetails(plantName: String) {
-        print("\n=== Updating Plant Details ===")
-        print("🔍 Looking for plant with name: \(plantName)")
+    private func initializePlantCheck() {
+        guard let plantName = selectedPlant?.plantName else {
+            print("⚠️ No plant name available in selectedPlant")
+            showPlantNotFoundAlert()
+            return
+        }
         
+        print("\n=== Initializing Plant Check ===")
+        print("📝 Selected plant name: \(plantName)")
+        
+        // First get the plant from database
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
             print("✅ Found plant in database")
             print("📝 Plant details:")
@@ -184,29 +180,34 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             print("   - Category: \(plant.category?.rawValue ?? "Not specified")")
             print("   - Season: \(plant.favourableSeason?.rawValue ?? "Not specified")")
             
-            // Update the plant details in the model
-            selectedPlant?.plantName = plant.plantName
-            selectedPlant?.botanicalName = plant.plantBotanicalName ?? "Not specified"
+            // Update UI with plant details
+            updatePlantUI(plant: plant)
             
-            // Create a more detailed and formatted plant details string
-            let details = """
-                
-                • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
-                • Category: \(plant.category?.rawValue ?? "Not specified")
-                • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
-                """
-            
-            // Update the UI
-            plantDetailsLabel.text = details
-            plantDetailsLabel.isHidden = false
-            print("✅ Updated plant details label with text: \n\(details)")
-            
-            // Check if plant exists in user's garden
+            // Check if user has this plant
             checkIfPlantExists(plantName: plantName)
         } else {
             print("⚠️ Plant not found in database: \(plantName)")
             showPlantNotFoundAlert()
         }
+    }
+    
+    private func updatePlantUI(plant: Plant) {
+        // Update the plant details in the model
+        selectedPlant?.plantName = plant.plantName
+        selectedPlant?.botanicalName = plant.plantBotanicalName ?? "Not specified"
+        
+        // Create a more detailed and formatted plant details string
+        let details = """
+            
+            • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
+            • Category: \(plant.category?.rawValue ?? "Not specified")
+            • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
+            """
+        
+        // Update the UI
+        plantDetailsLabel.text = details
+        plantDetailsLabel.isHidden = false
+        print("✅ Updated plant details label")
     }
 
     private func showPlantNotFoundAlert() {
@@ -233,24 +234,38 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     private func checkIfPlantExists(plantName: String) {
         print("\n=== Checking if plant exists ===")
-        if let firstUser = dataController.getUserSync() {
-            let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
-            isExistingPlant = userPlants.contains { userPlant in
-                if let plantID = userPlant.userplantID,
-                   let existingPlant = dataController.getPlantSync(by: plantID) {
-                    return existingPlant.plantName == plantName
-                }
-                return false
+        
+        guard let firstUser = dataController.getUserSync() else {
+            print("❌ No user found")
+            startCaringButton.isHidden = false
+            startCaringButton.setTitle("Add and Start Caring", for: .normal)
+            return
+        }
+        
+        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
+        print("📝 Found \(userPlants.count) user plants")
+        
+        isExistingPlant = userPlants.contains { userPlant in
+            if let plantID = userPlant.userplantID,
+               let existingPlant = dataController.getPlantSync(by: plantID) {
+                return existingPlant.plantName == plantName
             }
-            
-            if isExistingPlant {
-                print("✅ Plant already exists in user's garden")
-                showExistingPlantAlert()
-            } else {
-                print("📝 New plant - showing add button")
-                startCaringButton.isHidden = false
-                startCaringButton.setTitle("Add and Start Caring", for: .normal)
+            return false
+        }
+        
+        if isExistingPlant {
+            print("✅ Plant already exists in user's garden")
+            hasUserResponded = false
+            startCaringButton.isHidden = true
+            DispatchQueue.main.async {
+                self.showExistingPlantAlert()
             }
+        } else {
+            print("📝 New plant - showing add button")
+            hasUserResponded = true
+            isExistingPlant = false
+            startCaringButton.isHidden = false
+            startCaringButton.setTitle("Add and Start Caring", for: .normal)
         }
     }
 
@@ -266,7 +281,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             self.hasUserResponded = true
             self.isExistingPlant = true
             
-            // Hide the add button for same plant
+            // Keep the button hidden for same plant
             self.startCaringButton.isHidden = true
             
             // Show confirmation message
@@ -311,25 +326,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             let text = sectionData[indexPath.row]
             cell.textLabel?.text = text
             cell.textLabel?.numberOfLines = 0
-            
-            if text.starts(with: "http") {
-                cell.textLabel?.textColor = .systemBlue
-                cell.textLabel?.isUserInteractionEnabled = true
-                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openLink(_:)))
-                cell.textLabel?.addGestureRecognizer(tapGesture)
-            } else {
-                cell.textLabel?.textColor = UIColor(hex: "#004E05")
-                cell.textLabel?.isUserInteractionEnabled = false
-            }
+            cell.textLabel?.textColor = UIColor(hex: "#004E05")
         }
         return cell
     }
 
-    @objc func openLink(_ sender: UITapGestureRecognizer) {
-        guard let label = sender.view as? UILabel,
-              let text = label.text,
-              let url = URL(string: text) else { return }
-        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
     }
 
     // MARK: - UITableViewDelegate
@@ -388,9 +391,16 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             return
         }
         
-        // If user hasn't responded to the existing plant alert yet
+        // If user hasn't responded to the existing plant alert yet and it's an existing plant
         if isExistingPlant && !hasUserResponded {
+            print("⚠️ User needs to respond to existing plant alert first")
             showExistingPlantAlert()
+            return
+        }
+        
+        // If it's an existing plant and user chose "Same Plant", don't proceed
+        if isExistingPlant && hasUserResponded && startCaringButton.isHidden {
+            print("ℹ️ User chose 'Same Plant' - not adding duplicate")
             return
         }
         
@@ -418,23 +428,35 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private func updateDiseaseDetails(with disease: Diseases) {
         var dict: [String: [String]] = [:]
         
-        // Add only the required sections
+        // 1. Add symptoms section
         if let symptoms = disease.diseaseSymptoms {
             dict["Symptoms"] = symptoms.components(separatedBy: "; ")
         }
         
+        // 2. Add treatment section
         if let treatment = disease.diseaseCure {
             dict["Treatment"] = treatment.components(separatedBy: "; ")
         }
         
+        // 3. Add preventive measures section
+        if let preventiveMeasures = disease.diseasePreventiveMeasures {
+            dict["Preventive Measures"] = preventiveMeasures.components(separatedBy: "; ")
+        }
+        
+        // 4. Add fertilizers section
         if let fertilizers = disease.diseaseFertilizers {
             dict["Recommended Fertilizers"] = fertilizers.components(separatedBy: "; ")
+        }
+        
+        // 5. Add video solution section if available
+        if let videoSolution = disease.diseaseVideoSolution {
+            dict["Video Guide"] = [videoSolution]
         }
         
         selectedPlant?.sectionDetails = dict
         DiagnosisViewController.diagnosisLabel.text = disease.diseaseName
 
-        // Update plant details
+        // Update plant details with season information
         if let plant = dataController.getPlantbyNameSync(name: selectedPlant?.plantName ?? "") {
             let details = """
                 Plant: \(plant.plantName)
@@ -447,7 +469,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         // Ensure table view is visible and reload
         tableView.isHidden = false
         if !sectionTitles.isEmpty {
-            expandedSections.insert(0)
+            expandedSections.insert(0)  // Expand first section by default
         }
         tableView.reloadData()
     }
@@ -478,7 +500,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             
             // Update plant details if we have the plant name
             if let plantName = selectedPlant?.plantName {
-                updatePlantDetails(plantName: plantName)
+                initializePlantCheck()
             }
             
             return
@@ -486,36 +508,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         if let disease = dataController.getDiseaseByNameSync(name: cleanName) {
             print("✅ Found disease in database")
-            var details: [String: [String]] = [:]
-            
-            // Only include the required sections
-            if let symptoms = disease.diseaseSymptoms {
-                details["Symptoms"] = symptoms.components(separatedBy: "; ")
-            }
-            
-            if let cure = disease.diseaseCure {
-                details["Treatment"] = cure.components(separatedBy: "; ")
-            }
-            
-            if let fertilizers = disease.diseaseFertilizers {
-                details["Recommended Fertilizers"] = fertilizers.components(separatedBy: "; ")
-            }
-            
-            // Update the model and UI
-            selectedPlant?.sectionDetails = details
-            DiagnosisViewController.diagnosisLabel.text = disease.diseaseName
-            
-            // Show table view for diseased plants
-            tableView.isHidden = false
-            if !sectionTitles.isEmpty {
-                expandedSections.insert(0)
-            }
-            tableView.reloadData()
-            
-            // Update plant details
-            if let plantName = selectedPlant?.plantName {
-                updatePlantDetails(plantName: plantName)
-            }
+            updateDiseaseDetails(with: disease)
         } else {
             print("⚠️ No specific condition detected")
             // Hide table view
@@ -528,7 +521,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             
             // Update plant details
             if let plantName = selectedPlant?.plantName {
-                updatePlantDetails(plantName: plantName)
+                initializePlantCheck()
             }
         }
     }
@@ -660,6 +653,14 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         UIView.animate(withDuration: 0.5, delay: 0.2, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5, options: [], animations: {
             self.checkmarkImageView.transform = .identity
         })
+    }
+
+    @objc func openLink(_ sender: UITapGestureRecognizer) {
+        guard let label = sender.view as? UILabel,
+              let text = label.text,
+              let urlText = text.components(separatedBy: ": ").last,
+              let url = URL(string: urlText) else { return }
+        UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 
     private func setupConstraints() {
