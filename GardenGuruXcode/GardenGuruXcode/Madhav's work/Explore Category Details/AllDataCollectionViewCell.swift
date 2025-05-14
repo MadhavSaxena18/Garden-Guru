@@ -76,23 +76,51 @@ class AllDataCollectionViewCell: UICollectionViewCell {
     }
     
     func configureForDisease(with disease: Diseases) {
+        // Set disease name with proper formatting
         nameLabel.text = disease.diseaseName
         
-        if let symptoms = disease.diseaseSymptoms {
-            let symptomsText = symptoms.map { "• \($0)" }.joined(separator: "\n")
-        descriptionLabel.text = symptomsText
-        } else {
-            descriptionLabel.text = "No symptoms available"
+        // Format disease information in paragraphs
+        var descriptionText = ""
+        
+        // Add symptoms without label
+        if let symptoms = disease.diseaseSymptoms, !symptoms.isEmpty {
+            // Convert array of Characters to String
+            let symptomString = symptoms.map { String($0) }.joined()
+            descriptionText = symptomString
         }
         
+        if descriptionText.isEmpty {
+            descriptionText = "No information available"
+        }
+        
+        // Create attributed string with paragraph styling
+        let attributedString = NSMutableAttributedString(string: descriptionText)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 6
+        paragraphStyle.paragraphSpacing = 12
+        
+        // Apply paragraph style to entire text
+        attributedString.addAttribute(NSAttributedString.Key.paragraphStyle,
+                                    value: paragraphStyle,
+                                    range: NSRange(location: 0, length: descriptionText.count))
+        
+        // Apply text attributes for better readability
+        attributedString.addAttributes([
+            .font: UIFont.systemFont(ofSize: 16, weight: .regular),
+            .foregroundColor: UIColor.darkGray
+        ], range: NSRange(location: 0, length: descriptionText.count))
+        
+        descriptionLabel.attributedText = attributedString
+        
+        // Load and display disease image
         if let urlString = disease.diseaseImage, let url = URL(string: urlString) {
             plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "placeholder_disease"))
         } else {
             plantImageView.image = UIImage(named: "placeholder_disease")
         }
         
-        nameLabel.setNeedsLayout()
-        descriptionLabel.setNeedsLayout()
+        // Ensure proper layout
+        setNeedsLayout()
         layoutIfNeeded()
     }
     
