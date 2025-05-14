@@ -1,27 +1,21 @@
 import Foundation
-import SwiftUI
 
-@MainActor
-class SignupViewModel: ObservableObject {
-    @Published var userName = ""
-    @Published var email = ""
-    @Published var password = ""
-    @Published var confirmPassword = ""
-    @Published var location = ""
-    @Published var reminderAllowed = true
+class SignupViewModel {
+    var userName = ""
+    var email = ""
+    var password = ""
+    var confirmPassword = ""
     
-    @Published var showError = false
-    @Published var errorMessage = ""
-    @Published var showSuccess = false
+    var onError: ((String) -> Void)?
+    var onSuccess: (() -> Void)?
     
     private let dataController = DataControllerGG.shared
     
     var isFormValid: Bool {
         !userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         isValidEmail(email) &&
-        password.count >= 6 &&
-        password == confirmPassword &&
-        !location.isEmpty
+        isValidPassword(password) &&
+        password == confirmPassword
     }
     
     private func isValidEmail(_ email: String) -> Bool {
@@ -30,34 +24,59 @@ class SignupViewModel: ObservableObject {
         return emailPredicate.evaluate(with: email)
     }
     
+    func isValidPassword(_ password: String) -> Bool {
+        // Check minimum length
+        guard password.count >= 8 else { return false }
+        
+        // Check for uppercase letter
+        guard password.range(of: "[A-Z]", options: .regularExpression) != nil else { return false }
+        
+        // Check for lowercase letter
+        guard password.range(of: "[a-z]", options: .regularExpression) != nil else { return false }
+        
+        // Check for number
+        guard password.range(of: "[0-9]", options: .regularExpression) != nil else { return false }
+        
+        // Check for special character
+        guard password.range(of: "[!@#$%^&*(),.?\":{}|<>]", options: .regularExpression) != nil else { return false }
+        
+        return true
+    }
+    
+    var passwordRequirementText: String {
+        """
+        Password must contain:
+        • At least 8 characters
+        • One uppercase letter
+        • One lowercase letter
+        • One number
+        • One special character
+        """
+    }
+    
+    @MainActor
     func signUp() async {
         do {
-            // First, create the auth user in Supabase
-            let session = try await dataController.supabase.auth.signUp(
+            // First, create the auth user in Supabase with the provided name
+            let response = try await dataController.signUp(
                 email: email,
-                password: password
+                password: password,
+                userName: userName
             )
             
-            guard session.user != nil else {
-                throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create user"])
+            // Check if we have either a session or user data
+            if response.0.session != nil || response.1 != nil {
+                // Store the email in UserDefaults
+                UserDefaults.standard.set(email, forKey: "userEmail")
+                
+                // Show success message
+                onSuccess?()
+            } else {
+                onError?("Failed to create user")
             }
             
-            // Then create the user in UserTable
-            let user = try await dataController.createUser(
-                email: email,
-                userName: userName,
-                location: location
-            )
-            
-            // Store the email in UserDefaults
-            UserDefaults.standard.set(email, forKey: "userEmail")
-            
-            // Show success message
-            showSuccess = true
-            
         } catch {
-            errorMessage = error.localizedDescription
-            showError = true
+            onError?(error.localizedDescription)
         }
     }
 } 

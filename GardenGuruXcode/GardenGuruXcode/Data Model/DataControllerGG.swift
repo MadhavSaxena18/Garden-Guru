@@ -1160,6 +1160,34 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         return (session, userData)
     }
 
+    // Add this function after the signIn function
+    func signUp(email: String, password: String, userName: String) async throws -> (AuthResponse, userInfo?) {
+        print("\n=== Signing Up New User ===")
+        print("🔑 Attempting to sign up with email: \(email)")
+        
+        // First create the auth user in Supabase with email verification disabled
+        let authResponse = try await supabase.auth.signUp(
+            email: email,
+            password: password,
+            data: ["email_confirm": true] // This disables email verification
+        )
+        
+        print("✅ Authentication successful")
+        
+        // Store the email for future use
+        UserDefaults.standard.set(email, forKey: "userEmail")
+        
+        // Create user in UserTable with provided name
+        print("📝 Creating user in UserTable")
+        let userData = try await createUser(
+            email: email,
+            userName: userName
+        )
+        
+        print("✅ User created in UserTable")
+        return (authResponse, userData)
+    }
+
     // MARK: - Error Types
     
     struct APIError: Error {

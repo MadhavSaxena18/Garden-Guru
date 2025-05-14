@@ -185,6 +185,8 @@ class LoginViewController: UIViewController {
         button.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
         button.setTitleColor(UIColor(hex: "284329"), for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.isUserInteractionEnabled = true
+        button.isEnabled = true
         return button
     }()
     
@@ -231,6 +233,11 @@ class LoginViewController: UIViewController {
         contentView.addSubview(signUpContainer)
         signUpContainer.addSubview(signUpLabel)
         signUpContainer.addSubview(signUpButton)
+        
+        // Make sure signUpContainer and its contents are user interaction enabled
+        signUpContainer.isUserInteractionEnabled = true
+        signUpLabel.isUserInteractionEnabled = true
+        signUpButton.isUserInteractionEnabled = true
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -300,12 +307,15 @@ class LoginViewController: UIViewController {
             signUpContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             signUpContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             signUpContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+            signUpContainer.heightAnchor.constraint(equalToConstant: 44),
             
             signUpLabel.centerYAnchor.constraint(equalTo: signUpContainer.centerYAnchor),
             signUpLabel.centerXAnchor.constraint(equalTo: signUpContainer.centerXAnchor, constant: -30),
             
             signUpButton.centerYAnchor.constraint(equalTo: signUpContainer.centerYAnchor),
-            signUpButton.leadingAnchor.constraint(equalTo: signUpLabel.trailingAnchor, constant: 4)
+            signUpButton.leadingAnchor.constraint(equalTo: signUpLabel.trailingAnchor, constant: 4),
+            signUpButton.heightAnchor.constraint(equalToConstant: 44),
+            signUpButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80)
         ])
         
         // Remove any divider views
@@ -317,9 +327,16 @@ class LoginViewController: UIViewController {
     }
     
     private func setupActions() {
+        // Print statement to verify setup
+        print("Setting up actions...")
+        
         loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         showPasswordButton.addTarget(self, action: #selector(togglePasswordVisibility), for: .touchUpInside)
         forgotPasswordButton.addTarget(self, action: #selector(forgotPasswordButtonTapped), for: .touchUpInside)
+        
+        // Add target with debug print
+        signUpButton.addTarget(self, action: #selector(signUpButtonTapped), for: .touchUpInside)
+        print("Sign up button target added")
         
         // Add text field delegates
         emailTextField.delegate = self
@@ -331,6 +348,7 @@ class LoginViewController: UIViewController {
         let imageName = passwordTextField.isSecureTextEntry ? "eye.slash.fill" : "eye.fill"
         showPasswordButton.setImage(UIImage(systemName: imageName), for: .normal)
     }
+   
     
     @objc private func forgotPasswordButtonTapped() {
         let forgotPasswordVC = ForgotPasswordViewController()
@@ -457,6 +475,31 @@ class LoginViewController: UIViewController {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+    
+    @objc private func signUpButtonTapped() {
+        // Add visual feedback
+        UIView.animate(withDuration: 0.1, animations: {
+            self.signUpButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.signUpButton.transform = CGAffineTransform.identity
+            }
+        }
+
+        let signupVC = SignupViewController()
+        let navigationController = UINavigationController(rootViewController: signupVC)
+        navigationController.modalPresentationStyle = .fullScreen
+        
+        // Configure navigation bar appearance to match your theme
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(hex: "F5F9F5")
+        appearance.shadowColor = nil // Remove the shadow line
+        navigationController.navigationBar.standardAppearance = appearance
+        navigationController.navigationBar.scrollEdgeAppearance = appearance
+        
+        present(navigationController, animated: true)
     }
 }
 
