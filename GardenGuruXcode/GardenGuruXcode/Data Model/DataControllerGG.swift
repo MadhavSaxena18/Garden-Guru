@@ -1398,6 +1398,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         return disease
     }
 
+
     // MARK: - Password Reset Functions
 
     func sendPasswordResetOTP(email: String) async throws {
@@ -1447,6 +1448,19 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             print("❌ Password update failed: \(error)")
             throw AuthError.passwordUpdateFailed
         }
+    }
+
+    // Add this method in the DataControllerGG class
+    func updateUsername(email: String, newUsername: String) async throws {
+        print("🔄 Updating username for email: \(email)")
+        try await supabase
+            .database
+            .from("UserTable")
+            .update(["userName": newUsername])
+            .eq("user_email", value: email)
+            .execute()
+        print("✅ Username updated successfully in Supabase")
+
     }
 }
 

@@ -5,21 +5,10 @@ class DiseaseDetailTableViewCell: UITableViewCell {
     @IBOutlet private weak var contentLabel: UILabel!
     @IBOutlet private weak var backgroundCardView: UIView!
     
-    private let chevronImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.tintColor = UIColor(hex: "#2E7D32")
-        imageView.contentMode = .scaleAspectFit
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        return imageView
-    }()
-    
     var isExpanded: Bool = true {
         didSet {
             UIView.animate(withDuration: 0.3) {
                 self.contentLabel.alpha = self.isExpanded ? 1.0 : 0.0
-                self.chevronImageView.transform = self.isExpanded ? 
-                    CGAffineTransform(rotationAngle: .pi/2) :
-                    CGAffineTransform(rotationAngle: 0)
             }
         }
     }
@@ -35,11 +24,7 @@ class DiseaseDetailTableViewCell: UITableViewCell {
         // Configure background card view
         backgroundCardView.backgroundColor = .white
         backgroundCardView.layer.cornerRadius = 12
-        backgroundCardView.clipsToBounds = false
-        backgroundCardView.layer.shadowColor = UIColor.black.cgColor
-        backgroundCardView.layer.shadowOpacity = 0.1
-        backgroundCardView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        backgroundCardView.layer.shadowRadius = 4
+        backgroundCardView.clipsToBounds = true
         
         // Configure title label
         titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
@@ -52,10 +37,6 @@ class DiseaseDetailTableViewCell: UITableViewCell {
         contentLabel.textColor = .darkGray
         contentLabel.numberOfLines = 0
         contentLabel.backgroundColor = .clear
-        
-        // Setup chevron
-        chevronImageView.image = UIImage(systemName: "chevron.right")
-        backgroundCardView.addSubview(chevronImageView)
         
         // Add padding to content
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -72,39 +53,39 @@ class DiseaseDetailTableViewCell: UITableViewCell {
             backgroundCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             backgroundCardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
             
-            chevronImageView.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            chevronImageView.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -16),
-            chevronImageView.widthAnchor.constraint(equalToConstant: 20),
-            chevronImageView.heightAnchor.constraint(equalToConstant: 20),
-            
             titleLabel.topAnchor.constraint(equalTo: backgroundCardView.topAnchor, constant: 16),
             titleLabel.leadingAnchor.constraint(equalTo: backgroundCardView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: chevronImageView.leadingAnchor, constant: -8),
+            titleLabel.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -16),
             
-            contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             contentLabel.leadingAnchor.constraint(equalTo: backgroundCardView.leadingAnchor, constant: 16),
             contentLabel.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -16),
             contentLabel.bottomAnchor.constraint(equalTo: backgroundCardView.bottomAnchor, constant: -16)
         ])
         
-        // Add tap gesture
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(cellTapped))
-        backgroundCardView.addGestureRecognizer(tapGesture)
-        backgroundCardView.isUserInteractionEnabled = true
+        // Store constraints for later activation/deactivation
+        contentLabelTopToTitleConstraint = contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8)
+        contentLabelTopToBackgroundConstraint = contentLabel.topAnchor.constraint(equalTo: backgroundCardView.topAnchor, constant: 16)
+        
+        // Initially activate the default constraint
+        contentLabelTopToTitleConstraint?.isActive = true
     }
     
-    @objc private func cellTapped() {
-        isExpanded.toggle()
-    }
+    private var contentLabelTopToTitleConstraint: NSLayoutConstraint?
+    private var contentLabelTopToBackgroundConstraint: NSLayoutConstraint?
     
-    func configure(with disease: Diseases?, section: String) {
+    func configure(with disease: Diseases?, section: String, showHeader: Bool = true) {
         guard let disease = disease else {
             titleLabel.text = section
             contentLabel.text = "No information available"
             return
         }
         
-        titleLabel.text = section
+        // Hide or show the title label based on showHeader parameter
+        titleLabel.isHidden = !showHeader
+        
+        // Update constraints based on showHeader
+        contentLabelTopToTitleConstraint?.isActive = showHeader
+        contentLabelTopToBackgroundConstraint?.isActive = !showHeader
         
         switch section {
         case "Symptoms":
@@ -120,9 +101,7 @@ class DiseaseDetailTableViewCell: UITableViewCell {
             contentLabel.text = "Information not available"
         }
         
-        // Update shadow path for performance
         layoutIfNeeded()
-        backgroundCardView.layer.shadowPath = UIBezierPath(roundedRect: backgroundCardView.bounds, cornerRadius: backgroundCardView.layer.cornerRadius).cgPath
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {

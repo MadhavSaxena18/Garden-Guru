@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class DiseaseDetailViewController: UIViewController {
 
@@ -81,8 +82,16 @@ class DiseaseDetailViewController: UIViewController {
         guard let disease = disease else { return }
         
         // Configure image
-        if let imageName = disease.diseaseImage {
-            headerImageView.image = UIImage(named: imageName)
+        if let imageURL = disease.diseaseImage {
+            headerImageView.sd_setImage(with: URL(string: imageURL), 
+                                      placeholderImage: UIImage(named: "disease_placeholder"),
+                                      options: [], 
+                                      completed: { [weak self] image, error, _, _ in
+                if let error = error {
+                    print("Error loading disease image: \(error)")
+                    self?.headerImageView.image = UIImage(named: "disease_placeholder")
+                }
+            })
         } else {
             headerImageView.image = UIImage(named: "disease_placeholder")
         }
@@ -183,66 +192,128 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1 // One row per section
+        return expandedSections.contains(section) ? 1 : 0 // Show row only if section is expanded
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "DiseaseDetailCell", for: indexPath) as! DiseaseDetailTableViewCell
         
         guard let disease = disease else {
-            cell.configure(with: nil, section: "")
+            cell.configure(with: nil, section: "", showHeader: false)
             return cell
         }
         
-        cell.isExpanded = expandedSections.contains(indexPath.section)
+        cell.isExpanded = true // Always show content when row is visible
         
         switch indexPath.section {
         case 0: // Symptoms
-            cell.configure(with: disease, section: "Symptoms")
+            cell.configure(with: disease, section: "Symptoms", showHeader: false)
         case 1: // Causes
-            cell.configure(with: disease, section: "Causes")
+            cell.configure(with: disease, section: "Causes", showHeader: false)
         case 2: // Treatments
-            cell.configure(with: disease, section: "Treatment")
+            cell.configure(with: disease, section: "Treatment", showHeader: false)
         case 3: // Prevention
-            cell.configure(with: disease, section: "Prevention")
+            cell.configure(with: disease, section: "Prevention", showHeader: false)
         default:
-            cell.configure(with: nil, section: "")
+            cell.configure(with: nil, section: "", showHeader: false)
         }
         
         return cell
     }
     
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 8 // Small gap between sections
-    }
-    
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
         headerView.backgroundColor = .clear
+        
+        // Create container view with gray background
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.backgroundColor = UIColor(white: 0.95, alpha: 1.0) // Solid light gray background
+        containerView.layer.cornerRadius = 16
+        
+        // Add subtle shadow
+        containerView.layer.shadowColor = UIColor.black.cgColor
+        containerView.layer.shadowOffset = CGSize(width: 0, height: 1)
+        containerView.layer.shadowRadius = 1
+        containerView.layer.shadowOpacity = 0.1
+        
+        // Create title label
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.textColor = .black
+        titleLabel.font = .systemFont(ofSize: 22, weight: .medium) // Adjusted font size and weight to match image
+        
+        // Set title based on section
+        switch section {
+        case 0:
+            titleLabel.text = "Symptoms"
+        case 1:
+            titleLabel.text = "Causes"
+        case 2:
+            titleLabel.text = "Treatment"
+        case 3:
+            titleLabel.text = "Prevention"
+        default:
+            titleLabel.text = ""
+        }
+        
+        // Create chevron image view
+        let chevronImage = UIImageView(image: UIImage(systemName: expandedSections.contains(section) ? "chevron.down" : "chevron.right"))
+        chevronImage.translatesAutoresizingMaskIntoConstraints = false
+        chevronImage.tintColor = .gray
+        chevronImage.contentMode = .scaleAspectFit
+        
+        headerView.addSubview(containerView)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(chevronImage)
+        
+        NSLayoutConstraint.activate([
+            // Container view constraints - adjusted for better spacing
+            containerView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
+            containerView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 8),
+            containerView.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8),
+            
+            // Title label constraints
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 24),
+            titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            
+            // Chevron image constraints
+            chevronImage.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -24),
+            chevronImage.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            chevronImage.widthAnchor.constraint(equalToConstant: 20),
+            chevronImage.heightAnchor.constraint(equalToConstant: 20)
+        ])
+        
+        // Add tap gesture
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(headerTapped(_:)))
+        headerView.addGestureRecognizer(tapGesture)
+        headerView.tag = section
+        headerView.isUserInteractionEnabled = true
+        
         return headerView
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if expandedSections.contains(indexPath.section) {
-            expandedSections.remove(indexPath.section)
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 60 // Increased height to match design
+    }
+    
+    @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
+        guard let section = gesture.view?.tag else { return }
+        
+        if expandedSections.contains(section) {
+            expandedSections.remove(section)
         } else {
-            expandedSections.insert(indexPath.section)
+            expandedSections.insert(section)
         }
         
-        tableView.reloadRows(at: [indexPath], with: .automatic)
-        
-        // Ensure the cell is visible after expansion
-        if expandedSections.contains(indexPath.section) {
-            tableView.scrollToRow(at: indexPath, at: .none, animated: true)
-                }
+        tableView.reloadSections(IndexSet(integer: section), with: .automatic)
     }
     
     // Optional: Animate height changes
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         guard let cell = cell as? DiseaseDetailTableViewCell else { return }
-        
-        // Set initial state without animation
-        cell.isExpanded = expandedSections.contains(indexPath.section)
+        cell.isExpanded = true // Always show content when row is visible
     }
     
     @objc private func imageTapped(_ gesture: UITapGestureRecognizer) {
