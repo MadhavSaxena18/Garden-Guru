@@ -20,10 +20,11 @@ class CareReminderViewController: UIViewController {
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Relax!! No work today"
+        label.text = "Relax!! No work today"  // This will be updated dynamically
         label.textAlignment = .center
         label.font = .systemFont(ofSize: 20, weight: .medium)
         label.textColor = UIColor(hex: "284329")
+        label.tag = 100  // Add tag to reference the label later
         
         view.addSubview(label)
         NSLayoutConstraint.activate([
@@ -64,6 +65,11 @@ class CareReminderViewController: UIViewController {
         navigationController?.navigationBar.tintColor = UIColor(hex: "004E05")
         
         view.addSubview(noRemindersView)
+        // Set initial text based on selected segment
+        if let label = noRemindersView.viewWithTag(100) as? UILabel {
+            label.text = careReminderSegmentedControl.selectedSegmentIndex == 0 ? "Relax!! No work today" : "No upcoming reminders"
+        }
+        
         NSLayoutConstraint.activate([
             noRemindersView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             noRemindersView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -273,6 +279,11 @@ class CareReminderViewController: UIViewController {
     }
     // MARK: - Actions
     @IBAction func didChangeSegmentCareReminder(_ sender: UISegmentedControl) {
+        // Update the no reminders message based on selected segment
+        if let label = noRemindersView.viewWithTag(100) as? UILabel {
+            label.text = sender.selectedSegmentIndex == 0 ? "Relax!! No work today" : "No upcoming reminders"
+        }
+        
         sortReminders()
         updateEditButtonVisibility()
         careReminderCollectionView.reloadData()

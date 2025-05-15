@@ -168,7 +168,7 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     
     private func configureDueDate(dueDate: Date?, isCompleted: Bool, isUpcoming: Bool, isTomorrow: Bool) {
         guard let dueDate = dueDate else {
-            dueDateCareReminder.text = "Not scheduled"
+            dueDateCareReminder.text = "No upcoming reminder"
             dueDateCareReminder.textColor = .gray
             return
         }
