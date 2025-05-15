@@ -9,10 +9,10 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
-        <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="CareReminderCell" id="gTV-IL-0wX" customClass="CareReminderCollectionViewCell" customModule="GardenGuruXcode" customModuleProvider="target">
+        <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="NO" contentMode="center" reuseIdentifier="CareReminderCell" id="gTV-IL-0wX" customClass="CareReminderCollectionViewCell" customModule="GardenGuruXcode" customModuleProvider="target">
             <rect key="frame" x="0.0" y="0.0" width="360" height="130"/>
             <autoresizingMask key="autoresizingMask"/>
-            <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+            <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="NO" contentMode="center">
                 <rect key="frame" x="0.0" y="0.0" width="360" height="130"/>
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
@@ -22,14 +22,6 @@
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qhU-PM-WnM">
-                        <rect key="frame" x="331" y="58" width="24" height="14"/>
-                        <state key="normal" title="Button"/>
-                        <buttonConfiguration key="configuration" style="plain" title=""/>
-                        <connections>
-                            <action selector="checkBoxCareReminderButtonTapped:" destination="gTV-IL-0wX" eventType="touchUpInside" id="h0A-hI-xLi"/>
-                        </connections>
-                    </button>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="252" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TJ6-gu-upZ">
                         <rect key="frame" x="185" y="48" width="31" height="14.333333333333336"/>
                         <fontDescription key="fontDescription" style="UICTFontTextStyleCaption1"/>
@@ -58,12 +50,10 @@
             <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <constraints>
-                <constraint firstAttribute="trailing" secondItem="qhU-PM-WnM" secondAttribute="trailing" constant="5" id="Arb-JC-2L1"/>
                 <constraint firstItem="TJ6-gu-upZ" firstAttribute="top" secondItem="al5-gu-947" secondAttribute="bottom" constant="5" id="P7f-aF-bN2"/>
                 <constraint firstItem="al5-gu-947" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="Q3b-Z5-vbh"/>
                 <constraint firstItem="al5-gu-947" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="25" id="RLZ-Kq-vFD"/>
                 <constraint firstItem="ap9-2O-tp3" firstAttribute="top" secondItem="TJ6-gu-upZ" secondAttribute="bottom" constant="10" id="TQ9-B6-iMc"/>
-                <constraint firstItem="qhU-PM-WnM" firstAttribute="centerY" secondItem="gTV-IL-0wX" secondAttribute="centerY" id="ZrX-Ks-5bR"/>
                 <constraint firstItem="Btb-ST-reA" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="7" id="b5U-cc-Cjk"/>
                 <constraint firstItem="Btb-ST-reA" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="9" id="e3p-Ps-pa2"/>
                 <constraint firstItem="TJ6-gu-upZ" firstAttribute="leading" secondItem="Btb-ST-reA" secondAttribute="trailing" constant="15" id="gnm-lV-0UM"/>
@@ -73,7 +63,6 @@
             <size key="customSize" width="325" height="130"/>
             <connections>
                 <outlet property="careReminderPlantImageView" destination="Btb-ST-reA" id="hPr-X5-zR6"/>
-                <outlet property="checkBoxCareReminderButton" destination="qhU-PM-WnM" id="N80-S8-U1r"/>
                 <outlet property="dueDateCareReminder" destination="ap9-2O-tp3" id="gQ8-jr-uzq"/>
                 <outlet property="nickNameCareReminderLabel" destination="TJ6-gu-upZ" id="pMX-IQ-Nsh"/>
                 <outlet property="plantNameCareReminderLabel" destination="al5-gu-947" id="4P5-Xa-C66"/>

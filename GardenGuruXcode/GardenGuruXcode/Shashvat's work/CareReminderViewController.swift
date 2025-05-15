@@ -148,6 +148,7 @@ class CareReminderViewController: UIViewController {
         let currentDate = Date()
         
         print("\n=== Sorting Reminders ===")
+        print("Current Date: \(currentDate)")
         print("Total reminders to sort: \(reminders.count)")
         
         // Clear existing arrays
@@ -160,45 +161,42 @@ class CareReminderViewController: UIViewController {
             // Watering reminders
             if let waterDate = reminder.reminder.upcomingReminderForWater {
                 print("Water date: \(waterDate)")
+                print("Is water date today? \(calendar.isDateInToday(waterDate))")
+                print("Is water date > current? \(waterDate > currentDate)")
                 if calendar.isDateInToday(waterDate) {
                     print("- Water reminder is for today")
-                    todayReminders[0].append(reminder)  // Always show today's reminders
+                    todayReminders[0].append(reminder)
                 } else if waterDate > currentDate {
                     print("- Water reminder is upcoming")
-                    // Only add to upcoming if not completed
-                    if !(reminder.reminder.isWateringCompleted ?? false) {
-                        upcomingReminders[0].append(reminder)
-                    }
+                    upcomingReminders[0].append(reminder)
                 }
             }
             
             // Fertilizing reminders
             if let fertDate = reminder.reminder.upcomingReminderForFertilizers {
                 print("Fertilizer date: \(fertDate)")
+                print("Is fertilizer date today? \(calendar.isDateInToday(fertDate))")
+                print("Is fertilizer date > current? \(fertDate > currentDate)")
                 if calendar.isDateInToday(fertDate) {
                     print("- Fertilizer reminder is for today")
-                    todayReminders[1].append(reminder)  // Always show today's reminders
+                    todayReminders[1].append(reminder)
                 } else if fertDate > currentDate {
                     print("- Fertilizer reminder is upcoming")
-                    // Only add to upcoming if not completed
-                    if !(reminder.reminder.isFertilizingCompleted ?? false) {
-                        upcomingReminders[1].append(reminder)
-                    }
+                    upcomingReminders[1].append(reminder)
                 }
             }
             
             // Pruning reminders
             if let pruneDate = reminder.reminder.upcomingReminderForRepotted {
                 print("Pruning date: \(pruneDate)")
+                print("Is pruning date today? \(calendar.isDateInToday(pruneDate))")
+                print("Is pruning date > current? \(pruneDate > currentDate)")
                 if calendar.isDateInToday(pruneDate) {
                     print("- Pruning reminder is for today")
-                    todayReminders[2].append(reminder)  // Always show today's reminders
+                    todayReminders[2].append(reminder)
                 } else if pruneDate > currentDate {
                     print("- Pruning reminder is upcoming")
-                    // Only add to upcoming if not completed
-                    if !(reminder.reminder.isRepottingCompleted ?? false) {
-                        upcomingReminders[2].append(reminder)
-                    }
+                    upcomingReminders[2].append(reminder)
                 }
             }
         }
@@ -261,10 +259,10 @@ class CareReminderViewController: UIViewController {
         print("- Fertilizing: \(upcomingReminders[1].count)")
         print("- Pruning: \(upcomingReminders[2].count)")
         
-        // Update UI visibility
+        // Update UI visibility based on whether there are any reminders in the current view
         let hasReminders = careReminderSegmentedControl.selectedSegmentIndex == 0 ?
-            todayReminders.contains(where: { !$0.isEmpty }) :
-            upcomingReminders.contains(where: { !$0.isEmpty })
+            !todayReminders.allSatisfy({ $0.isEmpty }) :
+            !upcomingReminders.allSatisfy({ $0.isEmpty })
         
         print("\nUI Visibility:")
         print("Has reminders: \(hasReminders)")
@@ -431,7 +429,7 @@ class CareReminderViewController: UIViewController {
                 default:
                     continue
                 }
-                dataController.updateCareReminderStatusSync(
+                dataController.updateCareReminderWithDetailsSync(
                     userPlantID: reminder.userPlant.userPlantRelationID,
                     type: reminderType,
                     isCompleted: true
@@ -528,6 +526,10 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         return UICollectionReusableView()
     }
     private func handleCheckboxToggle(for reminder: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), type: Int) {
+        print("\n=== Handling Checkbox Toggle ===")
+        print("Plant: \(reminder.plant.plantName)")
+        print("Type: \(type)")
+        
         let isCompleted: Bool
         let reminderType: String
         
@@ -535,24 +537,50 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         case 0:
             isCompleted = reminder.reminder.isWateringCompleted ?? false
             reminderType = "water"
+            print("Water reminder - Current state: \(isCompleted)")
         case 1:
             isCompleted = reminder.reminder.isFertilizingCompleted ?? false
             reminderType = "fertilizer"
+            print("Fertilizer reminder - Current state: \(isCompleted)")
         case 2:
             isCompleted = reminder.reminder.isRepottingCompleted ?? false
             reminderType = "repot"
+            print("Repot reminder - Current state: \(isCompleted)")
         default:
+            print("❌ Invalid reminder type: \(type)")
             return
         }
         
+        print("Toggling state from \(isCompleted) to \(!isCompleted)")
+        
+        // Store the current date of the reminder before updating
+        let currentReminderDate: Date?
+        switch type {
+        case 0:
+            currentReminderDate = reminder.reminder.upcomingReminderForWater
+        case 1:
+            currentReminderDate = reminder.reminder.upcomingReminderForFertilizers
+        case 2:
+            currentReminderDate = reminder.reminder.upcomingReminderForRepotted
+        default:
+            currentReminderDate = nil
+        }
+        
+        if let currentDate = currentReminderDate {
+            print("Current reminder date: \(currentDate)")
+        }
+        
         // Update the database
-        dataController.updateCareReminderStatusSync(
+        print("📝 Updating database...")
+        dataController.updateCareReminderWithDetailsSync(
             userPlantID: reminder.userPlant.userPlantRelationID,
             type: reminderType,
             isCompleted: !isCompleted
         )
+        print("✅ Database updated")
         
         // Post notification to trigger UI update
+        print("📢 Posting notification...")
         NotificationCenter.default.post(
             name: NSNotification.Name("ReminderStatusUpdated"),
             object: nil,
@@ -562,9 +590,21 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
                 "isCompleted": !isCompleted
             ]
         )
+        print("✅ Notification posted")
         
-        // Reload data to refresh the UI
-        loadData()
+        // If this is a today's reminder, ensure it stays in today's section
+        if let reminderDate = currentReminderDate,
+           Calendar.current.isDateInToday(reminderDate) {
+            print("📅 Today's reminder - reloading data...")
+            // Force a reload without changing the reminder's date
+            DispatchQueue.main.async { [weak self] in
+                self?.loadData()
+            }
+        } else {
+            print("📅 Not today's reminder - normal reload")
+            loadData()
+        }
+        print("=== Checkbox Toggle Handling Complete ===\n")
     }
 }
 

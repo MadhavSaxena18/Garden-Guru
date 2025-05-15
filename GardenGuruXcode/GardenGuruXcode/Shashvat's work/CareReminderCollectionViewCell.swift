@@ -13,11 +13,71 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var careReminderPlantImageView: UIImageView!
     @IBOutlet weak var plantNameCareReminderLabel: UILabel!
     @IBOutlet weak var nickNameCareReminderLabel: UILabel!
-  
     @IBOutlet weak var dueDateCareReminder: UILabel!
-    @IBOutlet weak var checkBoxCareReminderButton: UIButton!
     
+    private var checkBoxButton: UIButton!
+    private var debugView: UIView? // For debugging touch area
     var onCheckboxToggle: (() -> Void)?
+    private var isCheckboxEnabled = false
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        print("\n=== Setting up Care Reminder Cell ===")
+        setupCheckboxButton()
+        
+        // Debug: Add tap gesture to cell
+        let cellTap = UITapGestureRecognizer(target: self, action: #selector(cellTapped))
+        self.addGestureRecognizer(cellTap)
+    }
+    
+    private func setupCheckboxButton() {
+        // Remove existing button if any
+        checkBoxButton?.removeFromSuperview()
+        debugView?.removeFromSuperview()
+        
+        // Create button
+        checkBoxButton = UIButton(type: .custom)
+        checkBoxButton.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(checkBoxButton)
+        
+        // Configure button appearance
+        checkBoxButton.backgroundColor = .clear
+        checkBoxButton.tintColor = .systemGreen
+        checkBoxButton.contentMode = .center
+        
+        // Make sure the button is above other views
+        checkBoxButton.layer.zPosition = 999
+        
+        // Add constraints for button
+        NSLayoutConstraint.activate([
+            // Button constraints
+            checkBoxButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            checkBoxButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            checkBoxButton.widthAnchor.constraint(equalToConstant: 30),
+            checkBoxButton.heightAnchor.constraint(equalToConstant: 30)
+        ])
+        
+        // Configure touch handling
+        checkBoxButton.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
+        checkBoxButton.addTarget(self, action: #selector(buttonTouchUpInside(_:)), for: .touchUpInside)
+        checkBoxButton.addTarget(self, action: #selector(buttonTouchUpOutside(_:)), for: .touchUpOutside)
+        
+        print("✅ Checkbox button setup complete")
+    }
+    
+    @objc private func cellTapped(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: self)
+        print("📱 Cell tapped at: \(location)")
+        
+        if let buttonFrame = checkBoxButton?.frame {
+            print("🔲 Button frame: \(buttonFrame)")
+            if buttonFrame.contains(location) {
+                print("✅ Tap was within button bounds")
+            } else {
+                print("❌ Tap was outside button bounds")
+            }
+        }
+    }
     
     func configure(with reminderData: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), 
                   isCompleted: Bool, 
@@ -25,6 +85,11 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
                   isUpcoming: Bool,
                   isTomorrow: Bool,
                   shouldEnableCheckbox: Bool) {
+        
+        print("\n=== Configuring Care Reminder Cell ===")
+        print("Plant: \(reminderData.plant.plantName)")
+        print("Is Completed: \(isCompleted)")
+        print("Should Enable Checkbox: \(shouldEnableCheckbox)")
         
         if let imageUrlString = reminderData.plant.plantImage,
            let imageUrl = URL(string: imageUrlString) {
@@ -38,19 +103,67 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         nickNameCareReminderLabel.text = reminderData.userPlant.userPlantNickName ?? reminderData.plant.plantName
         
         // Configure checkbox state and appearance
-        checkBoxCareReminderButton.isEnabled = shouldEnableCheckbox
-        checkBoxCareReminderButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
+        isCheckboxEnabled = shouldEnableCheckbox
+        checkBoxButton.isEnabled = shouldEnableCheckbox
+        checkBoxButton.isUserInteractionEnabled = shouldEnableCheckbox
+        checkBoxButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
         
+        // Configure checkbox image with proper sizing
+        let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular, scale: .medium)
         let checkBoxImage = isCompleted ? 
-            UIImage(systemName: "checkmark.square.fill")?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal) :
-            UIImage(systemName: "square")?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
-        checkBoxCareReminderButton.setImage(checkBoxImage, for: .normal)
+            UIImage(systemName: "checkmark.square.fill", withConfiguration: config)?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal) :
+            UIImage(systemName: "square", withConfiguration: config)?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
+        
+        checkBoxButton.setImage(checkBoxImage, for: .normal)
+        
+        // Ensure the button is properly configured for touch
+        checkBoxButton.isExclusiveTouch = true
+        
+        print("Checkbox state:")
+        print("- Enabled: \(checkBoxButton.isEnabled)")
+        print("- User Interaction: \(checkBoxButton.isUserInteractionEnabled)")
+        print("- Alpha: \(checkBoxButton.alpha)")
+        print("- Image: \(isCompleted ? "checkmark.square.fill" : "square")")
+        print("- Frame: \(checkBoxButton.frame)")
         
         // Configure due date label with appropriate color and text
         configureDueDate(dueDate: dueDate, isCompleted: isCompleted, isUpcoming: isUpcoming, isTomorrow: isTomorrow)
         
-        // Add tap gesture to the whole cell for better touch response
-        isUserInteractionEnabled = true
+        print("=== Cell Configuration Complete ===\n")
+    }
+    
+    @objc private func buttonTouchDown(_ sender: UIButton) {
+        print("👆 Button touch down")
+        guard isCheckboxEnabled else { 
+            print("❌ Button is disabled")
+            return 
+        }
+        
+        UIView.animate(withDuration: 0.1) {
+            sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }
+    }
+    
+    @objc private func buttonTouchUpInside(_ sender: UIButton) {
+        print("✅ Button touch up inside")
+        guard isCheckboxEnabled else { 
+            print("❌ Button is disabled")
+            return 
+        }
+        
+        UIView.animate(withDuration: 0.1) {
+            sender.transform = .identity
+        }
+        onCheckboxToggle?()
+    }
+    
+    @objc private func buttonTouchUpOutside(_ sender: UIButton) {
+        print("❌ Button touch up outside")
+        guard isCheckboxEnabled else { return }
+        
+        UIView.animate(withDuration: 0.1) {
+            sender.transform = .identity
+        }
     }
     
     private func configureDueDate(dueDate: Date?, isCompleted: Bool, isUpcoming: Bool, isTomorrow: Bool) {
@@ -82,17 +195,18 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         }
     }
     
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        // Set up the checkbox button
-        checkBoxCareReminderButton.tintColor = .systemGreen
-        checkBoxCareReminderButton.imageView?.contentMode = .scaleAspectFit
-        checkBoxCareReminderButton.contentHorizontalAlignment = .center
-        checkBoxCareReminderButton.contentVerticalAlignment = .center
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        checkBoxButton.transform = .identity
     }
     
-    @IBAction func checkBoxCareReminderButtonTapped(_ sender: Any) {
-        onCheckboxToggle?()
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        print("🎯 Hit test at point: \(point)")
+        if let buttonFrame = checkBoxButton?.frame,
+           buttonFrame.contains(point) {
+            print("✅ Hit test found button")
+            return checkBoxButton
+        }
+        return super.hitTest(point, with: event)
     }
-    
 }

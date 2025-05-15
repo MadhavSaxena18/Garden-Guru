@@ -265,6 +265,9 @@ struct CareReminder_: Codable, Hashable {
     var isWateringCompleted: Bool?
     var isFertilizingCompleted: Bool?
     var isRepottingCompleted: Bool?
+    var lastWaterCompletedDate: Date?
+    var lastFertilizerCompletedDate: Date?
+    var lastRepotCompletedDate: Date?
     
     init(careReminderID: UUID,
          upcomingReminderForWater: Date? = nil,
@@ -272,7 +275,10 @@ struct CareReminder_: Codable, Hashable {
          upcomingReminderForRepotted: Date? = nil,
          isWateringCompleted: Bool? = nil,
          isFertilizingCompleted: Bool? = nil,
-         isRepottingCompleted: Bool? = nil) {
+         isRepottingCompleted: Bool? = nil,
+         lastWaterCompletedDate: Date? = nil,
+         lastFertilizerCompletedDate: Date? = nil,
+         lastRepotCompletedDate: Date? = nil) {
         self.careReminderID = careReminderID
         self.upcomingReminderForWater = upcomingReminderForWater
         self.upcomingReminderForFertilizers = upcomingReminderForFertilizers
@@ -280,6 +286,9 @@ struct CareReminder_: Codable, Hashable {
         self.isWateringCompleted = isWateringCompleted
         self.isFertilizingCompleted = isFertilizingCompleted
         self.isRepottingCompleted = isRepottingCompleted
+        self.lastWaterCompletedDate = lastWaterCompletedDate
+        self.lastFertilizerCompletedDate = lastFertilizerCompletedDate
+        self.lastRepotCompletedDate = lastRepotCompletedDate
     }
     
     enum CodingKeys: String, CodingKey {
@@ -290,6 +299,9 @@ struct CareReminder_: Codable, Hashable {
         case isWateringCompleted
         case isFertilizingCompleted
         case isRepottingCompleted
+        case lastWaterCompletedDate
+        case lastFertilizerCompletedDate
+        case lastRepotCompletedDate
     }
     
     init(from decoder: Decoder) throws {
@@ -302,25 +314,53 @@ struct CareReminder_: Codable, Hashable {
             careReminderID = UUID()
         }
         
-        // Create date formatters for different possible formats
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
+        // Create date formatters
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
-        // Function to parse date string
+        let simpleDateFormatter = DateFormatter()
+        simpleDateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        // Function to parse date string using multiple formatters
         func parseDate(_ dateString: String?) -> Date? {
             guard let dateString = dateString else { return nil }
-            return dateFormatter.date(from: dateString)
+            
+            // Try ISO8601 first
+            if let date = iso8601Formatter.date(from: dateString) {
+                return date
+            }
+            
+            // Try simple date format
+            if let date = simpleDateFormatter.date(from: dateString) {
+                // For simple dates without time, set to start of day
+                var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+                components.hour = 0
+                components.minute = 0
+                components.second = 0
+                return Calendar.current.date(from: components)
+            }
+            
+            print("❌ Failed to parse date: \(dateString)")
+            return nil
         }
         
         // Decode date fields
         upcomingReminderForWater = parseDate(try container.decodeIfPresent(String.self, forKey: .upcomingReminderForWater))
         upcomingReminderForFertilizers = parseDate(try container.decodeIfPresent(String.self, forKey: .upcomingReminderForFertilizers))
         upcomingReminderForRepotted = parseDate(try container.decodeIfPresent(String.self, forKey: .upcomingReminderForRepotted))
+        lastWaterCompletedDate = parseDate(try container.decodeIfPresent(String.self, forKey: .lastWaterCompletedDate))
+        lastFertilizerCompletedDate = parseDate(try container.decodeIfPresent(String.self, forKey: .lastFertilizerCompletedDate))
+        lastRepotCompletedDate = parseDate(try container.decodeIfPresent(String.self, forKey: .lastRepotCompletedDate))
         
         // Decode boolean fields
         isWateringCompleted = try container.decodeIfPresent(Bool.self, forKey: .isWateringCompleted)
         isFertilizingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isFertilizingCompleted)
         isRepottingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isRepottingCompleted)
+        
+        // Print decoded dates for debugging
+        print("📅 Decoded Water Date: \(upcomingReminderForWater?.description ?? "nil")")
+        print("📅 Decoded Fertilizer Date: \(upcomingReminderForFertilizers?.description ?? "nil")")
+        print("📅 Decoded Repot Date: \(upcomingReminderForRepotted?.description ?? "nil")")
     }
 }
 
@@ -331,6 +371,21 @@ struct CareReminderUpdate: Encodable {
     var isWateringCompleted: Bool?
     var isFertilizingCompleted: Bool?
     var isRepottingCompleted: Bool?
+    var lastWaterCompletedDate: String?
+    var lastFertilizerCompletedDate: String?
+    var lastRepotCompletedDate: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case upcomingReminderForWater
+        case upcomingReminderForFertilizers
+        case upcomingReminderForRepotted
+        case isWateringCompleted
+        case isFertilizingCompleted
+        case isRepottingCompleted
+        case lastWaterCompletedDate = "last_water_completed_date"
+        case lastFertilizerCompletedDate = "last_fertilizer_completed_date"
+        case lastRepotCompletedDate = "last_repot_completed_date"
+    }
 }
 
 struct CareReminderOfUserPlant: Codable, Hashable {

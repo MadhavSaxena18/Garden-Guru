@@ -223,16 +223,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         print("📡 Querying CareReminderOfUserPlant table...")
         let linkResponse = try await supabase
             .database
-
             .from("CareReminderOfUserPlant")
             .select("careReminderId")
             .eq("userPlantRelationID", value: userPlantID.uuidString)
-
-//            .from("CareReminder_")
-//            .select()
-//            .eq("careReminderID", value: userPlantID.uuidString)
-//            .single()
-
             .execute()
         
         print("📡 Raw link response type: \(type(of: linkResponse.data))")
@@ -316,6 +309,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         case "water":
             update.isWateringCompleted = isCompleted
             if isCompleted {
+                // Set the completion timestamp
+                update.lastWaterCompletedDate = dateFormatter.string(from: currentDate)
                 if let waterFreq = userPlant.plant.waterFrequency {
                     // Set next water date based on frequency
                     if let nextDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: currentDate) {
@@ -326,6 +321,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         case "fertilizer":
             update.isFertilizingCompleted = isCompleted
             if isCompleted {
+                // Set the completion timestamp
+                update.lastFertilizerCompletedDate = dateFormatter.string(from: currentDate)
                 if let fertFreq = userPlant.plant.fertilizerFrequency {
                     // Set next fertilizer date based on frequency
                     if let nextDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: currentDate) {
@@ -336,6 +333,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         case "repot":
             update.isRepottingCompleted = isCompleted
             if isCompleted {
+                // Set the completion timestamp
+                update.lastRepotCompletedDate = dateFormatter.string(from: currentDate)
                 if let repotFreq = userPlant.plant.repottingFrequency {
                     // Set next repotting date based on frequency
                     if let nextDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: currentDate) {
@@ -351,13 +350,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         try await supabase
             .database
             .from("CareReminder_")
-
             .update(update)
             .eq("careReminderID", value: reminder.careReminderID.uuidString)
-
-//            .update(updateData)
-//            .eq("careReminderID", value: userPlantID.uuidString)
-
             .execute()
     }
     
@@ -928,36 +922,147 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // Function to update care reminder with all details
     func updateCareReminderWithDetails(userPlantID: UUID, type: String, isCompleted: Bool) async throws {
-        // First update the status
-        try await updateCareReminderStatus(userPlantID: userPlantID, type: type, isCompleted: isCompleted)
+        print("\n=== Updating Care Reminder ===")
+        print("🔍 Looking for reminder with userPlantID: \(userPlantID)")
+        print("📝 Update type: \(type), isCompleted: \(isCompleted)")
         
-        // Then update the reminder dates based on type
-        let nextReminderDate = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
-        let nextReminderString = ISO8601DateFormatter().string(from: nextReminderDate)
+        // Get the care reminder link
+        let linkResponse = try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .select("careReminderId")
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
         
-        // Create update data with proper type
-        var update = CareReminderUpdate()
-        switch type.lowercased() {
-        case "water":
-            update.upcomingReminderForWater = nextReminderString
-        case "fertilizer":
-            update.upcomingReminderForFertilizers = nextReminderString
-        case "repot":
-            update.upcomingReminderForRepotted = nextReminderString
-        default:
-            return
+        print("📡 Raw link response: \(String(describing: linkResponse.data))")
+        
+        guard let linkData = linkResponse.data as? Data,
+              let linkString = String(data: linkData, encoding: .utf8) else {
+            print("❌ Could not decode link response")
+            throw APIError(message: "Failed to decode link response")
         }
         
-        try await supabase
+        print("📡 Link string: \(linkString)")
+        
+        guard let linkJsonData = linkString.data(using: .utf8),
+              let jsonArray = try? JSONSerialization.jsonObject(with: linkJsonData) as? [[String: Any]],
+              let firstLink = jsonArray.first,
+              let careReminderId = firstLink["careReminderId"] as? String else {
+            print("❌ Could not parse care reminder ID")
+            throw APIError(message: "Failed to parse care reminder ID")
+        }
+        
+        print("✅ Found careReminderId: \(careReminderId)")
+        
+        // Create update object
+        var update = CareReminderUpdate()
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let currentDate = Date()
+        
+        print("📅 Current date: \(currentDate)")
+        
+        // Get the current reminder to check its dates
+        let reminderResponse = try await supabase
             .database
             .from("CareReminder_")
-
-            .update(update)
-
-//            .update(updateData)
-
-            .eq("careReminderID", value: userPlantID.uuidString)
+            .select()
+            .eq("careReminderID", value: careReminderId)
             .execute()
+            
+        guard let reminderData = reminderResponse.data as? Data,
+              let reminderString = String(data: reminderData, encoding: .utf8),
+              let reminderJsonData = reminderString.data(using: .utf8),
+              let reminders = try? JSONDecoder().decode([CareReminder_].self, from: reminderJsonData),
+              let currentReminder = reminders.first else {
+            print("❌ Could not get current reminder")
+            throw APIError(message: "Failed to get current reminder")
+        }
+        
+        switch type.lowercased() {
+        case "water":
+            update.isWateringCompleted = isCompleted
+            if isCompleted {
+                // Set the completion date
+                update.lastWaterCompletedDate = dateFormatter.string(from: currentDate)
+                
+                // Only update the next reminder date if today's date is over
+                if let currentReminderDate = currentReminder.upcomingReminderForWater,
+                   !Calendar.current.isDateInToday(currentReminderDate) {
+                    // Get the plant frequency
+                    if let userPlants = try? await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? ""),
+                       let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }),
+                       let waterFreq = userPlant.plant.waterFrequency {
+                        // Calculate next date from the current reminder date
+                        if let nextDate = Calendar.current.date(byAdding: .day, value: Int(waterFreq), to: currentReminderDate) {
+                            update.upcomingReminderForWater = dateFormatter.string(from: nextDate)
+                            print("💧 Setting next water date: \(update.upcomingReminderForWater ?? "nil")")
+                        }
+                    }
+                }
+            }
+            
+        case "fertilizer":
+            update.isFertilizingCompleted = isCompleted
+            if isCompleted {
+                // Set the completion date
+                update.lastFertilizerCompletedDate = dateFormatter.string(from: currentDate)
+                
+                // Only update the next reminder date if today's date is over
+                if let currentReminderDate = currentReminder.upcomingReminderForFertilizers,
+                   !Calendar.current.isDateInToday(currentReminderDate) {
+                    // Get the plant frequency
+                    if let userPlants = try? await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? ""),
+                       let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }),
+                       let fertFreq = userPlant.plant.fertilizerFrequency {
+                        // Calculate next date from the current reminder date
+                        if let nextDate = Calendar.current.date(byAdding: .day, value: Int(fertFreq), to: currentReminderDate) {
+                            update.upcomingReminderForFertilizers = dateFormatter.string(from: nextDate)
+                            print("🌱 Setting next fertilizer date: \(update.upcomingReminderForFertilizers ?? "nil")")
+                        }
+                    }
+                }
+            }
+            
+        case "repot":
+            update.isRepottingCompleted = isCompleted
+            if isCompleted {
+                // Set the completion date
+                update.lastRepotCompletedDate = dateFormatter.string(from: currentDate)
+                
+                // Only update the next reminder date if today's date is over
+                if let currentReminderDate = currentReminder.upcomingReminderForRepotted,
+                   !Calendar.current.isDateInToday(currentReminderDate) {
+                    // Get the plant frequency
+                    if let userPlants = try? await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? ""),
+                       let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }),
+                       let repotFreq = userPlant.plant.repottingFrequency {
+                        // Calculate next date from the current reminder date
+                        if let nextDate = Calendar.current.date(byAdding: .day, value: Int(repotFreq), to: currentReminderDate) {
+                            update.upcomingReminderForRepotted = dateFormatter.string(from: nextDate)
+                            print("🪴 Setting next repot date: \(update.upcomingReminderForRepotted ?? "nil")")
+                        }
+                    }
+                }
+            }
+            
+        default:
+            print("❌ Invalid reminder type: \(type)")
+            throw APIError(message: "Invalid reminder type")
+        }
+        
+        print("📝 Update object: \(update)")
+        
+        // Update the reminder
+        print("📡 Sending update to database...")
+        let updateResponse = try await supabase
+            .database
+            .from("CareReminder_")
+            .update(update)
+            .eq("careReminderID", value: careReminderId)
+            .execute()
+        
+        print("✅ Update response: \(String(describing: updateResponse.data))")
     }
     
     // Synchronous wrapper for updateCareReminderWithDetails
