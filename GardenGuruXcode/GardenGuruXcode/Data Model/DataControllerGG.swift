@@ -150,8 +150,16 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         if let data = response.data as? Data {
             do {
-                let userPlants = try JSONDecoder().decode([UserPlant].self, from: data)
+                var userPlants = try JSONDecoder().decode([UserPlant].self, from: data)
                 print("✅ Successfully decoded \(userPlants.count) user plants")
+                
+                // Fetch associated diseases for each plant
+                for i in 0..<userPlants.count {
+                    if let diseases = try? await getAssociatedDiseases(for: userPlants[i].userPlantRelationID) {
+                        userPlants[i].associatedDiseases = diseases
+                    }
+                }
+                
                 return userPlants
             } catch {
                 print("❌ Error decoding user plants from Data: \(error)")
@@ -159,16 +167,32 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 // Try parsing as JSON array if direct decoding fails
                 if let jsonString = String(data: data, encoding: .utf8),
                    let jsonData = jsonString.data(using: .utf8),
-                   let userPlants = try? JSONDecoder().decode([UserPlant].self, from: jsonData) {
+                   var userPlants = try? JSONDecoder().decode([UserPlant].self, from: jsonData) {
                     print("✅ Successfully decoded \(userPlants.count) user plants from JSON string")
+                    
+                    // Fetch associated diseases for each plant
+                    for i in 0..<userPlants.count {
+                        if let diseases = try? await getAssociatedDiseases(for: userPlants[i].userPlantRelationID) {
+                            userPlants[i].associatedDiseases = diseases
+                        }
+                    }
+                    
                     return userPlants
                 }
             }
         } else if let jsonArray = response.data as? [[String: Any]] {
             do {
                 let jsonData = try JSONSerialization.data(withJSONObject: jsonArray)
-                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                var userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
                 print("✅ Successfully decoded \(userPlants.count) user plants from JSON array")
+                
+                // Fetch associated diseases for each plant
+                for i in 0..<userPlants.count {
+                    if let diseases = try? await getAssociatedDiseases(for: userPlants[i].userPlantRelationID) {
+                        userPlants[i].associatedDiseases = diseases
+                    }
+                }
+                
                 return userPlants
             } catch {
                 print("❌ Error decoding user plants from JSON array: \(error)")
@@ -1463,6 +1487,151 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         let disease = try JSONDecoder().decode(Diseases.self, from: jsonData)
         print("✅ Successfully fetched disease with ID: \(diseaseId)")
         return disease
+    }
+
+    // MARK: - Disease Management
+    
+    func getAssociatedDiseases(for userPlantID: UUID) async throws -> [Diseases] {
+        print("🔍 Fetching diseases for user plant: \(userPlantID)")
+        
+        // First get the disease IDs from UsersPlantDisease table
+        let response = try await supabase
+            .database
+            .from("UsersPlantDisease")
+            .select()
+            .eq("usersPlantRelationID", value: userPlantID.uuidString)
+            .execute()
+            
+        if let data = response.data as? Data {
+            let userPlantDiseases = try JSONDecoder().decode([UsersPlantDisease].self, from: data)
+            
+            // Now fetch each disease
+            var diseases: [Diseases] = []
+            for userPlantDisease in userPlantDiseases {
+                if let disease = try await getDiseaseDetails(by: userPlantDisease.diseaseID) {
+                    diseases.append(disease)
+                }
+            }
+            
+            print("✅ Found \(diseases.count) diseases for user plant")
+            return diseases
+        }
+        
+        print("❌ No diseases found for user plant")
+        return []
+    }
+    
+    // Sync wrapper for getAssociatedDiseases
+    func getAssociatedDiseasesSync(for userPlantID: UUID) -> [Diseases] {
+        var diseases: [Diseases] = []
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                diseases = try await getAssociatedDiseases(for: userPlantID)
+            } catch {
+                print("Error getting associated diseases: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return diseases
+    }
+
+    // MARK: - Disease Management
+    
+    func getDiseasesForUserPlants(userEmail: String) async throws -> [Diseases] {
+        print("🔍 Fetching diseases for user's plants...")
+        
+        // 1. Get user's plants
+        let userPlants = try await getUserPlants(for: userEmail)
+        print("✅ Found \(userPlants.count) user plants")
+        
+        var allDiseases = Set<Diseases>() // Using Set to avoid duplicates
+        
+        // 2. For each user plant, get its possible diseases through PlantDisease table
+        for userPlant in userPlants {
+            if let plantID = userPlant.userplantID {
+                print("🔍 Fetching diseases for plant: \(plantID)")
+                
+                // Get plant-disease relationships from PlantDisease table
+                let response = try await supabase
+                    .database
+                    .from("PlantDisease")
+                    .select()
+                    .eq("plantID", value: plantID.uuidString)
+                    .execute()
+                
+                if let data = response.data as? Data {
+                    let plantDiseases = try JSONDecoder().decode([PlantDisease].self, from: data)
+                    print("✅ Found \(plantDiseases.count) disease relationships for plant")
+                    
+                    // For each relationship, get the disease details
+                    for plantDisease in plantDiseases {
+                        let diseaseResponse = try await supabase
+                            .database
+                            .from("Diseases")
+                            .select()
+                            .eq("diseaseID", value: plantDisease.diseaseID.uuidString)
+                            .execute()
+                        
+                        if let diseaseData = diseaseResponse.data as? Data {
+                            if let diseases = try? JSONDecoder().decode([Diseases].self, from: diseaseData),
+                               let disease = diseases.first {
+                                allDiseases.insert(disease)
+                                print("✅ Added disease: \(disease.diseaseName)")
+                            }
+                        }
+                    }
+                } else if let jsonArray = response.data as? [[String: Any]] {
+                    print("✅ Found \(jsonArray.count) disease relationships for plant")
+                    
+                    for relationship in jsonArray {
+                        if let diseaseIDString = relationship["diseaseID"] as? String,
+                           let diseaseID = UUID(uuidString: diseaseIDString) {
+                            
+                            let diseaseResponse = try await supabase
+                                .database
+                                .from("Diseases")
+                                .select()
+                                .eq("diseaseID", value: diseaseID.uuidString)
+                                .execute()
+                            
+                            if let diseaseJsonArray = diseaseResponse.data as? [[String: Any]],
+                               let firstDisease = diseaseJsonArray.first,
+                               let diseaseData = try? JSONSerialization.data(withJSONObject: firstDisease),
+                               let disease = try? JSONDecoder().decode(Diseases.self, from: diseaseData) {
+                                allDiseases.insert(disease)
+                                print("✅ Added disease: \(disease.diseaseName)")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        let diseases = Array(allDiseases)
+        print("✅ Total unique diseases found: \(diseases.count)")
+        return diseases
+    }
+    
+    // Synchronous wrapper for getDiseasesForUserPlants
+    func getDiseasesForUserPlantsSync(userEmail: String) -> [Diseases] {
+        var diseases: [Diseases] = []
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                diseases = try await getDiseasesForUserPlants(userEmail: userEmail)
+            } catch {
+                print("❌ Error getting diseases for user plants: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return diseases
     }
 }
 

@@ -187,8 +187,9 @@ struct UserPlant: Codable, Hashable {
     var lastFertilized: Date?
     var lastRepotted: Date?
     var userPlantImage: String?
+    var associatedDiseases: [Diseases]?
     
-    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil, userPlantImage: String? = nil) {
+    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil, userPlantImage: String? = nil, associatedDiseases: [Diseases]? = nil) {
         self.userPlantRelationID = userPlantRelationID
         self.userId = userId
         self.userplantID = userplantID
@@ -197,6 +198,7 @@ struct UserPlant: Codable, Hashable {
         self.lastFertilized = lastFertilized
         self.lastRepotted = lastRepotted
         self.userPlantImage = userPlantImage
+        self.associatedDiseases = associatedDiseases
     }
     
     enum CodingKeys: String, CodingKey {
@@ -208,6 +210,7 @@ struct UserPlant: Codable, Hashable {
         case lastFertilized
         case lastRepotted
         case userPlantImage
+        case associatedDiseases
     }
     
     init(from decoder: Decoder) throws {
@@ -248,6 +251,7 @@ struct UserPlant: Codable, Hashable {
             lastRepotted = dateFormatter.date(from: lastRepottedString)
         }
         userPlantImage = try container.decodeIfPresent(String.self, forKey: .userPlantImage)
+        associatedDiseases = try container.decodeIfPresent([Diseases].self, forKey: .associatedDiseases)
     }
 }
 

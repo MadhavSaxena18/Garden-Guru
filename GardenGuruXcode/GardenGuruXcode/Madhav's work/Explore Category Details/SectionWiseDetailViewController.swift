@@ -104,62 +104,59 @@ class SectionWiseDetailViewController: UIViewController {
         // Start async task to fetch data
         Task {
             do {
-        switch segmentIndex {
-        case 0: // Discover
-            switch section {
-            case 0: // Top Winter Plants
-                dataType = .plants
+                switch segmentIndex {
+                case 0: // Discover
+                    switch section {
+                    case 0: // Top Winter Plants
+                        dataType = .plants
                         plants = try await dataController.getPlants()
-                print("Loaded winter plants: \(plants.count)")
-                
-            case 1: // Common Issues
-                dataType = .diseases
+                        print("Loaded winter plants: \(plants.count)")
+                        
+                    case 1: // Common Issues
+                        dataType = .diseases
                         diseases = try await dataController.getCommonIssues()
-                print("Loaded common issues: \(diseases.count)")
-                
-            case 2: // Common Fertilizers
-                dataType = .fertilizers
+                        print("Loaded common issues: \(diseases.count)")
+                        
+                    case 2: // Common Fertilizers
+                        dataType = .fertilizers
                         fertilizers = try await dataController.getCommonFertilizers()
-                print("Loaded fertilizers: \(fertilizers.count)")
-                
-            default:
-                break
-            }
-            
-        case 1: // For My Plants
-            switch section {
-            case 0: // Common Issues for User Plants
-                dataType = .diseases
-                        diseases = try await dataController.getCommonIssues()
-                print("Loaded user plant diseases: \(diseases.count)")
-                print("Disease names: \(diseases.map { $0.diseaseName })")
-                
-            case 1: // Common Fertilizers
-                dataType = .fertilizers
+                        print("Loaded fertilizers: \(fertilizers.count)")
+                        
+                    default:
+                        break
+                    }
+                    
+                case 1: // For My Plants
+                    switch section {
+                    case 0: // Common Issues for User Plants
+                        dataType = .diseases
+                        // Check for filtered items first
+                        if let filteredDiseases = filteredItems as? [Diseases] {
+                            diseases = filteredDiseases
+                            print("Using filtered diseases: \(diseases.count)")
+                        }
+                        print("Using diseases set via setDiseases")
+                        
+                    case 1: // Common Fertilizers
+                        dataType = .fertilizers
                         fertilizers = try await dataController.getCommonFertilizers()
-                print("Loaded fertilizers: \(fertilizers.count)")
-                print("Fertilizers: \(fertilizers)")
+                        print("Loaded fertilizers: \(fertilizers.count)")
+                        print("Fertilizers: \(fertilizers)")
+                        
+                    default:
+                        print("Unknown section for For My Plants segment")
+                    }
+                    
+                default:
+                    print("Unknown segment index")
+                }
                 
-            default:
-                print("Unknown section for For My Plants segment")
-            }
-            
-        default:
-            print("Unknown segment index")
-        }
-        
-        print("Final data counts - Plants: \(plants.count), Diseases: \(diseases.count), Fertilizers: \(fertilizers.count)")
-        print("Current data type: \(dataType)")
-        
-        // Use filtered items if available, otherwise use regular data
-        if let filteredData = filteredItems {
-            // Use the filtered data
-            // Example: diseases = filteredData as? [Diseases] ?? []
-        }
-        
+                print("Final data counts - Plants: \(plants.count), Diseases: \(diseases.count), Fertilizers: \(fertilizers.count)")
+                print("Current data type: \(dataType)")
+                
                 // Update UI on main thread
                 await MainActor.run {
-            self.collectionView.reloadData()
+                    self.collectionView.reloadData()
                 }
             } catch {
                 print("Error loading data: \(error)")
@@ -174,6 +171,13 @@ class SectionWiseDetailViewController: UIViewController {
                 }
             }
         }
+    }
+    
+    // Add public method to set diseases
+    func setDiseases(_ diseases: [Diseases]) {
+        self.diseases = diseases
+        self.dataType = .diseases
+        collectionView?.reloadData()
     }
 }
 
