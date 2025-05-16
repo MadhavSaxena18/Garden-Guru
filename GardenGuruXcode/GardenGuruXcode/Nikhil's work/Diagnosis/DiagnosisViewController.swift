@@ -233,25 +233,17 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
 
     private func checkIfPlantExists(plantName: String) {
-        print("\n=== Checking if plant exists ===")
+        print("\n=== Checking if plant exists (Improved) ===")
         
-        guard let firstUser = dataController.getUserSync() else {
-            print("❌ No user found")
+        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+            print("❌ No user email found in UserDefaults")
             startCaringButton.isHidden = false
             startCaringButton.setTitle("Add and Start Caring", for: .normal)
             return
         }
         
-        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
-        print("📝 Found \(userPlants.count) user plants")
-        
-        isExistingPlant = userPlants.contains { userPlant in
-            if let plantID = userPlant.userplantID,
-               let existingPlant = dataController.getPlantSync(by: plantID) {
-                return existingPlant.plantName == plantName
-            }
-            return false
-        }
+        // Use the improved function to check if plant exists
+        isExistingPlant = dataController.doesPlantExistInUserGardenSync(plantName: plantName, userEmail: userEmail)
         
         if isExistingPlant {
             print("✅ Plant already exists in user's garden")
@@ -407,16 +399,16 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         print("\n=== Starting Add Plant Flow ===")
         print("Plant name from DiagnosisViewController: \(plantName)")
         
+        // Retrieve the stored image URL from UserDefaults
+        let imageURL = UserDefaults.standard.string(forKey: "pendingPlantImageURL")
+        print("🔗 Using stored image URL: \(imageURL ?? "none")")
+        
         let reminderVC = addNickNameViewController()
         reminderVC.plantNameForReminder = plantName
         
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
-            if let diagnosisImage = plantImageView.image {
-                print("✅ Adding diagnosis image to plant")
-                dataController.updatePlantImages(plantName: plantName, newImage: diagnosisImage)
-            } else {
-                print("❌ No diagnosis image available")
-            }
+            // We no longer need to upload the image here since it was already uploaded during diagnosis
+            // and the URL is stored in UserDefaults
             reminderVC.selectedPlant = plant
         }
         
