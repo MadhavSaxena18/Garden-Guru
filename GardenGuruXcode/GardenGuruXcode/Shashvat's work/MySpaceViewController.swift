@@ -123,7 +123,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         // Count plants by category
         var categoryCount: [Category: Int] = [:]
         plantsWithDetails.forEach { plantWithDetails in
-            if let category = plantWithDetails.plant.category {
+            if let category = plantWithDetails.plant.category_new {
                 categoryCount[category, default: 0] += 1
                 print("Category \(category): \(categoryCount[category] ?? 0) plants")
             }
@@ -131,8 +131,8 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         
         userStats = [
             "Total Plants": totalPlants,
-            "Ornamental": categoryCount[.Ornamental] ?? 0,
-            "Flowering": categoryCount[.Flowering] ?? 0,
+            "Ornamental": categoryCount[.ornamental] ?? 0,
+            "Flowering": categoryCount[.flowering] ?? 0,
             "Medicinal": categoryCount[.medicinal] ?? 0
         ]
         
