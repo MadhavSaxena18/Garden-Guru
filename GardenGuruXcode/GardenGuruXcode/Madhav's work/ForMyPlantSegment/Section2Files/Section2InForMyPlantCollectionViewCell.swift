@@ -25,7 +25,11 @@ class Section2InForMyPlantCollectionViewCell: UICollectionViewCell {
     
     // Updated configure function to accept a Fertilizer object
     func configure(with fertilizer: Fertilizer) {
-        imageViewForMyPlantSegment.image = UIImage(named: fertilizer.fertilizerImage) ?? UIImage(named: "fertilizer_placeholder")
+        if let imageName = fertilizer.fertilizerImage {
+            imageViewForMyPlantSegment.image = UIImage(named: imageName) ?? UIImage(named: "fertilizer_placeholder")
+        } else {
+            imageViewForMyPlantSegment.image = UIImage(named: "fertilizer_placeholder")
+        }
         descriptionOfImageInforMyPlantSegment.text = fertilizer.fertilizerName
     }
     

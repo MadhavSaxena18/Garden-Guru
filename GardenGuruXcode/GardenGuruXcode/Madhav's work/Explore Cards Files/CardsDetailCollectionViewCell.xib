@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23727" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23721"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -18,7 +18,7 @@
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="fNX-hA-Iwp">
-                        <rect key="frame" x="0.0" y="5" width="183" height="209"/>
+                        <rect key="frame" x="0.0" y="5" width="153" height="209"/>
                         <userDefinedRuntimeAttributes>
                             <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
                                 <integer key="value" value="15"/>
@@ -26,7 +26,7 @@
                         </userDefinedRuntimeAttributes>
                     </imageView>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="mXZ-Mj-Mvm">
-                        <rect key="frame" x="193" y="5" width="100" height="66"/>
+                        <rect key="frame" x="163" y="5" width="130" height="66"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="drop.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="VAN-03-h6u">
                                 <rect key="frame" x="5" y="13.666666666666668" width="40" height="39.666666666666657"/>
@@ -40,10 +40,10 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="aaaaaaaaaaaaaaaaa" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gIK-ki-OBx">
-                                <rect key="frame" x="54" y="15.999999999999996" width="40" height="39.666666666666657"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="aaaaaaaaaaaaaaaaa" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="4" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gIK-ki-OBx">
+                                <rect key="frame" x="54" y="11.999999999999998" width="63" height="26.333333333333329"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="40" id="5aW-7T-at3"/>
+                                    <constraint firstAttribute="width" constant="63" id="5aW-7T-at3"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="11"/>
                                 <color key="textColor" red="0.0" green="0.30588235294117649" blue="0.019607843137254902" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -54,12 +54,12 @@
                         <constraints>
                             <constraint firstItem="VAN-03-h6u" firstAttribute="leading" secondItem="mXZ-Mj-Mvm" secondAttribute="leading" constant="5" id="0cf-kn-2eh"/>
                             <constraint firstAttribute="bottom" secondItem="VAN-03-h6u" secondAttribute="bottom" constant="12" id="1d0-oN-kut"/>
-                            <constraint firstItem="gIK-ki-OBx" firstAttribute="top" secondItem="mXZ-Mj-Mvm" secondAttribute="top" constant="16" id="7y3-d9-t4d"/>
+                            <constraint firstItem="gIK-ki-OBx" firstAttribute="top" secondItem="mXZ-Mj-Mvm" secondAttribute="top" constant="12" id="7y3-d9-t4d"/>
                             <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="66" id="UvG-w1-jmj"/>
                             <constraint firstAttribute="height" constant="66" id="aaE-nw-1x9"/>
                             <constraint firstItem="VAN-03-h6u" firstAttribute="top" secondItem="mXZ-Mj-Mvm" secondAttribute="top" constant="13" id="bSg-yp-s7l"/>
                             <constraint firstItem="gIK-ki-OBx" firstAttribute="leading" secondItem="VAN-03-h6u" secondAttribute="trailing" constant="9" id="nzN-PC-ceR"/>
-                            <constraint firstAttribute="width" constant="100" id="wp8-Ov-7b1"/>
+                            <constraint firstAttribute="width" constant="130" id="wp8-Ov-7b1"/>
                         </constraints>
                         <userDefinedRuntimeAttributes>
                             <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
@@ -68,7 +68,7 @@
                         </userDefinedRuntimeAttributes>
                     </view>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="mrC-Ol-Ner">
-                        <rect key="frame" x="193" y="76" width="100" height="66"/>
+                        <rect key="frame" x="163" y="76" width="130" height="66"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="fertilizer_symbol" translatesAutoresizingMaskIntoConstraints="NO" id="ooW-j3-MN8">
                                 <rect key="frame" x="5" y="13" width="40" height="41"/>
@@ -81,10 +81,10 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="aaaaaaaaaaaaaaa" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="S0T-T0-cqr">
-                                <rect key="frame" x="54" y="15.999999999999996" width="40" height="39.666666666666657"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="aaaaaaaaaaaaaaa" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="4" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="S0T-T0-cqr">
+                                <rect key="frame" x="54" y="11.999999999999998" width="63" height="26.333333333333329"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="40" id="bat-a8-gCK"/>
+                                    <constraint firstAttribute="width" constant="63" id="bat-a8-gCK"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="11"/>
                                 <color key="textColor" red="0.0" green="0.30588235294117649" blue="0.019607843137254902" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -98,8 +98,8 @@
                             <constraint firstAttribute="bottom" secondItem="ooW-j3-MN8" secondAttribute="bottom" constant="12" id="RDh-Tr-gN5"/>
                             <constraint firstItem="ooW-j3-MN8" firstAttribute="top" secondItem="mrC-Ol-Ner" secondAttribute="top" constant="13" id="dd7-74-TLD"/>
                             <constraint firstItem="ooW-j3-MN8" firstAttribute="leading" secondItem="mrC-Ol-Ner" secondAttribute="leading" constant="5" id="k2M-KS-3IH"/>
-                            <constraint firstItem="S0T-T0-cqr" firstAttribute="top" secondItem="mrC-Ol-Ner" secondAttribute="top" constant="16" id="kcZ-O7-CwI"/>
-                            <constraint firstAttribute="width" constant="100" id="pcG-FS-05e"/>
+                            <constraint firstItem="S0T-T0-cqr" firstAttribute="top" secondItem="mrC-Ol-Ner" secondAttribute="top" constant="12" id="kcZ-O7-CwI"/>
+                            <constraint firstAttribute="width" constant="130" id="pcG-FS-05e"/>
                         </constraints>
                         <userDefinedRuntimeAttributes>
                             <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
@@ -108,7 +108,7 @@
                         </userDefinedRuntimeAttributes>
                     </view>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="UpU-sw-ucU">
-                        <rect key="frame" x="193" y="147" width="100" height="66"/>
+                        <rect key="frame" x="163" y="147" width="130" height="66"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="sun.min.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="9ai-Fy-x6d">
                                 <rect key="frame" x="5" y="7.9999999999999964" width="40" height="49.333333333333329"/>
@@ -123,10 +123,10 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="aaaaaaaaaaaaaaaaaa" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="P6L-Nl-h1I">
-                                <rect key="frame" x="54" y="24" width="40" height="26.333333333333329"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="aaaaaaaaaaaaaaaaaa" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="4" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="P6L-Nl-h1I">
+                                <rect key="frame" x="54" y="11.999999999999998" width="63" height="26.333333333333329"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="40" id="p3s-oZ-a3H"/>
+                                    <constraint firstAttribute="width" constant="63" id="p3s-oZ-a3H"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="11"/>
                                 <color key="textColor" red="0.0" green="0.30588235294117649" blue="0.019607843137254902" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -135,8 +135,8 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="100" id="1gH-HJ-EXx"/>
-                            <constraint firstItem="P6L-Nl-h1I" firstAttribute="top" secondItem="UpU-sw-ucU" secondAttribute="top" constant="24" id="5pm-jY-k8t"/>
+                            <constraint firstAttribute="width" constant="130" id="1gH-HJ-EXx"/>
+                            <constraint firstItem="P6L-Nl-h1I" firstAttribute="top" secondItem="UpU-sw-ucU" secondAttribute="top" constant="12" id="5pm-jY-k8t"/>
                             <constraint firstItem="9ai-Fy-x6d" firstAttribute="leading" secondItem="UpU-sw-ucU" secondAttribute="leading" constant="5" id="ix8-BC-ccf"/>
                             <constraint firstAttribute="height" constant="66" id="pq3-fN-bMp"/>
                             <constraint firstItem="P6L-Nl-h1I" firstAttribute="leading" secondItem="9ai-Fy-x6d" secondAttribute="trailing" constant="9" id="qqZ-qo-Mck"/>

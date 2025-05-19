@@ -183,21 +183,9 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
     }
 
     // MARK: - CardDetailsSection3CollectionViewCellDelegate
-    extension CardsDetailViewController: CardDetailsSection3CollectionViewCellDelegate {
-        func didTapImage(at index: Int) {
-            guard let selectedData = selectedCardData else { return }
-            
+extension CardsDetailViewController: CardDetailsSection3CollectionViewCellDelegate {
+    func didTapImage(at index: Int, images: [UIImage]) {
             let fullScreenVC = FullScreenImageViewController()
-            var images: [UIImage] = []
-            
-            // Get images based on the data type
-            if let plant = selectedData as? Plant {
-                images = plant.plantImage.compactMap { UIImage(named: $0) }
-            } else if let disease = selectedData as? Diseases {
-                images = disease.diseaseImage.compactMap { UIImage(named: $0) }
-            }
-            
-            // Configure and present the full-screen viewer
             fullScreenVC.images = images
             fullScreenVC.currentIndex = index
             fullScreenVC.modalPresentationStyle = .fullScreen

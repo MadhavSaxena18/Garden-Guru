@@ -57,25 +57,16 @@ class MySpaceCollectionViewSection1Cell: UICollectionViewCell {
     
     func configure(with userPlant: UserPlant, plant: Plant) {
         print("Configuring cell for plant: \(plant.plantName)")
-        print("Available images: \(plant.plantImage.count)")
         
-        // Try to get the last image which might be a base64 encoded captured image
-        if let lastImage = plant.plantImage.last,
-           let imageData = Data(base64Encoded: lastImage),
-           let image = UIImage(data: imageData) {
-            print("✅ Using captured image")
-            section1PlantImageView.image = image
-        } else if !plant.plantImage.isEmpty {
-            // Fall back to the first (default) image
-            print("✅ Using default image: \(plant.plantImage[0])")
-            section1PlantImageView.image = UIImage(named: plant.plantImage[0])
+        // Set plant image
+        if let imageName = plant.plantImage {
+            section1PlantImageView.image = UIImage(named: imageName)
         } else {
-            // Use a placeholder if no images available
-            print("⚠️ No images available, using placeholder")
             section1PlantImageView.image = UIImage(named: "plant_placeholder")
         }
         
-        section1NickNameLabel.text = userPlant.userPlantNickName
+        // Set plant name
+        section1NickNameLabel.text = plant.plantName
         section1PlantImageView.contentMode = .scaleAspectFill
         section1PlantImageView.clipsToBounds = true
         
@@ -86,5 +77,17 @@ class MySpaceCollectionViewSection1Cell: UICollectionViewCell {
         layer.shadowOffset = CGSize(width: 0, height: 2)
         layer.shadowRadius = 4
         layer.shadowOpacity = 0.1
+    }
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        contentView.layer.cornerRadius = 25
+        contentView.layer.masksToBounds = true
+        // Optional: Add shadow for a more card-like look
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOffset = CGSize(width: 0, height: 2)
+        layer.shadowRadius = 4
+        layer.shadowOpacity = 0.1
+        layer.masksToBounds = false
     }
 }

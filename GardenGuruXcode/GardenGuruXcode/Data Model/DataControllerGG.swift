@@ -22,6 +22,15 @@ class supaBaseController {
     }
 }
 
+// Add this struct near the top of the file with other model definitions
+private struct UserTableInsert: Encodable {
+    let id: String
+    let user_email: String
+    let userName: String
+    let location: String
+    let reminderAllowed: Bool
+}
+
 class DataControllerGG: NSObject, CLLocationManagerDelegate {
     static let shared = DataControllerGG()
     private let supabase = supaBaseController.shared.client
@@ -113,78 +122,257 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .from("UserTable")
             .select()
             .eq("user_email", value: userEmail)
-            .single()
             .execute()
         
-        guard let userData = userResponse.data as? [String: Any],
-              let userIdString = userData["id"] as? String,
-              let userId = UUID(uuidString: userIdString) else {
+        print("📡 Raw user response: \(String(describing: userResponse.data))")
+        
+       if let jsonData = userResponse.data as? Data,
+           let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
+           let user = users.first {
+            print("✅ Found user ID: \(user.id)")
+            
+            // Now get the user's plants using the correct ID
+            let response = try await supabase
+                .database
+                .from("UserPlant")
+                .select()
+                .eq("userId", value: user.id)
+                .execute()
+            
+            print("📡 Raw user plants response: \(String(describing: response.data))")
+            
+            if let jsonData = response.data as? Data {
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded \(userPlants.count) user plants")
+                return userPlants
+            } else if let jsonObject = response.data as? [[String: Any]] {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded \(userPlants.count) user plants")
+                return userPlants
+            }
+        }
+        
+        print("❌ No user plants found")
+
+        // Try to decode the response data
+        var userIdString: String?
+        if let data = userResponse.data as? Data {
+            do {
+                let users = try JSONDecoder().decode([userInfo].self, from: data)
+                if let firstUser = users.first {
+                    userIdString = firstUser.id
+                    print("✅ Found user ID: \(firstUser.id)")
+                }
+            } catch {
+                print("❌ Error decoding user data: \(error)")
+            }
+        } else if let jsonObject = userResponse.data as? [[String: Any]],
+                  let firstUser = jsonObject.first,
+                  let id = firstUser["id"] as? String {
+            userIdString = id
+            print("✅ Found user ID: \(id)")
+        }
+        
+        guard let userId = userIdString else {
             print("❌ Could not find user ID for email: \(userEmail)")
             return []
         }
-        
-        print("📍 Found user ID: \(userId.uuidString)")
         
         // Now get the user's plants using the correct ID
         let response = try await supabase
             .database
             .from("UserPlant")
             .select()
-            .eq("userId", value: userId.uuidString)
+            .eq("userId", value: userId)
             .execute()
         
-        print("📡 Raw user plants response data: \(String(describing: response.data))")
+        print("📡 Raw user plants response: \(String(describing: response.data))")
         
-        if let jsonObject = response.data as? [[String: Any]] {
-            let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-            let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
-            print("✅ Decoded user plants count: \(userPlants.count)")
-            return userPlants
+        if let data = response.data as? Data {
+            do {
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: data)
+                print("✅ Decoded user plants count: \(userPlants.count)")
+                return userPlants
+            } catch {
+                print("❌ Error decoding user plants: \(error)")
+            }
+        } else if let jsonObject = response.data as? [[String: Any]] {
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
+                print("✅ Decoded user plants count: \(userPlants.count)")
+                return userPlants
+            } catch {
+                print("❌ Error decoding user plants: \(error)")
+            }
         }
         
         print("❌ Failed to decode user plants data")
+
         return []
     }
     
     // MARK: - Care Reminder Functions
     
     func getCareReminders(for userPlantID: UUID) async throws -> CareReminder_? {
-        let response = try await supabase
+        print("\n=== Fetching Care Reminder ===")
+        print("🔍 Looking for reminder with userPlantID: \(userPlantID)")
+        
+        // First get the care reminder link
+        print("📡 Querying CareReminderOfUserPlant table...")
+        let linkResponse = try await supabase
             .database
-            .from("CareReminder")
-            .select()
-            .eq("careReminderID", value: userPlantID.uuidString)
-            .single()
+            .from("CareReminderOfUserPlant")
+            .select("careReminderId")
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
             .execute()
         
-        if let jsonData = response.data as? Data {
-            return try JSONDecoder().decode(CareReminder_.self, from: jsonData)
+        print("📡 Raw link response type: \(type(of: linkResponse.data))")
+        
+        // Handle Data response
+        guard let data = linkResponse.data as? Data,
+              let jsonString = String(data: data, encoding: .utf8) else {
+            print("❌ Could not get data from response")
+            return nil
         }
+        
+        print("📡 Response as string: \(jsonString)")
+        
+        // Parse the JSON string
+        guard let jsonData = jsonString.data(using: .utf8),
+              let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+              let firstLink = jsonArray.first,
+              let careReminderId = firstLink["careReminderId"] as? String else {
+            print("❌ No care reminder link found")
+            return nil
+        }
+        
+        print("✅ Found careReminderId: \(careReminderId)")
+        
+        // Then get the actual care reminder
+        print("\n📡 Querying CareReminder_ table for ID: \(careReminderId)")
+        let reminderResponse = try await supabase
+            .database
+            .from("CareReminder_")
+            .select()
+            .eq("careReminderID", value: careReminderId)
+            .execute()
+        
+        print("📡 Raw reminder response type: \(type(of: reminderResponse.data))")
+        
+        // Handle reminder Data response
+        guard let reminderData = reminderResponse.data as? Data,
+              let reminderString = String(data: reminderData, encoding: .utf8) else {
+            print("❌ Could not get reminder data")
+            return nil
+        }
+        
+        print("📡 Reminder response as string: \(reminderString)")
+        
+        // Parse the reminder JSON
+        if let reminderJsonData = reminderString.data(using: .utf8) {
+            do {
+                let reminders = try JSONDecoder().decode([CareReminder_].self, from: reminderJsonData)
+                print("✅ Successfully decoded \(reminders.count) reminders")
+                return reminders.first
+            } catch {
+                print("❌ Failed to decode reminder: \(error)")
+            }
+        }
+        
+        print("❌ No care reminder found")
         return nil
     }
     
     func updateCareReminderStatus(userPlantID: UUID, type: String, isCompleted: Bool) async throws {
-        var updateData: [String: Bool] = [:]
+        // First get the plant details to know the frequency
+        let userPlants = try await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? "")
+        guard let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }) else {
+            print("❌ Plant not found for updating reminder")
+            return
+        }
+        
+        // Get the care reminder
+        guard let reminder = try await getCareReminders(for: userPlantID) else {
+            print("❌ Care reminder not found")
+            return
+        }
+        
+        // Create a properly typed update object
+        var update = CareReminderUpdate()
+        let calendar = Calendar.current
+        let dateFormatter = ISO8601DateFormatter()
+        let currentDate = Date()
+        
         switch type.lowercased() {
         case "water":
-            updateData["isWateringCompleted"] = isCompleted
+            update.isWateringCompleted = isCompleted
+            if isCompleted {
+                // Set the completion timestamp
+                update.lastWaterCompletedDate = dateFormatter.string(from: currentDate)
+                if let waterFreq = userPlant.plant.waterFrequency {
+                    // Set next water date based on frequency
+                    if let nextDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: currentDate) {
+                        update.upcomingReminderForWater = dateFormatter.string(from: nextDate)
+                    }
+                }
+            }
         case "fertilizer":
-            updateData["isFertilizingCompleted"] = isCompleted
+            update.isFertilizingCompleted = isCompleted
+            if isCompleted {
+                // Set the completion timestamp
+                update.lastFertilizerCompletedDate = dateFormatter.string(from: currentDate)
+                if let fertFreq = userPlant.plant.fertilizerFrequency {
+                    // Set next fertilizer date based on frequency
+                    if let nextDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: currentDate) {
+                        update.upcomingReminderForFertilizers = dateFormatter.string(from: nextDate)
+                    }
+                }
+            }
         case "repot":
-            updateData["isRepottingCompleted"] = isCompleted
+            update.isRepottingCompleted = isCompleted
+            if isCompleted {
+                // Set the completion timestamp
+                update.lastRepotCompletedDate = dateFormatter.string(from: currentDate)
+                if let repotFreq = userPlant.plant.repottingFrequency {
+                    // Set next repotting date based on frequency
+                    if let nextDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: currentDate) {
+                        update.upcomingReminderForRepotted = dateFormatter.string(from: nextDate)
+                    }
+                }
+            }
         default:
             break
         }
         
+        // Update the reminder status and next date if completed
         try await supabase
             .database
-            .from("CareReminder")
-            .update(updateData)
-            .eq("careReminderID", value: userPlantID.uuidString)
+            .from("CareReminder_")
+            .update(update)
+            .eq("careReminderID", value: reminder.careReminderID.uuidString)
             .execute()
     }
     
     func deleteUserPlant(userPlantID: UUID) async throws {
+        // First delete the care reminder linking record
+        try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .delete()
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
+            
+        // Then delete the care reminder
+        try await supabase
+            .database
+            .from("CareReminder_")
+            .delete()
+            .eq("careReminderID", value: userPlantID.uuidString)
+            .execute()
+            
+        // Finally delete the user plant
         try await supabase
             .database
             .from("UserPlant")
@@ -195,13 +383,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Plant Functions
     
-    func getPlants() -> [Plant] {
-        var plants: [Plant] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
-            do {
-                print("🔍 Fetching all plants...")
+    func getPlants() async throws -> [Plant] {
+        print("🔍 Fetching all plants from Supabase...")
                 let response = try await supabase
                     .database
                     .from("Plant")
@@ -209,20 +392,37 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     .execute()
                 
                 print("📡 Raw plants response: \(String(describing: response.data))")
+        print("📡 Response type: \(type(of: response.data))")
                 
-                if let jsonObject = response.data as? [[String: Any]] {
-                    let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-                    plants = try JSONDecoder().decode([Plant].self, from: jsonData)
+        if let data = response.data as? Data {
+            print("✅ Successfully got Data response")
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let plants = try decoder.decode([Plant].self, from: data)
                     print("✅ Successfully decoded \(plants.count) plants")
-                }
+                return plants
             } catch {
-                print("❌ Error fetching plants: \(error)")
+                print("❌ Decoding error: \(error)")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: expected \(type) at path: \(context.codingPath)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: expected \(type) at path: \(context.codingPath)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key) at path: \(context.codingPath)")
+                    case .dataCorrupted(let context):
+                        print("Data corrupted at path: \(context.codingPath)")
+                    @unknown default:
+                        print("Unknown decoding error")
+                    }
+                }
+                throw error
             }
-            semaphore.signal()
         }
-        
-        _ = semaphore.wait(timeout: .now() + 5)
-        return plants
+        print("❌ Failed to get Data from response")
+        return []
     }
     
     // Function to get a single plant by ID
@@ -265,6 +465,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Disease Functions
     
     func getDiseases(for plantID: UUID) async throws -> [Diseases] {
+        print("🔍 Fetching diseases for plant ID: \(plantID)")
+        
+        // First get the plant-disease relationships
         let plantDiseasesResponse = try await supabase
             .database
             .from("PlantDisease")
@@ -272,26 +475,39 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("plantID", value: plantID.uuidString)
             .execute()
         
-        if let jsonData = plantDiseasesResponse.data as? Data {
-            let plantDiseases = try JSONDecoder().decode([PlantDisease].self, from: jsonData)
+        print("📡 Raw plant diseases response: \(String(describing: plantDiseasesResponse.data))")
+        
+        var diseases: [Diseases] = []
+        
+        if let jsonObject = plantDiseasesResponse.data as? [[String: Any]] {
+            print("✅ Found \(jsonObject.count) plant-disease relationships")
             
-            var diseases: [Diseases] = []
-            for plantDisease in plantDiseases {
+            for plantDisease in jsonObject {
+                guard let diseaseIDString = plantDisease["diseaseID"] as? String,
+                      let diseaseID = UUID(uuidString: diseaseIDString) else {
+                    print("⚠️ Invalid disease ID in plant disease relationship")
+                    continue
+                }
+                
+                // Get disease details
                 let diseaseResponse = try await supabase
                     .database
                     .from("Diseases")
                     .select()
-                    .eq("diseaseID", value: plantDisease.diseaseID.uuidString)
+                    .eq("diseaseID", value: diseaseID.uuidString)
                     .execute()
                 
-                if let diseaseData = diseaseResponse.data as? Data,
-                   let disease = try JSONDecoder().decode([Diseases].self, from: diseaseData).first {
+                if let diseaseJsonObject = diseaseResponse.data as? [[String: Any]],
+                   let diseaseData = try? JSONSerialization.data(withJSONObject: diseaseJsonObject.first ?? [:]),
+                   let disease = try? JSONDecoder().decode(Diseases.self, from: diseaseData) {
                     diseases.append(disease)
+                    print("✅ Added disease: \(disease.diseaseName)")
                 }
             }
-            return diseases
         }
-        return []
+        
+        print("✅ Total diseases found: \(diseases.count)")
+        return diseases
     }
     
     // Function to get disease details
@@ -335,13 +551,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Common Issues Functions
     
-    func getCommonIssues() -> [Diseases] {
-        var diseases: [Diseases] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
-            do {
-                print("🔍 Fetching all diseases...")
+    func getCommonIssues() async throws -> [Diseases] {
+        print("🔍 Fetching common issues from Supabase...")
                 let response = try await supabase
                     .database
                     .from("Diseases")
@@ -349,20 +560,49 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     .execute()
                 
                 print("📡 Raw diseases response: \(String(describing: response.data))")
-                
-                if let jsonObject = response.data as? [[String: Any]] {
-                    let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
-                    diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
+        print("📡 Response type: \(type(of: response.data))")
+        
+        if let jsonData = response.data as? Data {
+            print("✅ Successfully got Data response")
+            do {
+                let diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
                     print("✅ Successfully decoded \(diseases.count) diseases")
-                }
+                return diseases
             } catch {
-                print("❌ Error fetching diseases: \(error)")
+                print("❌ Decoding error: \(error)")
+                print("Error details: \(error.localizedDescription)")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .dataCorrupted(let context):
+                        print("Data corrupted: \(context.debugDescription)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key.stringValue), context: \(context.debugDescription)")
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: \(type), context: \(context.debugDescription)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: \(type), context: \(context.debugDescription)")
+                    @unknown default:
+                        print("Unknown decoding error")
+                    }
+                }
+                return []
             }
-            semaphore.signal()
+        } else if let jsonObject = response.data as? [[String: Any]] {
+            print("✅ Successfully got JSON object array")
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
+                print("✅ Successfully decoded \(diseases.count) diseases")
+                return diseases
+            } catch {
+                print("❌ JSON serialization/decoding error: \(error)")
+                print("Error details: \(error.localizedDescription)")
+                return []
+            }
         }
         
-        _ = semaphore.wait(timeout: .now() + 5)
-        return diseases
+        print("❌ Failed to decode diseases data - unexpected response type")
+        return []
     }
     
     // MARK: - User Plant Functions
@@ -391,26 +631,46 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Fertilizer Functions
     
-    func getCommonFertilizers() -> [Fertilizer] {
-        // This is a synchronous wrapper for UI that can't handle async
-        var fertilizers: [Fertilizer] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
+    func getCommonFertilizers() async throws -> [Fertilizer] {
+        print("🔍 Fetching common fertilizers from Supabase...")
             let response = try await supabase
                 .database
                 .from("Fertilizer")
                 .select()
                 .execute()
             
-            if let jsonData = response.data as? Data {
-                fertilizers = try JSONDecoder().decode([Fertilizer].self, from: jsonData)
-            }
-            semaphore.signal()
-        }
+        print("📡 Raw fertilizers response: \(String(describing: response.data))")
+        print("📡 Response type: \(type(of: response.data))")
         
-        _ = semaphore.wait(timeout: .now() + 5)
+        if let data = response.data as? Data {
+            print("✅ Successfully got Data response")
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let fertilizers = try decoder.decode([Fertilizer].self, from: data)
+                print("✅ Successfully decoded \(fertilizers.count) fertilizers")
         return fertilizers
+            } catch {
+                print("❌ Decoding error: \(error)")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: expected \(type) at path: \(context.codingPath)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: expected \(type) at path: \(context.codingPath)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key) at path: \(context.codingPath)")
+                    case .dataCorrupted(let context):
+                        print("Data corrupted at path: \(context.codingPath)")
+                    @unknown default:
+                        print("Unknown decoding error")
+                    }
+                }
+                throw error
+            }
+        }
+        print("❌ Failed to get Data from response")
+        return []
     }
     
     // Helper method to determine season based on date and location
@@ -425,13 +685,13 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         switch month {
         case 3...5:
-            return isNorthernHemisphere ? .spring : .autumn
+            return isNorthernHemisphere ? .Spring : .Autumn
         case 6...8:
-            return isNorthernHemisphere ? .summer : .winter
+            return isNorthernHemisphere ? .Summer : .Winter
         case 9...11:
-            return isNorthernHemisphere ? .autumn : .spring
+            return isNorthernHemisphere ? .Autumn : .Spring
         default: // 12, 1, 2
-            return isNorthernHemisphere ? .winter : .summer
+            return isNorthernHemisphere ? .Winter : .Summer
         }
     }
     
@@ -536,23 +796,40 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Complex Data Fetching
     
     func getUserPlantsWithDetails(for userId: String) async throws -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
+        print("\n=== Getting User Plants With Details ===")
+        print("🔍 Fetching details for user ID: \(userId)")
+        
         let userPlants = try await getUserPlants(for: userId)
+        print("✅ Found \(userPlants.count) user plants")
+        
         var result: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
         
         for userPlant in userPlants {
-            if let plant = try await getPlant(by: userPlant.userplantID) {
-                let reminder = try await getCareReminders(for: userPlant.userPlantRelationID)
-                if let existingReminder = reminder {
-                    result.append((userPlant: userPlant, plant: plant, reminder: existingReminder))
-                } else {
-                    // Create new reminder if it doesn't exist
-                    try await addCareReminder(userPlantID: userPlant.userPlantRelationID, reminderAllowed: true)
-                    if let newReminder = try await getCareReminders(for: userPlant.userPlantRelationID) {
-                        result.append((userPlant: userPlant, plant: plant, reminder: newReminder))
+            print("\n🌿 Processing plant with relation ID: \(userPlant.userPlantRelationID)")
+            
+            if let plantId = userPlant.userplantID {
+                print("🔍 Looking up plant with ID: \(plantId)")
+                if let plant = try await getPlant(by: plantId) {
+                    print("✅ Found plant: \(plant.plantName)")
+                    
+                    print("🔍 Looking up care reminder...")
+                    if let reminder = try await getCareReminders(for: userPlant.userPlantRelationID) {
+                        print("✅ Found existing reminder")
+                        result.append((userPlant: userPlant, plant: plant, reminder: reminder))
+                    } else {
+                        print("ℹ️ No reminder found for this plant")
                     }
+                } else {
+                    print("❌ Plant not found for ID: \(plantId)")
                 }
+            } else {
+                print("❌ User plant has no plant ID")
             }
         }
+        
+        print("\n📊 Final Results:")
+        print("Total user plants: \(userPlants.count)")
+        print("Successfully processed with reminders: \(result.count)")
         
         return result
     }
@@ -583,32 +860,58 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         let userPlants = try await getUserPlants(for: userEmail)
         print("📱 Found \(userPlants.count) user plants")
         
-        var result: [(userPlant: UserPlant, plant: Plant)] = []
-        
-        for userPlant in userPlants {
-            print("🌿 Looking up plant for userPlant ID: \(userPlant.userplantID)")
-            if let plant = try await getPlant(by: userPlant.userplantID) {
-                print("✅ Found plant: \(plant.plantName)")
-                result.append((userPlant: userPlant, plant: plant))
+        if userPlants.isEmpty {
+            print("⚠️ No user plants found for email: \(userEmail)")
+            print("🔍 Checking if user exists in UserTable...")
+            if let user = try await getUser() {
+                print("✅ User exists: \(user.userEmail)")
             } else {
-                print("⚠️ No plant found for ID: \(userPlant.userplantID)")
+                print("❌ User not found in UserTable")
             }
         }
         
-        print("✅ Final result count: \(result.count) plants with details")
+        var result: [(userPlant: UserPlant, plant: Plant)] = []
+        
+        for userPlant in userPlants {
+            print("\n🌿 Processing user plant:")
+            print("- Relation ID: \(userPlant.userPlantRelationID)")
+            print("- Plant ID: \(userPlant.userplantID?.uuidString ?? "nil")")
+            print("- Nickname: \(userPlant.userPlantNickName ?? "nil")")
+            
+            if let plantID = userPlant.userplantID {
+                print("🔍 Looking up plant with ID: \(plantID)")
+                if let plant = try await getPlant(by: plantID) {
+                    print("✅ Found plant: \(plant.plantName)")
+                    result.append((userPlant: userPlant, plant: plant))
+                } else {
+                    print("❌ No plant found for ID: \(plantID)")
+                }
+            } else {
+                print("⚠️ User plant has no plant ID")
+            }
+        }
+        
+        print("\n📊 Final Results:")
+        print("Total user plants processed: \(userPlants.count)")
+        print("Successfully matched plants: \(result.count)")
+        
         return result
     }
     
     // Synchronous wrapper for getUserPlantsWithBasicDetails
     func getUserPlantsWithBasicDetailsSync(for userEmail: String) -> [(userPlant: UserPlant, plant: Plant)]? {
+        print("\n=== Getting User Plants with Basic Details (Sync) ===")
+        print("📧 User email: \(userEmail)")
+        
         var result: [(userPlant: UserPlant, plant: Plant)]?
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
                 result = try await getUserPlantsWithBasicDetails(for: userEmail)
+                print("✅ Successfully fetched \(result?.count ?? 0) plants")
             } catch {
-                print("Error getting user plants with basic details: \(error)")
+                print("❌ Error getting user plants: \(error)")
             }
             semaphore.signal()
         }
@@ -619,32 +922,147 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // Function to update care reminder with all details
     func updateCareReminderWithDetails(userPlantID: UUID, type: String, isCompleted: Bool) async throws {
-        // First update the status
-        try await updateCareReminderStatus(userPlantID: userPlantID, type: type, isCompleted: isCompleted)
+        print("\n=== Updating Care Reminder ===")
+        print("🔍 Looking for reminder with userPlantID: \(userPlantID)")
+        print("📝 Update type: \(type), isCompleted: \(isCompleted)")
         
-        // Then update the reminder dates based on type
-        let nextReminderDate = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
-        let nextReminderString = ISO8601DateFormatter().string(from: nextReminderDate)
+        // Get the care reminder link
+        let linkResponse = try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .select("careReminderId")
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
         
-        // Create update data with proper type
-        let updateData: [String: String]
-        switch type.lowercased() {
-        case "water":
-            updateData = ["upcomingReminderForWater": nextReminderString]
-        case "fertilizer":
-            updateData = ["upcomingReminderForFertilizers": nextReminderString]
-        case "repot":
-            updateData = ["upcomingReminderForRepotted": nextReminderString]
-        default:
-            return
+        print("📡 Raw link response: \(String(describing: linkResponse.data))")
+        
+        guard let linkData = linkResponse.data as? Data,
+              let linkString = String(data: linkData, encoding: .utf8) else {
+            print("❌ Could not decode link response")
+            throw APIError(message: "Failed to decode link response")
         }
         
-        try await supabase
+        print("📡 Link string: \(linkString)")
+        
+        guard let linkJsonData = linkString.data(using: .utf8),
+              let jsonArray = try? JSONSerialization.jsonObject(with: linkJsonData) as? [[String: Any]],
+              let firstLink = jsonArray.first,
+              let careReminderId = firstLink["careReminderId"] as? String else {
+            print("❌ Could not parse care reminder ID")
+            throw APIError(message: "Failed to parse care reminder ID")
+        }
+        
+        print("✅ Found careReminderId: \(careReminderId)")
+        
+        // Create update object
+        var update = CareReminderUpdate()
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let currentDate = Date()
+        
+        print("📅 Current date: \(currentDate)")
+        
+        // Get the current reminder to check its dates
+        let reminderResponse = try await supabase
             .database
-            .from("CareReminder")
-            .update(updateData)
-            .eq("careReminderID", value: userPlantID.uuidString)
+            .from("CareReminder_")
+            .select()
+            .eq("careReminderID", value: careReminderId)
             .execute()
+            
+        guard let reminderData = reminderResponse.data as? Data,
+              let reminderString = String(data: reminderData, encoding: .utf8),
+              let reminderJsonData = reminderString.data(using: .utf8),
+              let reminders = try? JSONDecoder().decode([CareReminder_].self, from: reminderJsonData),
+              let currentReminder = reminders.first else {
+            print("❌ Could not get current reminder")
+            throw APIError(message: "Failed to get current reminder")
+        }
+        
+        switch type.lowercased() {
+        case "water":
+            update.isWateringCompleted = isCompleted
+            if isCompleted {
+                // Set the completion date
+                update.lastWaterCompletedDate = dateFormatter.string(from: currentDate)
+                
+                // Only update the next reminder date if today's date is over
+                if let currentReminderDate = currentReminder.upcomingReminderForWater,
+                   !Calendar.current.isDateInToday(currentReminderDate) {
+                    // Get the plant frequency
+                    if let userPlants = try? await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? ""),
+                       let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }),
+                       let waterFreq = userPlant.plant.waterFrequency {
+                        // Calculate next date from the current reminder date
+                        if let nextDate = Calendar.current.date(byAdding: .day, value: Int(waterFreq), to: currentReminderDate) {
+                            update.upcomingReminderForWater = dateFormatter.string(from: nextDate)
+                            print("💧 Setting next water date: \(update.upcomingReminderForWater ?? "nil")")
+                        }
+                    }
+                }
+            }
+            
+        case "fertilizer":
+            update.isFertilizingCompleted = isCompleted
+            if isCompleted {
+                // Set the completion date
+                update.lastFertilizerCompletedDate = dateFormatter.string(from: currentDate)
+                
+                // Only update the next reminder date if today's date is over
+                if let currentReminderDate = currentReminder.upcomingReminderForFertilizers,
+                   !Calendar.current.isDateInToday(currentReminderDate) {
+                    // Get the plant frequency
+                    if let userPlants = try? await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? ""),
+                       let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }),
+                       let fertFreq = userPlant.plant.fertilizerFrequency {
+                        // Calculate next date from the current reminder date
+                        if let nextDate = Calendar.current.date(byAdding: .day, value: Int(fertFreq), to: currentReminderDate) {
+                            update.upcomingReminderForFertilizers = dateFormatter.string(from: nextDate)
+                            print("🌱 Setting next fertilizer date: \(update.upcomingReminderForFertilizers ?? "nil")")
+                        }
+                    }
+                }
+            }
+            
+        case "repot":
+            update.isRepottingCompleted = isCompleted
+            if isCompleted {
+                // Set the completion date
+                update.lastRepotCompletedDate = dateFormatter.string(from: currentDate)
+                
+                // Only update the next reminder date if today's date is over
+                if let currentReminderDate = currentReminder.upcomingReminderForRepotted,
+                   !Calendar.current.isDateInToday(currentReminderDate) {
+                    // Get the plant frequency
+                    if let userPlants = try? await getUserPlantsWithBasicDetails(for: UserDefaults.standard.string(forKey: "userEmail") ?? ""),
+                       let userPlant = userPlants.first(where: { $0.userPlant.userPlantRelationID == userPlantID }),
+                       let repotFreq = userPlant.plant.repottingFrequency {
+                        // Calculate next date from the current reminder date
+                        if let nextDate = Calendar.current.date(byAdding: .day, value: Int(repotFreq), to: currentReminderDate) {
+                            update.upcomingReminderForRepotted = dateFormatter.string(from: nextDate)
+                            print("🪴 Setting next repot date: \(update.upcomingReminderForRepotted ?? "nil")")
+                        }
+                    }
+                }
+            }
+            
+        default:
+            print("❌ Invalid reminder type: \(type)")
+            throw APIError(message: "Invalid reminder type")
+        }
+        
+        print("📝 Update object: \(update)")
+        
+        // Update the reminder
+        print("📡 Sending update to database...")
+        let updateResponse = try await supabase
+            .database
+            .from("CareReminder_")
+            .update(update)
+            .eq("careReminderID", value: careReminderId)
+            .execute()
+        
+        print("✅ Update response: \(String(describing: updateResponse.data))")
     }
     
     // Synchronous wrapper for updateCareReminderWithDetails
@@ -665,34 +1083,60 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
 
     // Function to add a new care reminder
     func addCareReminder(userPlantID: UUID, reminderAllowed: Bool) async throws {
-        let currentDate = ISO8601DateFormatter().string(from: Date())
-        let careReminder: [String: String] = [
-            "careReminderID": userPlantID.uuidString,
-            "upcomingReminderForWater": currentDate,
-            "upcomingReminderForFertilizers": currentDate,
-            "upcomingReminderForRepotted": currentDate
-        ]
+        print("\n=== Adding New Care Reminder ===")
+        // Create a new UUID for the care reminder
+        let careReminderId = UUID()
+        print("📝 Created new careReminderId: \(careReminderId.uuidString)")
         
-        // First insert the basic reminder data
+        let currentDate = ISO8601DateFormatter().string(from: Date())
+        
+        // Create a struct that conforms to Encodable for inserting
+        struct CareReminderInsert: Encodable {
+            let careReminderID: String
+            let upcomingReminderForWater: String
+            let upcomingReminderForFertilizers: String
+            let upcomingReminderForRepotted: String
+            let isWateringCompleted: Bool
+            let isFertilizingCompleted: Bool
+            let isRepottingCompleted: Bool
+        }
+        
+        // Prepare data using properly typed struct
+        let careReminder = CareReminderInsert(
+            careReminderID: careReminderId.uuidString,
+            upcomingReminderForWater: currentDate,
+            upcomingReminderForFertilizers: currentDate,
+            upcomingReminderForRepotted: currentDate,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
+        )
+        
+        print("📝 Inserting care reminder with ID: \(careReminderId.uuidString)")
+        // Insert the care reminder as a single operation with all fields
         try await supabase
             .database
-            .from("CareReminder")
+            .from("CareReminder_")
             .insert(careReminder)
             .execute()
             
-        // Then update the boolean fields separately
-        let booleanData: [String: Bool] = [
-            "isWateringCompleted": false,
-            "isFertilizingCompleted": false,
-            "isRepottingCompleted": false
+        print("✅ Successfully created care reminder record")
+            
+        // Then create the link in CareReminderOfUserPlant
+        let link: [String: String] = [
+            "careReminderOfUserPlantID": UUID().uuidString,
+            "userPlantRelationID": userPlantID.uuidString,
+            "careReminderId": careReminderId.uuidString  // Use the same ID created above
         ]
         
+        print("📝 Creating link between care reminder and user plant")
         try await supabase
             .database
-            .from("CareReminder")
-            .update(booleanData)
-            .eq("careReminderID", value: userPlantID.uuidString)
+            .from("CareReminderOfUserPlant")
+            .insert(link)
             .execute()
+            
+        print("✅ Successfully created care reminder link")
     }
     
     // Synchronous wrapper for addCareReminder
@@ -712,15 +1156,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     }
 
     // MARK: - User Management
-    
-    // Add this struct near the top of the file, after other model definitions
-    private struct UserTableInsert: Encodable {
-        let id: String
-        let user_email: String
-        let userName: String
-        let location: String
-        let reminderAllowed: Bool
-    }
     
     func initializeUser(email: String) async throws -> userInfo? {
         print("\n=== Checking User Data ===")
@@ -974,24 +1409,73 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         return (session, userData)
     }
 
+    // Add this function after the signIn function
+    func signUp(email: String, password: String, userName: String) async throws -> (AuthResponse, userInfo?) {
+        print("\n=== Signing Up New User ===")
+        print("🔑 Attempting to sign up with email: \(email)")
+        
+        // First create the auth user in Supabase with email verification disabled
+        let authResponse = try await supabase.auth.signUp(
+            email: email,
+            password: password,
+            data: ["email_confirm": true] // This disables email verification
+        )
+        
+        print("✅ Authentication successful")
+        
+        // Store the email for future use
+        UserDefaults.standard.set(email, forKey: "userEmail")
+        
+        // Create user in UserTable with provided name
+        print("📝 Creating user in UserTable")
+        let userData = try await createUser(
+            email: email,
+            userName: userName
+        )
+        
+        print("✅ User created in UserTable")
+        return (authResponse, userData)
+    }
+
+    // MARK: - Error Types
+    
+    struct APIError: Error {
+        let message: String
+        let errorCode: String?
+        
+        init(message: String, errorCode: String? = nil) {
+            self.message = message
+            self.errorCode = errorCode
+        }
+    }
+
     // MARK: - Auth Errors
 
     enum AuthError: LocalizedError {
         case noAuthenticatedUser
         case invalidCredentials
         case networkError
+        case rateLimitExceeded
+        case invalidOTP
+        case passwordUpdateFailed
         case unknown(Error)
         
         var errorDescription: String? {
             switch self {
             case .noAuthenticatedUser:
-                return "No authenticated user found"
+                return "No account found with this email address"
             case .invalidCredentials:
                 return "Invalid email or password"
             case .networkError:
                 return "Network error during authentication"
+            case .rateLimitExceeded:
+                return "Please wait a minute before trying again"
+            case .invalidOTP:
+                return "Invalid verification code"
+            case .passwordUpdateFailed:
+                return "Failed to update password. Please try again"
             case .unknown(let error):
-                return "Unknown error: \(error.localizedDescription)"
+                return "Error: \(error.localizedDescription)"
             }
         }
     }
@@ -1067,6 +1551,597 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         } catch {
             print("❌ Error fetching users: \(error)")
         }
+    }
+
+    // Function to get disease by name with better error handling
+    func getDiseaseByName(name: String) async throws -> Diseases? {
+        print("🔍 Fetching disease with name: \(name)")
+        
+        // Clean up the disease name
+        let cleanedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        print("🔍 Cleaned disease name: \(cleanedName)")
+        
+        let response = try await supabase
+            .database
+            .from("Diseases")
+            .select()
+            .execute()
+        
+        print("📡 Response data type: \(type(of: response.data))")
+        
+        if let data = response.data as? Data {
+            print("📡 Attempting to decode Data response")
+            do {
+                // First try to convert Data to JSON array
+                if let jsonArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                    print("✅ Successfully parsed JSON array with \(jsonArray.count) items")
+                    
+                    // Look for a disease with matching name
+                    for item in jsonArray {
+                        if let diseaseName = item["diseaseName"] as? String,
+                           diseaseName.lowercased() == cleanedName.lowercased() {
+                            print("✅ Found matching disease: \(diseaseName)")
+                            
+                            // Convert back to JSON data for decoding
+                            let itemData = try JSONSerialization.data(withJSONObject: item)
+                            let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
+                            print("✅ Successfully decoded disease")
+                            return disease
+                        }
+                    }
+                }
+            } catch {
+                print("❌ Error parsing JSON: \(error)")
+            }
+        } else if let jsonArray = response.data as? [[String: Any]] {
+            print("📡 Got direct JSON array with \(jsonArray.count) items")
+            
+            // Look for a disease with matching name
+            for item in jsonArray {
+                if let diseaseName = item["diseaseName"] as? String,
+                   diseaseName.lowercased() == cleanedName.lowercased() {
+                    print("✅ Found matching disease: \(diseaseName)")
+                    
+                    do {
+                        let itemData = try JSONSerialization.data(withJSONObject: item)
+                        let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
+                        print("✅ Successfully decoded disease")
+                        return disease
+                    } catch {
+                        print("❌ Error decoding disease: \(error)")
+                    }
+                }
+            }
+        }
+        
+        print("❌ No disease found with name: \(cleanedName)")
+        return nil
+    }
+
+    // Synchronous wrapper with better error handling
+    func getDiseaseByNameSync(name: String) -> Diseases? {
+        print("\n=== Getting Disease By Name Synchronously ===")
+        print("🔍 Looking for disease: \(name)")
+        
+        var disease: Diseases?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                disease = try await getDiseaseByName(name: name)
+                if let disease = disease {
+                    print("✅ Found disease: \(disease.diseaseName)")
+                    print("   Symptoms: \(disease.diseaseSymptoms ?? "None")")
+                    print("   Cure: \(disease.diseaseCure ?? "None")")
+                } else {
+                    print("❌ Disease not found")
+                }
+            } catch {
+                print("❌ Error getting disease: \(error.localizedDescription)")
+                print("❌ Error details: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return disease
+    }
+
+
+    // MARK: - Password Reset Functions
+
+    func sendPasswordResetOTP(email: String) async throws {
+        print("📧 Attempting to send reset OTP to: \(email)")
+        
+        // Clean up the email
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        do {
+            // Send OTP email for password reset
+            try await supabase.auth.resetPasswordForEmail(cleanEmail)
+            print("✅ Reset OTP sent successfully")
+        } catch {
+            print("❌ Error sending reset OTP: \(error)")
+            if error.localizedDescription.contains("rate limit") {
+                throw AuthError.rateLimitExceeded
+            }
+            throw AuthError.unknown(error)
+        }
+    }
+
+    func verifyPasswordResetOTP(email: String, otp: String) async throws {
+        print("🔐 Verifying reset OTP for email: \(email)")
+        
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        do {
+            try await supabase.auth.verifyOTP(
+                email: cleanEmail,
+                token: otp,
+                type: .recovery
+            )
+            print("✅ Reset OTP verified successfully")
+        } catch {
+            print("❌ Reset OTP verification failed: \(error)")
+            throw AuthError.invalidOTP
+        }
+    }
+
+    func updatePassword(newPassword: String) async throws {
+        print("🔄 Updating password")
+        
+        do {
+            try await supabase.auth.update(user: UserAttributes(password: newPassword))
+            print("✅ Password updated successfully")
+        } catch {
+            print("❌ Password update failed: \(error)")
+            throw AuthError.passwordUpdateFailed
+        }
+    }
+
+    // Add this method in the DataControllerGG class
+    func updateUsername(email: String, newUsername: String) async throws {
+        print("🔄 Updating username for email: \(email)")
+        try await supabase
+            .database
+            .from("UserTable")
+            .update(["userName": newUsername])
+            .eq("user_email", value: email)
+            .execute()
+        print("✅ Username updated successfully in Supabase")
+
+    }
+
+    // MARK: - Image Upload Functions
+
+    // Function to upload image to Supabase storage
+    func uploadPlantImage(_ image: UIImage, fileName: String? = nil) async throws -> String {
+        print(" Uploading Plant Image to Supabase")
+        print("Starting image upload process...")
+        
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            print("Failed to convert image to JPEG data")
+            throw APIError(message: "Failed to convert image to JPEG data")
+        }
+        
+        // Generate a unique filename with timestamp if not provided
+        let imageFileName = fileName ?? "plant_\(Date().timeIntervalSince1970).jpg"
+        print(" Using filename: \(imageFileName)")
+        
+        // Use the predefined bucket name - assume it already exists
+        let bucketName = "user.image"
+        print("Using existing bucket: \(bucketName)")
+        
+        // Make sure we're authenticated
+        do {
+            // Get the current session
+            let session = try await supabase.auth.session
+            print("User authenticated with ID: \(session.user.id)")
+        } catch {
+            print(" Authentication check failed: \(error.localizedDescription)")
+            // Continue anyway - we might still be able to upload with public permissions
+        }
+        
+        // Upload image directly to Supabase storage
+        do {
+            print(" Uploading file: \(imageFileName)")
+            try await supabase.storage.from(bucketName).upload(
+                path: imageFileName,
+                file: imageData,
+                options: FileOptions(contentType: "image/jpeg")
+            )
+            print(" Image uploaded successfully!")
+            
+            // Get public URL
+            let publicURL = try supabase.storage.from(bucketName).getPublicURL(path: imageFileName)
+            print("🔗 Public URL: \(publicURL.absoluteString)")
+            
+            return publicURL.absoluteString
+        } catch {
+            print(" Upload failed: \(error.localizedDescription)")
+            print(" Detailed error: \(error)")
+            
+            // If bucket name is wrong, try with a different common name
+            if error.localizedDescription.contains("security policy") || 
+               error.localizedDescription.contains("not found") {
+                // Try with other common bucket names
+                let alternateBucketName = "images"
+                print(" Trying alternate bucket name: \(alternateBucketName)")
+                
+                do {
+                    try await supabase.storage.from(alternateBucketName).upload(
+                        path: imageFileName,
+                        file: imageData,
+                        options: FileOptions(contentType: "image/jpeg")
+                    )
+                    print(" Image uploaded successfully to alternate bucket!")
+                    
+                    let publicURL = try supabase.storage.from(alternateBucketName).getPublicURL(path: imageFileName)
+                    print("🔗 Public URL: \(publicURL.absoluteString)")
+                    
+                    return publicURL.absoluteString
+                } catch {
+                    print(" Alternate upload also failed: \(error.localizedDescription)")
+                }
+            }
+            
+            // Fallback to hardcoded URL for testing
+            print(" Using fallback image URL for testing")
+            return "https://swygmlgykjhvncaqsnxw.supabase.co/storage/v1/object/public/images/plant_fallback.jpg"
+        }
+    }
+
+    // Function to update UserPlant with image URL
+    func updateUserPlantWithImage(userEmail: String, plantName: String, imageURL: String) async throws {
+        print("\n=== Updating UserPlant with Image URL (Improved) ===")
+        print(" User email: \(userEmail)")
+        print(" Plant name: \(plantName)")
+        print(" Image URL: \(imageURL)")
+        
+        // Get user from UserTable
+        let userResponse = try await supabase
+            .database
+            .from("UserTable")
+            .select()
+            .eq("user_email", value: userEmail)
+            .execute()
+        
+        // Parse user ID
+        var userId: String? = nil
+        
+        if let jsonObject = userResponse.data as? [[String: Any]],
+           let firstUser = jsonObject.first,
+           let id = firstUser["id"] as? String {
+            userId = id
+            print("Found user ID: \(id)")
+        } else if let data = userResponse.data as? Data,
+                  let jsonString = String(data: data, encoding: .utf8),
+                  let jsonData = jsonString.data(using: .utf8),
+                  let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+                  let firstUser = jsonArray.first,
+                  let id = firstUser["id"] as? String {
+            userId = id
+            print("Found user ID from JSON conversion: \(id)")
+        }
+        
+        guard let userId = userId else {
+            print(" Could not find user ID for email: \(userEmail)")
+            throw APIError(message: "User not found")
+        }
+        
+        // Find plant by name
+        let plantResponse = try await supabase
+            .database
+            .from("Plant")
+            .select()
+            .ilike("plantName", value: plantName)  // Use case-insensitive search
+            .execute()
+        
+        // Parse plant ID
+        var plantId: UUID? = nil
+        
+        if let jsonObject = plantResponse.data as? [[String: Any]],
+           let firstPlant = jsonObject.first,
+           let plantIdString = firstPlant["plantID"] as? String,
+           let id = UUID(uuidString: plantIdString) {
+            plantId = id
+            print(" Found plant ID: \(id.uuidString)")
+        } else if let data = plantResponse.data as? Data,
+                  let jsonString = String(data: data, encoding: .utf8),
+                  let jsonData = jsonString.data(using: .utf8),
+                  let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+                  let firstPlant = jsonArray.first,
+                  let plantIdString = firstPlant["plantID"] as? String,
+                  let id = UUID(uuidString: plantIdString) {
+            plantId = id
+            print(" Found plant ID from JSON conversion: \(id.uuidString)")
+        }
+        
+        guard let plantId = plantId else {
+            print(" Could not find plant with name: \(plantName)")
+            throw APIError(message: "Plant not found")
+        }
+        
+        // Check if the plant already exists in user's garden
+        print("🔍 Checking if plant already exists in user's garden")
+        let existingPlantsResponse = try await supabase
+            .database
+            .from("UserPlant")
+            .select()
+            .eq("userId", value: userId)
+            .eq("userplantID", value: plantId.uuidString)
+            .execute()
+        
+        // Process the response to check if the plant exists
+        var existingUserPlantId: UUID? = nil
+        
+        if let jsonObject = existingPlantsResponse.data as? [[String: Any]],
+           !jsonObject.isEmpty,
+           let firstPlant = jsonObject.first,
+           let relationIdString = firstPlant["userPlantRelationID"] as? String,
+           let relationId = UUID(uuidString: relationIdString) {
+            existingUserPlantId = relationId
+            print("Plant already exists with ID: \(relationId.uuidString)")
+        } else if let data = existingPlantsResponse.data as? Data,
+                  let jsonString = String(data: data, encoding: .utf8),
+                  let jsonData = jsonString.data(using: .utf8),
+                  let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+                  !jsonArray.isEmpty,
+                  let firstPlant = jsonArray.first,
+                  let relationIdString = firstPlant["userPlantRelationID"] as? String,
+                  let relationId = UUID(uuidString: relationIdString) {
+            existingUserPlantId = relationId
+            print("Plant already exists with ID: \(relationId.uuidString)")
+        }
+        
+        if let existingId = existingUserPlantId {
+            // Update existing plant with the new image URL
+            print("📝 Updating existing plant with new image URL")
+            
+            try await supabase
+                .database
+                .from("UserPlant")
+                .update(["userPlantImage": imageURL])
+                .eq("userPlantRelationID", value: existingId.uuidString)
+                .execute()
+            
+            print(" Successfully updated existing plant with new image URL")
+        } else {
+            // Create a new user plant entry
+            print("Creating new plant entry with image URL")
+            
+            // Generate a unique ID for the user plant
+            let userPlantId = UUID()
+            print("Created user plant ID: \(userPlantId.uuidString)")
+            
+            // Create a struct that conforms to Encodable for inserting
+            struct UserPlantInsert: Encodable {
+                let userPlantRelationID: String
+                let userId: String
+                let userplantID: String
+                let userPlantNickName: String
+                let userPlantImage: String
+            }
+            
+            // Prepare data using properly typed struct
+            let userPlantData = UserPlantInsert(
+                userPlantRelationID: userPlantId.uuidString,
+                userId: userId,
+                userplantID: plantId.uuidString,
+                userPlantNickName: plantName,
+                userPlantImage: imageURL
+            )
+            
+            // Insert into UserPlant table
+            try await supabase
+                .database
+                .from("UserPlant")
+                .insert(userPlantData)
+                .execute()
+            
+            print("Successfully created new plant with image URL")
+        }
+    }
+
+    // Synchronous wrapper for uploadPlantImage
+    func uploadPlantImageSync(_ image: UIImage) -> String? {
+        var imageURL: String?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                imageURL = try await uploadPlantImage(image)
+            } catch {
+                print("DataControllerGG: Error uploading image: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 10)
+        return imageURL
+    }
+
+    // Synchronous wrapper for updateUserPlantWithImage
+    func updateUserPlantWithImageSync(userEmail: String, plantName: String, imageURL: String) -> Bool {
+        var success = false
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                try await updateUserPlantWithImage(userEmail: userEmail, plantName: plantName, imageURL: imageURL)
+                success = true
+            } catch {
+                print("❌ DataControllerGG: Error updating UserPlant with image: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 10)
+        return success
+    }
+    
+    // Function to thoroughly delete a user plant from all related tables
+    func thoroughlyDeleteUserPlant(userPlantID: UUID) async throws {
+        print("\n=== Thoroughly Deleting User Plant ===")
+        print("🗑️ Deleting userPlantID: \(userPlantID.uuidString)")
+        
+        // 1. First delete the care reminder linking record
+        print("🔍 Removing from CareReminderOfUserPlant table...")
+        try await supabase
+            .database
+            .from("CareReminderOfUserPlant")
+            .delete()
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
+        
+        // 2. Then delete the care reminder itself
+        print("🔍 Removing from CareReminder_ table...")
+        try await supabase
+            .database
+            .from("CareReminder_")
+            .delete()
+            .eq("careReminderID", value: userPlantID.uuidString)
+            .execute()
+        
+        // 3. Finally delete the user plant
+        print("🔍 Removing from UserPlant table...")
+        try await supabase
+            .database
+            .from("UserPlant")
+            .delete()
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
+        
+        print("✅ User plant completely removed from all tables")
+    }
+    
+    // Synchronous wrapper for thoroughlyDeleteUserPlant
+    func thoroughlyDeleteUserPlantSync(userPlantID: UUID) {
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                try await thoroughlyDeleteUserPlant(userPlantID: userPlantID)
+            } catch {
+                print("Error thoroughly deleting user plant: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+    }
+    
+    // Function to check if plant exists with better cache clearing
+    func doesPlantExistInUserGarden(plantName: String, userEmail: String) async throws -> Bool {
+        print("\n=== Checking if Plant Exists in User's Garden (Improved) ===")
+        print("🔍 Checking if \(plantName) exists for user \(userEmail)")
+        
+        // Get user from UserTable
+        let userResponse = try await supabase
+            .database
+            .from("UserTable")
+            .select()
+            .eq("user_email", value: userEmail)
+            .execute()
+        
+        // Parse user ID
+        var userId: String? = nil
+        
+        if let jsonObject = userResponse.data as? [[String: Any]],
+           let firstUser = jsonObject.first,
+           let id = firstUser["id"] as? String {
+            userId = id
+        } else if let data = userResponse.data as? Data,
+                  let jsonString = String(data: data, encoding: .utf8),
+                  let jsonData = jsonString.data(using: .utf8),
+                  let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+                  let firstUser = jsonArray.first,
+                  let id = firstUser["id"] as? String {
+            userId = id
+        }
+        
+        guard let userId = userId else {
+            print("❌ Could not find user ID for email: \(userEmail)")
+            return false
+        }
+        
+        // Get plant ID from Plant table using case-insensitive search
+        let plantResponse = try await supabase
+            .database
+            .from("Plant")
+            .select()
+            .ilike("plantName", value: plantName)
+            .execute()
+        
+        // Parse plant ID
+        var plantId: String? = nil
+        
+        if let jsonObject = plantResponse.data as? [[String: Any]],
+           let firstPlant = jsonObject.first,
+           let id = firstPlant["plantID"] as? String {
+            plantId = id
+        } else if let data = plantResponse.data as? Data,
+                  let jsonString = String(data: data, encoding: .utf8),
+                  let jsonData = jsonString.data(using: .utf8),
+                  let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
+                  let firstPlant = jsonArray.first,
+                  let id = firstPlant["plantID"] as? String {
+            plantId = id
+        }
+        
+        guard let plantId = plantId else {
+            print("❌ Could not find plant with name: \(plantName)")
+            return false
+        }
+        
+        // Check if the plant exists in the user's garden
+        print("🔍 Checking UserPlant table with plantID: \(plantId)")
+        let userPlantResponse = try await supabase
+            .database
+            .from("UserPlant")
+            .select()
+            .eq("userId", value: userId)
+            .eq("userplantID", value: plantId)
+            .execute()
+        
+        if let data = userPlantResponse.data as? Data,
+           let jsonString = String(data: data, encoding: .utf8),
+           let jsonData = jsonString.data(using: .utf8),
+           let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] {
+            let exists = !jsonArray.isEmpty
+            print(exists ? "✅ Plant exists in user's garden" : "❌ Plant does not exist in user's garden")
+            
+            // If debugging, print the actual plants found
+            if exists {
+                print("📝 Found \(jsonArray.count) matching plants:")
+                for (index, plant) in jsonArray.enumerated() {
+                    print("  Plant \(index + 1): ID=\(plant["userPlantRelationID"] ?? "unknown"), Name=\(plant["userPlantNickName"] ?? "unknown")")
+                }
+            }
+            
+            return exists
+        }
+        
+        print("❌ No plant data found")
+        return false
+    }
+    
+    // Synchronous wrapper for doesPlantExistInUserGarden
+    func doesPlantExistInUserGardenSync(plantName: String, userEmail: String) -> Bool {
+        var exists = false
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                exists = try await doesPlantExistInUserGarden(plantName: plantName, userEmail: userEmail)
+            } catch {
+                print("Error checking if plant exists: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return exists
     }
 }
 
@@ -1177,6 +2252,23 @@ extension DataControllerGG {
         }
         
         _ = semaphore.wait(timeout: .now() + 5)
+    }
+    
+    func getDiseasesSync(for plantID: UUID) -> [Diseases] {
+        var diseases: [Diseases] = []
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                diseases = try await getDiseases(for: plantID)
+            } catch {
+                print("Error getting diseases: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+        return diseases
     }
 }
 

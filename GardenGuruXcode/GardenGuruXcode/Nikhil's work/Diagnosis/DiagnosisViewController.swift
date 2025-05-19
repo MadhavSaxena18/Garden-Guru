@@ -13,7 +13,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     private let overlayView = UIView()
     static var plantNameLabel = UILabel()
     static var diagnosisLabel = UILabel()
-    static  var detailsStackView = UIStackView()
+    private let plantDetailsLabel = UILabel()
+    static var detailsStackView = UIStackView()
     private let tableView = UITableView()
     private let startCaringButton = UIButton()
 
@@ -27,6 +28,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     // Add this property at the top of the class
     private var isExistingPlant: Bool = false
+    private var hasUserResponded: Bool = false
 
     // Add these properties at the top of DiagnosisViewController class
     private let healthyAnimationView = UIView()
@@ -35,14 +37,38 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("\n=== DiagnosisViewController Loading ===")
+        
         view.backgroundColor = UIColor(hex: "#EBF4EB")
+        
+        // Add tap gesture to dismiss keyboard
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
+        
+        // Initially hide UI elements until we verify the plant
+        startCaringButton.isHidden = true
+        tableView.isHidden = true
+        healthyAnimationView.isHidden = true
+        plantDetailsLabel.isHidden = true
+        
         setupUI()
         setupConstraints()
+        
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.title = "Diagnosis"
         
-        // Hide tab bar
+        // Configure table view
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DiagnosisCell")
+        tableView.backgroundColor = UIColor(hex: "#EBF4EB")
+        tableView.isHidden = false
+        tableView.reloadData()
+        
         self.tabBarController?.tabBar.isHidden = true
+        
+        // Initialize plant check
+        initializePlantCheck()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -78,9 +104,12 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 //        }
 //    }
     
+    @objc internal override func dismissKeyboard() {
+        view.endEditing(true)
+    }
+
     private func setupUI() {
         // Plant Image
-       // plantImageView.image = UIImage(named: "parlor_palm3")
         plantImageView.image = scanAndDiagnoseViewController.capturedImages[2]
         plantImageView.contentMode = .scaleAspectFill
         plantImageView.clipsToBounds = true
@@ -92,7 +121,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
         // Plant Name Label
         DiagnosisViewController.plantNameLabel.text = selectedPlant?.plantName
-        print("Setting diagnosis plant name to: \(selectedPlant?.plantName ?? "nil")")
         DiagnosisViewController.plantNameLabel.textColor = .white
         DiagnosisViewController.plantNameLabel.font = UIFont.boldSystemFont(ofSize: 16)
         overlayView.addSubview(DiagnosisViewController.plantNameLabel)
@@ -103,225 +131,173 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         DiagnosisViewController.diagnosisLabel.font = UIFont.systemFont(ofSize: 24)
         overlayView.addSubview(DiagnosisViewController.diagnosisLabel)
 
-        // Details StackView
-        DiagnosisViewController.detailsStackView.axis = .vertical
-        DiagnosisViewController.detailsStackView.alignment = .leading
-        DiagnosisViewController.detailsStackView.spacing = 8
-        view.addSubview(DiagnosisViewController.detailsStackView)
+        // Plant Details Label
+        plantDetailsLabel.numberOfLines = 0
+        plantDetailsLabel.textColor = UIColor(hex: "#005E2C")
+        plantDetailsLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        plantDetailsLabel.backgroundColor = UIColor(hex: "#E2EAE2").withAlphaComponent(0.5)
+        plantDetailsLabel.layer.cornerRadius = 8
+        plantDetailsLabel.clipsToBounds = true
+        plantDetailsLabel.textAlignment = .left
+        // Add padding to the label
+        plantDetailsLabel.layoutMargins = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+        view.addSubview(plantDetailsLabel)
 
-        // Get plant details from DataController
-        if let plantName = selectedPlant?.plantName,
-           let plant = dataController.getPlantbyNameSync(name: plantName) {
-            
-            // Update botanical name in selectedPlant
-            selectedPlant?.botanicalName = plant.plantBotanicalName
-            
-            let generalDetails = [
-                "Botanical Name: \(plant.plantBotanicalName)",
-                "Category: \(plant.category)",
-                "Favourable Season: \(plant.favourableSeason)"
-            ]
-
-            // Clear existing stack view items
-            DiagnosisViewController.detailsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-
-            generalDetails.forEach { text in
-                let label = UILabel()
-                label.text = text
-                label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-                label.textColor = UIColor(hex: "#005E2C")
-                label.numberOfLines = 0
-                DiagnosisViewController.detailsStackView.addArrangedSubview(label)
-            }
-
-
-            // Update disease details
-            if let diagnosis = selectedPlant?.diagnosis,
-               let diseaseID = UUID(uuidString: diagnosis),
-               let diseaseDetails = dataController.getDiseaseDetailsSync(diseaseID: diseaseID) {
-                updateDiseaseDetails(with: diseaseDetails)
-            }
-
-
-            print("Diseases update")
-            // Update disease details
-//            if let diagnosis = selectedPlant?.diagnosis,
-//               let diseaseDetails = dataController.getDiseaseDetails(for: diagnosis) {
-//                print("Inside update")
-//                selectedPlant?.sectionDetails = diseaseDetails
-//                print(diseaseDetails)
-//                tableView.reloadData()
-//            }
-            if let diagnosis = selectedPlant?.diagnosis {
-                print("Diagnosis: \(diagnosis)")
-                if let diseaseID = UUID(uuidString: diagnosis),
-                   let diseaseDetails = dataController.getDiseaseDetailsSync(diseaseID: diseaseID) {
-                    print("Inside update")
-                    updateDiseaseDetails(with: diseaseDetails)
-                } else {
-                    print("No disease details found for \(diagnosis)")
-                }
-            } else {
-                print("Diagnosis is nil")
-            }
-
-
-
-            // Check if plant exists in user's space
-            if let firstUser = dataController.getUserSync() {
-                let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
-                isExistingPlant = userPlants.contains { userPlant in
-                    if let existingPlant = dataController.getPlantSync(by: userPlant.userplantID) {
-                        return existingPlant.plantName == plantName
-                    }
-                    return false
-                }
-                
-                if isExistingPlant {
-                    showExistingPlantAlert()
-                }
-                
-                startCaringButton.setTitle(isExistingPlant ? "Start Caring" : "Add and Start Caring", for: .normal)
-            }
-        }
-//            if let firstUser = dataController.getUsers().first {
-//                let userPlants = dataController.getUserPlants(for: firstUser.userId)
-//                
-//                isExistingPlant = userPlants.contains { userPlant in
-//                    guard let existingPlant = dataController.getPlant(by: userPlant.userplantID) else {
-//                        return false
-//                    }
-//                    return existingPlant.plantName == plantName
-//                }
-//
-//                if isExistingPlant {
-//                    showExistingPlantAlert()
-//                    startCaringButton.isHidden = true  // Hide the button if plant exists
-//                } else {
-//                    startCaringButton.isHidden = false
-//                    startCaringButton.setTitle("Add and Start Caring", for: .normal)
-//                }
-//            }
-
-
-        // TableView
+        // Table View
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DiagnosisCell")
-        tableView.isScrollEnabled = true
         tableView.backgroundColor = UIColor(hex: "#EBF4EB")
+        tableView.isHidden = false
         view.addSubview(tableView)
 
         // Start Caring Button
+        startCaringButton.setTitle("Add and Start Caring", for: .normal)
         startCaringButton.setTitleColor(.white, for: .normal)
         startCaringButton.backgroundColor = .systemGreen
         startCaringButton.layer.cornerRadius = 10
+        startCaringButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
         view.addSubview(startCaringButton)
         startCaringButton.addTarget(self, action: #selector(startCaringTapped), for: .touchUpInside)
-
-        // Add this after all the existing setup code
-        setupHealthyAnimation()
+    }
+    
+    private func initializePlantCheck() {
+        guard let plantName = selectedPlant?.plantName else {
+            print("⚠️ No plant name available in selectedPlant")
+            showPlantNotFoundAlert()
+            return
+        }
         
-        // Check if plant is healthy
-        if let diagnosis = selectedPlant?.diagnosis,
-           diagnosis.lowercased().contains("healthy") {
-            showHealthyAnimation()
+        print("\n=== Initializing Plant Check ===")
+        print("📝 Selected plant name: \(plantName)")
+        
+        // First get the plant from database
+        if let plant = dataController.getPlantbyNameSync(name: plantName) {
+            print("✅ Found plant in database")
+            print("📝 Plant details:")
+            print("   - Name: \(plant.plantName)")
+            print("   - Botanical Name: \(plant.plantBotanicalName ?? "Not specified")")
+            print("   - Category: \(plant.category?.rawValue ?? "Not specified")")
+            print("   - Season: \(plant.favourableSeason?.rawValue ?? "Not specified")")
             
-            // Update the overlay color to green for healthy plants
-            overlayView.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
+            // Update UI with plant details
+            updatePlantUI(plant: plant)
+            
+            // Check if user has this plant
+            checkIfPlantExists(plantName: plantName)
+        } else {
+            print("⚠️ Plant not found in database: \(plantName)")
+            showPlantNotFoundAlert()
         }
     }
     
-    private func setupConstraints() {
-        // Enable Auto Layout
-        plantImageView.translatesAutoresizingMaskIntoConstraints = false
-        overlayView.translatesAutoresizingMaskIntoConstraints = false
-        DiagnosisViewController.plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        DiagnosisViewController.diagnosisLabel.translatesAutoresizingMaskIntoConstraints = false
-        DiagnosisViewController.detailsStackView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        startCaringButton.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            // Plant Image
-            plantImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            plantImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            plantImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            plantImageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.25),
-
-            // Overlay
-            overlayView.leadingAnchor.constraint(equalTo: plantImageView.leadingAnchor),
-            overlayView.trailingAnchor.constraint(equalTo: plantImageView.trailingAnchor),
-            overlayView.bottomAnchor.constraint(equalTo: plantImageView.bottomAnchor),
-            overlayView.heightAnchor.constraint(equalToConstant: 60),
-
-            // Plant Name Label
-            DiagnosisViewController.plantNameLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-            DiagnosisViewController.plantNameLabel.topAnchor.constraint(equalTo: DiagnosisViewController.diagnosisLabel.bottomAnchor, constant: 0),
-
-            // Diagnosis Label
-            DiagnosisViewController.diagnosisLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
-            DiagnosisViewController.diagnosisLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
-
-            // Details StackView
-            DiagnosisViewController.detailsStackView.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 16),
-            DiagnosisViewController.detailsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            DiagnosisViewController.detailsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-
-            // TableView
-            tableView.topAnchor.constraint(equalTo: DiagnosisViewController.detailsStackView.bottomAnchor, constant: 10),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
-            tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
-
-            // Start Caring Button
-            startCaringButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            startCaringButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            startCaringButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            startCaringButton.heightAnchor.constraint(equalToConstant: 50)
-        ])
+    private func updatePlantUI(plant: Plant) {
+        // Update the plant details in the model
+        selectedPlant?.plantName = plant.plantName
+        selectedPlant?.botanicalName = plant.plantBotanicalName ?? "Not specified"
+        
+        // Create a more detailed and formatted plant details string
+        let details = """
+            
+            • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
+            • Category: \(plant.category?.rawValue ?? "Not specified")
+            • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
+            """
+        
+        // Update the UI
+        plantDetailsLabel.text = details
+        plantDetailsLabel.isHidden = false
+        print("✅ Updated plant details label")
     }
-    
-//    private func showBackAlert() {
-//        let alert = UIAlertController(
-//            title: "Scan Another Plant?",
-//            message: "Would you like to scan another plant?",
-//            preferredStyle: .alert
-//        )
-//        
-//        let yesAction = UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
-//            self?.navigationController?.popToRootViewController(animated: true)
-//        }
-//        
-//        let noAction = UIAlertAction(title: "No", style: .cancel) { [weak self] _ in
-//            self?.tabBarController?.tabBar.isHidden = false
-//            
-//            self?.tabBarController?.selectedIndex = 0
-//            self?.navigationController?.popToRootViewController(animated: false)
-//        }
-//        
-//        alert.addAction(yesAction)
-//        alert.addAction(noAction)
-//        
-//        present(alert, animated: true)
-//    }
+
+    private func showPlantNotFoundAlert() {
+        let alert = UIAlertController(
+            title: "Plant Not Found",
+            message: "Sorry, we couldn't find this plant in our database. Would you like to scan another plant?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Scan Again", style: .default) { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true) {
+            // Hide all UI elements since plant is not found
+            self.tableView.isHidden = true
+            self.healthyAnimationView.isHidden = true
+            self.startCaringButton.isHidden = true
+            self.plantDetailsLabel.isHidden = true
+        }
+    }
+
+    private func checkIfPlantExists(plantName: String) {
+        print("\n=== Checking if plant exists (Improved) ===")
+        
+        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+            print("❌ No user email found in UserDefaults")
+            startCaringButton.isHidden = false
+            startCaringButton.setTitle("Add and Start Caring", for: .normal)
+            return
+        }
+        
+        // Use the improved function to check if plant exists
+        isExistingPlant = dataController.doesPlantExistInUserGardenSync(plantName: plantName, userEmail: userEmail)
+        
+        if isExistingPlant {
+            print("✅ Plant already exists in user's garden")
+            hasUserResponded = false
+            startCaringButton.isHidden = true
+            DispatchQueue.main.async {
+                self.showExistingPlantAlert()
+            }
+        } else {
+            print("📝 New plant - showing add button")
+            hasUserResponded = true
+            isExistingPlant = false
+            startCaringButton.isHidden = false
+            startCaringButton.setTitle("Add and Start Caring", for: .normal)
+        }
+    }
 
     private func showExistingPlantAlert() {
         let alert = UIAlertController(
-            title: "Plant Already Exists",
-            message: "Is this the same plant that you already have in your space or a different one?",
+            title: "Plant Already in Your Garden",
+            message: "We noticed you already have a \(selectedPlant?.plantName ?? "plant") in your garden. Is this the same plant or a different one?",
             preferredStyle: .alert
         )
         
         alert.addAction(UIAlertAction(title: "Same Plant", style: .default) { [weak self] _ in
-            self?.isExistingPlant = true
-            self?.startCaringButton.isHidden = true
-           // self?.startCaringButton.setTitle("Start Caring", for: .normal)
+            guard let self = self else { return }
+            self.hasUserResponded = true
+            self.isExistingPlant = true
+            
+            // Keep the button hidden for same plant
+            self.startCaringButton.isHidden = true
+            
+            // Show confirmation message
+            let confirmAlert = UIAlertController(
+                title: "Plant Already Being Monitored",
+                message: "This plant is already being monitored in your garden. You can view its details and care schedule in My Garden.",
+                preferredStyle: .alert
+            )
+            confirmAlert.addAction(UIAlertAction(title: "View in My Garden", style: .default) { [weak self] _ in
+                // Navigate to My Garden tab
+                self?.tabBarController?.selectedIndex = 0
+                self?.navigationController?.popToRootViewController(animated: false)
+            })
+            confirmAlert.addAction(UIAlertAction(title: "Stay Here", style: .cancel))
+            self.present(confirmAlert, animated: true)
         })
         
         alert.addAction(UIAlertAction(title: "Different Plant", style: .default) { [weak self] _ in
-            self?.isExistingPlant = false
-            self?.startCaringButton.setTitle("Add and Start Caring", for: .normal)
+            guard let self = self else { return }
+            self.hasUserResponded = true
+            self.isExistingPlant = false
+            // Show the add button for different plant
+            self.startCaringButton.isHidden = false
+            self.startCaringButton.setTitle("Add as New Plant", for: .normal)
         })
         
         present(alert, animated: true)
@@ -342,25 +318,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             let text = sectionData[indexPath.row]
             cell.textLabel?.text = text
             cell.textLabel?.numberOfLines = 0
-            
-            if text.starts(with: "http") {
-                cell.textLabel?.textColor = .systemBlue
-                cell.textLabel?.isUserInteractionEnabled = true
-                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openLink(_:)))
-                cell.textLabel?.addGestureRecognizer(tapGesture)
-            } else {
-                cell.textLabel?.textColor = UIColor(hex: "#004E05")
-                cell.textLabel?.isUserInteractionEnabled = false
-            }
+            cell.textLabel?.textColor = UIColor(hex: "#004E05")
         }
         return cell
     }
 
-    @objc func openLink(_ sender: UITapGestureRecognizer) {
-        guard let label = sender.view as? UILabel,
-              let text = label.text,
-              let url = URL(string: text) else { return }
-        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
     }
 
     // MARK: - UITableViewDelegate
@@ -419,60 +383,150 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             return
         }
         
+        // If user hasn't responded to the existing plant alert yet and it's an existing plant
+        if isExistingPlant && !hasUserResponded {
+            print("⚠️ User needs to respond to existing plant alert first")
+            showExistingPlantAlert()
+            return
+        }
+        
+        // If it's an existing plant and user chose "Same Plant", don't proceed
+        if isExistingPlant && hasUserResponded && startCaringButton.isHidden {
+            print("ℹ️ User chose 'Same Plant' - not adding duplicate")
+            return
+        }
+        
         print("\n=== Starting Add Plant Flow ===")
         print("Plant name from DiagnosisViewController: \(plantName)")
         
-        let reminderVC = addNickNameViewController()
+        // Retrieve the stored image URL from UserDefaults
+        let imageURL = UserDefaults.standard.string(forKey: "pendingPlantImageURL")
+        print("🔗 Using stored image URL: \(imageURL ?? "none")")
         
-        // Pass both the plant name and the selected plant
+        let reminderVC = addNickNameViewController()
         reminderVC.plantNameForReminder = plantName
+        
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
-            // Get the image we're currently displaying in the diagnosis view
-            if let diagnosisImage = plantImageView.image {
-                print("✅ Adding diagnosis image to plant")
-                dataController.updatePlantImages(plantName: plantName, newImage: diagnosisImage)
-            } else {
-                print("❌ No diagnosis image available")
-            }
+            // We no longer need to upload the image here since it was already uploaded during diagnosis
+            // and the URL is stored in UserDefaults
             reminderVC.selectedPlant = plant
         }
         
-        // Create navigation controller to present it
         let navController = UINavigationController(rootViewController: reminderVC)
         present(navController, animated: true)
     }
 
-    // Helper function to convert Diseases to dictionary format
-    private func convertDiseaseToDictionary(_ disease: Diseases) -> [String: [String]] {
-        var dict: [String: [String]] = [:]
-        
-        // Add symptoms
-        if !disease.symptoms.isEmpty {
-            dict["Symptoms"] = disease.symptoms
-        }
-        
-        // Add causes
-        if !disease.causes.isEmpty {
-            dict["Causes"] = disease.causes
-        }
-        
-        // Add treatments
-        if !disease.treatment.isEmpty {
-            dict["Treatment"] = disease.treatment
-        }
-        
-        // Add prevention
-        if !disease.prevention.isEmpty {
-            dict["Prevention"] = disease.prevention
-        }
-        
-        return dict
-    }
-
     // Update the disease details handling
     private func updateDiseaseDetails(with disease: Diseases) {
-        selectedPlant?.sectionDetails = convertDiseaseToDictionary(disease)
+        var dict: [String: [String]] = [:]
+        
+        // 1. Add symptoms section
+        if let symptoms = disease.diseaseSymptoms {
+            dict["Symptoms"] = symptoms.components(separatedBy: "; ")
+        }
+        
+        // 2. Add treatment section
+        if let treatment = disease.diseaseCure {
+            dict["Treatment"] = treatment.components(separatedBy: "; ")
+        }
+        
+        // 3. Add preventive measures section
+        if let preventiveMeasures = disease.diseasePreventiveMeasures {
+            dict["Preventive Measures"] = preventiveMeasures.components(separatedBy: "; ")
+        }
+        
+        // 4. Add fertilizers section
+        if let fertilizers = disease.diseaseFertilizers {
+            dict["Recommended Fertilizers"] = fertilizers.components(separatedBy: "; ")
+        }
+        
+        // 5. Add video solution section if available
+        if let videoSolution = disease.diseaseVideoSolution {
+            dict["Video Guide"] = [videoSolution]
+        }
+        
+        selectedPlant?.sectionDetails = dict
+        DiagnosisViewController.diagnosisLabel.text = disease.diseaseName
+
+        // Update plant details with season information
+        if let plant = dataController.getPlantbyNameSync(name: selectedPlant?.plantName ?? "") {
+            let details = """
+                Plant: \(plant.plantName)
+                Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
+                Season: \(disease.diseaseSeason?.rawValue.capitalized ?? "Not specified")
+                """
+            plantDetailsLabel.text = details
+        }
+        
+        // Ensure table view is visible and reload
+        tableView.isHidden = false
+        if !sectionTitles.isEmpty {
+            expandedSections.insert(0)  // Expand first section by default
+        }
         tableView.reloadData()
+    }
+
+    // Update fetchAndUpdateDiseaseDetails to use the new format
+    func fetchAndUpdateDiseaseDetails(diseaseName: String) {
+        print("\n=== Fetching Disease Details ===")
+        print("🔍 Looking for disease: \(diseaseName)")
+        
+        // Clean up disease name
+        let cleanName = diseaseName.replacingOccurrences(of: "_", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Handle healthy plant cases
+        if cleanName.lowercased().contains("healthy") || cleanName == "No disease detected" {
+            print("✅ Plant is healthy")
+            // Hide table view for healthy plants
+            tableView.isHidden = true
+            
+            // Update diagnosis label
+            DiagnosisViewController.diagnosisLabel.text = "Healthy"
+            
+            // Show healthy animation and message
+            showHealthyAnimation()
+            
+            // Update the overlay to green
+            overlayView.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
+            
+            // Update plant details if we have the plant name
+            if let plantName = selectedPlant?.plantName {
+                initializePlantCheck()
+            }
+            
+            return
+        }
+        
+        if let disease = dataController.getDiseaseByNameSync(name: cleanName) {
+            print("✅ Found disease in database")
+            updateDiseaseDetails(with: disease)
+        } else {
+            print("⚠️ No specific condition detected")
+            // Hide table view
+            tableView.isHidden = true
+            
+            // Show healthy status if no disease is found
+            DiagnosisViewController.diagnosisLabel.text = "Healthy"
+            overlayView.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
+            showHealthyAnimation()
+            
+            // Update plant details
+            if let plantName = selectedPlant?.plantName {
+                initializePlantCheck()
+            }
+        }
+    }
+
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(
+            title: "Plant Condition Not Found",
+            message: message,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     // Add this method after setupUI()
@@ -480,19 +534,26 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         // Setup animation container view
         healthyAnimationView.backgroundColor = UIColor(hex: "#EBF4EB")
         healthyAnimationView.alpha = 0
+        healthyAnimationView.layer.cornerRadius = 15
+        healthyAnimationView.clipsToBounds = true
+        healthyAnimationView.layer.borderWidth = 1
+        healthyAnimationView.layer.borderColor = UIColor.systemGreen.withAlphaComponent(0.3).cgColor
         view.addSubview(healthyAnimationView)
         
         // Setup checkmark image
-        checkmarkImageView.image = UIImage(systemName: "checkmark.circle.fill")
+        checkmarkImageView.image = UIImage(systemName: "checkmark.seal.fill")
         checkmarkImageView.tintColor = .systemGreen
         checkmarkImageView.contentMode = .scaleAspectFit
         healthyAnimationView.addSubview(checkmarkImageView)
         
-        // Setup healthy label
-        healthyLabel.text = "Your plant is healthy! 🌱"
+        // Setup healthy label with more padding and styling
         healthyLabel.textColor = UIColor(hex: "#005E2C")
-        healthyLabel.font = .systemFont(ofSize: 24, weight: .bold)
+        healthyLabel.font = .systemFont(ofSize: 20, weight: .bold)
         healthyLabel.textAlignment = .center
+        healthyLabel.numberOfLines = 0
+        healthyLabel.backgroundColor = .clear
+        healthyLabel.layer.cornerRadius = 12
+        healthyLabel.clipsToBounds = true
         healthyAnimationView.addSubview(healthyLabel)
         
         // Setup constraints
@@ -501,20 +562,20 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         healthyLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            healthyAnimationView.topAnchor.constraint(equalTo: DiagnosisViewController.detailsStackView.bottomAnchor),
-            healthyAnimationView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            healthyAnimationView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            healthyAnimationView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor),
+            healthyAnimationView.topAnchor.constraint(equalTo: plantDetailsLabel.bottomAnchor, constant: 10),
+            healthyAnimationView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            healthyAnimationView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            healthyAnimationView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -20),
             
             checkmarkImageView.centerXAnchor.constraint(equalTo: healthyAnimationView.centerXAnchor),
-            checkmarkImageView.centerYAnchor.constraint(equalTo: healthyAnimationView.centerYAnchor, constant: -40),
-            checkmarkImageView.widthAnchor.constraint(equalToConstant: 100),
-            checkmarkImageView.heightAnchor.constraint(equalToConstant: 100),
+            checkmarkImageView.topAnchor.constraint(equalTo: healthyAnimationView.topAnchor, constant: 10),
+            checkmarkImageView.widthAnchor.constraint(equalToConstant: 80),
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: 80),
             
-            healthyLabel.topAnchor.constraint(equalTo: checkmarkImageView.bottomAnchor, constant: 20),
-            healthyLabel.centerXAnchor.constraint(equalTo: healthyAnimationView.centerXAnchor),
+            healthyLabel.topAnchor.constraint(equalTo: checkmarkImageView.bottomAnchor, constant: 10),
             healthyLabel.leadingAnchor.constraint(equalTo: healthyAnimationView.leadingAnchor, constant: 20),
-            healthyLabel.trailingAnchor.constraint(equalTo: healthyAnimationView.trailingAnchor, constant: -20)
+            healthyLabel.trailingAnchor.constraint(equalTo: healthyAnimationView.trailingAnchor, constant: -20),
+            healthyLabel.bottomAnchor.constraint(lessThanOrEqualTo: healthyAnimationView.bottomAnchor, constant: -20)
         ])
     }
 
@@ -523,9 +584,56 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         // Hide the table view
         tableView.isHidden = true
         
-        // Show the healthy animation view
+        // Configure healthy animation view if not already configured
+        if healthyAnimationView.superview == nil {
+            setupHealthyAnimation()
+        }
+        
+        // Update healthy label text with more detailed message
+        let titleAttributes = [
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 24, weight: .bold),
+            NSAttributedString.Key.foregroundColor: UIColor.systemGreen
+        ]
+        
+        let subtitleAttributes = [
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 18, weight: .medium),
+            NSAttributedString.Key.foregroundColor: UIColor(hex: "#005E2C")
+        ]
+        
+        let bulletPointAttributes = [
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 16, weight: .regular),
+            NSAttributedString.Key.foregroundColor: UIColor(hex: "#005E2C")
+        ]
+        
+        let attributedString = NSMutableAttributedString()
+        
+        // Title
+        attributedString.append(NSAttributedString(string: "Your plant is healthy! 🌱\n\n", attributes: titleAttributes))
+        
+        // Subtitle
+        attributedString.append(NSAttributedString(string: "Keep maintaining the current care routine:\n\n", attributes: subtitleAttributes))
+        
+        // Bullet points
+        let bulletPoints = [
+            "• Proper watering\n",
+            "• Good light exposure\n",
+            "• Regular monitoring"
+        ]
+        
+        for point in bulletPoints {
+            attributedString.append(NSAttributedString(string: point, attributes: bulletPointAttributes))
+        }
+        
+        healthyLabel.attributedText = attributedString
+        
+        // Show the healthy animation view with shadow
         healthyAnimationView.transform = CGAffineTransform(scaleX: 0.5, y: 0.5)
         healthyAnimationView.alpha = 0
+        healthyAnimationView.isHidden = false
+        healthyAnimationView.layer.shadowColor = UIColor.black.cgColor
+        healthyAnimationView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        healthyAnimationView.layer.shadowRadius = 4
+        healthyAnimationView.layer.shadowOpacity = 0.1
         
         UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5, options: [], animations: {
             self.healthyAnimationView.transform = .identity
@@ -537,5 +645,62 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         UIView.animate(withDuration: 0.5, delay: 0.2, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5, options: [], animations: {
             self.checkmarkImageView.transform = .identity
         })
+    }
+
+    @objc func openLink(_ sender: UITapGestureRecognizer) {
+        guard let label = sender.view as? UILabel,
+              let text = label.text,
+              let urlText = text.components(separatedBy: ": ").last,
+              let url = URL(string: urlText) else { return }
+        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+    }
+
+    private func setupConstraints() {
+        plantImageView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        DiagnosisViewController.plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        DiagnosisViewController.diagnosisLabel.translatesAutoresizingMaskIntoConstraints = false
+        plantDetailsLabel.translatesAutoresizingMaskIntoConstraints = false
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        startCaringButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            // Plant Image
+            plantImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            plantImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            plantImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            plantImageView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.25),
+            
+            // Overlay
+            overlayView.leadingAnchor.constraint(equalTo: plantImageView.leadingAnchor),
+            overlayView.trailingAnchor.constraint(equalTo: plantImageView.trailingAnchor),
+            overlayView.bottomAnchor.constraint(equalTo: plantImageView.bottomAnchor),
+            overlayView.heightAnchor.constraint(equalToConstant: 60),
+            
+            // Plant Name Label
+            DiagnosisViewController.plantNameLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
+            DiagnosisViewController.plantNameLabel.topAnchor.constraint(equalTo: DiagnosisViewController.diagnosisLabel.bottomAnchor, constant: 0),
+            
+            // Diagnosis Label
+            DiagnosisViewController.diagnosisLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 16),
+            DiagnosisViewController.diagnosisLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
+            
+            // Plant Details Label
+            plantDetailsLabel.topAnchor.constraint(equalTo: plantImageView.bottomAnchor, constant: 16),
+            plantDetailsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            plantDetailsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            // Table View
+            tableView.topAnchor.constraint(equalTo: plantDetailsLabel.bottomAnchor, constant: 16),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            tableView.bottomAnchor.constraint(equalTo: startCaringButton.topAnchor, constant: -16),
+            
+            // Start Caring Button
+            startCaringButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            startCaringButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            startCaringButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            startCaringButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
     }
 }

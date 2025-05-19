@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class AllDataCollectionViewCell: UICollectionViewCell {
 
@@ -63,43 +64,76 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         nameLabel.text = plant.plantName
         descriptionLabel.text = plant.plantDescription
         
-        if let imageName = plant.plantImage.first {
-            plantImageView.image = UIImage(named: imageName)
+        if let urlString = plant.plantImage, let url = URL(string: urlString) {
+            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "placeholder_plant"))
+        } else {
+            plantImageView.image = UIImage(named: "placeholder_plant")
         }
         
-        // Ensure labels are visible and properly laid out
         nameLabel.setNeedsLayout()
         descriptionLabel.setNeedsLayout()
         layoutIfNeeded()
     }
     
     func configureForDisease(with disease: Diseases) {
+        // Set disease name with proper formatting
         nameLabel.text = disease.diseaseName
         
-        // Format symptoms with bullet points
-        let symptomsText = disease.diseaseSymptoms.map { "• \($0)" }.joined(separator: "\n")
-        descriptionLabel.text = symptomsText
+        // Format disease information in paragraphs
+        var descriptionText = ""
         
-        if let imageName = disease.diseaseImage.first {
-            plantImageView.image = UIImage(named: imageName)
+        // Add symptoms without label
+        if let symptoms = disease.diseaseSymptoms, !symptoms.isEmpty {
+            // Convert array of Characters to String
+            let symptomString = symptoms.map { String($0) }.joined()
+            descriptionText = symptomString
         }
         
-        // Ensure labels are visible and properly laid out
-        nameLabel.setNeedsLayout()
-        descriptionLabel.setNeedsLayout()
+        if descriptionText.isEmpty {
+            descriptionText = "No information available"
+        }
+        
+        // Create attributed string with paragraph styling
+        let attributedString = NSMutableAttributedString(string: descriptionText)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 6
+        paragraphStyle.paragraphSpacing = 12
+        
+        // Apply paragraph style to entire text
+        attributedString.addAttribute(NSAttributedString.Key.paragraphStyle,
+                                    value: paragraphStyle,
+                                    range: NSRange(location: 0, length: descriptionText.count))
+        
+        // Apply text attributes for better readability
+        attributedString.addAttributes([
+            .font: UIFont.systemFont(ofSize: 16, weight: .regular),
+            .foregroundColor: UIColor.darkGray
+        ], range: NSRange(location: 0, length: descriptionText.count))
+        
+        descriptionLabel.attributedText = attributedString
+        
+        // Load and display disease image
+        if let urlString = disease.diseaseImage, let url = URL(string: urlString) {
+            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "placeholder_disease"))
+        } else {
+            plantImageView.image = UIImage(named: "placeholder_disease")
+        }
+        
+        // Ensure proper layout
+        setNeedsLayout()
         layoutIfNeeded()
     }
     
-    // Update the method signature to accept a Fertilizer object
     func configureForFertilizer(with fertilizer: Fertilizer) {
-        // Configure the cell with fertilizer data
         nameLabel.text = fertilizer.fertilizerName
-        descriptionLabel.text = fertilizer.fertilizerDescription
+        descriptionLabel.text = fertilizer.fertilizerDescription ?? "No description available"
         
-        // Load the fertilizer image
-        plantImageView.image = UIImage(named: fertilizer.fertilizerImage) ?? UIImage(named: "fertilizer_placeholder")
+        if let urlString = fertilizer.fertilizerImage, let url = URL(string: urlString) {
+            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "fertilizer_placeholder"))
+        } else {
+            plantImageView.image = UIImage(named: "fertilizer_placeholder")
+        }
         
-        // Ensure labels are visible and properly laid out
         nameLabel.setNeedsLayout()
         descriptionLabel.setNeedsLayout()
         layoutIfNeeded()

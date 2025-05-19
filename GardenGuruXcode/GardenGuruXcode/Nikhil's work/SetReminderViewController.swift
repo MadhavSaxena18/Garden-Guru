@@ -156,15 +156,21 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         print("\n=== Adding New Plant ===")
         print("Looking for plant: '\(plantName)'")
         
-        if let plant = DataControllerGG.shared.getPlantbyNameSync(name: plantName) {
+        Task {
+            do {
+                if let plant = try await DataControllerGG.shared.getPlantbyName(by: plantName) {
             self.existingPlant = plant
             print("✅ Found existing plant:")
             print("- Name: \(plant.plantName)")
             print("- ID: \(plant.plantID)")
+                    await self.continueAddingPlant(nickname: nickname)
         } else {
             print("❌ Plant not found in database")
             print("Available plants:")
-            dataController.getPlants().forEach { plant in
+                    
+                    let plants = try await dataController.getPlants()
+                    await MainActor.run {
+                        plants.forEach { plant in
                 print("- \(plant.plantName)")
             }
             
@@ -175,10 +181,26 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
                 preferredStyle: .alert
             )
             alert.addAction(UIAlertAction(title: "OK", style: .default))
-            present(alert, animated: true)
-            return
+                        self.present(alert, animated: true)
+                    }
+                }
+            } catch {
+                print("Error: \(error)")
+                await MainActor.run {
+                    let alert = UIAlertController(
+                        title: "Error",
+                        message: "Failed to process request. Please try again later.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
+            }
         }
-        
+    }
+    
+    @MainActor
+    private func continueAddingPlant(nickname: String) async {
         // Create new UserPlant
         guard let plant = existingPlant,
               let user = dataController.getUserSync() else { 
@@ -186,17 +208,20 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             return 
         }
         
+        // Get the stored image URL from UserDefaults
+        let imageURL = UserDefaults.standard.string(forKey: "pendingPlantImageURL") ?? ""
+        print("🔍 Retrieved stored image URL: \(imageURL)")
+        
+        let userPlantID = UUID()
         let newUserPlant = UserPlant(
-            userPlantRelationID: UUID(),
+            userPlantRelationID: userPlantID,
+            userId: UUID(uuidString: user.id) ?? UUID(),
             userplantID: plant.plantID,
-            userId: user.userEmail,  // Using email as userId
             userPlantNickName: nickname,
-            lastWatered: Date(),
-            lastFertilized: Date(),
-            lastRepotted: Date()
+            userPlantImage: imageURL // Add the image URL here
         )
         
-        // Get switch states and create reminder
+        // Get switch states for reminders
         var isWateringEnabled = false
         var isFertilizingEnabled = false
         var isRepottingEnabled = false
@@ -217,25 +242,37 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             }
         }
         
-        // Calculate reminder dates based on enabled switches
-        let nextWaterDate = isWateringEnabled ? 
-            Calendar.current.date(byAdding: .day, value: plant.waterFrequency, to: Date()) : nil
-        let nextFertilizerDate = isFertilizingEnabled ? 
-            Calendar.current.date(byAdding: .day, value: plant.fertilizerFrequency, to: Date()) : nil
-        let nextRepottingDate = isRepottingEnabled ? 
-            Calendar.current.date(byAdding: .day, value: plant.repottingFrequency, to: Date()) : nil
+        // Calculate reminder dates based on enabled switches and plant frequencies
+        let currentDate = Date()
+        let waterDate = isWateringEnabled ? 
+            Calendar.current.date(byAdding: .day, value: Int(plant.waterFrequency ?? 7), to: currentDate) : currentDate
+        let fertilizerDate = isFertilizingEnabled ? 
+            Calendar.current.date(byAdding: .day, value: Int(plant.fertilizerFrequency ?? 30), to: currentDate) : nil
+        let repottingDate = isRepottingEnabled ? 
+            Calendar.current.date(byAdding: .day, value: Int(plant.repottingFrequency ?? 365), to: currentDate) : nil
         
-        // Create reminder with only enabled reminders
+        // Create reminder with enabled reminders
         let reminder = CareReminder_(
-            userPlantID: newUserPlant.userPlantRelationID,
-            wateringDate: nextWaterDate,
-            fertilizingDate: nextFertilizerDate,
-            repottingDate: nextRepottingDate
+            careReminderID: userPlantID, // Use same ID as userPlant for easy linking
+            upcomingReminderForWater: waterDate ?? currentDate,
+            upcomingReminderForFertilizers: fertilizerDate,
+            upcomingReminderForRepotted: repottingDate,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false
         )
         
-        // Add to DataController with the reminder
+        // Add UserPlant to database
         dataController.addUserPlantSync(userPlant: newUserPlant)
         print("✅ Added plant to DataController")
+        
+        // Add CareReminder to database
+        dataController.addCareReminderSync(userPlantID: userPlantID, reminderAllowed: isWateringEnabled || isFertilizingEnabled || isRepottingEnabled)
+        print("✅ Added care reminder to DataController")
+        
+        // Clear the stored image URL from UserDefaults after successful plant creation
+        UserDefaults.standard.removeObject(forKey: "pendingPlantImageURL")
+        print("✅ Cleared pending image URL from UserDefaults")
         
         // Post notification
         NotificationCenter.default.post(
@@ -299,12 +336,47 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     // Add public method to set plant name
     func configure(plantName: String?, nickname: String?) {
         print("\n=== Configuring SetReminderViewController ===")
+        print("DataController instance: \(dataController)")
+        
         if let plantName = plantName {
             self.plantNameLabel.text = plantName
             print("Setting plant name to: '\(plantName)'")
+            
+            Task {
+                do {
+                    if let plant = try await dataController.getPlantbyName(by: plantName) {
+                        print("✅ Plant found in database:")
+                        print("- Name: \(plant.plantName)")
+                        print("- ID: \(plant.plantID)")
+                        print("- Category: \(plant.category)")
+                    } else {
+                        print("❌ Plant not found in database")
+                        print("Attempting to fetch all plants...")
+                        let allPlants = try await dataController.getPlants()
+                        print("Available plants:")
+                        await MainActor.run {
+                            allPlants.forEach { plant in
+                                print("- '\(plant.plantName)'")
+                            }
+                        }
+                    }
+                } catch {
+                    print("Error during plant verification: \(error)")
+                    await MainActor.run {
+                        let alert = UIAlertController(
+                            title: "Error",
+                            message: "Failed to verify plant information. Please try again.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
+                }
+            }
         } else {
             print("❌ No plant name provided to SetReminderViewController")
         }
+        
         if let nickname = nickname {
             self.locationLabel.text = nickname
             print("Setting nickname to: '\(nickname)'")

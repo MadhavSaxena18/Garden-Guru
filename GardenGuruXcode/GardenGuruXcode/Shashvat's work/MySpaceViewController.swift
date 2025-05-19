@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchResultsUpdating, UICollectionViewDelegateFlowLayout {
     // Static array to store newly added plants
@@ -90,29 +91,42 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     
     private func loadData() {
         print("\n=== MySpaceViewController loadData started ===")
+        print("🔑 Checking UserDefaults...")
+        print("isLoggedIn: \(UserDefaults.standard.bool(forKey: "isLoggedIn"))")
+        print("userEmail: \(UserDefaults.standard.string(forKey: "userEmail") ?? "nil")")
         
         guard let user = dataController.getUserSync() else {
-            print("ERROR: No users found in DataController")
+            print("❌ ERROR: No users found in DataController")
             return
         }
         
+        print("✅ Found user: \(user.userEmail)")
+        
         // Get plants with details using the sync wrapper
+        print("🌿 Fetching plants for user...")
         let plantsWithDetails = dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail) ?? []
         
-        print("\nAll plant IDs:")
+        print("\n📊 Plant Details Summary:")
+        print("Total plants found: \(plantsWithDetails.count)")
+        
         plantsWithDetails.forEach { plantWithDetails in
-            print("Plant: \(plantWithDetails.userPlant.userPlantNickName), ID: \(plantWithDetails.userPlant.userplantID)")
+            print("\nPlant: \(plantWithDetails.plant.plantName)")
+            print("- ID: \(plantWithDetails.userPlant.userplantID?.uuidString ?? "nil")")
+            print("- Nickname: \(plantWithDetails.userPlant.userPlantNickName ?? "nil")")
         }
         
         // Calculate user stats with actual count
         let totalPlants = plantsWithDetails.count
-        print("\nProcessed plants count: \(totalPlants)")
+        print("\n📈 Stats:")
+        print("Total Plants: \(totalPlants)")
         
         // Count plants by category
         var categoryCount: [Category: Int] = [:]
         plantsWithDetails.forEach { plantWithDetails in
-            categoryCount[plantWithDetails.plant.category, default: 0] += 1
-            print("Added \(plantWithDetails.plant.plantName) to category \(plantWithDetails.plant.category)")
+            if let category = plantWithDetails.plant.category {
+                categoryCount[category, default: 0] += 1
+                print("Category \(category): \(categoryCount[category] ?? 0) plants")
+            }
         }
         
         userStats = [
@@ -127,7 +141,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             tuple.plant.plantName
         }
         
-        print("\nGrouped plants by name:")
+        print("\n🔍 Plant Grouping:")
         groupedPlants.forEach { (name, plants) in
             print("- \(name): \(plants.count) plant(s)")
         }
@@ -138,8 +152,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             groupedPlants[plantName]?.map { $0.userPlant } ?? []
         }
         
-        print("\nFinal organization:")
-        print("Categories (\(plantCategories.count)): \(plantCategories)")
+        print("\n🏷 Categories:")
         for (index, category) in plantCategories.enumerated() {
             print("- \(category): \(categorizedPlants[index].count) plant(s)")
         }
@@ -147,12 +160,12 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         // Update UI on main thread
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            print("\n🔄 Updating UI...")
             self.mySpaceCollectionView.reloadData()
-            print("\nCollection view updated with:")
-            print("- Number of sections: \(self.numberOfSections(in: self.mySpaceCollectionView))")
+            print("Collection view sections: \(self.numberOfSections(in: self.mySpaceCollectionView))")
             for section in 0..<self.numberOfSections(in: self.mySpaceCollectionView) {
                 let items = self.collectionView(self.mySpaceCollectionView, numberOfItemsInSection: section)
-                print("- Section \(section): \(items) items")
+                print("Section \(section): \(items) items")
             }
         }
         
@@ -178,11 +191,13 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         let filteredPairs = categoryPlantPairs.compactMap { category, plants -> (String, [UserPlant])? in
             let filteredPlants = plants.filter { userPlant in
                 // Get the plant details using sync wrapper
-                guard let plant = dataController.getPlantSync(by: userPlant.userplantID) else { return false }
-                
+                if let plantID = userPlant.userplantID,
+                   let plant = dataController.getPlantSync(by: plantID) {
                 // Check if either nickname or plant name contains the search text
-                return userPlant.userPlantNickName.lowercased().contains(searchText) ||
+                    return (userPlant.userPlantNickName?.lowercased().contains(searchText))! ||
                        plant.plantName.lowercased().contains(searchText)
+                }
+                return false
             }
             
             // Only include categories that have matching plants
@@ -223,20 +238,38 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             cell.configure(with: userStats)
             return cell
         }
-        
         let plants = isSearching ? filteredCategorizedPlants : categorizedPlants
         let userPlant = plants[indexPath.section - 1][indexPath.item]
-        
-        // Get plant data using sync wrapper
-        if let plant = dataController.getPlantSync(by: userPlant.userplantID) {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlantCell", for: indexPath) as! MySpacePlantCell
-            cell.configure(with: userPlant, plant: plant)
-            cell.deleteButton.addTarget(self, action: #selector(handleDeletePlant(_:)), for: UIControl.Event.touchUpInside)
-            return cell
+        guard let plantID = userPlant.userplantID,
+              let plant = dataController.getPlantSync(by: plantID) else {
+            return UICollectionViewCell()
         }
-        
-        // Return empty cell if plant data not found
-        return UICollectionViewCell()
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewSection1Cell
+        // Set nickname
+        cell.section1NickNameLabel.text = userPlant.userPlantNickName ?? ""
+        // Set image: Prefer userPlant image, else plant image, else placeholder
+        if let userPlantImageURL = userPlant.userPlantImage, !userPlantImageURL.isEmpty, let url = URL(string: userPlantImageURL) {
+            cell.section1PlantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "plant_placeholder"))
+        } else if let plantImageURL = plant.plantImage, !plantImageURL.isEmpty, let url = URL(string: plantImageURL) {
+            cell.section1PlantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "plant_placeholder"))
+        } else {
+            cell.section1PlantImageView.image = UIImage(named: "plant_placeholder")
+        }
+        // Set up 3-dots menu if needed
+        cell.optionsHandler = { [weak self] in
+            let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+            alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { _ in
+                self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
+                self?.loadData()
+            })
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            if let popover = alert.popoverPresentationController {
+                popover.sourceView = cell
+                popover.sourceRect = cell.bounds
+            }
+            self?.present(alert, animated: true)
+        }
+        return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -253,12 +286,12 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 
                 let plantName = categories[indexPath.section - 1]
                 let plantsInSection = plants[indexPath.section - 1]
-                
-                header.headerLabel.text = plantName
+                // Show name with count in brackets
+                header.headerLabel.text = "\(plantName) (\(plantsInSection.count))"
                 header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
                 header.headerLabel.textColor = UIColor(hex: "284329")
-                header.totalPlantLabel.text = "Total Plants: \(plantsInSection.count)"
-                header.totalPlantLabel.textColor = UIColor(hex: "284329")
+                // Hide the totalPlantLabel
+                header.totalPlantLabel.isHidden = true
             }
             
             return header
@@ -302,23 +335,20 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     
     func generateSection1Layout() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(290)
+            widthDimension: .fractionalWidth(0.9),
+            heightDimension: .absolute(260)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
         let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(0.9),
-            heightDimension: .absolute(290)
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(260)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-        
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
-        section.interGroupSpacing = 15
-        section.orthogonalScrollingBehavior = .groupPaging
-        
-        // Add header
+        section.orthogonalScrollingBehavior = .continuous
+        section.interGroupSpacing = 2
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 20, trailing: 0)
         let headerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
             heightDimension: .absolute(45)
@@ -329,7 +359,6 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             alignment: .top
         )
         section.boundarySupplementaryItems = [header]
-        
         return section
     }
     
@@ -365,7 +394,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         
         // Register cells
         mySpaceCollectionView.register(MySpaceStatsCell.self, forCellWithReuseIdentifier: "StatsCell")
-        mySpaceCollectionView.register(MySpacePlantCell.self, forCellWithReuseIdentifier: "PlantCell")
+        mySpaceCollectionView.register(UINib(nibName: "MySpaceCollectionViewSection1Cell", bundle: nil), forCellWithReuseIdentifier: "first")
         
         // Register header
         mySpaceCollectionView.register(
@@ -383,29 +412,21 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         print("Collection view setup completed")
     }
     
-    @objc private func handleDeletePlant(_ sender: UIButton) {
-        guard let cell = sender.superview?.superview as? UICollectionViewCell,
-              let indexPath = mySpaceCollectionView.indexPath(for: cell) else {
-            return
-        }
-        
+    @objc private func handleMenuButton(_ sender: UIButton) {
+        let section = sender.tag >> 16
+        let item = sender.tag & 0xFFFF
         let plants = isSearching ? filteredCategorizedPlants : categorizedPlants
-        let userPlant = plants[indexPath.section - 1][indexPath.item]
-        
-        // Show confirmation alert
-        let alert = UIAlertController(
-            title: "Delete Plant",
-            message: "Are you sure you want to delete this plant?",
-            preferredStyle: .alert
-        )
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        let userPlant = plants[section - 1][item]
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
-            // Use sync wrapper to delete plant
             self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
             self?.loadData()
         })
-        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = sender
+            popover.sourceRect = sender.bounds
+        }
         present(alert, animated: true)
     }
     
@@ -421,7 +442,11 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         print("UserPlant ID: \(userPlant.userplantID)")
         
         // Check if this plant is already in newlyAddedPlants
-        if MySpaceViewController.newlyAddedPlants.contains(where: { $0.userplantID == userPlant.userplantID }) {
+        let isDuplicate = MySpaceViewController.newlyAddedPlants.contains { existingPlant in
+            existingPlant.userplantID == userPlant.userplantID
+        }
+        
+        if isDuplicate {
             print("⚠️ Plant already exists in newlyAddedPlants - skipping addition")
             return
         }
@@ -458,109 +483,5 @@ extension MySpaceViewController {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 15
-    }
-}
-
-class MySpacePlantCell: UICollectionViewCell {
-    var deleteButton: UIButton!
-    private var imageView: UIImageView!
-    private var nameLabel: UILabel!
-    private var nicknameLabel: UILabel!
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupUI()
-    }
-    
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupUI()
-    }
-    
-    private func setupUI() {
-        // Setup container view with rounded corners and shadow
-        let containerView = UIView()
-        containerView.backgroundColor = .white
-        containerView.layer.cornerRadius = 15
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        containerView.layer.shadowRadius = 4
-        containerView.layer.shadowOpacity = 0.1
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(containerView)
-        
-        // Setup image view
-        imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 10
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.addSubview(imageView)
-        
-        // Setup name label
-        nameLabel = UILabel()
-        nameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        nameLabel.textColor = UIColor(hex: "284329")
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        containerView.addSubview(nameLabel)
-        
-        // Setup nickname label
-        nicknameLabel = UILabel()
-        nicknameLabel.font = UIFont.systemFont(ofSize: 16)
-        nicknameLabel.textColor = UIColor(hex: "284329")
-        nicknameLabel.translatesAutoresizingMaskIntoConstraints = false
-        containerView.addSubview(nicknameLabel)
-        
-        // Setup delete button
-        deleteButton = UIButton(type: .system)
-        deleteButton.setImage(UIImage(systemName: "trash"), for: .normal)
-        deleteButton.tintColor = .red
-        deleteButton.translatesAutoresizingMaskIntoConstraints = false
-        containerView.addSubview(deleteButton)
-        
-        // Setup constraints
-        NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
-            
-            imageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
-            imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            imageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
-            imageView.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.6),
-            
-            nameLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 12),
-            nameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: deleteButton.leadingAnchor, constant: -8),
-            
-            nicknameLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
-            nicknameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            nicknameLabel.trailingAnchor.constraint(equalTo: deleteButton.leadingAnchor, constant: -8),
-            
-            deleteButton.centerYAnchor.constraint(equalTo: nameLabel.centerYAnchor),
-            deleteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
-            deleteButton.widthAnchor.constraint(equalToConstant: 24),
-            deleteButton.heightAnchor.constraint(equalToConstant: 24)
-        ])
-    }
-    
-    func configure(with userPlant: UserPlant, plant: Plant) {
-        nameLabel.text = plant.plantName
-        nicknameLabel.text = userPlant.userPlantNickName
-        
-        // Load image if available
-        if let lastImage = plant.plantImage.last,
-           let imageData = Data(base64Encoded: lastImage),
-           let image = UIImage(data: imageData) {
-            // If the last image is a base64 encoded image (from camera)
-            imageView.image = image
-        } else if !plant.plantImage.isEmpty {
-            // Use the first image from the array
-            imageView.image = UIImage(named: plant.plantImage[0])
-        } else {
-            // Use a placeholder if no images available
-            imageView.image = UIImage(named: "plant_placeholder")
-        }
     }
 }

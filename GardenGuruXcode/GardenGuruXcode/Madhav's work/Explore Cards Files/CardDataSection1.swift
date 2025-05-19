@@ -31,8 +31,22 @@ class CardDataSection1: UICollectionViewCell {
         }
 
         if let plant = data as? Plant {
-            // Set plant image
-            plantImageOutlet.image = UIImage(named: plant.plantImage.first ?? "defaultPlantImage")
+            // Set plant image from URL if available
+            if let urlString = plant.plantImage, let url = URL(string: urlString) {
+                URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+                    guard let self = self, let data = data, error == nil else {
+                        DispatchQueue.main.async {
+                            self?.plantImageOutlet.image = UIImage(named: "defaultPlantImage")
+                        }
+                        return
+                    }
+                    DispatchQueue.main.async {
+                        self.plantImageOutlet.image = UIImage(data: data)
+                    }
+                }.resume()
+            } else {
+                plantImageOutlet.image = UIImage(named: "defaultPlantImage")
+            }
             
             // Water frequency
             let waterDays = plant.waterFrequency
@@ -42,11 +56,29 @@ class CardDataSection1: UICollectionViewCell {
             let fertilizerDays = plant.fertilizerFrequency
             infoLabel2Outlet.text = "Every \(fertilizerDays) days"
             
-            // Light requirement (using water requirement as placeholder since light isn't in the model)
-            infoLabel3Outlet.text = plant.lightRequirement
+            // Handle optional season
+            if let season = plant.favourableSeason {
+                infoLabel3Outlet.text = "Season: \(season.rawValue)"
+            } else {
+                infoLabel3Outlet.text = "Season: Not specified"
+            }
             
         } else if let disease = data as? Diseases {
-            plantImageOutlet.image = UIImage(named: disease.diseaseImage.first ?? "defaultDiseaseImage")
+            if let urlString = disease.diseaseImage, let url = URL(string: urlString) {
+                URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+                    guard let self = self, let data = data, error == nil else {
+                        DispatchQueue.main.async {
+                            self?.plantImageOutlet.image = UIImage(named: "defaultDiseaseImage")
+                        }
+                        return
+                    }
+                    DispatchQueue.main.async {
+                        self.plantImageOutlet.image = UIImage(data: data)
+                    }
+                }.resume()
+            } else {
+                plantImageOutlet.image = UIImage(named: "defaultDiseaseImage")
+            }
             resetInfoLabels()
         }
     }

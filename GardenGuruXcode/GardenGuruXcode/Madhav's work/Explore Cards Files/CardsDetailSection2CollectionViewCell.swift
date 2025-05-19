@@ -26,7 +26,22 @@ class CardsDetailSection2CollectionViewCell: UICollectionViewCell {
             }
 
         plantNameLabel.text = disease.diseaseName
-        plantDescription.text = "Symptoms: \(disease.diseaseSymptoms.joined(separator: ", "))\nCure: \(disease.diseaseCure.joined(separator: ", "))"
+        
+        var descriptionText = "Symptoms: "
+        if let symptoms = disease.diseaseSymptoms {
+            descriptionText += symptoms
+        } else {
+            descriptionText += "Not specified"
+        }
+        
+        descriptionText += "\nCure: "
+        if let cure = disease.diseaseCure {
+            descriptionText += cure
+        } else {
+            descriptionText += "Not specified"
+        }
+        
+        plantDescription.text = descriptionText
         }
 
 

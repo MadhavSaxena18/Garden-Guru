@@ -27,7 +27,7 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
             searchResultsTableView = UITableView()
             searchResultsTableView.delegate = self
             searchResultsTableView.dataSource = self
-            searchResultsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "PlantCell")
+            searchResultsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "first")
             searchResultsTableView.isHidden = true
             searchResultsTableView.translatesAutoresizingMaskIntoConstraints = false
             searchResultsTableView.backgroundColor = UIColor(hex: "EBF4EB")
@@ -43,24 +43,45 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         }
         
         // MARK: - Search Bar Delegate
-        func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-            if searchText.isEmpty {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        Task { [weak self] in
+            await self?.performSearch(with: searchText)
+        }
+    }
+
+    private func performSearch(with searchText: String) async {
+        if searchText.isEmpty {
+            filteredPlants = []
+            await MainActor.run {
+                searchResultsTableView.isHidden = true
+                searchResultsTableView.reloadData()
+            }
+            return
+        }
+        do {
+            let allPlants = try await dataController.getPlants()
+            filteredPlants = allPlants.filter {
+                $0.plantName.lowercased().contains(searchText.lowercased())
+            }
+            await MainActor.run {
+                searchResultsTableView.isHidden = filteredPlants.isEmpty
+                searchResultsTableView.reloadData()
+            }
+        } catch {
+            await MainActor.run {
+                let alert = UIAlertController(
+                    title: "Error",
+                    message: "Failed to search plants. Please try again later.",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
                 filteredPlants = []
                 searchResultsTableView.isHidden = true
-            } else {
-                // Get all plants using the proper method
-                let allPlants = dataController.getPlants()
-                print("Found \(allPlants.count) total plants")
-                
-                filteredPlants = allPlants.filter {
-                    $0.plantName.lowercased().contains(searchText.lowercased())
-                }
-                print("Filtered to \(filteredPlants.count) plants matching '\(searchText)'")
-                
-                searchResultsTableView.isHidden = filteredPlants.isEmpty
+                searchResultsTableView.reloadData()
             }
-            searchResultsTableView.reloadData()
         }
+    }
         
         // MARK: - Table View Data Source
         func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -68,7 +89,7 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate, UITableView
         }
         
         func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "PlantCell", for: indexPath)
+            let cell = tableView.dequeueReusableCell(withIdentifier: "first", for: indexPath)
             let plant = filteredPlants[indexPath.row]
             cell.textLabel?.text = plant.plantName
             cell.backgroundColor = .white

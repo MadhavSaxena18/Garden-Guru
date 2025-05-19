@@ -6,11 +6,12 @@
 //
 
 import UIKit
+import SDWebImage
 
 class DiseaseDetailViewController: UIViewController {
 
     var disease: Diseases?
-    private var expandedSections: Set<Int> = []
+    private var expandedSections: Set<Int> = [0] // Start with first section expanded
     private var fullscreenImageView: UIImageView?
     private var currentImageIndex: Int = 0
     private var imageArray: [UIImage] = []
@@ -62,10 +63,16 @@ class DiseaseDetailViewController: UIViewController {
         // Setup TableView
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         
-        // Remove separators
+        // Register cell with XIB
+        let nib = UINib(nibName: "DiseaseDetailTableViewCell", bundle: nil)
+        tableView.register(nib, forCellReuseIdentifier: "DiseaseDetailCell")
+        
+        // Remove separators and set background
         tableView.separatorStyle = .none
+        tableView.backgroundColor = UIColor(red: 0.92, green: 0.96, blue: 0.92, alpha: 1.0)
+        tableView.estimatedRowHeight = 140
+        tableView.rowHeight = UITableView.automaticDimension
         
         // Setup Navigation
         navigationItem.largeTitleDisplayMode = .never
@@ -75,16 +82,31 @@ class DiseaseDetailViewController: UIViewController {
         guard let disease = disease else { return }
         
         // Configure image
-        if let imageName = disease.diseaseImage.first {
-            headerImageView.image = UIImage(named: imageName)
+        if let imageURL = disease.diseaseImage {
+            headerImageView.sd_setImage(with: URL(string: imageURL), 
+                                      placeholderImage: UIImage(named: "disease_placeholder"),
+                                      options: [], 
+                                      completed: { [weak self] image, error, _, _ in
+                if let error = error {
+                    print("Error loading disease image: \(error)")
+                    self?.headerImageView.image = UIImage(named: "disease_placeholder")
+                }
+            })
+        } else {
+            headerImageView.image = UIImage(named: "disease_placeholder")
         }
         headerImageView.contentMode = .scaleAspectFill
         headerImageView.clipsToBounds = true
         
         // Configure disease name label
         diseaseNameLabel.text = disease.diseaseName
-        let symptomsText = disease.diseaseSymptoms.joined(separator: ", ")
-        diseaseSymptoms.text = "\(symptomsText)"
+        
+        // Configure symptoms label
+        if let symptoms = disease.diseaseSymptoms {
+            diseaseSymptoms.text = symptoms
+        } else {
+            diseaseSymptoms.text = "No symptoms available"
+        }
         
         // Style the disease name label
         diseaseNameLabel.textColor = .white
@@ -166,281 +188,132 @@ extension DiseaseDetailViewController: UITextViewDelegate {
 
 extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 6
+        return 4 // Symptoms, Causes, Treatments, Prevention
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return expandedSections.contains(section) ? 2 : 1 // Show detail row if expanded
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if indexPath.row == 0 {
-            return 55 // Header cell height
-        } else {
-            return UITableView.automaticDimension // Let the content determine the height
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        return indexPath.row == 0 ? 55 : 100 // Provide estimated heights
-    }
-    
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return section == 0 ? 16 : 8 // Regular spacing between sections
-    }
-    
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerView = UIView()
-        headerView.backgroundColor = .clear
-        return headerView
+        return expandedSections.contains(section) ? 1 : 0 // Show row only if section is expanded
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "DiseaseDetailCell", for: indexPath) as! DiseaseDetailTableViewCell
         
-        let cellBackgroundColor = UIColor(red: 242/255, green: 242/255, blue: 242/255, alpha: 1.0)
+        guard let disease = disease else {
+            cell.configure(with: nil, section: "", showHeader: false)
+            return cell
+        }
         
-        if indexPath.row == 0 {
-            // Header cell
-            configureHeaderCell(cell, for: indexPath.section, backgroundColor: cellBackgroundColor)
-        } else {
-            // Detail cell
-            configureDetailCell(cell, for: indexPath.section, backgroundColor: cellBackgroundColor)
+        cell.isExpanded = true // Always show content when row is visible
+        
+        switch indexPath.section {
+        case 0: // Symptoms
+            cell.configure(with: disease, section: "Symptoms", showHeader: false)
+        case 1: // Causes
+            cell.configure(with: disease, section: "Causes", showHeader: false)
+        case 2: // Treatments
+            cell.configure(with: disease, section: "Treatment", showHeader: false)
+        case 3: // Prevention
+            cell.configure(with: disease, section: "Prevention", showHeader: false)
+        default:
+            cell.configure(with: nil, section: "", showHeader: false)
         }
         
         return cell
     }
     
-    private func configureHeaderCell(_ cell: UITableViewCell, for section: Int, backgroundColor: UIColor) {
-        // Setup darker gray background view
-        let backgroundView = UIView()
-        backgroundView.backgroundColor = UIColor(red: 230/255, green: 230/255, blue: 230/255, alpha: 1.0)
-        backgroundView.layer.cornerRadius = 8
-        cell.backgroundView = backgroundView
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView()
+        headerView.backgroundColor = .clear
         
-        // Setup selected background view
-        let selectedBackgroundView = UIView()
-        selectedBackgroundView.backgroundColor = UIColor(red: 220/255, green: 220/255, blue: 220/255, alpha: 1.0)
-        selectedBackgroundView.layer.cornerRadius = 8
-        cell.selectedBackgroundView = selectedBackgroundView
+        // Create container view with gray background
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.backgroundColor = UIColor(white: 0.95, alpha: 1.0) // Solid light gray background
+        containerView.layer.cornerRadius = 16
         
-        // Configure content
-        let options = ["Cure and Treatment", "Preventive Measures", "Symptoms",
-                      "Vitamins Required", "Related Images", "Video Solution"]
-        cell.textLabel?.text = options[section]
-        cell.textLabel?.font = .systemFont(ofSize: 17, weight: .regular)
-        cell.textLabel?.textColor = .black
+        // Add subtle shadow
+        containerView.layer.shadowColor = UIColor.black.cgColor
+        containerView.layer.shadowOffset = CGSize(width: 0, height: 1)
+        containerView.layer.shadowRadius = 1
+        containerView.layer.shadowOpacity = 0.1
         
-        // Add padding to content
-        cell.contentView.layoutMargins = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
-        cell.contentView.preservesSuperviewLayoutMargins = false
+        // Create title label
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.textColor = .black
+        titleLabel.font = .systemFont(ofSize: 22, weight: .medium) // Adjusted font size and weight to match image
         
-        // Configure accessory
-        let imageName = expandedSections.contains(section) ? "chevron.down" : "chevron.right"
-        let chevronImage = UIImage(systemName: imageName)?.withRenderingMode(.alwaysTemplate)
-        let chevronView = UIImageView(image: chevronImage)
-        chevronView.tintColor = .gray
-        chevronView.contentMode = .scaleAspectFit
-        cell.accessoryView = chevronView
-        
-        cell.selectionStyle = .none
-    }
-    
-    private func configureDetailCell(_ cell: UITableViewCell, for section: Int, backgroundColor: UIColor) {
-        // Setup background view with white color
-        let backgroundView = UIView()
-        backgroundView.backgroundColor = .white
-        backgroundView.layer.cornerRadius = 8
-        cell.backgroundView = backgroundView
-        
-        // Add padding
-        let padding = UIEdgeInsets(top: 24, left: 20, bottom: 16, right: 20)
-        cell.contentView.directionalLayoutMargins = NSDirectionalEdgeInsets(
-            top: padding.top,
-            leading: padding.left,
-            bottom: padding.bottom,
-            trailing: padding.right
-        )
-        
-        // Remove any existing subviews from previous cells
-        cell.contentView.subviews.forEach { $0.removeFromSuperview() }
-        cell.textLabel?.text = nil // Clear existing text
-        
-        // Configure content based on section
+        // Set title based on section
         switch section {
-        case 0: // Cure and Treatment
-            if let cureAndTreatment = disease?.diseaseDetail["Cure and Treatment"] as? [String] {
-                cell.textLabel?.text = cureAndTreatment.joined(separator: "\n")
-                cell.textLabel?.numberOfLines = 0
-                cell.textLabel?.font = .systemFont(ofSize: 15)
-                cell.textLabel?.textColor = .darkGray
-            }
-            
-        case 1: // Preventive Measures
-            if let preventiveMeasures = disease?.diseaseDetail["Preventive Measures"] as? [String] {
-                cell.textLabel?.text = preventiveMeasures.joined(separator: "\n")
-                cell.textLabel?.numberOfLines = 0
-                cell.textLabel?.font = .systemFont(ofSize: 15)
-                cell.textLabel?.textColor = .darkGray
-            }
-            
-        case 2: // Symptoms
-            if let symptoms = disease?.diseaseDetail["Symptoms"] as? [String] {
-                cell.textLabel?.text = symptoms.joined(separator: "\n")
-                cell.textLabel?.numberOfLines = 0
-                cell.textLabel?.font = .systemFont(ofSize: 15)
-                cell.textLabel?.textColor = .darkGray
-            }
-            
-        case 3: // Vitamins Required
-            if let vitamins = disease?.diseaseDetail["Vitamins Required"] as? [String] {
-                cell.textLabel?.text = vitamins.joined(separator: "\n")
-                cell.textLabel?.numberOfLines = 0
-                cell.textLabel?.font = .systemFont(ofSize: 15)
-                cell.textLabel?.textColor = .darkGray
-            }
-            
-        case 4: // Related Images
-            if let images = disease?.diseaseDetail["Related Images"] as? [String] {
-                // Create scroll view for horizontal scrolling
-                let scrollView = UIScrollView()
-                scrollView.translatesAutoresizingMaskIntoConstraints = false
-                scrollView.showsHorizontalScrollIndicator = false
-                scrollView.showsVerticalScrollIndicator = false
-                
-                // Create stack view to hold images
-                let stackView = UIStackView()
-                stackView.translatesAutoresizingMaskIntoConstraints = false
-                stackView.axis = .horizontal
-                stackView.spacing = 10
-                stackView.alignment = .center
-                
-                // Add images to stack view
-                for imageName in images {
-                    let imageView = UIImageView()
-                    imageView.contentMode = .scaleAspectFill
-                    imageView.clipsToBounds = true
-                    imageView.image = UIImage(named: imageName)
-                    imageView.isUserInteractionEnabled = true
-                    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:)))
-                    imageView.addGestureRecognizer(tapGesture)
-                    
-                    let imageSize: CGFloat = 280
-                    imageView.widthAnchor.constraint(equalToConstant: imageSize).isActive = true
-                    imageView.heightAnchor.constraint(equalToConstant: imageSize).isActive = true
-                    imageView.layer.cornerRadius = 12
-                    
-                    stackView.addArrangedSubview(imageView)
-                }
-                
-                scrollView.addSubview(stackView)
-                cell.contentView.addSubview(scrollView)
-                
-                NSLayoutConstraint.activate([
-                    scrollView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 10),
-                    scrollView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 20),
-                    scrollView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -20),
-                    scrollView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -10),
-                    scrollView.heightAnchor.constraint(equalToConstant: 300),
-                    
-                    stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-                    stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-                    stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-                    stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-                    stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
-                ])
-            }
-            
-        case 5: // Video Solution
-            if let videos = disease?.diseaseDetail["Video Solution"] as? [String] {
-                // Create text view for clickable links
-                let textView = UITextView()
-                textView.translatesAutoresizingMaskIntoConstraints = false
-                textView.isEditable = false
-                textView.isScrollEnabled = false
-                textView.backgroundColor = .clear
-                textView.delegate = self
-                
-                // Create attributed string for links
-                let attributedString = NSMutableAttributedString()
-                for (index, video) in videos.enumerated() {
-                    let linkAttributes: [NSAttributedString.Key: Any] = [
-                        .foregroundColor: UIColor.systemBlue,
-                        .underlineStyle: NSUnderlineStyle.single.rawValue,
-                        .link: video
-                    ]
-                    
-                    let videoLink = NSAttributedString(string: "Video Solution \(index + 1)", attributes: linkAttributes)
-                    attributedString.append(videoLink)
-                    
-                    if index < videos.count - 1 {
-                        attributedString.append(NSAttributedString(string: "\n"))
-                    }
-                }
-                
-                textView.attributedText = attributedString
-                textView.linkTextAttributes = [
-                    .foregroundColor: UIColor.systemBlue,
-                    .underlineStyle: NSUnderlineStyle.single.rawValue
-                ]
-                
-                cell.contentView.addSubview(textView)
-                
-                NSLayoutConstraint.activate([
-                    textView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: padding.top),
-                    textView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: padding.left),
-                    textView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -padding.right),
-                    textView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -padding.bottom)
-                ])
-            }
-            
+        case 0:
+            titleLabel.text = "Symptoms"
+        case 1:
+            titleLabel.text = "Causes"
+        case 2:
+            titleLabel.text = "Treatment"
+        case 3:
+            titleLabel.text = "Prevention"
         default:
-            break
+            titleLabel.text = ""
         }
         
-        // Remove selection style and accessory
-        cell.selectionStyle = .none
-        cell.accessoryView = nil
+        // Create chevron image view
+        let chevronImage = UIImageView(image: UIImage(systemName: expandedSections.contains(section) ? "chevron.down" : "chevron.right"))
+        chevronImage.translatesAutoresizingMaskIntoConstraints = false
+        chevronImage.tintColor = .gray
+        chevronImage.contentMode = .scaleAspectFit
+        
+        headerView.addSubview(containerView)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(chevronImage)
+        
+        NSLayoutConstraint.activate([
+            // Container view constraints - adjusted for better spacing
+            containerView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
+            containerView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 8),
+            containerView.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8),
+            
+            // Title label constraints
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 24),
+            titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            
+            // Chevron image constraints
+            chevronImage.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -24),
+            chevronImage.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            chevronImage.widthAnchor.constraint(equalToConstant: 20),
+            chevronImage.heightAnchor.constraint(equalToConstant: 20)
+        ])
+        
+        // Add tap gesture
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(headerTapped(_:)))
+        headerView.addGestureRecognizer(tapGesture)
+        headerView.tag = section
+        headerView.isUserInteractionEnabled = true
+        
+        return headerView
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.row == 0 { // Only toggle for header cells
-            let section = indexPath.section
-            
-            // Animate the chevron rotation
-            if let cell = tableView.cellForRow(at: indexPath),
-               let chevronView = cell.accessoryView as? UIImageView {
-                UIView.animate(withDuration: 0.3) {
-                    chevronView.transform = self.expandedSections.contains(section) ?
-                        .identity : CGAffineTransform(rotationAngle: .pi/2)
-                }
-            }
-            
-            // Toggle section expansion
-            if expandedSections.contains(section) {
-                expandedSections.remove(section)
-            } else {
-                expandedSections.insert(section)
-            }
-            
-            // Reload with animation
-            UIView.animate(withDuration: 0.3) {
-                tableView.performBatchUpdates({
-                    tableView.reloadSections(IndexSet(integer: section), with: .automatic)
-                })
-            }
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 60 // Increased height to match design
+    }
+    
+    @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
+        guard let section = gesture.view?.tag else { return }
+        
+        if expandedSections.contains(section) {
+            expandedSections.remove(section)
+        } else {
+            expandedSections.insert(section)
         }
+        
+        tableView.reloadSections(IndexSet(integer: section), with: .automatic)
     }
     
-    // Remove the extra spacing from section headers and footers
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return section == 5 ? 20 : 0 // Only bottom padding for last section
-    }
-    
-    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        let footerView = UIView()
-        footerView.backgroundColor = .clear
-        return footerView
+    // Optional: Animate height changes
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let cell = cell as? DiseaseDetailTableViewCell else { return }
+        cell.isExpanded = true // Always show content when row is visible
     }
     
     @objc private func imageTapped(_ gesture: UITapGestureRecognizer) {
