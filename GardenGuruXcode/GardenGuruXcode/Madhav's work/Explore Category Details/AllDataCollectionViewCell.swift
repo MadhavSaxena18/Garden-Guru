@@ -135,7 +135,7 @@ class AllDataCollectionViewCell: UICollectionViewCell {
                 plantImageView.image = diseaseImage
             } else {
                 print("❌ No local image found for disease: \(disease.diseaseName)")
-                plantImageView.image = UIImage(named: "placeholder_disease")
+            plantImageView.image = UIImage(named: "placeholder_disease")
             }
         }
         

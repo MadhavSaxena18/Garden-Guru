@@ -52,7 +52,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
         
         print("⚠️ No user data found in UserTable")
-        return nil
+            return nil
     }
     
     func getUsers() async throws -> [userInfo] {
@@ -519,11 +519,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     func getCommonFertilizers() async throws -> [Fertilizer] {
         print("🔍 Fetching common fertilizers from Supabase...")
-        let response = try await supabase
-            .database
-            .from("Fertilizer")
-            .select()
-            .execute()
+            let response = try await supabase
+                .database
+                .from("Fertilizer")
+                .select()
+                .execute()
             
         print("📡 Raw fertilizers response: \(String(describing: response.data))")
         print("📡 Response type: \(type(of: response.data))")
@@ -536,7 +536,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let fertilizers = try decoder.decode([Fertilizer].self, from: data)
                 print("✅ Successfully decoded \(fertilizers.count) fertilizers from Data")
-                return fertilizers
+        return fertilizers
             } catch {
                 print("❌ Failed to decode Data response: \(error)")
             }
@@ -949,16 +949,16 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     }
                 } catch {
                     print("❌ Error decoding user data: \(error)")
-                    
+                
                     // Try parsing as JSON array if direct decoding fails
                     if let jsonString = String(data: data, encoding: .utf8),
                        let jsonData = jsonString.data(using: .utf8),
                        let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
-                       let user = users.first {
+                   let user = users.first {
                         print("✅ Successfully decoded user from JSON string: \(user.userName)")
-                        return user
-                    }
+                    return user
                 }
+            }
             } else if let jsonArray = response.data as? [[String: Any]] {
                 print("📡 JSON Array: \(jsonArray)")
                 
@@ -968,7 +968,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                         let user = try JSONDecoder().decode(userInfo.self, from: jsonData)
                         print("✅ Successfully decoded user: \(user.userName)")
                         return user
-                    } catch {
+        } catch {
                         print("❌ Error decoding user data: \(error)")
                     }
                 }
@@ -979,7 +979,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             
         } catch {
             print("❌ Error fetching user data: \(error)")
-            return nil
+        return nil
         }
     }
     
@@ -1632,6 +1632,38 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         _ = semaphore.wait(timeout: .now() + 5)
         return diseases
+    }
+
+    // MARK: - Disease Management
+    
+    func getFertilizers(for diseaseID: UUID) async throws -> [Fertilizer] {
+        print("🔍 Fetching fertilizers for disease ID: \(diseaseID)")
+        let response = try await supabase
+            .database
+            .from("DiseaseFertilizer")
+            .select()
+            .eq("diseaseID", value: diseaseID.uuidString)
+            .execute()
+        var fertilizers: [Fertilizer] = []
+        if let data = response.data as? Data {
+            let diseaseFertilizers = try JSONDecoder().decode([DiseaseFertilizer].self, from: data)
+            for df in diseaseFertilizers {
+                let fertilizerId = df.fertilizerId
+                let fertResponse = try await supabase
+                    .database
+                    .from("Fertilizer")
+                    .select()
+                    .eq("fertilizerId", value: fertilizerId.uuidString)
+                    .single()
+                    .execute()
+                if let fertData = fertResponse.data as? Data,
+                   let fertilizer = try? JSONDecoder().decode(Fertilizer.self, from: fertData) {
+                    fertilizers.append(fertilizer)
+                }
+            }
+        }
+        print("✅ Found \(fertilizers.count) fertilizers for disease")
+        return fertilizers
     }
 }
 

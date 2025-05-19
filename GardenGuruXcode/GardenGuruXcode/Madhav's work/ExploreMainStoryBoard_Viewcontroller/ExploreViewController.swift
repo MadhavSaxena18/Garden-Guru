@@ -204,7 +204,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         Task {
             let authStatus = locationManager.getAuthorizationStatus()
             if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
-                await fetchWeatherAndUpdatePlants()
+            await fetchWeatherAndUpdatePlants()
             } else {
                 print("⚠️ Location access not granted. Authorization status: \(authStatus)")
                 // Handle the case where location access is not granted
@@ -303,28 +303,22 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         collectionView.reloadData()
     }
     
-    private func fetchDataFromSupabase() async {
-        print("🔄 Starting data fetch from Supabase...")
+    func fetchDataFromSupabase() async {
+        print("\n=== Fetching Data from Supabase ===")
         do {
             // Fetch plants
             print("🌿 Fetching plants...")
             let plants = try await dataController.getPlants()
             print("✅ Successfully fetched \(plants.count) plants")
             self.plants = plants
-            
+
             // Fetch all diseases for Discover tab
             print("🦠 Fetching common issues...")
             let diseases = try await dataController.getCommonIssues()
             print("✅ Successfully fetched \(diseases.count) diseases")
             self.diseases = diseases
-            
-            // Fetch fertilizers
-            print("🌱 Fetching fertilizers...")
-            let fertilizers = try await dataController.getCommonFertilizers()
-            print("✅ Successfully fetched \(fertilizers.count) fertilizers")
-            self.fertilizers = fertilizers
-            
-            // Debug: Print user email and user id before fetching UserPlant
+
+            // Get user email
             if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
                 print("[DEBUG] Current user email: \(userEmail)")
                 
@@ -337,18 +331,34 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                     let userPlantDiseases = try await dataController.getDiseasesForUserPlants(userEmail: userEmail)
                     print("✅ Found \(userPlantDiseases.count) diseases for user's plants")
                     
+                    // NEW: Fetch fertilizers for each disease
+                    print("🌱 Fetching fertilizers for diseases...")
+                    var allFertilizers: [Fertilizer] = []
+                    var fertilizerSet = Set<UUID>() // To avoid duplicates
+                    
+                    for disease in userPlantDiseases {
+                        let fertilizers = try await dataController.getFertilizers(for: disease.diseaseID)
+                        for fert in fertilizers {
+                            if !fertilizerSet.contains(fert.fertilizerId) {
+                                allFertilizers.append(fert)
+                                fertilizerSet.insert(fert.fertilizerId)
+                            }
+                        }
+                    }
+                    print("✅ Found \(allFertilizers.count) unique fertilizers")
+                    
                     await MainActor.run {
-                        // Update forMyPlantCategories with the fetched data
+                        // Update forMyPlantCategories with both diseases and fertilizers
                         if !userPlantDiseases.isEmpty {
-                            self.forMyPlantCategories = [
+                            var categories: [(title: String, items: [Any])] = [
                                 ("Common Issues in your Plant", userPlantDiseases)
                             ]
+                            if !allFertilizers.isEmpty {
+                                categories.append(("Common Fertilizers", allFertilizers))
+                            }
+                            self.forMyPlantCategories = categories
                         } else {
                             self.forMyPlantCategories = []
-                        }
-                        
-                        if self.isSearchActive {
-                            self.filteredForMyPlantCategories = self.forMyPlantCategories
                         }
                         
                         // Update discover categories
@@ -359,6 +369,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         
                         if self.isSearchActive {
                             self.filteredDiscoverCategories = self.discoverCategories
+                            self.filteredForMyPlantCategories = self.forMyPlantCategories
                         }
                         
                         self.collectionView.reloadData()
@@ -372,11 +383,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 print("❌ No user email found in UserDefaults")
                 self.forMyPlantCategories = []
             }
-            
-            print("✅ UI update complete")
-            
         } catch {
-            print("❌ Error fetching data: \(error.localizedDescription)")
+            print("❌ Error fetching data: \(error)")
             print("Error details: \(error)")
             await MainActor.run {
                 let alert = UIAlertController(
@@ -543,7 +551,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             cell.layer.masksToBounds = false
             return cell
         } else if category.title == "Common Issues" || category.title == "Common Issues in your Plant" {
-            // Use different cells for Discover and For My Plants segments
             if selectedSegment == 0 {
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
                 if let disease = item as? Diseases {
@@ -571,9 +578,21 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 cell.layer.masksToBounds = false
                 return cell
             }
+        } else if category.title == "Common Fertilizers" {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
+            if let fertilizer = item as? Fertilizer {
+                cell.configure(with: fertilizer)
+            }
+            cell.contentView.layer.cornerRadius = 25
+            cell.contentView.layer.masksToBounds = true
+            cell.layer.shadowColor = UIColor.black.cgColor
+            cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+            cell.layer.shadowRadius = 4
+            cell.layer.shadowOpacity = 0.2
+            cell.layer.masksToBounds = false
+            return cell
         }
         
-        // Return empty cell if no matching category
         return UICollectionViewCell()
     }
     
@@ -608,14 +627,14 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 print("🎨 Using For My Plants layout")
             } else {
                 // Discover segment - choose layout based on category title
-                switch categoryTitle {
+            switch categoryTitle {
                 case "Current Season Plants":
                     section = generateSection1Layout()
-                case "Common Issues":
+            case "Common Issues":
                     section = generateSection2Layout()
-                default:
+            default:
                     print("❌ Invalid category title")
-                    return nil
+                return nil
                 }
                 print("🎨 Using Discover layout for \(categoryTitle)")
             }
@@ -898,6 +917,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         // Hide collection view when showing Coming Soon
         collectionView.isHidden = selectedSegment == 1
     }
-}
+  }
     
 
