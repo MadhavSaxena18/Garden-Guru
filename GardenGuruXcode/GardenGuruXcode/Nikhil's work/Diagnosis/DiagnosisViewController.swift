@@ -266,6 +266,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             isExistingPlant = false
             startCaringButton.isHidden = false
             startCaringButton.setTitle("Add and Start Caring", for: .normal)
+            //hello madhav how are you
         }
     }
 
