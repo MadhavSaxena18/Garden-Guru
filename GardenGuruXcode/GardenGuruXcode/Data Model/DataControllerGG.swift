@@ -1462,6 +1462,140 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         print("✅ Username updated successfully in Supabase")
 
     }
+
+    func checkUserExists(email: String) async throws -> Bool {
+        print("\n=== Checking User Existence ===")
+        print("🔍 Checking email: \(email)")
+        
+        // Clean and validate email
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard cleanEmail.contains("@") && cleanEmail.contains(".") else {
+            print("❌ Invalid email format")
+            throw AuthError.invalidCredentials
+        }
+        
+        do {
+            // First check auth table
+            let authResponse = try await supabase.auth.user(email: cleanEmail)
+            if authResponse != nil {
+                print("✅ User found in auth table")
+                return true
+            }
+            
+            // Then check UserTable
+            let response = try await supabase
+                .database
+                .from("UserTable")
+                .select()
+                .eq("user_email", value: cleanEmail)
+                .execute()
+            
+            if let jsonObject = response.data as? [[String: Any]], !jsonObject.isEmpty {
+                print("✅ User found in UserTable")
+                return true
+            }
+            
+            print("✅ User does not exist")
+            return false
+        } catch {
+            print("❌ Error checking user existence: \(error)")
+            throw AuthError.unknown(error)
+        }
+    }
+
+    // MARK: - Email Verification and Signup
+
+    func sendSignupVerificationEmail(email: String) async throws {
+        print("\n=== Sending Signup Verification Email ===")
+        print("📧 Sending to: \(email)")
+        
+        // Create temporary account with email verification enabled
+        try await supabase.auth.signUp(
+            email: email,
+            password: UUID().uuidString // Temporary password, will be updated later
+        )
+        print("✅ Verification email sent")
+    }
+    
+    func resendVerificationEmail(email: String) async throws {
+        print("\n=== Resending Verification Email ===")
+        print("📧 Resending to: \(email)")
+        
+        try await supabase.auth.resend(
+            email: email,
+            type: .signup,
+            emailRedirectTo: nil,
+            captchaToken: nil
+        )
+    }
+    
+    func verifyEmail(email: String, otp: String) async throws {
+        print("\n=== Verifying Email ===")
+        print("📧 Verifying email: \(email)")
+        
+        try await supabase.auth.verifyOTP(
+            email: email,
+            token: otp,
+            type: .signup
+        )
+        print("✅ Email verified")
+    }
+    
+    func completeSignup(email: String, password: String, userName: String) async throws {
+        // First update the user's password
+        try await supabase.auth.update(user: .init(password: password))
+        
+        // Then create the initial user record
+        try await supabase
+            .database
+            .from("UserTable")
+            .insert([
+                "user_email": email,
+                "user_name": userName,
+                "created_at": Date().ISO8601Format()
+            ])
+            .execute()
+    }
+
+    func saveUserProfile(userData: [String: Any]) async throws {
+        guard let email = userData["email"] as? String else {
+            throw NSError(domain: "DataController", code: 400, userInfo: [NSLocalizedDescriptionKey: "Email is required"])
+        }
+        
+        // Create a properly typed dictionary for the update
+        var updateData: [String: String] = [
+            "updated_at": Date().ISO8601Format()
+        ]
+        
+        // Safely add optional fields with proper type conversion
+        if let fullName = userData["full_name"] as? String {
+            updateData["full_name"] = fullName
+        }
+        
+        if let age = userData["age"] as? Int {
+            updateData["age"] = String(age)
+        }
+        
+        if let gender = userData["gender"] as? String {
+            updateData["gender"] = gender
+        }
+        
+        if let preferences = userData["plant_preferences"] as? [String] {
+            // Convert array to JSON string
+            if let preferencesData = try? JSONSerialization.data(withJSONObject: preferences),
+               let preferencesString = String(data: preferencesData, encoding: .utf8) {
+                updateData["plant_preferences"] = preferencesString
+            }
+        }
+        
+        // Update the user profile in UserTable
+        try await supabase
+            .database
+            .from("UserTable")
+            .update(updateData)
+            .eq("user_email", value: email)
+            .execute()
+    }
 }
 
 // Helper struct for decoding nested JSON response

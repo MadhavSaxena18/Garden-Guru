@@ -671,36 +671,80 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+//    if let image = info[.originalImage] as? UIImage {
+//        uploadImageToSupabase(image: image)
+//    }
+//    picker.dismiss(animated: true)
+//}
+//3. Upload Image to Supabase Storage
+//func uploadImageToSupabase(image: UIImage) {
+//    guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+//    let fileName = UUID().uuidString + ".jpg"
+//
+//    Task {
+//        do {
+//            // Upload to Supabase Storage
+//            try await supabase.storage.from("user-images").upload(
+//                path: fileName,
+//                file: imageData,
+//                options: FileOptions(contentType: "image/jpeg")
+//            )
+//
+//            // Get public URL
+//            let publicURL = supabase.storage.from("user-images").getPublicURL(path: fileName)
+//
+//            // Save this URL to your table
+//            await saveImageURLToTable(publicURL: publicURL.absoluteString)
+//
+//        } catch {
+//            print("Upload failed: \(error)")
+//        }
+//    }
+//}
+//4. Save Image URL to Supabase Table
+//func saveImageURLToTable(publicURL: String) async {
+//    do {
+//        try await supabase.database
+//            .from("profiles")
+//            .update(["image_url": publicURL])
+//            .eq("id", "user-id") // Replace with actual user ID
+//
+//        print("Image URL saved in database")
+//    } catch {
+//        print("Error saving URL to table: \(error)")
+//    }
+//}
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//

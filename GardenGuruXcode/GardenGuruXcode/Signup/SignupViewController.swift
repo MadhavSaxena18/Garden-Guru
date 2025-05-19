@@ -19,143 +19,215 @@ class SignupViewController: UIViewController {
         return view
     }()
     
-    private let formContainer: UIView = {
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Sign Up"
+        label.font = .systemFont(ofSize: 28, weight: .bold)
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Create your account"
+        label.font = .systemFont(ofSize: 17, weight: .regular)
+        label.textColor = .systemGray
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let containerView: UIView = {
         let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .white
-        view.layer.cornerRadius = 20
+        view.layer.cornerRadius = 16
         view.layer.shadowColor = UIColor.black.cgColor
         view.layer.shadowOffset = CGSize(width: 0, height: 2)
         view.layer.shadowRadius = 6
         view.layer.shadowOpacity = 0.1
+        view.translatesAutoresizingMaskIntoConstraints = false
         return view
-    }()
-    
-    private let stackView: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .vertical
-        stack.spacing = 20
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
     }()
     
     private func createTextField(placeholder: String, isSecure: Bool = false) -> UITextField {
         let textField = UITextField()
         textField.placeholder = placeholder
         textField.borderStyle = .none
-        textField.backgroundColor = .white
+        textField.backgroundColor = UIColor(hex: "F5F9F5")
         textField.layer.cornerRadius = 12
-        textField.layer.borderWidth = 1
-        textField.layer.borderColor = UIColor.systemGray5.cgColor
-        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: textField.frame.height))
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 0))
         textField.leftView = paddingView
         textField.leftViewMode = .always
+        textField.translatesAutoresizingMaskIntoConstraints = false
         textField.heightAnchor.constraint(equalToConstant: 50).isActive = true
         textField.isSecureTextEntry = isSecure
+        textField.font = .systemFont(ofSize: 16)
         return textField
     }
     
-    private lazy var nameTextField: UITextField = createTextField(placeholder: "Full Name")
     private lazy var emailTextField: UITextField = createTextField(placeholder: "Email")
+    
     private lazy var passwordTextField: UITextField = createTextField(placeholder: "Password", isSecure: true)
+    
     private lazy var confirmPasswordTextField: UITextField = createTextField(placeholder: "Confirm Password", isSecure: true)
     
-   
+    private lazy var otpTextField: UITextField = createTextField(placeholder: "Enter verification code")
     
-    private let passwordRequirementsLabel: UILabel = {
+    private let resendContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+    
+    private let resendLabel: UILabel = {
         let label = UILabel()
-        label.text = "Password must contain:"
-        label.font = .systemFont(ofSize: 14)
+        label.text = "Didn't receive OTP?"
+        label.font = .systemFont(ofSize: 15)
         label.textColor = .systemGray
+        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private let requirementsStackView: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .vertical
-        stack.spacing = 4
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
+    private let resendButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Resend", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        button.setTitleColor(UIColor(hex: "284329"), for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
-    
-    private func createRequirementLabel(text: String) -> UILabel {
-        let label = UILabel()
-        label.text = "• " + text
-        label.font = .systemFont(ofSize: 14)
-        label.textColor = .systemGray
-        return label
-    }
-    
-  
-    
-    
     
     private let signupButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Sign Up", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         button.backgroundColor = UIColor(hex: "284329")
         button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 12
-        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        button.layer.cornerRadius = 14
+        button.translatesAutoresizingMaskIntoConstraints = false
         button.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        button.isEnabled = false
         return button
     }()
     
+    private let orLabel: UILabel = {
+        let label = UILabel()
+        label.text = "--------------------- OR ---------------------"
+        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.textColor = .systemGray
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let signUpWithAppleButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .black
+        button.setTitle("Sign up with Apple", for: .normal)
+        button.setImage(UIImage(systemName: "apple.logo"), for: .normal)
+        button.tintColor = .white
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        button.layer.cornerRadius = 14
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 0)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        return button
+    }()
+    
+    private let signInContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let signInLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Already have an account?"
+        label.font = .systemFont(ofSize: 15)
+        label.textColor = .systemGray
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let signInButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Sign In", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        button.setTitleColor(UIColor(hex: "284329"), for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.hidesWhenStopped = true
+        indicator.color = .white
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
+    
+    // MARK: - Properties
+    private var currentStep: SignupStep = .initial {
+        didSet {
+            updateUIForCurrentStep()
+        }
+    }
+    
+    private enum SignupStep {
+        case initial
+        case otp
+    }
+    
     // MARK: - Lifecycle
     
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
         setupActions()
         setupBindings()
-        setupNavigationBar()
     }
     
     // MARK: - Setup
     
-    private func setupNavigationBar() {
-        navigationItem.title = "Sign Up"
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor.black,
-            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
-        ]
-        let backButton = UIBarButtonItem(image: UIImage(systemName: "xmark"),
-                                       style: .plain,
-                                       target: self,
-                                       action: #selector(backButtonTapped))
-        navigationItem.leftBarButtonItem = backButton
-        navigationController?.navigationBar.tintColor = UIColor(hex: "284329")
-    }
-    
     private func setupUI() {
         view.backgroundColor = .white
         
+        // Configure email text field
+        emailTextField.keyboardType = .emailAddress
+        emailTextField.autocapitalizationType = .none
+        
+        // Configure OTP text field
+        otpTextField.keyboardType = .numberPad
+        otpTextField.isHidden = true
+        
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-        contentView.addSubview(formContainer)
-        formContainer.addSubview(stackView)
         
-        // Add password requirements
-        requirementsStackView.addArrangedSubview(passwordRequirementsLabel)
-        requirementsStackView.addArrangedSubview(createRequirementLabel(text: "At least 8 characters"))
-        requirementsStackView.addArrangedSubview(createRequirementLabel(text: "One uppercase letter"))
-        requirementsStackView.addArrangedSubview(createRequirementLabel(text: "One lowercase letter"))
-        requirementsStackView.addArrangedSubview(createRequirementLabel(text: "One number"))
-        requirementsStackView.addArrangedSubview(createRequirementLabel(text: "One special character"))
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(subtitleLabel)
+        contentView.addSubview(containerView)
         
-        // Setup reminders container
+        containerView.addSubview(emailTextField)
+        containerView.addSubview(passwordTextField)
+        containerView.addSubview(confirmPasswordTextField)
+        containerView.addSubview(otpTextField)
+        containerView.addSubview(resendContainer)
+        resendContainer.addSubview(resendLabel)
+        resendContainer.addSubview(resendButton)
+        containerView.addSubview(signupButton)
+        signupButton.addSubview(loadingIndicator)
         
+        contentView.addSubview(orLabel)
+        contentView.addSubview(signUpWithAppleButton)
+        contentView.addSubview(signInContainer)
+        signInContainer.addSubview(signInLabel)
+        signInContainer.addSubview(signInButton)
         
-        // Add all elements to stack view
-        stackView.addArrangedSubview(nameTextField)
-        stackView.addArrangedSubview(emailTextField)
-        stackView.addArrangedSubview(passwordTextField)
-        stackView.addArrangedSubview(confirmPasswordTextField)
-        stackView.addArrangedSubview(requirementsStackView)
-     
-        stackView.addArrangedSubview(signupButton)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
     }
     
     private func setupConstraints() {
@@ -171,44 +243,135 @@ class SignupViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            formContainer.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 20),
-            formContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            formContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            formContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
+            titleLabel.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 60),
+            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
-            stackView.topAnchor.constraint(equalTo: formContainer.topAnchor, constant: 20),
-            stackView.leadingAnchor.constraint(equalTo: formContainer.leadingAnchor, constant: 16),
-            stackView.trailingAnchor.constraint(equalTo: formContainer.trailingAnchor, constant: -16),
-            stackView.bottomAnchor.constraint(equalTo: formContainer.bottomAnchor, constant: -20),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
-        
+            containerView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 32),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            emailTextField.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
+            emailTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            emailTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            passwordTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 16),
+            passwordTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            passwordTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            confirmPasswordTextField.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 16),
+            confirmPasswordTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            confirmPasswordTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            otpTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 16),
+            otpTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            otpTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            resendContainer.topAnchor.constraint(equalTo: otpTextField.bottomAnchor, constant: 8),
+            resendContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            resendContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            resendContainer.heightAnchor.constraint(equalToConstant: 20),
+            
+            resendLabel.leadingAnchor.constraint(equalTo: resendContainer.leadingAnchor),
+            resendLabel.centerYAnchor.constraint(equalTo: resendContainer.centerYAnchor),
+            
+            resendButton.leadingAnchor.constraint(equalTo: resendLabel.trailingAnchor, constant: 8),
+            resendButton.centerYAnchor.constraint(equalTo: resendContainer.centerYAnchor),
+            
+            signupButton.topAnchor.constraint(equalTo: confirmPasswordTextField.bottomAnchor, constant: 24),
+            signupButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            signupButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            signupButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: signupButton.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: signupButton.centerYAnchor),
+            
+            orLabel.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 24),
+            orLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            
+            signUpWithAppleButton.topAnchor.constraint(equalTo: orLabel.bottomAnchor, constant: 24),
+            signUpWithAppleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            signUpWithAppleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            signInContainer.topAnchor.constraint(equalTo: signUpWithAppleButton.bottomAnchor, constant: 24),
+            signInContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            signInContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            signInContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+            signInContainer.heightAnchor.constraint(equalToConstant: 44),
+            
+            signInLabel.centerYAnchor.constraint(equalTo: signInContainer.centerYAnchor),
+            signInLabel.centerXAnchor.constraint(equalTo: signInContainer.centerXAnchor, constant: -30),
+            
+            signInButton.centerYAnchor.constraint(equalTo: signInContainer.centerYAnchor),
+            signInButton.leadingAnchor.constraint(equalTo: signInLabel.trailingAnchor, constant: 4),
+            signInButton.heightAnchor.constraint(equalToConstant: 44),
+            signInButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80)
         ])
     }
     
     private func setupActions() {
-       
         signupButton.addTarget(self, action: #selector(signupButtonTapped), for: .touchUpInside)
-        
-        nameTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
-        emailTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
-        passwordTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
-        confirmPasswordTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
-        
-        // Add tap gesture to dismiss keyboard
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
-        view.addGestureRecognizer(tapGesture)
+        resendButton.addTarget(self, action: #selector(resendButtonTapped), for: .touchUpInside)
+        signInButton.addTarget(self, action: #selector(signInButtonTapped), for: .touchUpInside)
+        signUpWithAppleButton.addTarget(self, action: #selector(appleSignUpTapped), for: .touchUpInside)
     }
     
     private func setupBindings() {
         viewModel.onError = { [weak self] message in
+            self?.hideLoadingIndicator()
             self?.showAlert(title: "Error", message: message)
-            self?.signupButton.setTitle("Sign Up", for: .normal)
         }
         
-        viewModel.onSuccess = { [weak self] in
-            self?.showAlert(title: "Success", message: "Account created successfully!") { _ in
-                self?.dismiss(animated: true)
+        viewModel.onUserExists = { [weak self] in
+            self?.hideLoadingIndicator()
+            self?.showAlert(
+                title: "Account Exists",
+                message: "An account with this email already exists. Would you like to login?",
+                primaryButtonTitle: "Login",
+                secondaryButtonTitle: "Cancel"
+            ) { [weak self] in
+                self?.dismiss(animated: true) // This will take user back to login screen
             }
+        }
+        
+        viewModel.onOTPSent = { [weak self] in
+            self?.hideLoadingIndicator()
+            self?.currentStep = .otp
+            self?.showAlert(title: "Success", message: "Verification code sent successfully!")
+        }
+        
+        viewModel.onOTPVerified = { [weak self] in
+            self?.hideLoadingIndicator()
+            // Present the complete profile view controller
+            let profileVC = CompleteProfileViewController()
+            profileVC.modalPresentationStyle = .fullScreen
+            self?.present(profileVC, animated: true)
+        }
+    }
+    
+    private func updateUIForCurrentStep() {
+        UIView.animate(withDuration: 0.3) {
+            switch self.currentStep {
+            case .initial:
+                self.emailTextField.isEnabled = true
+                self.passwordTextField.isHidden = true
+                self.confirmPasswordTextField.isHidden = true
+                self.otpTextField.isHidden = true
+                self.resendContainer.isHidden = true
+                self.signupButton.setTitle("Continue", for: .normal)
+                
+            case .otp:
+                self.emailTextField.isEnabled = false
+                self.passwordTextField.isHidden = true
+                self.confirmPasswordTextField.isHidden = true
+                self.otpTextField.isHidden = false
+                self.resendContainer.isHidden = false
+                self.signupButton.setTitle("Verify", for: .normal)
+            }
+            
+            self.view.layoutIfNeeded()
         }
     }
     
@@ -218,53 +381,89 @@ class SignupViewController: UIViewController {
         view.endEditing(true)
     }
     
-    @objc private func backButtonTapped() {
+    @objc private func signupButtonTapped() {
+        switch currentStep {
+        case .initial:
+            guard let email = emailTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !email.isEmpty else {
+                showAlert(title: "Error", message: "Please enter your email")
+                return
+            }
+            
+            showLoadingIndicator()
+            viewModel.email = email
+            Task {
+                await viewModel.checkEmailAndSendOTP()
+            }
+            
+        case .otp:
+            guard let otp = otpTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !otp.isEmpty else {
+                showAlert(title: "Error", message: "Please enter the verification code")
+                return
+            }
+            
+            showLoadingIndicator()
+            viewModel.otp = otp
+            Task {
+                await viewModel.verifyOTP()
+            }
+        }
+    }
+    
+    @objc private func resendButtonTapped() {
+        showLoadingIndicator()
+        Task {
+            do {
+                try await DataControllerGG.shared.resendVerificationEmail(email: viewModel.email)
+                hideLoadingIndicator()
+                showAlert(title: "Success", message: "OTP resent successfully!")
+            } catch {
+                hideLoadingIndicator()
+                showAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
+    }
+    
+    @objc private func signInButtonTapped() {
         dismiss(animated: true)
     }
     
-  
-    
-    @objc private func signupButtonTapped() {
-        viewModel.userName = nameTextField.text ?? ""
-        viewModel.email = emailTextField.text ?? ""
-        viewModel.password = passwordTextField.text ?? ""
-        viewModel.confirmPassword = confirmPasswordTextField.text ?? ""
-    
-        
-        Task {
-            await viewModel.signUp()
-        }
+    @objc private func appleSignUpTapped() {
+        showAlert(title: "Coming Soon", message: "Apple Sign Up will be available soon!")
     }
     
-    @objc private func textFieldDidChange(_ textField: UITextField) {
-        viewModel.userName = nameTextField.text ?? ""
-        viewModel.email = emailTextField.text ?? ""
-        viewModel.password = passwordTextField.text ?? ""
-        viewModel.confirmPassword = confirmPasswordTextField.text ?? ""
-        
-        updateValidationStatus()
-        
-        signupButton.isEnabled = viewModel.isFormValid
-        signupButton.backgroundColor = viewModel.isFormValid ? UIColor(hex: "284329") : .systemGray
+    private func showLoadingIndicator() {
+        loadingIndicator.startAnimating()
+        signupButton.setTitle("", for: .normal)
+        signupButton.isEnabled = false
     }
     
-    private func updateValidationStatus() {
-        let password = passwordTextField.text ?? ""
-        
-        if password.isEmpty {
-            passwordRequirementsLabel.text = ""
-        } else if viewModel.isValidPassword(password) {
-            passwordRequirementsLabel.text = "Password is valid!"
-            passwordRequirementsLabel.textColor = .systemGreen
-        } else {
-            passwordRequirementsLabel.text = "Password must be at least 8 characters long and include a mix of letters, numbers, and special characters."
-            passwordRequirementsLabel.textColor = .systemRed
-        }
+    private func hideLoadingIndicator() {
+        loadingIndicator.stopAnimating()
+        updateUIForCurrentStep()
+        signupButton.isEnabled = true
     }
     
-    private func showAlert(title: String, message: String, completion: ((UIAlertAction) -> Void)? = nil) {
+    private func showAlert(
+        title: String,
+        message: String,
+        primaryButtonTitle: String? = nil,
+        secondaryButtonTitle: String = "OK",
+        primaryAction: (() -> Void)? = nil
+    ) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: completion))
+        
+        if let primaryButtonTitle = primaryButtonTitle {
+            let primaryButton = UIAlertAction(title: primaryButtonTitle, style: .default) { _ in
+                primaryAction?()
+            }
+            alert.addAction(primaryButton)
+        }
+        
+        let secondaryButton = UIAlertAction(title: secondaryButtonTitle, style: .cancel)
+        alert.addAction(secondaryButton)
+        
         present(alert, animated: true)
     }
 }
