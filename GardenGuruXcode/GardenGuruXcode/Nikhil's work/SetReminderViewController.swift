@@ -208,12 +208,17 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             return 
         }
         
+        // Get the stored image URL from UserDefaults
+        let imageURL = UserDefaults.standard.string(forKey: "pendingPlantImageURL") ?? ""
+        print("🔍 Retrieved stored image URL: \(imageURL)")
+        
         let userPlantID = UUID()
         let newUserPlant = UserPlant(
             userPlantRelationID: userPlantID,
             userId: UUID(uuidString: user.id) ?? UUID(),
             userplantID: plant.plantID,
-            userPlantNickName: nickname
+            userPlantNickName: nickname,
+            userPlantImage: imageURL // Add the image URL here
         )
         
         // Get switch states for reminders
@@ -248,17 +253,10 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
         // Create reminder with enabled reminders
         let reminder = CareReminder_(
-
-//            careReminderID: UUID(),
-//            upcomingReminderForWater: isWateringEnabled ? nextWaterDate : nil,
-//            upcomingReminderForFertilizers: isFertilizingEnabled ? nextFertilizerDate : nil,
-//            upcomingReminderForRepotted: isRepottingEnabled ? nextRepottingDate : nil,
-
             careReminderID: userPlantID, // Use same ID as userPlant for easy linking
             upcomingReminderForWater: waterDate ?? currentDate,
             upcomingReminderForFertilizers: fertilizerDate,
             upcomingReminderForRepotted: repottingDate,
-
             isWateringCompleted: false,
             isFertilizingCompleted: false,
             isRepottingCompleted: false
@@ -271,6 +269,10 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         // Add CareReminder to database
         dataController.addCareReminderSync(userPlantID: userPlantID, reminderAllowed: isWateringEnabled || isFertilizingEnabled || isRepottingEnabled)
         print("✅ Added care reminder to DataController")
+        
+        // Clear the stored image URL from UserDefaults after successful plant creation
+        UserDefaults.standard.removeObject(forKey: "pendingPlantImageURL")
+        print("✅ Cleared pending image URL from UserDefaults")
         
         // Post notification
         NotificationCenter.default.post(
@@ -346,7 +348,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
                         print("✅ Plant found in database:")
                         print("- Name: \(plant.plantName)")
                         print("- ID: \(plant.plantID)")
-                        print("- Category: \(plant.category)")
+                        print("- Category: \(plant.category_new)")
                     } else {
                         print("❌ Plant not found in database")
                         print("Attempting to fetch all plants...")
