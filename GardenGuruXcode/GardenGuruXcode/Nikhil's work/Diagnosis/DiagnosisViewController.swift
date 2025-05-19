@@ -177,7 +177,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             print("📝 Plant details:")
             print("   - Name: \(plant.plantName)")
             print("   - Botanical Name: \(plant.plantBotanicalName ?? "Not specified")")
-            print("   - Category: \(plant.category?.rawValue ?? "Not specified")")
+            print("   - Category: \(plant.category_new?.rawValue ?? "Not specified")")
             print("   - Season: \(plant.favourableSeason?.rawValue ?? "Not specified")")
             
             // Update UI with plant details
@@ -200,7 +200,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         let details = """
             
             • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
-            • Category: \(plant.category?.rawValue ?? "Not specified")
+            • Category: \(plant.category_new?.rawValue ?? "Not specified")
             • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
             """
         
@@ -412,11 +412,16 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         reminderVC.plantNameForReminder = plantName
         
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
-            if let diagnosisImage = plantImageView.image {
-                print("✅ Adding diagnosis image to plant")
-                dataController.updatePlantImages(plantName: plantName, newImage: diagnosisImage)
+            // Use the first image (whole plant view) from captured images
+            if let wholePlantImage = scanAndDiagnoseViewController.capturedImages.first {
+                print("✅ Adding whole plant image to storage")
+                if let imageURL = dataController.uploadUserPlantImageSync(userPlantID: plant.plantID, image: wholePlantImage) {
+                    print("✅ Successfully uploaded image: \(imageURL)")
+                } else {
+                    print("❌ Failed to upload image")
+                }
             } else {
-                print("❌ No diagnosis image available")
+                print("❌ No whole plant image available")
             }
             reminderVC.selectedPlant = plant
         }

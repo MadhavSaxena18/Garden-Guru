@@ -2019,6 +2019,129 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         print("✅ Found \(fertilizers.count) fertilizers for disease")
         return fertilizers
     }
+
+    // MARK: - Image Storage Functions
+    
+    func uploadUserPlantImage(userPlantID: UUID, image: UIImage) async throws -> String {
+        print("📸 Starting image upload for user plant: \(userPlantID)")
+        
+        // Convert UIImage to Data
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            throw APIError(message: "Failed to convert image to data")
+        }
+        
+        let fileName = "\(userPlantID.uuidString)_\(Date().timeIntervalSince1970).jpg"
+        let filePath = "user_plant_images/\(fileName)"
+        
+        print("📤 Uploading image to path: \(filePath)")
+        
+        // Upload to Supabase Storage with correct bucket name
+        try await supabase.storage
+            .from("user.image")  // Changed bucket name to user.image
+            .upload(
+                path: filePath,
+                file: imageData,
+                options: FileOptions(contentType: "image/jpeg")
+            )
+        
+        print("✅ Image uploaded successfully")
+        
+        // Get the public URL from correct bucket
+        let signedURL = try await supabase.storage
+            .from("user.image")  // Changed bucket name to user.image
+            .createSignedURL(
+                path: filePath,
+                expiresIn: 365 * 24 * 60 * 60 // 1 year in seconds
+            )
+        
+        let publicURLString = signedURL.absoluteString
+        print("🔗 Generated public URL: \(publicURLString)")
+        
+        // Create an update dictionary with the correct type
+        let updateDict: [String: String] = ["userPlantImage": publicURLString]
+        
+        // Update the UserPlant table with the image URL
+        try await supabase.database
+            .from("UserPlant")
+            .update(updateDict)
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .execute()
+        
+        print("✅ Updated UserPlant record with image URL")
+        
+        return publicURLString
+    }
+    
+    // Synchronous wrapper for uploadUserPlantImage
+    func uploadUserPlantImageSync(userPlantID: UUID, image: UIImage) -> String? {
+        var imageURL: String?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                imageURL = try await uploadUserPlantImage(userPlantID: userPlantID, image: image)
+            } catch {
+                print("❌ Error uploading image: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 30) // Longer timeout for image upload
+        return imageURL
+    }
+    
+    func deleteUserPlantImage(userPlantID: UUID) async throws {
+        print("🗑 Deleting image for user plant: \(userPlantID)")
+        
+        // First get the current image URL
+        let response = try await supabase.database
+            .from("UserPlant")
+            .select("userPlantImage")
+            .eq("userPlantRelationID", value: userPlantID.uuidString)
+            .single()
+            .execute()
+        
+        if let data = response.data as? [String: Any],
+           let imageURL = data["userPlantImage"] as? String,
+           let urlComponents = URLComponents(string: imageURL),
+           let path = urlComponents.path.components(separatedBy: "user.image/").last {  // Updated separator to match new bucket name
+            
+            // Delete from storage with correct bucket name
+            try await supabase.storage
+                .from("user.image")  // Changed bucket name to user.image
+                .remove(paths: [path])
+            
+            print("✅ Deleted image from storage")
+            
+            // Create a properly typed update dictionary
+            let updateDict: [String: Optional<String>] = ["userPlantImage": nil]
+            
+            // Clear the URL from the database
+            try await supabase.database
+                .from("UserPlant")
+                .update(updateDict)
+                .eq("userPlantRelationID", value: userPlantID.uuidString)
+                .execute()
+            
+            print("✅ Cleared image URL from database")
+        }
+    }
+    
+    // Synchronous wrapper for deleteUserPlantImage
+    func deleteUserPlantImageSync(userPlantID: UUID) {
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                try await deleteUserPlantImage(userPlantID: userPlantID)
+            } catch {
+                print("❌ Error deleting image: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 10)
+    }
 }
 
 // Helper struct for decoding nested JSON response

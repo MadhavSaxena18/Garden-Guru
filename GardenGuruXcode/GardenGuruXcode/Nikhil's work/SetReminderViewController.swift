@@ -346,7 +346,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
                         print("✅ Plant found in database:")
                         print("- Name: \(plant.plantName)")
                         print("- ID: \(plant.plantID)")
-                        print("- Category: \(plant.category)")
+                        print("- Category: \(plant.category_new?.rawValue ?? "Not specified")")
                     } else {
                         print("❌ Plant not found in database")
                         print("Attempting to fetch all plants...")
