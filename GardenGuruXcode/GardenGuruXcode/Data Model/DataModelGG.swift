@@ -58,7 +58,7 @@ struct Plant: Codable, Hashable, Equatable {
     var repottingFrequency: Int64?
     var pruningFrequency: Int64?
     var favourableSeason: Season?
-    var category_new: Category?
+    var category: Category?
     
     enum CodingKeys: String, CodingKey {
         case plantID
@@ -71,7 +71,7 @@ struct Plant: Codable, Hashable, Equatable {
         case repottingFrequency
         case pruningFrequency
         case favourableSeason
-        case category_new
+        case category
     }
     
     init(from decoder: Decoder) throws {
@@ -94,7 +94,7 @@ struct Plant: Codable, Hashable, Equatable {
         repottingFrequency = try container.decodeIfPresent(Int64.self, forKey: .repottingFrequency)
         pruningFrequency = try container.decodeIfPresent(Int64.self, forKey: .pruningFrequency)
         favourableSeason = try container.decodeIfPresent(Season.self, forKey: .favourableSeason)
-        category_new = try container.decodeIfPresent(Category.self, forKey: .category_new)
+        category = try container.decodeIfPresent(Category.self, forKey: .category)
     }
 }
 
@@ -421,7 +421,7 @@ enum Season: String, Codable, Hashable {
 }
 
 enum Category: String, Codable, Hashable {
-    case ornamental, flowering, medicinal
+    case medicinal, Ornamental, Flowering
 }
 
 struct Design: Codable, Hashable {

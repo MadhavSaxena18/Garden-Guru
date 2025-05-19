@@ -12,7 +12,7 @@ import UIKit
 import AVFoundation
 import CoreML
 import Vision
-import Supabase  // Added Supabase import
+
 
 class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
@@ -31,14 +31,10 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     static var capturedImages: [UIImage] = []
     
     private let dataController = DataControllerGG.shared
-    private let supabase = supaBaseController.shared.client
     
     private var fullScreenScanningView: UIView!
     private var scanningLine: UIView!
     private var processingLabel: UILabel!
-    
-    // Variable to store the uploaded image URL
-    private var diagnosisImageURL: String?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -160,56 +156,31 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     }
     
     @IBAction func captureImage(_ sender: UIButton) {
-        print("📸 captureImage button pressed")
         let settings = AVCapturePhotoSettings()
         settings.flashMode = .auto
-        print("📸 Calling photoOutput.capturePhoto...")
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
     
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        print("📸 photoOutput callback - processing photo...")
-        
         guard error == nil, let photoData = photo.fileDataRepresentation() else {
             print("Error capturing photo: \(String(describing: error))")
             return
         }
         
+         
         if let capturedImage = UIImage(data: photoData) {
-            print("📸 Successfully created UIImage from photo data")
             DispatchQueue.main.async {
                 if self.counter == 0 {
-                    print("📸 First photo captured")
                     self.snapImage1.image = capturedImage
                     self.instructionLabel.text = self.instruction[self.counter + 1]
                     scanAndDiagnoseViewController.capturedImages.append(capturedImage)
                     self.counter += 1
-                    
-                    // Upload the first image to Supabase
-                    print("🚀 Uploading first image to Supabase storage...")
-                    Task {
-                        do {
-                            // Create a timestamp-based filename for uniqueness
-                            let fileName = "plant_diagnosis_\(Date().timeIntervalSince1970).jpg"
-                            
-                            // Upload image and get URL
-                            let imageURL = try await self.dataController.uploadPlantImage(capturedImage, fileName: fileName)
-                            self.diagnosisImageURL = imageURL
-                            print("✅ Successfully uploaded image: \(imageURL)")
-                        } catch {
-                            print("❌ Error uploading image: \(error.localizedDescription)")
-                            print("❌ Error details: \(error)")
-                        }
-                    }
-                    
                 } else if self.counter == 1 {
-                    print("📸 Second photo captured")
                     self.snapImage2.image = capturedImage
                     self.instructionLabel.text = self.instruction[self.counter + 1]
                     scanAndDiagnoseViewController.capturedImages.append(capturedImage)
                     self.counter += 1
                 } else if self.counter == 2 {
-                    print("📸 Third photo captured")
                     self.snapImage3.image = capturedImage
                     self.captureSession.stopRunning()
                     self.previewLayer.removeFromSuperlayer()
@@ -220,29 +191,32 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                     imageView.clipsToBounds = true
                     self.cameraView.addSubview(imageView)
                     scanAndDiagnoseViewController.capturedImages.append(capturedImage)
-                    print("\(scanAndDiagnoseViewController.capturedImages.count) images captured total")
-                    
-                    print("🔍 Starting processImages method")
+                    print("\(scanAndDiagnoseViewController.capturedImages.count)")
+//                    self.processImages()
                     self.processImages()
                     self.setupFullScreenScanning()
+                    
                 }
+                
+//                print("Capture")
+//                scanAndDiagnoseViewController.capturedImages.append(capturedImage)
+//                print("\(scanAndDiagnoseViewController.capturedImages.count)")
+//                self.counter += 1
             }
-        } else {
-            print("❌ Failed to create UIImage from photo data")
         }
     }
     private func processImages() {
-        print("🧠 processImages - Starting image processing...")
-        print("🧠 Number of captured images: \(scanAndDiagnoseViewController.capturedImages.count)")
+        print("Starting image processing...")
+        print("Number of captured images: \(scanAndDiagnoseViewController.capturedImages.count)")
         
         // Step 1: Run YOLO on all three images
         var yoloResults: [String] = []
         
         for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
-            print("\n🧠 --- Processing image \(index + 1) with YOLO ---")
+            print("\n--- Processing image \(index + 1) with YOLO ---")
             if let yoloResult = runYOLOModel(image) {
                 let lowercaseResult = yoloResult.lowercased()
-                print("🧠 YOLO Result for image \(index + 1): \(lowercaseResult)")
+                print("YOLO Result for image \(index + 1): \(lowercaseResult)")
                 yoloResults.append(lowercaseResult)
             } else {
                 print("⚠️ No YOLO result for image \(index + 1)")
@@ -250,7 +224,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             }
         }
         
-        print("\n🧠 All YOLO results: \(yoloResults)")
+        print("\nAll YOLO results: \(yoloResults)")
         
         // Check if majority of YOLO results are plants
         let plantDetections = yoloResults.filter {
@@ -261,7 +235,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             // Step 2: Run plant classifier on first image only
             if let firstImage = scanAndDiagnoseViewController.capturedImages.first,
                let plantType = runPlantClassifier(firstImage) {
-                print("🌱 Plant Classification Result: \(plantType)")
+                print("Plant Classification Result: \(plantType)")
                 
                 // Check if it's a non-plant object
                 if isNonPlantObject(plantType) {
@@ -285,19 +259,6 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 
                 DispatchQueue.main.async {
                     DiagnosisViewController.plantNameLabel.text = plantType
-                    
-                    // Store plant image URL - if it was uploaded successfully or we have a fallback
-                    let imageURL = self.diagnosisImageURL ?? "https://swygmlgykjhvncaqsnxw.supabase.co/storage/v1/object/public/images/plant_fallback.jpg"
-                    print("\n=== Saving Diagnosis Image URL for Later Use ===")
-                    print("🌿 Plant identified as: \(plantType)")
-                    print("🔗 Image URL: \(imageURL)")
-                    
-                    // Store the URL in UserDefaults for later use when creating the UserPlant
-                    UserDefaults.standard.set(imageURL, forKey: "pendingPlantImageURL")
-                    print("✅ Stored image URL in UserDefaults - will be used when user completes plant setup")
-                    
-                    // Note: We're NOT creating a UserPlant record here anymore!
-                    // The UserPlant will be created only when the user completes the full setup flow
                 }
                 
                 // Step 3: Run disease detection on all images
@@ -408,7 +369,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     }
     
     private func runPlantClassifier(_ image: UIImage) -> String? {
-        guard let model = try? VNCoreMLModel(for: PLANT_IDENTIFICATION_MODEL_1().model),
+        guard let model = try? VNCoreMLModel(for: PlantIdentify().model),
               let cgImage = image.cgImage else { return nil }
         
         var resultIdentifier: String?
@@ -429,50 +390,31 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     }
     
     private func runDiseaseDetection(_ image: UIImage) -> String? {
-        do {
-            // Create ML model URL with the proper name (contains space)
-            let modelName = "GardenGuruDiseasesDetection 2"
-            guard let modelURL = Bundle.main.url(forResource: modelName, withExtension: "mlmodelc") else {
-                print("Failed to find model file: \(modelName)")
-                return nil
-            }
-            
-            // Load the model
-            let model = try MLModel(contentsOf: modelURL)
-            let vnModel = try VNCoreMLModel(for: model)
-            
-            guard let cgImage = image.cgImage else { 
-                print("Failed to get CGImage")
-                return nil 
-            }
-            
-            var resultIdentifier: String?
-            var resultConfidence: Float = 0.0
-            let semaphore = DispatchSemaphore(value: 0)
-            
-            let request = VNCoreMLRequest(model: vnModel) { request, _ in
-                if let results = request.results as? [VNClassificationObservation],
-                   let topResult = results.first {
-                    // Only accept results with confidence above 0.5
-                    if topResult.confidence > 0.5 {
-                        resultIdentifier = topResult.identifier
-                        resultConfidence = topResult.confidence
-                    }
-                    print("Disease detection: \(topResult.identifier) with confidence: \(topResult.confidence)")
+        guard let model = try? VNCoreMLModel(for: GardenGuruDiseasesDetection_2().model),
+              let cgImage = image.cgImage else { return nil }
+        
+        var resultIdentifier: String?
+        var resultConfidence: Float = 0.0
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        let request = VNCoreMLRequest(model: model) { request, _ in
+            if let results = request.results as? [VNClassificationObservation],
+               let topResult = results.first {
+                // Only accept results with confidence above 0.5
+                if topResult.confidence > 0.5 {
+                    resultIdentifier = topResult.identifier
+                    resultConfidence = topResult.confidence
                 }
-                semaphore.signal()
+                print("Disease detection: \(topResult.identifier) with confidence: \(topResult.confidence)")
             }
-            
-            try VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
-            semaphore.wait()
-            
-            // If confidence is too low, return nil instead of a potentially incorrect result
-            return resultConfidence > 0.5 ? resultIdentifier : nil
-            
-        } catch {
-            print("Disease model error: \(error.localizedDescription)")
-            return nil
+            semaphore.signal()
         }
+        
+        try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        semaphore.wait()
+        
+        // If confidence is too low, return nil instead of a potentially incorrect result
+        return resultConfidence > 0.5 ? resultIdentifier : nil
     }
     
     private func mostFrequentResult(_ results: [String]) -> String {
