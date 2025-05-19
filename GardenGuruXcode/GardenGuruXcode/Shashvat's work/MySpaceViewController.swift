@@ -83,7 +83,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     
     private func loadUserData() {
         if let user = dataController.getUserSync() {
-            let userPlantsWithDetails = dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail)
+            let userPlantsWithDetails = dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail!)
             userPlants = userPlantsWithDetails ?? []
             mySpaceCollectionView.reloadData()
         }
@@ -104,7 +104,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         
         // Get plants with details using the sync wrapper
         print("🌿 Fetching plants for user...")
-        let plantsWithDetails = dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail) ?? []
+        let plantsWithDetails = dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail!) ?? []
         
         print("\n📊 Plant Details Summary:")
         print("Total plants found: \(plantsWithDetails.count)")

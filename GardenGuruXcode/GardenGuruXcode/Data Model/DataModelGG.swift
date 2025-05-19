@@ -11,18 +11,39 @@ import SDWebImage
 // MARK: - Data Models
 
 struct userInfo: Codable, Hashable {
-    var userEmail: String
-    var userName: String
-    var location: String
-    var reminderAllowed: Bool
     var id: String
+    var userName: String
+    var location: String?
+    var reminderAllowed: Bool?
+    var userEmail: String?
     
     enum CodingKeys: String, CodingKey {
-        case userEmail = "user_email"
+        case id
         case userName
         case location
         case reminderAllowed
-        case id
+        case userEmail = "user_email"
+    }
+    
+    init(id: String, userName: String, location: String? = nil, reminderAllowed: Bool? = nil, userEmail: String? = nil) {
+        self.id = id
+        self.userName = userName
+        self.location = location
+        self.reminderAllowed = reminderAllowed
+        self.userEmail = userEmail
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Required fields
+        id = try container.decode(String.self, forKey: .id)
+        userName = try container.decode(String.self, forKey: .userName)
+        
+        // Optional fields
+        location = try container.decodeIfPresent(String.self, forKey: .location)
+        reminderAllowed = try container.decodeIfPresent(Bool.self, forKey: .reminderAllowed)
+        userEmail = try container.decodeIfPresent(String.self, forKey: .userEmail)
     }
 }
 
@@ -171,12 +192,6 @@ struct Diseases: Codable, Hashable {
     }
 }
 
-struct PlantDisease: Codable, Hashable {
-    var plantDiseaseID: UUID
-    var plantID: UUID //FK FOR PLANT
-    var diseaseID: UUID //FK FOR DISEASE
-}
-
 struct UserPlant: Codable, Hashable {
     var userPlantRelationID: UUID
     var userId: UUID
@@ -186,8 +201,9 @@ struct UserPlant: Codable, Hashable {
     var lastFertilized: Date?
     var lastRepotted: Date?
     var userPlantImage: String?
+    var associatedDiseases: [Diseases]?
     
-    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil, userPlantImage: String? = nil) {
+    init(userPlantRelationID: UUID, userId: UUID, userplantID: UUID? = nil, userPlantNickName: String? = nil, lastWatered: Date? = nil, lastFertilized: Date? = nil, lastRepotted: Date? = nil, userPlantImage: String? = nil, associatedDiseases: [Diseases]? = nil) {
         self.userPlantRelationID = userPlantRelationID
         self.userId = userId
         self.userplantID = userplantID
@@ -196,6 +212,7 @@ struct UserPlant: Codable, Hashable {
         self.lastFertilized = lastFertilized
         self.lastRepotted = lastRepotted
         self.userPlantImage = userPlantImage
+        self.associatedDiseases = associatedDiseases
     }
     
     enum CodingKeys: String, CodingKey {
@@ -207,6 +224,7 @@ struct UserPlant: Codable, Hashable {
         case lastFertilized
         case lastRepotted
         case userPlantImage
+        case associatedDiseases
     }
     
     init(from decoder: Decoder) throws {
@@ -247,6 +265,7 @@ struct UserPlant: Codable, Hashable {
             lastRepotted = dateFormatter.date(from: lastRepottedString)
         }
         userPlantImage = try container.decodeIfPresent(String.self, forKey: .userPlantImage)
+        associatedDiseases = try container.decodeIfPresent([Diseases].self, forKey: .associatedDiseases)
     }
 }
 

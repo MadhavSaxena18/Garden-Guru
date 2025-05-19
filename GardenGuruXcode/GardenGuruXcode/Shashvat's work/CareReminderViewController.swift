@@ -114,6 +114,7 @@ class CareReminderViewController: UIViewController {
     
     // MARK: - Data Loading
     private func loadData() {
+
         print("\n=== Loading Care Reminder Data ===")
         
         guard let firstUser = dataController.getUserSync() else {
@@ -122,7 +123,7 @@ class CareReminderViewController: UIViewController {
         }
         print("✅ Found user: \(firstUser.userEmail)")
         
-        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
+        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail!)
         print("📱 Found \(userPlants.count) user plants")
         
         reminders = []
@@ -145,6 +146,10 @@ class CareReminderViewController: UIViewController {
         }
         
         print("\n📊 Total reminders loaded: \(reminders.count)")
+
+        guard let firstUser = dataController.getUserSync() else { return }
+        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
+
         sortReminders()
         careReminderCollectionView.reloadData()
     }
@@ -304,7 +309,11 @@ class CareReminderViewController: UIViewController {
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
         guard let firstUser = dataController.getUserSync() else { return }
-        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
+
+        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail!)
+
+        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
+
         
         for userPlant in userPlants {
             if let plant = dataController.getPlantSync(by: userPlant.userplantID ?? UUID()),

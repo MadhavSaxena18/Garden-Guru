@@ -130,9 +130,12 @@ class SectionWiseDetailViewController: UIViewController {
             switch section {
             case 0: // Common Issues for User Plants
                 dataType = .diseases
-                        diseases = try await dataController.getCommonIssues()
-                print("Loaded user plant diseases: \(diseases.count)")
-                print("Disease names: \(diseases.map { $0.diseaseName })")
+                        // Check for filtered items first
+                        if let filteredDiseases = filteredItems as? [Diseases] {
+                            diseases = filteredDiseases
+                            print("Using filtered diseases: \(diseases.count)")
+                        }
+                        print("Using diseases set via setDiseases")
                 
             case 1: // Common Fertilizers
                 dataType = .fertilizers
@@ -151,12 +154,6 @@ class SectionWiseDetailViewController: UIViewController {
         print("Final data counts - Plants: \(plants.count), Diseases: \(diseases.count), Fertilizers: \(fertilizers.count)")
         print("Current data type: \(dataType)")
         
-        // Use filtered items if available, otherwise use regular data
-        if let filteredData = filteredItems {
-            // Use the filtered data
-            // Example: diseases = filteredData as? [Diseases] ?? []
-        }
-        
                 // Update UI on main thread
                 await MainActor.run {
             self.collectionView.reloadData()
@@ -174,6 +171,13 @@ class SectionWiseDetailViewController: UIViewController {
                 }
             }
         }
+    }
+    
+    // Add public method to set diseases
+    func setDiseases(_ diseases: [Diseases]) {
+        self.diseases = diseases
+        self.dataType = .diseases
+        collectionView?.reloadData()
     }
 }
 

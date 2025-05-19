@@ -242,7 +242,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             return
         }
         
-        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail)
+        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail!)
         print("📝 Found \(userPlants.count) user plants")
         
         isExistingPlant = userPlants.contains { userPlant in

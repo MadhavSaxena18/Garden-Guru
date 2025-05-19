@@ -173,6 +173,8 @@ class ExploreScreen{
                 userDiseases.append(DataOfSection1InforMyPlantSegment(from: userDisease, disease: disease))
             }
         }
+        // Sort userDiseases by diseaseName for static order
+        userDiseases.sort { $0.diseaseName.localizedCaseInsensitiveCompare($1.diseaseName) == .orderedAscending }
         
         // Get fertilizers
         print("🌱 Fetching fertilizers...")

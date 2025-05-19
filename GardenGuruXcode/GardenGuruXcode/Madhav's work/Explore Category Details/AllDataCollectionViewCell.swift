@@ -113,10 +113,30 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         descriptionLabel.attributedText = attributedString
         
         // Load and display disease image
-        if let urlString = disease.diseaseImage, let url = URL(string: urlString) {
-            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "placeholder_disease"))
+        if let urlString = disease.diseaseImage {
+            print("🖼️ Loading disease image from URL: \(urlString)")
+            if let url = URL(string: urlString) {
+                plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "placeholder_disease")) { image, error, cacheType, url in
+                    if let error = error {
+                        print("❌ Error loading disease image: \(error)")
+                    } else {
+                        print("✅ Successfully loaded disease image from: \(url?.absoluteString ?? "unknown URL")")
+                    }
+                }
+            } else {
+                print("❌ Invalid disease image URL: \(urlString)")
+                plantImageView.image = UIImage(named: "placeholder_disease")
+            }
         } else {
+            print("❌ No disease image URL provided")
+            // Try to load image by disease name
+            if let diseaseImage = UIImage(named: disease.diseaseName.lowercased().replacingOccurrences(of: " ", with: "_")) {
+                print("✅ Found local image for disease: \(disease.diseaseName)")
+                plantImageView.image = diseaseImage
+            } else {
+                print("❌ No local image found for disease: \(disease.diseaseName)")
             plantImageView.image = UIImage(named: "placeholder_disease")
+            }
         }
         
         // Ensure proper layout
