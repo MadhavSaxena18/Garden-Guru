@@ -177,7 +177,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             print("📝 Plant details:")
             print("   - Name: \(plant.plantName)")
             print("   - Botanical Name: \(plant.plantBotanicalName ?? "Not specified")")
-            print("   - Category: \(plant.category?.rawValue ?? "Not specified")")
+            print("   - Category: \(plant.category_new?.rawValue ?? "Not specified")")
             print("   - Season: \(plant.favourableSeason?.rawValue ?? "Not specified")")
             
             // Update UI with plant details
@@ -200,7 +200,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         let details = """
             
             • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
-            • Category: \(plant.category?.rawValue ?? "Not specified")
+            • Category: \(plant.category_new?.rawValue ?? "Not specified")
             • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
             """
         

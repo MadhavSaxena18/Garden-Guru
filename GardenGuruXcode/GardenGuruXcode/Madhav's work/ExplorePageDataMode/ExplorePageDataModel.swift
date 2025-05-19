@@ -31,7 +31,7 @@ struct DataOfSection1InDicoverSegment {
         self.repottingFrequency = plant.repottingFrequency
         self.pruningFrequency = plant.pruningFrequency
         self.favourableSeason = plant.favourableSeason
-        self.category = plant.category
+        self.category = plant.category_new
     }
 }
 

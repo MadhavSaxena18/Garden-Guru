@@ -408,7 +408,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     }
     
     private func runPlantClassifier(_ image: UIImage) -> String? {
-        guard let model = try? VNCoreMLModel(for: PlantIdentify().model),
+        guard let model = try? VNCoreMLModel(for: PLANT_IDENTIFICATION_MODEL_1().model),
               let cgImage = image.cgImage else { return nil }
         
         var resultIdentifier: String?
