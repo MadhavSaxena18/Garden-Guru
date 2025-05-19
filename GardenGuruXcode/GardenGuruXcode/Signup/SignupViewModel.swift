@@ -2,6 +2,7 @@ import Foundation
 
 class SignupViewModel {
     var email = ""
+    var password = ""
     var otp = ""
     
     var onError: ((String) -> Void)?
@@ -20,34 +21,52 @@ class SignupViewModel {
     
     @MainActor
     func checkEmailAndSendOTP() async {
+        print("\n=== Starting Email Check and OTP Process ===")
         do {
             // Clean up the email
             let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            print("📧 Processing email: \(cleanEmail)")
             
             // First validate email format
             guard isValidEmail(cleanEmail) else {
+                print("❌ Invalid email format")
                 onError?("Please enter a valid email address")
                 return
             }
+            print("✅ Email format is valid")
             
             // Check if user exists
-            let userExists = try await dataController.checkUserExists(email: cleanEmail)
+            print("🔍 Checking if user exists...")
+            let (userExists, _) = try await dataController.checkUserExists(email: cleanEmail)
+            print("📝 User exists check result: \(userExists)")
+            
             if userExists {
+                print("⚠️ User already exists, showing login prompt")
                 onUserExists?()
                 return
             }
             
             // Send verification email
+            print("📧 Sending verification email...")
             try await dataController.sendSignupVerificationEmail(email: cleanEmail)
             
-            // Store the email in UserDefaults for later use
+            // Store the email and password in UserDefaults
+            print("💾 Storing credentials temporarily")
             UserDefaults.standard.set(cleanEmail, forKey: "userEmail")
+            UserDefaults.standard.set(password, forKey: "tempPassword")
+            
+            print("✅ OTP sent successfully")
             onOTPSent?()
             
         } catch {
+            print("❌ Error in checkEmailAndSendOTP: \(error)")
+            print("❌ Error details: \(error.localizedDescription)")
+            
             if error.localizedDescription.contains("rate limit") {
+                print("⚠️ Rate limit exceeded")
                 onError?("Please wait a moment before trying again")
             } else if error.localizedDescription.contains("Invalid email") {
+                print("❌ Invalid email format caught in error")
                 onError?("Please enter a valid email address")
             } else {
                 onError?(error.localizedDescription)
@@ -57,10 +76,14 @@ class SignupViewModel {
     
     @MainActor
     func resendOTP() async {
+        print("\n=== Resending OTP ===")
         do {
+            print("📧 Attempting to resend OTP to: \(email)")
             try await dataController.resendVerificationEmail(email: email)
+            print("✅ OTP resent successfully")
             onOTPSent?()
         } catch {
+            print("❌ Error resending OTP: \(error)")
             if error.localizedDescription.contains("rate limit") {
                 onError?("Please wait a moment before trying again")
             } else {
@@ -71,11 +94,19 @@ class SignupViewModel {
     
     @MainActor
     func verifyOTP() async {
+        print("\n=== Verifying OTP ===")
+        print("📧 Email: \(email)")
+        print("🔑 OTP Length: \(otp.count)")
+        
         do {
-            try await dataController.verifyEmail(email: email, otp: otp)
-            onOTPVerified?()
+            print("🔍 Attempting OTP verification...")
+            try await DataControllerGG.shared.verifyEmail(email: email, otp: otp)
+            print("✅ OTP verified successfully")
+            onSuccess?()
         } catch {
-            onError?("Invalid verification code")
+            print("❌ OTP verification failed: \(error)")
+            print("❌ Error details: \(error.localizedDescription)")
+            onError?(error.localizedDescription)
         }
     }
 } 

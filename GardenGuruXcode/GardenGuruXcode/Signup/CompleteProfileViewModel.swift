@@ -98,4 +98,56 @@ class CompleteProfileViewModel {
             onError?(error.localizedDescription)
         }
     }
+    
+    func completeProfile(name: String, age: Int, gender: String, plantPreferences: [String]) {
+        Task {
+            do {
+                // Get the user's email and password from UserDefaults
+                guard let email = UserDefaults.standard.string(forKey: "userEmail"),
+                      let password = UserDefaults.standard.string(forKey: "tempPassword") else {
+                    onError?("User credentials not found")
+                    return
+                }
+                
+                await MainActor.run {
+                    // Show loading state if needed
+                    // You can add a loading state handler here
+                }
+                
+                // First create the user in auth and UserTable
+                try await DataControllerGG.shared.completeSignup(
+                    email: email,
+                    password: password,
+                    userName: name
+                )
+                
+                // Then save the complete profile data
+                let userData: [String: Any] = [
+                    "email": email,
+                    "full_name": name,
+                    "age": age,
+                    "gender": gender,
+                    "plant_preferences": plantPreferences,
+                    "updated_at": Date().ISO8601Format()
+                ]
+                
+                // Update the user profile with additional details
+                try await DataControllerGG.shared.saveUserProfile(userData: userData)
+                
+                // Clear temporary password from UserDefaults
+                UserDefaults.standard.removeObject(forKey: "tempPassword")
+                
+                // Notify success on main thread
+                await MainActor.run {
+                    self.onSuccess?()
+                }
+                
+            } catch {
+                // Handle errors on main thread
+                await MainActor.run {
+                    self.onError?(error.localizedDescription)
+                }
+            }
+        }
+    }
 } 

@@ -1145,19 +1145,27 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         // Store the email for future use
         UserDefaults.standard.set(email, forKey: "userEmail")
         
-        // After successful authentication, fetch user data from UserTable
+        // After successful authentication, fetch or create user data in UserTable
         print("🔍 Fetching user data from UserTable")
-        let userData = try await initializeUser(email: email)
+        let (exists, userData) = try await checkUserExists(email: email)
         
         if let userData = userData {
             print("✅ User data found in UserTable")
-        } else {
-            print("⚠️ No user data found in UserTable")
-            // Print all users to debug
-            await printAllUsers()
+            return (session, userData)
+        } else if exists {
+            // User exists in Auth but not in UserTable, create entry
+            print("⚠️ User exists in Auth but not in UserTable, creating entry")
+            let newUserData = try await createUser(
+                email: email,
+                userName: email.components(separatedBy: "@")[0], // Use email prefix as default username
+                location: "North India" // Default location
+            )
+            print("✅ Created user data in UserTable")
+            return (session, newUserData)
         }
         
-        return (session, userData)
+        print("❌ Could not find or create user data")
+        return (session, nil)
     }
 
     // Add this function after the signIn function
@@ -1463,26 +1471,22 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
 
     }
 
-    func checkUserExists(email: String) async throws -> Bool {
+    func checkUserExists(email: String) async throws -> (exists: Bool, userData: userInfo?) {
         print("\n=== Checking User Existence ===")
         print("🔍 Checking email: \(email)")
         
         // Clean and validate email
         let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        print("📧 Cleaned email: \(cleanEmail)")
+        
         guard cleanEmail.contains("@") && cleanEmail.contains(".") else {
             print("❌ Invalid email format")
             throw AuthError.invalidCredentials
         }
         
         do {
-            // First check auth table
-            let authResponse = try await supabase.auth.user(email: cleanEmail)
-            if authResponse != nil {
-                print("✅ User found in auth table")
-                return true
-            }
-            
-            // Then check UserTable
+            // Check UserTable first
+            print("🔍 Step 1: Checking UserTable...")
             let response = try await supabase
                 .database
                 .from("UserTable")
@@ -1490,16 +1494,60 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 .eq("user_email", value: cleanEmail)
                 .execute()
             
-            if let jsonObject = response.data as? [[String: Any]], !jsonObject.isEmpty {
+            print("📝 UserTable response type: \(type(of: response.data))")
+            if let jsonData = response.data as? Data {
+                print("📝 UserTable response (Data): \(String(data: jsonData, encoding: .utf8) ?? "nil")")
+                if let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
+                   let user = users.first {
+                    print("✅ User found in UserTable with data")
+                    return (true, user)
+                }
+            } else if let jsonObject = response.data as? [[String: Any]], !jsonObject.isEmpty {
                 print("✅ User found in UserTable")
-                return true
+                if let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject[0]),
+                   let user = try? JSONDecoder().decode(userInfo.self, from: jsonData) {
+                    return (true, user)
+                }
+                return (true, nil)
             }
             
-            print("✅ User does not exist")
-            return false
+            // If not found in UserTable, check auth table
+            print("\n🔍 Step 2: Checking Auth table...")
+            do {
+                print("📝 Attempting to get user by email: \(cleanEmail)")
+                // Try to sign in with invalid password to check if user exists
+                try await supabase.auth.signIn(
+                    email: cleanEmail,
+                    password: UUID().uuidString // Random invalid password
+                )
+                // If we get here without error, something went wrong
+                print("⚠️ Unexpected successful sign in with random password")
+                return (true, nil)
+            } catch let error {
+                print("📝 Auth check response: \(error.localizedDescription)")
+                
+                // Check error message for specific cases
+                let errorMessage = error.localizedDescription.lowercased()
+                if errorMessage.contains("invalid login credentials") {
+                    // "Invalid login credentials" actually means user doesn't exist in this case
+                    print("✅ User does not exist in Auth table (invalid credentials)")
+                    return (false, nil)
+                } else if errorMessage.contains("user not found") || 
+                          errorMessage.contains("invalid user") ||
+                          errorMessage.contains("no user found") {
+                    print("✅ User does not exist in Auth table")
+                    return (false, nil)
+                }
+                
+                // For any other error, log it and assume user doesn't exist
+                print("⚠️ Unexpected auth error: \(error)")
+                print("⚠️ Assuming user doesn't exist to allow signup attempt")
+                return (false, nil)
+            }
         } catch {
             print("❌ Error checking user existence: \(error)")
-            throw AuthError.unknown(error)
+            print("❌ Error details: \(error.localizedDescription)")
+            throw error
         }
     }
 
@@ -1542,19 +1590,43 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     }
     
     func completeSignup(email: String, password: String, userName: String) async throws {
-        // First update the user's password
-        try await supabase.auth.update(user: .init(password: password))
+        print("\n=== Completing User Signup ===")
+        print("📧 Creating user with email: \(email)")
         
-        // Then create the initial user record
-        try await supabase
-            .database
-            .from("UserTable")
-            .insert([
-                "user_email": email,
-                "user_name": userName,
-                "created_at": Date().ISO8601Format()
-            ])
-            .execute()
+        do {
+            // First create the auth user
+            let authResponse = try await supabase.auth.signUp(
+                email: email,
+                password: password
+            )
+            
+            let userId = authResponse.user.id.uuidString
+            print("✅ Auth user created successfully with ID: \(userId)")
+            
+            // Then create the user in UserTable
+            let userTableData = UserTableInsert(
+                id: userId, // Use the string ID from auth
+                user_email: email,
+                userName: userName,
+                location: "North India", // Default location
+                reminderAllowed: true    // Default setting
+            )
+            
+            try await supabase
+                .database
+                .from("UserTable")
+                .insert(userTableData)
+                .execute()
+            
+            print("✅ User created in UserTable")
+            
+            // Store the email for future use
+            UserDefaults.standard.set(email, forKey: "userEmail")
+            
+        } catch {
+            print("❌ Error completing signup: \(error)")
+            throw error
+        }
     }
 
     func saveUserProfile(userData: [String: Any]) async throws {

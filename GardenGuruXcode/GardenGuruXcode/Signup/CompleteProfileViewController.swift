@@ -1,6 +1,53 @@
 import UIKit
 
-class CompleteProfileViewController: UIViewController {
+extension Notification.Name {
+    static let userDidCompleteProfile = Notification.Name("userDidCompleteProfile")
+}
+
+class CompleteProfileViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return plantCategories.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlantPreferenceCell", for: indexPath) as? PlantPreferenceCell else {
+            return UICollectionViewCell()
+        }
+        
+        let category = plantCategories[indexPath.item]
+        cell.configure(with: category)
+        cell.isSelected = selectedPlantPreferences.contains(category)
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let category = plantCategories[indexPath.item]
+        selectedPlantPreferences.insert(category)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        let category = plantCategories[indexPath.item]
+        selectedPlantPreferences.remove(category)
+    }
+    
+    // MARK: - UICollectionViewDelegateFlowLayout
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let width = (collectionView.bounds.width - 20) / 2 // 2 cells per row with 20pt total spacing
+        return CGSize(width: width, height: 44)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        return 10
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 10
+    }
+    
     private let viewModel = CompleteProfileViewModel()
     
     // MARK: - UI Elements
@@ -84,15 +131,18 @@ class CompleteProfileViewController: UIViewController {
         return label
     }()
     
-    private lazy var genderSegmentedControl: UISegmentedControl = {
-        let control = UISegmentedControl(items: ["Male", "Female", "Other"])
-        control.selectedSegmentIndex = 0
-        control.backgroundColor = UIColor(hex: "F5F9F5")
-        control.selectedSegmentTintColor = UIColor(hex: "284329")
-        control.setTitleTextAttributes([.foregroundColor: UIColor.darkGray], for: .normal)
-        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
-        control.translatesAutoresizingMaskIntoConstraints = false
-        return control
+    private let genderButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Select Gender", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 16)
+        button.contentHorizontalAlignment = .left
+        button.backgroundColor = UIColor(hex: "F5F9F5")
+        button.setTitleColor(.darkGray, for: .normal)
+        button.layer.cornerRadius = 12
+        button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        return button
     }()
     
     private let plantPreferencesLabel: UILabel = {
@@ -149,6 +199,9 @@ class CompleteProfileViewController: UIViewController {
         "Bonsai",
         "Air Plants"
     ]
+    private let genderOptions = ["Male", "Female", "Other"]
+    private var selectedGender: String?
+    private var selectedPlantPreferences: Set<String> = []
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -174,7 +227,7 @@ class CompleteProfileViewController: UIViewController {
         containerView.addSubview(nameTextField)
         containerView.addSubview(ageTextField)
         containerView.addSubview(genderLabel)
-        containerView.addSubview(genderSegmentedControl)
+        containerView.addSubview(genderButton)
         containerView.addSubview(plantPreferencesLabel)
         containerView.addSubview(plantPreferencesCollectionView)
         containerView.addSubview(continueButton)
@@ -182,6 +235,9 @@ class CompleteProfileViewController: UIViewController {
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
+        
+        // Setup gender button action
+        genderButton.addTarget(self, action: #selector(showGenderPicker), for: .touchUpInside)
     }
     
     private func setupCollectionView() {
@@ -225,11 +281,11 @@ class CompleteProfileViewController: UIViewController {
             genderLabel.topAnchor.constraint(equalTo: ageTextField.bottomAnchor, constant: 16),
             genderLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             
-            genderSegmentedControl.topAnchor.constraint(equalTo: genderLabel.bottomAnchor, constant: 8),
-            genderSegmentedControl.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            genderSegmentedControl.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            genderButton.topAnchor.constraint(equalTo: genderLabel.bottomAnchor, constant: 8),
+            genderButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            genderButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
-            plantPreferencesLabel.topAnchor.constraint(equalTo: genderSegmentedControl.bottomAnchor, constant: 24),
+            plantPreferencesLabel.topAnchor.constraint(equalTo: genderButton.bottomAnchor, constant: 24),
             plantPreferencesLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             
             plantPreferencesCollectionView.topAnchor.constraint(equalTo: plantPreferencesLabel.bottomAnchor, constant: 8),
@@ -253,14 +309,22 @@ class CompleteProfileViewController: UIViewController {
     
     private func setupBindings() {
         viewModel.onError = { [weak self] message in
-            self?.showAlert(title: "Error", message: message)
-            self?.hideLoadingIndicator()
+            guard let self = self else { return }
+            self.hideLoadingIndicator()
+            self.showAlert(title: "Error", message: message)
         }
         
         viewModel.onSuccess = { [weak self] in
-            self?.hideLoadingIndicator()
-            // Navigate to main app
-            NotificationCenter.default.post(name: .userDidCompleteProfile, object: nil)
+            guard let self = self else { return }
+            self.hideLoadingIndicator()
+            
+            // Post notification on main thread
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .userDidCompleteProfile,
+                    object: nil
+                )
+            }
         }
     }
     
@@ -269,9 +333,34 @@ class CompleteProfileViewController: UIViewController {
         view.endEditing(true)
     }
     
+    @objc private func showGenderPicker() {
+        let alertController = UIAlertController(title: "Select Gender", message: nil, preferredStyle: .actionSheet)
+        
+        for gender in genderOptions {
+            let action = UIAlertAction(title: gender, style: .default) { [weak self] _ in
+                self?.selectedGender = gender
+                self?.genderButton.setTitle(gender, for: .normal)
+                self?.genderButton.setTitleColor(.darkGray, for: .normal)
+            }
+            alertController.addAction(action)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        // For iPad support
+        if let popoverController = alertController.popoverPresentationController {
+            popoverController.sourceView = genderButton
+            popoverController.sourceRect = genderButton.bounds
+        }
+        
+        present(alertController, animated: true)
+    }
+    
     @objc private func continueButtonTapped() {
         guard let name = nameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               let ageText = ageTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let selectedGender = selectedGender,
               !name.isEmpty, !ageText.isEmpty else {
             showAlert(title: "Error", message: "Please fill in all fields")
             return
@@ -282,18 +371,16 @@ class CompleteProfileViewController: UIViewController {
             return
         }
         
-        let selectedPreferences = plantPreferencesCollectionView.indexPathsForSelectedItems?.map { plantCategories[$0.item] } ?? []
+        let selectedPreferences = Array(selectedPlantPreferences)
         guard !selectedPreferences.isEmpty else {
             showAlert(title: "Error", message: "Please select at least one plant preference")
             return
         }
         
-        let gender = ["male", "female", "other"][genderSegmentedControl.selectedSegmentIndex]
-        
         showLoadingIndicator()
         viewModel.completeProfile(name: name,
                                 age: age,
-                                gender: gender,
+                                gender: selectedGender.lowercased(),
                                 plantPreferences: selectedPreferences)
     }
     
@@ -315,26 +402,3 @@ class CompleteProfileViewController: UIViewController {
         present(alert, animated: true)
     }
 }
-
-// MARK: - UICollectionView DataSource & Delegate
-extension CompleteProfileViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return plantCategories.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlantPreferenceCell", for: indexPath) as! PlantPreferenceCell
-        cell.configure(with: plantCategories[indexPath.item])
-        return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = (collectionView.bounds.width - 20) / 2
-        return CGSize(width: width, height: 44)
-    }
-}
-
-// MARK: - Notification Extension
-extension Notification.Name {
-    static let userDidCompleteProfile = Notification.Name("userDidCompleteProfile")
-} 
