@@ -130,8 +130,8 @@ class addPlantCameraViewController: UIViewController, AVCapturePhotoCaptureDeleg
         
         // Test Plant Identify model initialization
         do {
-            let _ = try VNCoreMLModel(for: PLANT_IDENTIFICATION_MODEL_1().model)
-            plantIdentifyModel = try VNCoreMLModel(for: PLANT_IDENTIFICATION_MODEL_1().model)
+            let _ = try VNCoreMLModel(for: PlantIdentify().model)
+            plantIdentifyModel = try VNCoreMLModel(for: PlantIdentify().model)
             print("✅ Plant Identify model initialized successfully")
         } catch {
             print("❌ Plant Identify model initialization failed: \(error.localizedDescription)")

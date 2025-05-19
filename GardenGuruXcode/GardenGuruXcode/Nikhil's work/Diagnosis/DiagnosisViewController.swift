@@ -177,7 +177,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             print("📝 Plant details:")
             print("   - Name: \(plant.plantName)")
             print("   - Botanical Name: \(plant.plantBotanicalName ?? "Not specified")")
-            print("   - Category: \(plant.category_new?.rawValue ?? "Not specified")")
+            print("   - Category: \(plant.category?.rawValue ?? "Not specified")")
             print("   - Season: \(plant.favourableSeason?.rawValue ?? "Not specified")")
             
             // Update UI with plant details
@@ -200,7 +200,7 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         let details = """
             
             • Botanical Name: \(plant.plantBotanicalName ?? "Not specified")
-            • Category: \(plant.category_new?.rawValue ?? "Not specified")
+            • Category: \(plant.category?.rawValue ?? "Not specified")
             • Favourable Season: \(plant.favourableSeason?.rawValue.capitalized ?? "Not specified")
             """
         
@@ -233,16 +233,15 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
 
     private func checkIfPlantExists(plantName: String) {
-        print("\n=== Checking if plant exists (Improved) ===")
+        print("\n=== Checking if plant exists ===")
         
-        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
-            print("❌ No user email found in UserDefaults")
+        guard let firstUser = dataController.getUserSync() else {
+            print("❌ No user found")
             startCaringButton.isHidden = false
             startCaringButton.setTitle("Add and Start Caring", for: .normal)
             return
         }
         
-
         let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail!)
         print("📝 Found \(userPlants.count) user plants")
         
@@ -253,10 +252,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             }
             return false
         }
-
-        // Use the improved function to check if plant exists
-        isExistingPlant = dataController.doesPlantExistInUserGardenSync(plantName: plantName, userEmail: userEmail)
-
         
         if isExistingPlant {
             print("✅ Plant already exists in user's garden")
@@ -412,16 +407,16 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         print("\n=== Starting Add Plant Flow ===")
         print("Plant name from DiagnosisViewController: \(plantName)")
         
-        // Retrieve the stored image URL from UserDefaults
-        let imageURL = UserDefaults.standard.string(forKey: "pendingPlantImageURL")
-        print("🔗 Using stored image URL: \(imageURL ?? "none")")
-        
         let reminderVC = addNickNameViewController()
         reminderVC.plantNameForReminder = plantName
         
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
-            // We no longer need to upload the image here since it was already uploaded during diagnosis
-            // and the URL is stored in UserDefaults
+            if let diagnosisImage = plantImageView.image {
+                print("✅ Adding diagnosis image to plant")
+                dataController.updatePlantImages(plantName: plantName, newImage: diagnosisImage)
+            } else {
+                print("❌ No diagnosis image available")
+            }
             reminderVC.selectedPlant = plant
         }
         
