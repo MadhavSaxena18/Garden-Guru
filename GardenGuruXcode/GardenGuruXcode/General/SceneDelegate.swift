@@ -10,30 +10,73 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+    private let dataController = DataControllerGG.shared
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
         
-        // Reset user defaults during development
-        #if DEBUG
-        UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
-        UserDefaults.standard.removeObject(forKey: "isLoggedIn")
-        #endif
+        // Set up session observers
+        setupSessionObservers()
         
-        // Determine which screen to show
-        if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
-            // First time user - show onboarding
-            showOnboarding()
-        } else if !UserDefaults.standard.bool(forKey: "isLoggedIn") {
-            // Completed onboarding but not logged in
-            showLoginScreen()
-        } else {
-            // Logged in user - show main interface
-            showMainInterface()
+        // Check for stored session first
+        Task {
+            await checkAndHandleSession()
         }
         
         window?.makeKeyAndVisible()
+    }
+    
+    private func checkAndHandleSession() async {
+        print("\n=== Checking Session State ===")
+        
+        // Check if we have stored session data
+        if let sessionData = UserDefaults.standard.data(forKey: "userSession"),
+           let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
+            print("✅ Found stored session data")
+            print("📧 User email: \(userEmail)")
+            
+            do {
+                // Try to validate the session
+                let isValid = try await dataController.checkSessionValid()
+                
+                // Verify the user exists in our database
+                if isValid, let user = try await dataController.initializeUser(email: userEmail) {
+                    print("✅ Session is valid and user exists")
+                    
+                    // Session is valid, show main interface
+                    DispatchQueue.main.async {
+                        if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+                            self.showOnboarding()
+                        } else {
+                            self.showMainInterface()
+                        }
+                    }
+                } else {
+                    print("❌ User not found in database")
+                    handleInvalidSession()
+                }
+            } catch {
+                print("❌ Session validation failed: \(error)")
+                handleInvalidSession()
+            }
+        } else {
+            print("⚠️ No stored session found")
+            handleInvalidSession()
+        }
+    }
+    
+    private func handleInvalidSession() {
+        // Clear any stored session data
+        UserDefaults.standard.removeObject(forKey: "userSession")
+        
+        DispatchQueue.main.async {
+            if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+                self.showOnboarding()
+            } else {
+                self.showLoginScreen()
+            }
+        }
     }
     
     func showOnboarding() {
@@ -55,6 +98,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let mainStoryboard = UIStoryboard(name: "Main", bundle: nil)
         if let tabBarController = mainStoryboard.instantiateViewController(withIdentifier: "TabBarController") as? UITabBarController {
             window?.rootViewController = tabBarController
+        }
+    }
+    
+    // Add notification observer for session state changes
+    func setupSessionObservers() {
+        NotificationCenter.default.addObserver(forName: Notification.Name("UserSignedOut"), object: nil, queue: .main) { [weak self] _ in
+            self?.handleInvalidSession()
+        }
+        
+        NotificationCenter.default.addObserver(forName: Notification.Name("UserSignedIn"), object: nil, queue: .main) { [weak self] _ in
+            self?.showMainInterface()
         }
     }
     

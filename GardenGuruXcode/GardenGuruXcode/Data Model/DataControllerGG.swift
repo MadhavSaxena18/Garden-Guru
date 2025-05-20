@@ -20,6 +20,17 @@ class supaBaseController {
             supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3eWdtbGd5a2podm5jYXFzbnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUyMTg5NDcsImV4cCI6MjA2MDc5NDk0N30.1n8et91JSCN2LMZ24bTzcuEER-449Dx0GDc8Nr1XTXU"
         )
     }
+    
+    func clearSession() async {
+        print("\n=== Clearing Supabase Session ===")
+        do {
+            // Sign out using the auth client
+            try await client.auth.signOut()
+            print("✅ Supabase session cleared")
+        } catch {
+            print("❌ Error clearing Supabase session: \(error)")
+        }
+    }
 }
 
 // Add this struct near the top of the file with other model definitions
@@ -48,6 +59,19 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     private override init() {
         super.init()
+    }
+    
+    // Add public method to check session state
+    func checkSessionValid() async throws -> Bool {
+        print("\n=== Checking Session Validity ===")
+        do {
+            _ = try await supabase.auth.session
+            print("✅ Session is valid")
+            return true
+        } catch {
+            print("❌ Session is invalid: \(error)")
+            return false
+        }
     }
     
     // MARK: - User Functions
@@ -1462,6 +1486,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         print("✅ Authentication successful")
         
+        // Save the session
+        saveSession(session)
+        
         // Store the email for future use
         UserDefaults.standard.set(email, forKey: "userEmail")
         
@@ -1477,6 +1504,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             await printAllUsers()
         }
         
+        // Post notification that user signed in
+        NotificationCenter.default.post(name: Notification.Name("UserSignedIn"), object: nil)
+        
         return (session, userData)
     }
 
@@ -1485,14 +1515,19 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         print("\n=== Signing Up New User ===")
         print("🔑 Attempting to sign up with email: \(email)")
         
-        // First create the auth user in Supabase with email verification disabled
+        // First create the auth user in Supabase
         let authResponse = try await supabase.auth.signUp(
             email: email,
             password: password,
-            data: ["email_confirm": true] // This disables email verification
+            data: ["email_confirm": true]
         )
         
         print("✅ Authentication successful")
+        
+        if let session = authResponse.session {
+            // Save the session
+            saveSession(session)
+        }
         
         // Store the email for future use
         UserDefaults.standard.set(email, forKey: "userEmail")
@@ -1505,6 +1540,10 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         )
         
         print("✅ User created in UserTable")
+        
+        // Post notification that user signed up
+        NotificationCenter.default.post(name: Notification.Name("UserSignedUp"), object: nil)
+        
         return (authResponse, userData)
     }
 
@@ -2159,6 +2198,41 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
         
         _ = semaphore.wait(timeout: .now() + 10)
+    }
+
+    // MARK: - Session Management
+    
+    private func saveSession(_ session: Session) {
+        print("\n=== Saving User Session ===")
+        do {
+            let sessionData = try JSONEncoder().encode(session)
+            UserDefaults.standard.set(sessionData, forKey: "userSession")
+            print("✅ Session saved successfully")
+        } catch {
+            print("❌ Failed to save session: \(error)")
+        }
+    }
+    
+    func signOut() async throws {
+        print("\n=== Signing Out User ===")
+        
+        // Clear the Supabase session state
+        await supaBaseController.shared.clearSession()
+        
+        // Clear stored session and user data
+        UserDefaults.standard.removeObject(forKey: "userSession")
+        UserDefaults.standard.removeObject(forKey: "userEmail")
+        UserDefaults.standard.removeObject(forKey: "tempPlantImageURL")
+        UserDefaults.standard.removeObject(forKey: "tempPlantID")
+        UserDefaults.standard.synchronize() // Force UserDefaults to save immediately
+        
+        print("✅ User signed out successfully")
+        print("✅ All session data cleared")
+        
+        // Post notification that user signed out
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("UserSignedOut"), object: nil)
+        }
     }
 }
 
