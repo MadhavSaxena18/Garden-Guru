@@ -880,21 +880,72 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .insert(linkingRecord)
             .execute()
     }
+
+    // Add this struct near other model definitions
+    private struct CareReminderInsert: Encodable {
+        let careReminderID: String
+        let upcomingReminderForWater: String
+        let upcomingReminderForFertilizers: String
+        let upcomingReminderForRepotted: String
+        let isWateringCompleted: Bool
+        let isFertilizingCompleted: Bool
+        let isRepottingCompleted: Bool
+    }
     
     // Synchronous wrapper for addCareReminder
-    func addCareReminderSync(userPlantID: UUID, reminderAllowed: Bool) {
+    func addCareReminderSync(userPlantID: UUID, reminderAllowed: Bool, isWateringEnabled: Bool = false, isFertilizingEnabled: Bool = false, isRepottingEnabled: Bool = false) {
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
-                try await addCareReminder(userPlantID: userPlantID, reminderAllowed: reminderAllowed)
+                let currentDate = ISO8601DateFormatter().string(from: Date())
+                
+                // Create a properly typed care reminder
+                let careReminder = CareReminderInsert(
+                    careReminderID: userPlantID.uuidString,
+                    upcomingReminderForWater: currentDate,
+                    upcomingReminderForFertilizers: currentDate,
+                    upcomingReminderForRepotted: currentDate,
+                    isWateringCompleted: isWateringEnabled,  // Set to false if enabled, true if disabled
+                    isFertilizingCompleted: isFertilizingEnabled,  // Set to false if enabled, true if disabled
+                    isRepottingCompleted: isRepottingEnabled  // Set to false if enabled, true if disabled
+                )
+                
+                // Insert the care reminder with all fields
+                try await supabase
+                    .database
+                    .from("CareReminder_")
+                    .insert(careReminder)
+                    .execute()
+                
+                // Create the linking record in CareReminderOfUserPlant
+                let linkingRecord = CareReminderLinkInsert(
+                    careReminderOfUserPlantID: UUID().uuidString,
+                    userPlantRelationID: userPlantID.uuidString,
+                    careReminderId: userPlantID.uuidString
+                )
+                
+                try await supabase
+                    .database
+                    .from("CareReminderOfUserPlant")
+                    .insert(linkingRecord)
+                    .execute()
+                
+                print("✅ Added care reminder with toggle states - Water: \(isWateringEnabled), Fertilizer: \(isFertilizingEnabled), Repotting: \(isRepottingEnabled)")
             } catch {
-                print("Error adding care reminder: \(error)")
+                print("❌ Error adding care reminder: \(error)")
             }
             semaphore.signal()
         }
         
         _ = semaphore.wait(timeout: .now() + 5)
+    }
+
+    // Add this struct for the linking record
+    private struct CareReminderLinkInsert: Encodable {
+        let careReminderOfUserPlantID: String
+        let userPlantRelationID: String
+        let careReminderId: String
     }
 
     // MARK: - User Management
