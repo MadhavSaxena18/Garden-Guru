@@ -60,10 +60,28 @@ class OnboardingCell: UICollectionViewCell {
         ])
     }
     
+//    func configure(with slide: OnboardingSlide) {
+//        let config = UIImage.SymbolConfiguration(pointSize: 100, weight: .medium)
+//        imageView.image = UIImage(systemName: slide.image, withConfiguration: config)
+//        titleLabel.text = slide.title
+//        descriptionLabel.text = slide.description
+//    }
+    
     func configure(with slide: OnboardingSlide) {
-        let config = UIImage.SymbolConfiguration(pointSize: 100, weight: .medium)
-        imageView.image = UIImage(systemName: slide.image, withConfiguration: config)
+        if let image = UIImage(named: slide.image) {
+            // Use regular image asset
+            imageView.image = image
+            imageView.tintColor = nil // remove tint for normal images
+            imageView.contentMode = .scaleAspectFit
+        } else {
+            // Try system symbol
+            let config = UIImage.SymbolConfiguration(pointSize: 100, weight: .medium)
+            imageView.image = UIImage(systemName: slide.image, withConfiguration: config)
+            imageView.tintColor = UIColor(hex: "284329") // your tint color for SF symbols
+            imageView.contentMode = .scaleAspectFit
+        }
+        
         titleLabel.text = slide.title
         descriptionLabel.text = slide.description
     }
-} 
+}

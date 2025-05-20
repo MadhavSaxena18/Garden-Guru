@@ -1629,44 +1629,73 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
     }
 
+    // Add this struct near the top of the file with other model definitions
+    private struct UserProfileUpdate: Encodable {
+        let userName: String?
+        let age: Int?
+        let gender: String?
+        let plant_preferences: [String]?
+        
+        init(from userData: [String: Any]) {
+            self.userName = userData["full_name"] as? String
+            self.age = userData["age"] as? Int
+            self.gender = userData["gender"] as? String
+            self.plant_preferences = userData["plant_preferences"] as? [String]
+        }
+    }
+    
     func saveUserProfile(userData: [String: Any]) async throws {
         guard let email = userData["email"] as? String else {
             throw NSError(domain: "DataController", code: 400, userInfo: [NSLocalizedDescriptionKey: "Email is required"])
         }
         
-        // Create a properly typed dictionary for the update
-        var updateData: [String: String] = [
-            "updated_at": Date().ISO8601Format()
-        ]
+        // Create a properly typed update struct
+        let updateData = UserProfileUpdate(from: userData)
         
-        // Safely add optional fields with proper type conversion
-        if let fullName = userData["full_name"] as? String {
-            updateData["full_name"] = fullName
-        }
-        
-        if let age = userData["age"] as? Int {
-            updateData["age"] = String(age)
-        }
-        
-        if let gender = userData["gender"] as? String {
-            updateData["gender"] = gender
-        }
-        
-        if let preferences = userData["plant_preferences"] as? [String] {
-            // Convert array to JSON string
-            if let preferencesData = try? JSONSerialization.data(withJSONObject: preferences),
-               let preferencesString = String(data: preferencesData, encoding: .utf8) {
-                updateData["plant_preferences"] = preferencesString
+        do {
+            // First check if user exists
+            let (exists, _) = try await checkUserExists(email: email)
+            
+            if exists {
+                // User exists, update their profile
+                try await supabase
+                    .database
+                    .from("UserTable")
+                    .update(updateData)
+                    .eq("user_email", value: email)
+                    .execute()
+                
+                print("✅ Successfully updated existing user profile")
+            } else {
+                // User doesn't exist, create new profile
+                let userTableData = UserTableInsert(
+                    id: UUID().uuidString,
+                    user_email: email,
+                    userName: updateData.userName ?? email.components(separatedBy: "@")[0],
+                    location: "North India",
+                    reminderAllowed: true
+                )
+                
+                try await supabase
+                    .database
+                    .from("UserTable")
+                    .insert(userTableData)
+                    .execute()
+                
+                // Now update with additional profile data
+                try await supabase
+                    .database
+                    .from("UserTable")
+                    .update(updateData)
+                    .eq("user_email", value: email)
+                    .execute()
+                
+                print("✅ Successfully created and updated new user profile")
             }
+        } catch {
+            print("❌ Error in saveUserProfile: \(error)")
+            throw error
         }
-        
-        // Update the user profile in UserTable
-        try await supabase
-            .database
-            .from("UserTable")
-            .update(updateData)
-            .eq("user_email", value: email)
-            .execute()
     }
 }
 

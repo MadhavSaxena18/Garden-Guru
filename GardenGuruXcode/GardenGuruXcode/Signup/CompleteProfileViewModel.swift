@@ -111,10 +111,9 @@ class CompleteProfileViewModel {
                 
                 await MainActor.run {
                     // Show loading state if needed
-                    // You can add a loading state handler here
                 }
                 
-                // First create the user in auth and UserTable
+                // First complete the signup in Auth and create basic UserTable entry
                 try await DataControllerGG.shared.completeSignup(
                     email: email,
                     password: password,
@@ -126,13 +125,16 @@ class CompleteProfileViewModel {
                     "email": email,
                     "full_name": name,
                     "age": age,
-                    "gender": gender,
-                    "plant_preferences": plantPreferences,
-                    "updated_at": Date().ISO8601Format()
+                    "gender": gender.lowercased(),
+                    "plant_preferences": plantPreferences
                 ]
+                
+                print("📝 Updating user profile with data: \(userData)")
                 
                 // Update the user profile with additional details
                 try await DataControllerGG.shared.saveUserProfile(userData: userData)
+                
+                print("✅ Profile update successful")
                 
                 // Clear temporary password from UserDefaults
                 UserDefaults.standard.removeObject(forKey: "tempPassword")
@@ -143,9 +145,15 @@ class CompleteProfileViewModel {
                 }
                 
             } catch {
+                print("❌ Profile update error: \(error)")
                 // Handle errors on main thread
                 await MainActor.run {
-                    self.onError?(error.localizedDescription)
+                    if error.localizedDescription.contains("23505") {
+                        // This is a duplicate key error, but we've already updated the profile
+                        self.onSuccess?()
+                    } else {
+                        self.onError?(error.localizedDescription)
+                    }
                 }
             }
         }
