@@ -26,9 +26,11 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     var captureSession: AVCaptureSession!
     var previewLayer: AVCaptureVideoPreviewLayer!
     var photoOutput: AVCapturePhotoOutput!
-   // var capturedImages : [UIImage] = []
     var counter: Int = 0
     static var capturedImages: [UIImage] = []
+    
+    // Property to track the uploaded image URL
+    private var uploadedImageURL: String? = nil
     
     private let dataController = DataControllerGG.shared
     
@@ -209,7 +211,14 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         print("Starting image processing...")
         print("Number of captured images: \(scanAndDiagnoseViewController.capturedImages.count)")
         
-        // Step 1: Run YOLO on all three images
+        // Upload the first (full plant) image to Supabase
+        if let firstImage = scanAndDiagnoseViewController.capturedImages.first {
+            Task {
+                await uploadImageToSupabase(image: firstImage)
+            }
+        }
+        
+        // Continue with existing YOLO processing
         var yoloResults: [String] = []
         
         for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
@@ -634,10 +643,19 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 sectionDetails: [:]
             )
             
-            // Fetch disease details
-            diagnosisVC.fetchAndUpdateDiseaseDetails(diseaseName: diseaseName)
+            // Store plant ID in UserDefaults
+            UserDefaults.standard.set(plant.plantID.uuidString, forKey: "tempPlantID")
+            print("✅ Plant ID stored in UserDefaults")
             
-            // Navigate to the diagnosis view
+            // Verify image URL is in UserDefaults
+            if let storedURL = UserDefaults.standard.string(forKey: "tempPlantImageURL") {
+                print("✅ Found stored image URL: \(storedURL)")
+            } else {
+                print("⚠️ No image URL found in UserDefaults")
+            }
+            
+            // Fetch disease details and navigate
+            diagnosisVC.fetchAndUpdateDiseaseDetails(diseaseName: diseaseName)
             navigationController?.pushViewController(diagnosisVC, animated: true)
         } else {
             print("Error: Plant not found in database")
@@ -668,6 +686,27 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         }
         
         return nil
+    }
+    
+    private func uploadImageToSupabase(image: UIImage) async {
+        print("\n=== Uploading Image to Supabase ===")
+        
+        // Generate a unique ID for this upload
+        let imageID = UUID()
+        
+        do {
+            // Upload the image and get the URL
+            let imageURL = try await dataController.uploadUserPlantImage(userPlantID: imageID, image: image)
+            print("✅ Image uploaded successfully")
+            print("🔗 Image URL: \(imageURL)")
+            self.uploadedImageURL = imageURL
+            
+            // Store in UserDefaults immediately after successful upload
+            UserDefaults.standard.set(imageURL, forKey: "tempPlantImageURL")
+            print("✅ Image URL stored in UserDefaults")
+        } catch {
+            print("❌ Failed to upload image: \(error)")
+        }
     }
 }
 

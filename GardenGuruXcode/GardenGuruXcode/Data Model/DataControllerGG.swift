@@ -31,6 +31,15 @@ private struct UserTableInsert: Encodable {
     let reminderAllowed: Bool
 }
 
+// Add this struct near the top with other model definitions
+private struct UserPlantInsert: Encodable {
+    let userPlantRelationID: String
+    let userId: String
+    let userplantID: String
+    let userPlantImage: String?
+    let userPlantNickName: String?
+}
+
 class DataControllerGG: NSObject, CLLocationManagerDelegate {
     static let shared = DataControllerGG()
     private let supabase = supaBaseController.shared.client
@@ -749,14 +758,35 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         return UserDefaults.standard.string(forKey: "userLocation") ?? "North India"
     }
     
+    // Modify the addUserPlant function to handle image URL
     func addUserPlant(userPlant: UserPlant) async throws {
+        print("\n=== Adding New User Plant ===")
+        
+        // Get the stored image URL from UserDefaults
+        let imageURL = UserDefaults.standard.string(forKey: "tempPlantImageURL")
+        print("📸 Retrieved image URL from UserDefaults: \(imageURL ?? "nil")")
+        
+        let userPlantRecord = UserPlantInsert(
+            userPlantRelationID: userPlant.userPlantRelationID.uuidString,
+            userId: userPlant.userId.uuidString,
+            userplantID: userPlant.userplantID?.uuidString ?? "",
+            userPlantImage: imageURL,
+            userPlantNickName: userPlant.userPlantNickName
+        )
+        
         try await supabase
             .database
             .from("UserPlant")
-            .insert(userPlant)
+            .insert(userPlantRecord)
             .execute()
+            
+        print("✅ User plant added successfully with image URL")
+        
+        // Clear the temporary image URL from UserDefaults
+        UserDefaults.standard.removeObject(forKey: "tempPlantImageURL")
+        UserDefaults.standard.removeObject(forKey: "tempPlantID")
     }
-    
+
     // Synchronous wrapper for addUserPlant
     func addUserPlantSync(userPlant: UserPlant) {
         let semaphore = DispatchSemaphore(value: 0)
@@ -2037,7 +2067,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         // Upload to Supabase Storage with correct bucket name
         try await supabase.storage
-            .from("user.image")  // Changed bucket name to user.image
+            .from("user.image")  // Using the correct bucket name
             .upload(
                 path: filePath,
                 file: imageData,
@@ -2048,7 +2078,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         // Get the public URL from correct bucket
         let signedURL = try await supabase.storage
-            .from("user.image")  // Changed bucket name to user.image
+            .from("user.image")  // Using the correct bucket name
             .createSignedURL(
                 path: filePath,
                 expiresIn: 365 * 24 * 60 * 60 // 1 year in seconds
@@ -2056,18 +2086,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         let publicURLString = signedURL.absoluteString
         print("🔗 Generated public URL: \(publicURLString)")
-        
-        // Create an update dictionary with the correct type
-        let updateDict: [String: String] = ["userPlantImage": publicURLString]
-        
-        // Update the UserPlant table with the image URL
-        try await supabase.database
-            .from("UserPlant")
-            .update(updateDict)
-            .eq("userPlantRelationID", value: userPlantID.uuidString)
-            .execute()
-        
-        print("✅ Updated UserPlant record with image URL")
         
         return publicURLString
     }
