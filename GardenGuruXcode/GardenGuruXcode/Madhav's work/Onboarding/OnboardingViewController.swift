@@ -6,7 +6,7 @@ class OnboardingViewController: UIViewController {
         OnboardingSlide(
             title: "Welcome to Garden Guru",
             description: "Your personal plant care companion that helps you grow and maintain healthy plants.",
-            image: "leaf.fill"
+            image: "GG2"
         ),
         OnboardingSlide(
             title: "Smart Plant Care",
