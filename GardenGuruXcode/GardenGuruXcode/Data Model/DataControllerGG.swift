@@ -1211,21 +1211,72 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .insert(linkingRecord)
             .execute()
     }
+
+    // Add this struct near other model definitions
+    private struct CareReminderInsert: Encodable {
+        let careReminderID: String
+        let upcomingReminderForWater: String
+        let upcomingReminderForFertilizers: String
+        let upcomingReminderForRepotted: String
+        let isWateringCompleted: Bool
+        let isFertilizingCompleted: Bool
+        let isRepottingCompleted: Bool
+    }
     
     // Synchronous wrapper for addCareReminder
-    func addCareReminderSync(userPlantID: UUID, reminderAllowed: Bool) {
+    func addCareReminderSync(userPlantID: UUID, reminderAllowed: Bool, isWateringEnabled: Bool = false, isFertilizingEnabled: Bool = false, isRepottingEnabled: Bool = false) {
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
-                try await addCareReminder(userPlantID: userPlantID, reminderAllowed: reminderAllowed)
+                let currentDate = ISO8601DateFormatter().string(from: Date())
+                
+                // Create a properly typed care reminder
+                let careReminder = CareReminderInsert(
+                    careReminderID: userPlantID.uuidString,
+                    upcomingReminderForWater: currentDate,
+                    upcomingReminderForFertilizers: currentDate,
+                    upcomingReminderForRepotted: currentDate,
+                    isWateringCompleted: isWateringEnabled,  // Set to false if enabled, true if disabled
+                    isFertilizingCompleted: isFertilizingEnabled,  // Set to false if enabled, true if disabled
+                    isRepottingCompleted: isRepottingEnabled  // Set to false if enabled, true if disabled
+                )
+                
+                // Insert the care reminder with all fields
+                try await supabase
+                    .database
+                    .from("CareReminder_")
+                    .insert(careReminder)
+                    .execute()
+                
+                // Create the linking record in CareReminderOfUserPlant
+                let linkingRecord = CareReminderLinkInsert(
+                    careReminderOfUserPlantID: UUID().uuidString,
+                    userPlantRelationID: userPlantID.uuidString,
+                    careReminderId: userPlantID.uuidString
+                )
+                
+                try await supabase
+                    .database
+                    .from("CareReminderOfUserPlant")
+                    .insert(linkingRecord)
+                    .execute()
+                
+                print("✅ Added care reminder with toggle states - Water: \(isWateringEnabled), Fertilizer: \(isFertilizingEnabled), Repotting: \(isRepottingEnabled)")
             } catch {
-                print("Error adding care reminder: \(error)")
+                print("❌ Error adding care reminder: \(error)")
             }
             semaphore.signal()
         }
         
         _ = semaphore.wait(timeout: .now() + 5)
+    }
+
+    // Add this struct for the linking record
+    private struct CareReminderLinkInsert: Encodable {
+        let careReminderOfUserPlantID: String
+        let userPlantRelationID: String
+        let careReminderId: String
     }
 
     // MARK: - User Management
@@ -1492,22 +1543,31 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         // Store the email for future use
         UserDefaults.standard.set(email, forKey: "userEmail")
         
-        // After successful authentication, fetch user data from UserTable
+        // After successful authentication, fetch or create user data in UserTable
         print("🔍 Fetching user data from UserTable")
-        let userData = try await initializeUser(email: email)
+        let (exists, userData) = try await checkUserExists(email: email)
         
         if let userData = userData {
             print("✅ User data found in UserTable")
-        } else {
-            print("⚠️ No user data found in UserTable")
-            // Print all users to debug
-            await printAllUsers()
+            return (session, userData)
+        } else if exists {
+            // User exists in Auth but not in UserTable, create entry
+            print("⚠️ User exists in Auth but not in UserTable, creating entry")
+            let newUserData = try await createUser(
+                email: email,
+                userName: email.components(separatedBy: "@")[0], // Use email prefix as default username
+                location: "North India" // Default location
+            )
+            print("✅ Created user data in UserTable")
+            return (session, newUserData)
         }
         
+
         // Post notification that user signed in
         NotificationCenter.default.post(name: Notification.Name("UserSignedIn"), object: nil)
         
         return (session, userData)
+
     }
 
     // Add this function after the signIn function
@@ -1821,6 +1881,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         print("✅ Username updated successfully in Supabase")
 
     }
+
 
     // Get plant diseases for a specific plant
     func getPlantDiseases(for plantId: UUID) async throws -> [PlantDisease] {
@@ -2232,6 +2293,232 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         // Post notification that user signed out
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: Notification.Name("UserSignedOut"), object: nil)
+
+    func checkUserExists(email: String) async throws -> (exists: Bool, userData: userInfo?) {
+        print("\n=== Checking User Existence ===")
+        print("🔍 Checking email: \(email)")
+        
+        // Clean and validate email
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        print("📧 Cleaned email: \(cleanEmail)")
+        
+        guard cleanEmail.contains("@") && cleanEmail.contains(".") else {
+            print("❌ Invalid email format")
+            throw AuthError.invalidCredentials
+        }
+        
+        do {
+            // Check UserTable first
+            print("🔍 Step 1: Checking UserTable...")
+            let response = try await supabase
+                .database
+                .from("UserTable")
+                .select()
+                .eq("user_email", value: cleanEmail)
+                .execute()
+            
+            print("📝 UserTable response type: \(type(of: response.data))")
+            if let jsonData = response.data as? Data {
+                print("📝 UserTable response (Data): \(String(data: jsonData, encoding: .utf8) ?? "nil")")
+                if let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
+                   let user = users.first {
+                    print("✅ User found in UserTable with data")
+                    return (true, user)
+                }
+            } else if let jsonObject = response.data as? [[String: Any]], !jsonObject.isEmpty {
+                print("✅ User found in UserTable")
+                if let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject[0]),
+                   let user = try? JSONDecoder().decode(userInfo.self, from: jsonData) {
+                    return (true, user)
+                }
+                return (true, nil)
+            }
+            
+            // If not found in UserTable, check auth table
+            print("\n🔍 Step 2: Checking Auth table...")
+            do {
+                print("📝 Attempting to get user by email: \(cleanEmail)")
+                // Try to sign in with invalid password to check if user exists
+                try await supabase.auth.signIn(
+                    email: cleanEmail,
+                    password: UUID().uuidString // Random invalid password
+                )
+                // If we get here without error, something went wrong
+                print("⚠️ Unexpected successful sign in with random password")
+                return (true, nil)
+            } catch let error {
+                print("📝 Auth check response: \(error.localizedDescription)")
+                
+                // Check error message for specific cases
+                let errorMessage = error.localizedDescription.lowercased()
+                if errorMessage.contains("invalid login credentials") {
+                    // "Invalid login credentials" actually means user doesn't exist in this case
+                    print("✅ User does not exist in Auth table (invalid credentials)")
+                    return (false, nil)
+                } else if errorMessage.contains("user not found") || 
+                          errorMessage.contains("invalid user") ||
+                          errorMessage.contains("no user found") {
+                    print("✅ User does not exist in Auth table")
+                    return (false, nil)
+                }
+                
+                // For any other error, log it and assume user doesn't exist
+                print("⚠️ Unexpected auth error: \(error)")
+                print("⚠️ Assuming user doesn't exist to allow signup attempt")
+                return (false, nil)
+            }
+        } catch {
+            print("❌ Error checking user existence: \(error)")
+            print("❌ Error details: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    // MARK: - Email Verification and Signup
+
+    func sendSignupVerificationEmail(email: String) async throws {
+        print("\n=== Sending Signup Verification Email ===")
+        print("📧 Sending to: \(email)")
+        
+        // Create temporary account with email verification enabled
+        try await supabase.auth.signUp(
+            email: email,
+            password: UUID().uuidString // Temporary password, will be updated later
+        )
+        print("✅ Verification email sent")
+    }
+    
+    func resendVerificationEmail(email: String) async throws {
+        print("\n=== Resending Verification Email ===")
+        print("📧 Resending to: \(email)")
+        
+        try await supabase.auth.resend(
+            email: email,
+            type: .signup,
+            emailRedirectTo: nil,
+            captchaToken: nil
+        )
+    }
+    
+    func verifyEmail(email: String, otp: String) async throws {
+        print("\n=== Verifying Email ===")
+        print("📧 Verifying email: \(email)")
+        
+        try await supabase.auth.verifyOTP(
+            email: email,
+            token: otp,
+            type: .signup
+        )
+        print("✅ Email verified")
+    }
+    
+    func completeSignup(email: String, password: String, userName: String) async throws {
+        print("\n=== Completing User Signup ===")
+        print("📧 Creating user with email: \(email)")
+        
+        do {
+            // First create the auth user
+            let authResponse = try await supabase.auth.signUp(
+                email: email,
+                password: password
+            )
+            
+            let userId = authResponse.user.id.uuidString
+            print("✅ Auth user created successfully with ID: \(userId)")
+            
+            // Then create the user in UserTable
+            let userTableData = UserTableInsert(
+                id: userId, // Use the string ID from auth
+                user_email: email,
+                userName: userName,
+                location: "North India", // Default location
+                reminderAllowed: true    // Default setting
+            )
+            
+            try await supabase
+                .database
+                .from("UserTable")
+                .insert(userTableData)
+                .execute()
+            
+            print("✅ User created in UserTable")
+            
+            // Store the email for future use
+            UserDefaults.standard.set(email, forKey: "userEmail")
+            
+        } catch {
+            print("❌ Error completing signup: \(error)")
+            throw error
+        }
+    }
+
+    // Add this struct near the top of the file with other model definitions
+    private struct UserProfileUpdate: Encodable {
+        let userName: String?
+        let age: Int?
+        let gender: String?
+        let plant_preferences: [String]?
+        
+        init(from userData: [String: Any]) {
+            self.userName = userData["full_name"] as? String
+            self.age = userData["age"] as? Int
+            self.gender = userData["gender"] as? String
+            self.plant_preferences = userData["plant_preferences"] as? [String]
+        }
+    }
+    
+    func saveUserProfile(userData: [String: Any]) async throws {
+        guard let email = userData["email"] as? String else {
+            throw NSError(domain: "DataController", code: 400, userInfo: [NSLocalizedDescriptionKey: "Email is required"])
+        }
+        
+        // Create a properly typed update struct
+        let updateData = UserProfileUpdate(from: userData)
+        
+        do {
+            // First check if user exists
+            let (exists, _) = try await checkUserExists(email: email)
+            
+            if exists {
+                // User exists, update their profile
+                try await supabase
+                    .database
+                    .from("UserTable")
+                    .update(updateData)
+                    .eq("user_email", value: email)
+                    .execute()
+                
+                print("✅ Successfully updated existing user profile")
+            } else {
+                // User doesn't exist, create new profile
+                let userTableData = UserTableInsert(
+                    id: UUID().uuidString,
+                    user_email: email,
+                    userName: updateData.userName ?? email.components(separatedBy: "@")[0],
+                    location: "North India",
+                    reminderAllowed: true
+                )
+                
+                try await supabase
+                    .database
+                    .from("UserTable")
+                    .insert(userTableData)
+                    .execute()
+                
+                // Now update with additional profile data
+                try await supabase
+                    .database
+                    .from("UserTable")
+                    .update(updateData)
+                    .eq("user_email", value: email)
+                    .execute()
+                
+                print("✅ Successfully created and updated new user profile")
+            }
+        } catch {
+            print("❌ Error in saveUserProfile: \(error)")
+            throw error
+
         }
     }
 }
