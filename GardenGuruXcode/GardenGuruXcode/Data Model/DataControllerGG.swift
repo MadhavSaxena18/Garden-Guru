@@ -2374,10 +2374,10 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             throw error
         }
     }
-
-
+    
+    
     // MARK: - Email Verification and Signup
-
+    
     func sendSignupVerificationEmail(email: String) async throws {
         print("\n=== Sending Signup Verification Email ===")
         print("📧 Sending to: \(email)")
@@ -2453,7 +2453,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             throw error
         }
     }
-
+    
     // Add this struct near the top of the file with other model definitions
     private struct UserProfileUpdate: Encodable {
         let userName: String?
@@ -2520,20 +2520,20 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         } catch {
             print("❌ Error in saveUserProfile: \(error)")
             throw error
-
+            
         }
     }
-
-
-// Helper struct for decoding nested JSON response
-private struct UserPlantWithDetails: Codable {
-    let userPlant: UserPlant
-    let plant: Plant
-    let careReminder: CareReminder_
-}
-
-// Add synchronous wrappers in extension
-extension DataControllerGG {
+    
+    
+    // Helper struct for decoding nested JSON response
+    private struct UserPlantWithDetails: Codable {
+        let userPlant: UserPlant
+        let plant: Plant
+        let careReminder: CareReminder_
+    }
+    
+    // Add synchronous wrappers in extension
+    
     func getUsersSync() -> [userInfo] {
         var users: [userInfo] = []
         let semaphore = DispatchSemaphore(value: 0)
@@ -2650,32 +2650,34 @@ extension DataControllerGG {
         _ = semaphore.wait(timeout: .now() + 5)
         return diseases
     }
-}
-
-// MARK: - Location Errors
-
-enum LocationError: LocalizedError {
-    case managerNotInitialized
-    case notAuthorized
-    case requestInProgress
-    case timeout
-    case networkError
-    case unknown(Error)
     
-    var errorDescription: String? {
-        switch self {
-        case .managerNotInitialized:
-            return "Location services not initialized"
-        case .notAuthorized:
-            return "Location access not authorized"
-        case .requestInProgress:
-            return "Location request already in progress"
-        case .timeout:
-            return "Location request timed out"
-        case .networkError:
-            return "Network error while getting location"
-        case .unknown(let error):
-            return "Unknown error: \(error.localizedDescription)"
+    
+    // MARK: - Location Errors
+    
+    enum LocationError: LocalizedError {
+        case managerNotInitialized
+        case notAuthorized
+        case requestInProgress
+        case timeout
+        case networkError
+        case unknown(Error)
+        
+        var errorDescription: String? {
+            switch self {
+            case .managerNotInitialized:
+                return "Location services not initialized"
+            case .notAuthorized:
+                return "Location access not authorized"
+            case .requestInProgress:
+                return "Location request already in progress"
+            case .timeout:
+                return "Location request timed out"
+            case .networkError:
+                return "Network error while getting location"
+            case .unknown(let error):
+                return "Unknown error: \(error.localizedDescription)"
+            }
         }
     }
 }
+
