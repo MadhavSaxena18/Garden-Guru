@@ -261,7 +261,12 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 detailVC.selectedCardData = plants[indexPath.item]
                 navigationController?.pushViewController(detailVC, animated: true)
             }
+       // case .fertilizer:
         case .fertilizer:
+            let detailVC = FertilizerDetailViewController()
+            detailVC.fertilizer = fertilizer[indexPath.item]
+            detailVC.isPresentedModally = false
+            navigationController?.pushViewController(detailVC, animated: true)
             print("Tapped fertilizer at index \(indexPath.item)")
             // Add fertilizer detail VC push here if exists
         case .none:
