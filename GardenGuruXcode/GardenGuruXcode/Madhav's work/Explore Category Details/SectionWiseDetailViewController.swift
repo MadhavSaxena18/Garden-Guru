@@ -19,27 +19,62 @@ class SectionWiseDetailViewController: UIViewController {
     
     private var plants: [Plant] = []
     private var diseases: [Diseases] = []
-    private var fertilizers: [Fertilizer] = [] // Changed from [String] to [Fertilizer]
+    private var fertilizer: [Fertilizer] = []
     private var isShowingPlants = true
-    private var dataType: DataType = .plants
+    private var dataType: DataType = .none
     
     private enum DataType {
-        case plants
+        case fertilizer  // fixed spelling
         case diseases
-        case fertilizers
+        case plants
+        case none // Added for empty state
     }
+
     // MARK: - Dependencies
     var filteredItems: [Any]?
-    // MARK: - Dependencies
-    private let dataController = DataControllerGG.shared // Changed to initialize without shared
-    
+    private let dataController = DataControllerGG.shared
+
     // MARK: - Lifecycle Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCollectionView()
-        loadData()
-        
-        // Set the title based on section and segment
+        var didSetFiltered = false
+
+        print("🔍 SectionWiseDetailViewController - viewDidLoad")
+        print("🔍 SectionWiseDetailViewController - sectionNumber = \(String(describing: sectionNumber))")
+        print("🔍 SectionWiseDetailViewController - selectedSegmentIndex = \(String(describing: selectedSegmentIndex))")
+        print("🔍 SectionWiseDetailViewController - headerData = \(String(describing: headerData))")
+
+        if let section = sectionNumber, let segmentIndex = selectedSegmentIndex, segmentIndex == 1 {
+            print("🔍 SectionWiseDetailViewController - Processing For My Plants segment")
+            if section == 0, let filteredDiseases = filteredItems as? [Diseases] {
+                print("🔍 SectionWiseDetailViewController - Setting filtered diseases: \(filteredDiseases.count) items")
+                self.diseases = filteredDiseases
+                self.dataType = .diseases
+                self.plants = []
+                self.fertilizer = []
+                didSetFiltered = true
+            } else if section == 1 {
+                print("🔍 SectionWiseDetailViewController - Setting up fertilizers for user plants")
+                self.dataType = .fertilizer
+                if let filteredFertilizers = filteredItems as? [Fertilizer] {
+                    self.fertilizer = filteredFertilizers
+                    print("🔍 SectionWiseDetailViewController - Using filtered fertilizers: \(fertilizer.count)")
+                } else {
+                    print("❌ SectionWiseDetailViewController - filteredItems is nil or not of type [Fertilizer]")
+                    self.fertilizer = []
+                }
+                self.plants = []
+                self.diseases = []
+                didSetFiltered = true
+            }
+        }
+
+        if !didSetFiltered {
+            print("🔍 SectionWiseDetailViewController - Loading data through loadData()")
+            loadData()
+        }
+
         updateTitle()
     }
     
@@ -49,114 +84,89 @@ class SectionWiseDetailViewController: UIViewController {
             title = headerData[section]
         }
     }
-    
+
     // MARK: - Private Methods
     private func setupCollectionView() {
         collectionView.delegate = self
         collectionView.dataSource = self
-        
-        // Register cell
+
         let nib = UINib(nibName: "AllDataCollectionViewCell", bundle: nil)
         collectionView.register(nib, forCellWithReuseIdentifier: "PlantCell")
-        
-        // Setup compositional layout
         collectionView.collectionViewLayout = createCompositionalLayout()
-        //collectionView.backgroundColor = .systemBackground
     }
-    
+
     private func createCompositionalLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(400)  // Fixed height for each card
+            heightDimension: .absolute(400)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
+
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(400)  // Same fixed height
+            heightDimension: .absolute(400)
         )
         let group = NSCollectionLayoutGroup.vertical(
             layoutSize: groupSize,
             subitems: [item]
         )
-        
+
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(
-            top: 16,
-            leading: 16,
-            bottom: 16,
-            trailing: 16
-        )
+        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
         section.interGroupSpacing = 16
-        
+
         return UICollectionViewCompositionalLayout(section: section)
     }
-    
-    
+
     private func loadData() {
         guard let section = sectionNumber, let segmentIndex = selectedSegmentIndex else {
-            print("Section or segment index is nil")
+            print("❌ SectionWiseDetailViewController - Section or segment index is nil")
             return
         }
-        
-        print("Loading data for segment: \(segmentIndex), section: \(section)")
-        
-        // Start async task to fetch data
+
+        print("🔍 SectionWiseDetailViewController - loadData")
+        print("🔍 SectionWiseDetailViewController - Loading data for segment: \(segmentIndex), section: \(section)")
+
         Task {
             do {
-        switch segmentIndex {
-        case 0: // Discover
-            switch section {
-            case 0: // Top Winter Plants
-                dataType = .plants
+                switch segmentIndex {
+                case 0: // Discover
+                    print("🔍 SectionWiseDetailViewController - Processing Discover segment")
+                    switch section {
+                    case 0: // Top Winter Plants
+                        print("🔍 SectionWiseDetailViewController - Loading winter plants")
+                        dataType = .plants
                         plants = try await dataController.getPlants()
-                print("Loaded winter plants: \(plants.count)")
-                
-            case 1: // Common Issues
-                dataType = .diseases
+                        print("🔍 SectionWiseDetailViewController - Loaded winter plants: \(plants.count)")
+                    case 1: // Common Issues
+                        print("🔍 SectionWiseDetailViewController - Loading common issues")
+                        dataType = .diseases
                         diseases = try await dataController.getCommonIssues()
-                print("Loaded common issues: \(diseases.count)")
-                
-            case 2: // Common Fertilizers
-                dataType = .fertilizers
-                        fertilizers = try await dataController.getCommonFertilizers()
-                print("Loaded fertilizers: \(fertilizers.count)")
-                
-            default:
-                break
-            }
-            
-        case 1: // For My Plants
-            switch section {
-            case 0: // Common Issues for User Plants
-                dataType = .diseases
-                        // Check for filtered items first
+                        print("🔍 SectionWiseDetailViewController - Loaded common issues: \(diseases.count)")
+                    default:
+                        print("❌ SectionWiseDetailViewController - Unknown section in Discover segment")
+                    }
+                case 1: // For My Plants
+                    print("🔍 SectionWiseDetailViewController - Processing For My Plants segment")
+                    switch section {
+                    case 0:
+                        print("🔍 SectionWiseDetailViewController - Setting up diseases for user plants")
+                        dataType = .diseases
                         if let filteredDiseases = filteredItems as? [Diseases] {
                             diseases = filteredDiseases
-                            print("Using filtered diseases: \(diseases.count)")
+                            print("🔍 SectionWiseDetailViewController - Using filtered diseases: \(diseases.count)")
                         }
-                        print("Using diseases set via setDiseases")
-                
-            case 1: // Common Fertilizers
-                dataType = .fertilizers
-                        fertilizers = try await dataController.getCommonFertilizers()
-                print("Loaded fertilizers: \(fertilizers.count)")
-                print("Fertilizers: \(fertilizers)")
-                
-            default:
-                print("Unknown section for For My Plants segment")
-            }
-            
-        default:
-            print("Unknown segment index")
-        }
-        
-        print("Final data counts - Plants: \(plants.count), Diseases: \(diseases.count), Fertilizers: \(fertilizers.count)")
-        print("Current data type: \(dataType)")
-        
-                // Update UI on main thread
+                    default:
+                        print("❌ SectionWiseDetailViewController - Unknown section for For My Plants segment")
+                    }
+                default:
+                    print("❌ SectionWiseDetailViewController - Unknown segment index")
+                }
+
+                print("🔍 SectionWiseDetailViewController - Final data counts - Plants: \(plants.count), Diseases: \(diseases.count)")
+                print("🔍 SectionWiseDetailViewController - Current data type: \(dataType)")
                 await MainActor.run {
-            self.collectionView.reloadData()
+                    self.collectionView.reloadData()
                 }
             } catch {
                 print("Error loading data: \(error)")
@@ -172,8 +182,7 @@ class SectionWiseDetailViewController: UIViewController {
             }
         }
     }
-    
-    // Add public method to set diseases
+
     func setDiseases(_ diseases: [Diseases]) {
         self.diseases = diseases
         self.dataType = .diseases
@@ -190,19 +199,21 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             return plants.count
         case .diseases:
             return diseases.count
-        case .fertilizers:
-            return fertilizers.count
+        case .fertilizer:
+            return fertilizer.count
+        case .none:
+            return 0
         }
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlantCell", for: indexPath) as? AllDataCollectionViewCell else {
             print("Failed to dequeue cell")
             return UICollectionViewCell()
         }
-        
+
         print("Configuring cell at index \(indexPath.item) for dataType: \(dataType)")
-        
+
         switch dataType {
         case .plants:
             guard indexPath.item < plants.count else {
@@ -212,7 +223,6 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             let plant = plants[indexPath.item]
             print("Configuring cell with plant: \(plant.plantName)")
             cell.configure(with: plant)
-            
         case .diseases:
             guard indexPath.item < diseases.count else {
                 print("Disease index out of bounds")
@@ -221,20 +231,21 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             let disease = diseases[indexPath.item]
             print("Configuring cell with disease: \(disease.diseaseName)")
             cell.configureForDisease(with: disease)
-            
-        case .fertilizers:
-            guard indexPath.item < fertilizers.count else {
+        case .fertilizer:
+            guard indexPath.item < fertilizer.count else {
                 print("Fertilizer index out of bounds")
                 return cell
             }
-            let fertilizer = fertilizers[indexPath.item]
-            print("Configuring cell with fertilizer: \(fertilizer)")
-            cell.configureForFertilizer(with: fertilizer)
+            let fert = fertilizer[indexPath.item]
+            print("Configuring cell with fertilizer: \(fert.fertilizerName)") // replace with your fertilizer property
+            cell.configureForFertilizer(with: fert) // ensure this method exists in your cell
+        case .none:
+            return cell
         }
-        
+
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         switch dataType {
         case .diseases:
@@ -244,26 +255,22 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 detailVC.isModallyPresented = false
                 navigationController?.pushViewController(detailVC, animated: true)
             }
-            
         case .plants:
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
                 .instantiateViewController(withIdentifier: "CardsDetailViewController") as? CardsDetailViewController {
                 detailVC.selectedCardData = plants[indexPath.item]
                 navigationController?.pushViewController(detailVC, animated: true)
             }
-            
-        case .fertilizers:
+       // case .fertilizer:
+        case .fertilizer:
             let detailVC = FertilizerDetailViewController()
-            detailVC.fertilizer = fertilizers[indexPath.item]
-            //detailVC.title = fertilizers[indexPath.item].fertilizerName
+            detailVC.fertilizer = fertilizer[indexPath.item]
             detailVC.isPresentedModally = false
-            
-            // Configure back button to show "Explore"
-            let backItem = UIBarButtonItem()
-            backItem.title = "Common Fertilizers"
-            navigationItem.backBarButtonItem = backItem
-            
             navigationController?.pushViewController(detailVC, animated: true)
+            print("Tapped fertilizer at index \(indexPath.item)")
+            // Add fertilizer detail VC push here if exists
+        case .none:
+            print("No data selected")
         }
     }
 }
