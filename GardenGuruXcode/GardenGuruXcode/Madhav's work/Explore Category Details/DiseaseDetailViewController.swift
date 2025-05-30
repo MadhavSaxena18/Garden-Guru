@@ -27,7 +27,12 @@ class DiseaseDetailViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        selectedCardData = disease // ✅ ADD THIS LINE
+
+        guard let disease = disease else {
+            print("Disease is nil")
+            return
+        }
+        selectedCardData = disease
         setupUI()
         configureHeaderView()
         setupNavigationBar()
