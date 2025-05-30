@@ -11,8 +11,10 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
     //static var detailData: CardDetailsSection1?
     @IBOutlet weak var cardDetailCollectionView: UICollectionView!
     var selectedCardData: Any?
-        var isModallyPresented: Bool = false
-        
+    var isModallyPresented: Bool = false
+    private var isSaved = false
+    private var heartButton: UIBarButtonItem!
+    
         override func viewDidLoad() {
             super.viewDidLoad()
             
@@ -27,6 +29,7 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             cardDetailCollectionView.dataSource = self
             cardDetailCollectionView.delegate = self
             setupNavigationBar()
+            checkIfAlreadySaved()
         }
         
         private func setupNavigationBar() {
@@ -40,8 +43,85 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
                 )
                 navigationItem.leftBarButtonItem = doneButton
             }
+            
+            let heartImage = UIImage(systemName: isSaved ? "heart.fill" : "heart")
+            heartButton = UIBarButtonItem(image: heartImage, style: .plain, target: self, action: #selector(toggleHeartTapped))
+            navigationItem.rightBarButtonItem = heartButton
         }
         
+    @objc private func toggleHeartTapped() {
+        guard let userId = DataControllerGG.shared.getCurrentUserIdSync() else {
+            print("❌ User ID not found")
+            return
+        }
+
+        var itemId: UUID?
+        var itemType: String?
+
+        if let plant = selectedCardData as? Plant {
+            itemId = plant.plantID
+            itemType = "plant"
+        } else if let disease = selectedCardData as? Diseases {
+            itemId = disease.diseaseID
+            itemType = "disease"
+        }
+
+        guard let id = itemId, let type = itemType else { return }
+
+        Task {
+            do {
+                if isSaved {
+                    try await DataControllerGG.shared.unsaveUserItem(userId: userId, itemId: id, itemType: type)
+                    isSaved = false
+                } else {
+                    try await DataControllerGG.shared.saveUserItem(userId: userId, itemId: id, itemType: type)
+                    print("Plant saved")
+                    isSaved = true
+                }
+
+                DispatchQueue.main.async {
+                    self.updateHeartButton()
+                }
+            } catch {
+                print("❌ Error saving/unsaving item: \(error)")
+            }
+        }
+    }
+
+    
+    private func checkIfAlreadySaved() {
+        guard let userId = DataControllerGG.shared.getCurrentUserIdSync() else { return }
+
+        var itemId: UUID?
+        var itemType: String?
+
+        if let plant = selectedCardData as? Plant {
+            itemId = plant.plantID
+            itemType = "plant"
+        } else if let disease = selectedCardData as? Diseases {
+            itemId = disease.diseaseID
+            itemType = "disease"
+        }
+
+        guard let id = itemId, let type = itemType else { return }
+
+        Task {
+            do {
+                let saved = try await DataControllerGG.shared.isItemSaved(userId: userId, itemId: id, itemType: type)
+                self.isSaved = saved
+                DispatchQueue.main.async {
+                    self.updateHeartButton()
+                }
+            } catch {
+                print("❌ Failed to check if item is saved: \(error)")
+            }
+        }
+    }
+
+    private func updateHeartButton() {
+        let heartImage = UIImage(systemName: isSaved ? "heart.fill" : "heart")
+        heartButton.image = heartImage
+    }
         @objc private func dismissVC() {
             dismiss(animated: true)
         }

@@ -15,6 +15,7 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
     @IBOutlet weak var emailLabel: UILabel!
     @IBOutlet weak var profileImageView: UIImageView!
     
+
     private var userData: userInfo?
     private let dataController = DataControllerGG.shared
     private let locationManager = LocationManager()
@@ -247,6 +248,15 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         })
         
         present(alert, animated: true)
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        print("Tapped Section: \(indexPath.section), Row: \(indexPath.row)")
+
+        if indexPath.section == 1 && indexPath.row == 5 {
+            let savedVC = SavedItemsViewController(style: .plain)
+            navigationController?.pushViewController(savedVC, animated: true)
+        }
     }
 }
 

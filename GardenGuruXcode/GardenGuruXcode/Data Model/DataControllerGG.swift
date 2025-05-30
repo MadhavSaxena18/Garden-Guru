@@ -2345,6 +2345,116 @@ extension DataControllerGG {
         _ = semaphore.wait(timeout: .now() + 5)
     }
     
+    func saveUserItem(userId: UUID, itemId: UUID, itemType: String) async throws {
+            // Construct the record to insert
+            let saveRecord: [String: String] = [
+                "userId": userId.uuidString,
+                "itemId": itemId.uuidString,
+                "itemType": itemType
+            ]
+            
+            // Perform the insert operation
+            try await supabase
+                .database
+                .from("UserSavedItem")
+                .insert(saveRecord)
+                .execute()
+        }
+    
+    func unsaveUserItem(userId: UUID, itemId: UUID, itemType: String) async throws {
+            // Perform the delete operation with a compound match condition
+            try await supabase
+                .database
+                .from("UserSavedItem")
+                .delete()
+                .eq("userId", value: userId.uuidString)
+                .eq("itemId", value: itemId.uuidString)
+                .eq("itemType", value: itemType)
+                .execute()
+        }
+    
+    func getCurrentUserIdSync() -> UUID? {
+        if let user = getUserSync() {
+            return UUID(uuidString: user.id)
+        }
+        return nil
+    }
+    func isItemSaved(userId: UUID, itemId: UUID, itemType: String) async throws -> Bool {
+        // Perform a query for all matching saved items (typically only 1 or 0)
+        let response = try await supabase
+            .database
+            .from("UserSavedItem")
+            .select()
+            .eq("userId", value: userId.uuidString)
+            .eq("itemId", value: itemId.uuidString)
+            .eq("itemType", value: itemType)
+            .execute()
+
+        // Attempt to decode the response data as an array of dictionaries
+        if let data = response.data as? Data {
+            do {
+                if let results = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                    return !results.isEmpty // True if at least one saved item exists
+                }
+            } catch {
+                print("Failed to parse saved item check: \(error)")
+            }
+        }
+        return false // No match found
+    }
+
+    func getSavedItems(for userId: UUID) async throws -> [(itemType: String, item: Any)] {
+        let response = try await supabase
+            .database
+            .from("UserSavedItem")
+            .select()
+            .eq("userId", value: userId.uuidString)
+            .execute()
+
+        guard let data = response.data as? Data else { return [] }
+
+        let jsonArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] ?? []
+
+        var results: [(String, Any)] = []
+
+        for record in jsonArray {
+            guard let type = record["itemType"] as? String,
+                  let itemIdStr = record["itemId"] as? String,
+                  let itemId = UUID(uuidString: itemIdStr) else { continue }
+
+            switch type {
+            case "plant":
+                if let plant = try await getPlant(by: itemId) {
+                    results.append(("plant", plant))
+                }
+            case "disease":
+                if let disease = try await getDiseaseDetails(by: itemId) {
+                    results.append(("disease", disease))
+                }
+            default:
+                continue
+            }
+        }
+
+        return results
+    }
+    
+    func getSavedItemsSync(for userId: UUID) -> [(itemType: String, item: Any)] {
+        var result: [(itemType: String, item: Any)] = []
+        let semaphore = DispatchSemaphore(value: 0)
+
+        Task {
+            do {
+                result = try await getSavedItems(for: userId)
+            } catch {
+                print("❌ Error getting saved items: \(error)")
+            }
+            semaphore.signal()
+        }
+
+        _ = semaphore.wait(timeout: .now() + 5)
+        return result
+    }
     func getDiseasesSync(for plantID: UUID) -> [Diseases] {
         var diseases: [Diseases] = []
         let semaphore = DispatchSemaphore(value: 0)

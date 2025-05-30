@@ -844,54 +844,53 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         return UICollectionReusableView()
     }
     
+    
     @objc func sectionButtonTapped(_ sender: UIButton) {
+        // Use filtered categories when search is active
         let categories = selectedSegment == 0 ?
             (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
             (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
-
+        
         let selectedCategory = categories[sender.tag]
-
+        
+        // Debug print for tapped section
+        print("🔍 ExploreViewController - Tapped section index: \(sender.tag)")
+        print("🔍 ExploreViewController - Current segment index: \(selectedSegment)")
+        print("🔍 ExploreViewController - Selected category title: \(selectedCategory.title)")
+        
+        // Instantiate the detail view controller
         let storyBoard = UIStoryboard(name: "exploreTab", bundle: nil)
         guard let VC = storyBoard.instantiateViewController(withIdentifier: "SectionWiseDetailViewController") as? SectionWiseDetailViewController else {
             print("❌ Could not instantiate SectionWiseDetailViewController")
             return
         }
-
+        
+        // Always use the index from the currently displayed categories
         VC.sectionNumber = sender.tag
-        VC.selectedSegmentIndex = selectedSegment
-
-        // ✅ Properly pass filteredItems for both sections in 'For My Plant' segment
+        
+        // Pass the correct filteredItems for For My Plants segment
         if selectedSegment == 1 {
-            // For 'For My Plant' segment
-            switch sender.tag {
-            case 0:
-                VC.filteredItems = selectedCategory.items as? [Diseases]
-                print("Selected segment: \(selectedSegment), sender.tag: \(sender.tag)")
-                print("Filtered items type: \(type(of: VC.filteredItems))")
-            case 1:
-                VC.filteredItems = selectedCategory.items as? [Fertilizer]
-                print("Selected segment: \(selectedSegment), sender.tag: \(sender.tag)")
-                print("Filtered items type: \(type(of: VC.filteredItems))")
-            default:
-                VC.filteredItems = selectedCategory.items
-            }
-        } else {
-            // For 'Discover' segment (selectedSegment == 0)
-            // Always assign filteredItems whether search is active or not
+            // Always set filteredItems for For My Plants segment
+            VC.filteredItems = selectedCategory.items
+        } else if isSearchActive {
             VC.filteredItems = selectedCategory.items
         }
-
-
-        // Header data assignment
-        VC.headerData = selectedSegment == 0 ? ExploreScreen.headerData : ExploreScreen.headerForInMyPlantSegment
-
-        // Fetch user-specific diseases if segment is For My Plant and section is 0
-        if selectedSegment == 1 && sender.tag == 0 {
+        
+        // Set the segment and pass the correct data
+        VC.selectedSegmentIndex = selectedSegment
+        
+        // Pass the correct header data and items based on segment
+        if selectedSegment == 0 {
+            VC.headerData = ExploreScreen.headerData
+        } else {
+            VC.headerData = ExploreScreen.headerForInMyPlantSegment
+            // For My Plants segment - only pass the diseases for user's plants
             if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
                 Task {
                     do {
                         let userPlantDiseases = try await dataController.getDiseasesForUserPlants(userEmail: userEmail)
                         await MainActor.run {
+                            // Use the new setDiseases method
                             VC.setDiseases(userPlantDiseases)
                         }
                     } catch {
@@ -900,14 +899,18 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 }
             }
         }
-
+        
+        // Configure back button to show "Explore"
         let backItem = UIBarButtonItem()
         backItem.title = "Explore"
         navigationItem.backBarButtonItem = backItem
-
+        
         navigationController?.pushViewController(VC, animated: true)
     }
-
+    
+    
+    
+    
 
     
     
