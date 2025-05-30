@@ -246,7 +246,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         let repottingDate = isRepottingEnabled ? 
             Calendar.current.date(byAdding: .day, value: Int(plant.repottingFrequency ?? 365), to: currentDate) : nil
         
-        // Create reminder with enabled reminders
+        // Create reminder with enabled reminders and correct completion states
         let reminder = CareReminder_(
 
 //            careReminderID: UUID(),
@@ -259,18 +259,26 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             upcomingReminderForFertilizers: fertilizerDate,
             upcomingReminderForRepotted: repottingDate,
 
-            isWateringCompleted: false,
-            isFertilizingCompleted: false,
-            isRepottingCompleted: false
+            isWateringCompleted: !isWateringEnabled,  // Set to false if enabled, true if disabled
+            isFertilizingCompleted: !isFertilizingEnabled,  // Set to false if enabled, true if disabled
+            isRepottingCompleted: !isRepottingEnabled  // Set to false if enabled, true if disabled
+
         )
         
         // Add UserPlant to database
         dataController.addUserPlantSync(userPlant: newUserPlant)
         print("✅ Added plant to DataController")
         
-        // Add CareReminder to database
-        dataController.addCareReminderSync(userPlantID: userPlantID, reminderAllowed: isWateringEnabled || isFertilizingEnabled || isRepottingEnabled)
+        // Add CareReminder to database with correct toggle states
+        dataController.addCareReminderSync(
+            userPlantID: userPlantID,
+            reminderAllowed: isWateringEnabled || isFertilizingEnabled || isRepottingEnabled,
+            isWateringEnabled: isWateringEnabled,
+            isFertilizingEnabled: isFertilizingEnabled,
+            isRepottingEnabled: isRepottingEnabled
+        )
         print("✅ Added care reminder to DataController")
+        print("Toggle states - Water: \(isWateringEnabled), Fertilizer: \(isFertilizingEnabled), Repotting: \(isRepottingEnabled)")
         
         // Post notification
         NotificationCenter.default.post(

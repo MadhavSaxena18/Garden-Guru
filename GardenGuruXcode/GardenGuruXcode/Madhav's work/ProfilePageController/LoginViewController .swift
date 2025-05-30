@@ -296,12 +296,12 @@ class LoginViewController: UIViewController {
             orLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
             signInWithAppleButton.topAnchor.constraint(equalTo: orLabel.bottomAnchor, constant: 24),
-            signInWithAppleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            signInWithAppleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            signInWithAppleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 32),
+            signInWithAppleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -32),
             
             signInWithGoogleButton.topAnchor.constraint(equalTo: signInWithAppleButton.bottomAnchor, constant: 16),
-            signInWithGoogleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            signInWithGoogleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            signInWithGoogleButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 32),
+            signInWithGoogleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -32),
             
             signUpContainer.topAnchor.constraint(equalTo: signInWithGoogleButton.bottomAnchor, constant: 24),
             signUpContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),

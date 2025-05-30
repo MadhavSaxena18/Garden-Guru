@@ -245,6 +245,7 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
                 window?.rootViewController = loginVC
                 window?.makeKeyAndVisible()
             }
+        
         })
         
         present(alert, animated: true)
