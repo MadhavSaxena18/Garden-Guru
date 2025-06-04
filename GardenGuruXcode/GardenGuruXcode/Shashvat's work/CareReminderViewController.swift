@@ -114,8 +114,12 @@ class CareReminderViewController: UIViewController {
     
     // MARK: - Data Loading
     private func loadData() {
-
         print("\n=== Loading Care Reminder Data ===")
+        
+        // Clear existing data first
+        reminders = []
+        todayReminders = [[],[],[]]
+        upcomingReminders = [[],[],[]]
         
         guard let firstUser = dataController.getUserSync() else {
             print("❌ No user found")
@@ -123,33 +127,10 @@ class CareReminderViewController: UIViewController {
         }
         print("✅ Found user: \(firstUser.userEmail)")
         
-        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail!)
-        print("📱 Found \(userPlants.count) user plants")
-        
-        reminders = []
-        for userPlant in userPlants {
-            print("\n🌿 Processing plant: \(userPlant.userPlantNickName ?? "Unknown")")
-            if let plant = dataController.getPlantSync(by: userPlant.userplantID ?? UUID()) {
-                print("✅ Found plant: \(plant.plantName)")
-                if let reminder = dataController.getCareRemindersSync(for: userPlant.userPlantRelationID) {
-                    print("✅ Found reminder with ID: \(reminder.careReminderID)")
-                    print("- Water date: \(reminder.upcomingReminderForWater?.description ?? "nil")")
-                    print("- Fertilizer date: \(reminder.upcomingReminderForFertilizers?.description ?? "nil")")
-                    print("- Repot date: \(reminder.upcomingReminderForRepotted?.description ?? "nil")")
-                    reminders.append((userPlant: userPlant, plant: plant, reminder: reminder))
-                } else {
-                    print("❌ No reminder found for plant")
-                }
-            } else {
-                print("❌ Could not find plant details")
-            }
-        }
-        
-        print("\n📊 Total reminders loaded: \(reminders.count)")
-
-        guard let firstUser = dataController.getUserSync() else { return }
+        // Load reminders only once using the sync wrapper
         reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
-
+        print("📱 Loaded \(reminders.count) reminders")
+        
         sortReminders()
         careReminderCollectionView.reloadData()
     }
@@ -310,17 +291,9 @@ class CareReminderViewController: UIViewController {
         upcomingReminders = [[],[],[]]
         guard let firstUser = dataController.getUserSync() else { return }
 
-        let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail!)
-
+        // Only load reminders once, do not append in a loop
         reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
-
         
-        for userPlant in userPlants {
-            if let plant = dataController.getPlantSync(by: userPlant.userplantID ?? UUID()),
-               let reminder = dataController.getCareRemindersSync(for: userPlant.userPlantRelationID) {
-                reminders.append((userPlant: userPlant, plant: plant, reminder: reminder))
-            }
-        }
         sortReminders()
         DispatchQueue.main.async { [weak self] in
             self?.careReminderCollectionView.reloadData()
@@ -336,50 +309,8 @@ class CareReminderViewController: UIViewController {
         if let reminderId = notification.userInfo?["reminderId"] as? UUID,
            let reminderType = notification.userInfo?["reminderType"] as? String,
            let isCompleted = notification.userInfo?["isCompleted"] as? Bool {
-            for sectionIndex in 0..<todayReminders.count {
-                for (index, reminder) in todayReminders[sectionIndex].enumerated() {
-                    if reminder.reminder.careReminderID == reminderId {
-                        switch reminderType {
-                        case "Watering":
-                            if sectionIndex == 0 {
-                                todayReminders[sectionIndex][index].reminder.isWateringCompleted = isCompleted
-                            }
-                        case "Fertilization":
-                            if sectionIndex == 1 {
-                                todayReminders[sectionIndex][index].reminder.isFertilizingCompleted = isCompleted
-                            }
-                        case "Pruning":
-                            if sectionIndex == 2 {
-                                todayReminders[sectionIndex][index].reminder.isRepottingCompleted = isCompleted
-                            }
-                        default:
-                            break
-                        }
-                    }
-                }
-            }
-            for sectionIndex in 0..<upcomingReminders.count {
-                for (index, reminder) in upcomingReminders[sectionIndex].enumerated() {
-                    if reminder.reminder.careReminderID == reminderId {
-                        switch reminderType {
-                        case "Watering":
-                            if sectionIndex == 0 {
-                                upcomingReminders[sectionIndex][index].reminder.isWateringCompleted = isCompleted
-                            }
-                        case "Fertilization":
-                            if sectionIndex == 1 {
-                                upcomingReminders[sectionIndex][index].reminder.isFertilizingCompleted = isCompleted
-                            }
-                        case "Pruning":
-                            if sectionIndex == 2 {
-                                upcomingReminders[sectionIndex][index].reminder.isRepottingCompleted = isCompleted
-                            }
-                        default:
-                            break
-                        }
-                    }
-                }
-            }
+            
+            // Update the reminder in the main array
             for (index, reminder) in reminders.enumerated() {
                 if reminder.reminder.careReminderID == reminderId {
                     switch reminderType {
@@ -394,6 +325,9 @@ class CareReminderViewController: UIViewController {
                     }
                 }
             }
+            
+            // Re-sort reminders to update the sections
+            sortReminders()
             careReminderCollectionView.reloadData()
         }
     }
