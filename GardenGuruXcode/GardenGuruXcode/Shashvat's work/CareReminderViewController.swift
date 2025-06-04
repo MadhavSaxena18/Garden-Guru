@@ -8,7 +8,7 @@ class CareReminderViewController: UIViewController {
     @IBOutlet weak var editButton: UIBarButtonItem?
     
     private let dataController = DataControllerGG.shared
-    private let reminderTypes = ["Watering", "Fertilization", "Pruning"]
+    private let reminderTypes = ["Watering", "Fertilization", "Repotting"]
     
     private var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
     private var todayReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
@@ -139,66 +139,71 @@ class CareReminderViewController: UIViewController {
         let calendar = Calendar.current
         let currentDate = Date()
         
-        print("\n=== Sorting Reminders ===")
-        print("Current Date: \(currentDate)")
-        print("Total reminders to sort: \(reminders.count)")
-        
         // Clear existing arrays
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
         
         for reminder in reminders {
-            print("\nProcessing reminder for plant: \(reminder.plant.plantName)")
-            
             // Watering reminders
-            if let waterDate = reminder.reminder.upcomingReminderForWater {
-                print("Water date: \(waterDate)")
-                print("Is water date today? \(calendar.isDateInToday(waterDate))")
-                print("Is water date > current? \(waterDate > currentDate)")
+            if let waterDate = reminder.reminder.upcomingReminderForWater,
+               reminder.reminder.wateringEnabled == true {
+                let frequency = reminder.plant.waterFrequency ?? 0
                 if calendar.isDateInToday(waterDate) {
-                    print("- Water reminder is for today")
                     todayReminders[0].append(reminder)
+                    // Calculate next date for upcoming
+                    if frequency > 0 {
+                        if let nextDate = calendar.date(byAdding: .day, value: Int(frequency), to: waterDate), nextDate > currentDate {
+                            var nextReminder = reminder
+                            nextReminder.reminder.upcomingReminderForWater = nextDate
+                            upcomingReminders[0].append(nextReminder)
+                        }
+                    }
                 } else if waterDate > currentDate {
-                    print("- Water reminder is upcoming")
                     upcomingReminders[0].append(reminder)
                 }
             }
-            
             // Fertilizing reminders
-            if let fertDate = reminder.reminder.upcomingReminderForFertilizers {
-                print("Fertilizer date: \(fertDate)")
-                print("Is fertilizer date today? \(calendar.isDateInToday(fertDate))")
-                print("Is fertilizer date > current? \(fertDate > currentDate)")
+            if let fertDate = reminder.reminder.upcomingReminderForFertilizers,
+               reminder.reminder.fertilizingEnabled == true {
+                let frequency = reminder.plant.fertilizerFrequency ?? 0
                 if calendar.isDateInToday(fertDate) {
-                    print("- Fertilizer reminder is for today")
                     todayReminders[1].append(reminder)
+                    // Calculate next date for upcoming
+                    if frequency > 0 {
+                        if let nextDate = calendar.date(byAdding: .day, value: Int(frequency), to: fertDate), nextDate > currentDate {
+                            var nextReminder = reminder
+                            nextReminder.reminder.upcomingReminderForFertilizers = nextDate
+                            upcomingReminders[1].append(nextReminder)
+                        }
+                    }
                 } else if fertDate > currentDate {
-                    print("- Fertilizer reminder is upcoming")
                     upcomingReminders[1].append(reminder)
                 }
             }
-            
-            // Pruning reminders
-            if let pruneDate = reminder.reminder.upcomingReminderForRepotted {
-                print("Pruning date: \(pruneDate)")
-                print("Is pruning date today? \(calendar.isDateInToday(pruneDate))")
-                print("Is pruning date > current? \(pruneDate > currentDate)")
-                if calendar.isDateInToday(pruneDate) {
-                    print("- Pruning reminder is for today")
+            // Repotting reminders
+            if let repotDate = reminder.reminder.upcomingReminderForRepotted,
+               reminder.reminder.repottingEnabled == true {
+                let frequency = reminder.plant.repottingFrequency ?? 0
+                if calendar.isDateInToday(repotDate) {
                     todayReminders[2].append(reminder)
-                } else if pruneDate > currentDate {
-                    print("- Pruning reminder is upcoming")
+                    // Calculate next date for upcoming
+                    if frequency > 0 {
+                        if let nextDate = calendar.date(byAdding: .day, value: Int(frequency), to: repotDate), nextDate > currentDate {
+                            var nextReminder = reminder
+                            nextReminder.reminder.upcomingReminderForRepotted = nextDate
+                            upcomingReminders[2].append(nextReminder)
+                        }
+                    }
+                } else if repotDate > currentDate {
                     upcomingReminders[2].append(reminder)
                 }
             }
         }
-        
         // Sort reminders by date within each section
         for i in 0..<3 {
             todayReminders[i].sort { first, second in
                 let date1: Date?
                 let date2: Date?
-                
                 switch i {
                 case 0:
                     date1 = first.reminder.upcomingReminderForWater
@@ -212,15 +217,12 @@ class CareReminderViewController: UIViewController {
                 default:
                     return false
                 }
-                
                 guard let d1 = date1, let d2 = date2 else { return false }
                 return d1 < d2
             }
-            
             upcomingReminders[i].sort { first, second in
                 let date1: Date?
                 let date2: Date?
-                
                 switch i {
                 case 0:
                     date1 = first.reminder.upcomingReminderForWater
@@ -234,32 +236,14 @@ class CareReminderViewController: UIViewController {
                 default:
                     return false
                 }
-                
                 guard let d1 = date1, let d2 = date2 else { return false }
                 return d1 < d2
             }
         }
-        
-        // Print summary
-        print("\n=== Reminder Sort Summary ===")
-        print("Today's reminders:")
-        print("- Watering: \(todayReminders[0].count)")
-        print("- Fertilizing: \(todayReminders[1].count)")
-        print("- Pruning: \(todayReminders[2].count)")
-        print("\nUpcoming reminders:")
-        print("- Watering: \(upcomingReminders[0].count)")
-        print("- Fertilizing: \(upcomingReminders[1].count)")
-        print("- Pruning: \(upcomingReminders[2].count)")
-        
         // Update UI visibility based on whether there are any reminders in the current view
         let hasReminders = careReminderSegmentedControl.selectedSegmentIndex == 0 ?
             !todayReminders.allSatisfy({ $0.isEmpty }) :
             !upcomingReminders.allSatisfy({ $0.isEmpty })
-        
-        print("\nUI Visibility:")
-        print("Has reminders: \(hasReminders)")
-        print("Selected segment: \(careReminderSegmentedControl.selectedSegmentIndex)")
-        
         noRemindersView.isHidden = hasReminders
         careReminderCollectionView.isHidden = !hasReminders
     }
@@ -318,7 +302,7 @@ class CareReminderViewController: UIViewController {
                         reminders[index].reminder.isWateringCompleted = isCompleted
                     case "Fertilization":
                         reminders[index].reminder.isFertilizingCompleted = isCompleted
-                    case "Pruning":
+                    case "Repotting":
                         reminders[index].reminder.isRepottingCompleted = isCompleted
                     default:
                         break

@@ -248,21 +248,16 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
         // Create reminder with enabled reminders and correct completion states
         let reminder = CareReminder_(
-
-//            careReminderID: UUID(),
-//            upcomingReminderForWater: isWateringEnabled ? nextWaterDate : nil,
-//            upcomingReminderForFertilizers: isFertilizingEnabled ? nextFertilizerDate : nil,
-//            upcomingReminderForRepotted: isRepottingEnabled ? nextRepottingDate : nil,
-
             careReminderID: userPlantID, // Use same ID as userPlant for easy linking
             upcomingReminderForWater: waterDate ?? currentDate,
             upcomingReminderForFertilizers: fertilizerDate,
             upcomingReminderForRepotted: repottingDate,
-
-            isWateringCompleted: !isWateringEnabled,  // Set to false if enabled, true if disabled
-            isFertilizingCompleted: !isFertilizingEnabled,  // Set to false if enabled, true if disabled
-            isRepottingCompleted: !isRepottingEnabled  // Set to false if enabled, true if disabled
-
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false,
+            wateringEnabled: isWateringEnabled,
+            fertilizingEnabled: isFertilizingEnabled,
+            repottingEnabled: isRepottingEnabled
         )
         
         // Add UserPlant to database
