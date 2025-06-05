@@ -1221,9 +1221,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         let isWateringCompleted: Bool
         let isFertilizingCompleted: Bool
         let isRepottingCompleted: Bool
-        let wateringEnabled: Bool
-        let fertilizingEnabled: Bool
-        let repottingEnabled: Bool
     }
     
     // Synchronous wrapper for addCareReminder
@@ -1235,18 +1232,18 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let currentDate = ISO8601DateFormatter().string(from: Date())
                 
                 // Create a properly typed care reminder
-                let careReminder = CareReminderInsert(
-                    careReminderID: userPlantID.uuidString,
-                    upcomingReminderForWater: currentDate,
-                    upcomingReminderForFertilizers: currentDate,
-                    upcomingReminderForRepotted: currentDate,
-                    isWateringCompleted: false,
-                    isFertilizingCompleted: false,
-                    isRepottingCompleted: false,
-                    wateringEnabled: isWateringEnabled,
-                    fertilizingEnabled: isFertilizingEnabled,
-                    repottingEnabled: isRepottingEnabled
-                )
+                let careReminder: [String: Any] = [
+                    "careReminderID": userPlantID.uuidString,
+                    "upcomingReminderForWater": currentDate,
+                    "upcomingReminderForFertilizers": currentDate,
+                    "upcomingReminderForRepotted": currentDate,
+                    "isWateringCompleted": false,
+                    "isFertilizingCompleted": false,
+                    "isRepottingCompleted": false,
+                    "wateringEnabled": isWateringEnabled,
+                    "fertilizingEnabled": isFertilizingEnabled,
+                    "repottingEnabled": isRepottingEnabled
+                ]
                 
                 // Insert the care reminder with all fields
                 try await supabase
