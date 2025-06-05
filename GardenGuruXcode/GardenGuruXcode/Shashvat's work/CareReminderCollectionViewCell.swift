@@ -107,9 +107,6 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         checkBoxButton.isEnabled = shouldEnableCheckbox
         checkBoxButton.isUserInteractionEnabled = shouldEnableCheckbox
         checkBoxButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
-
-        // Hide checkbox if in Upcoming section
-        checkBoxButton.isHidden = isUpcoming
         
         // Configure checkbox image with proper sizing
         let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular, scale: .medium)

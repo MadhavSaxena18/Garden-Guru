@@ -1232,18 +1232,15 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let currentDate = ISO8601DateFormatter().string(from: Date())
                 
                 // Create a properly typed care reminder
-                let careReminder: [String: Any] = [
-                    "careReminderID": userPlantID.uuidString,
-                    "upcomingReminderForWater": currentDate,
-                    "upcomingReminderForFertilizers": currentDate,
-                    "upcomingReminderForRepotted": currentDate,
-                    "isWateringCompleted": false,
-                    "isFertilizingCompleted": false,
-                    "isRepottingCompleted": false,
-                    "wateringEnabled": isWateringEnabled,
-                    "fertilizingEnabled": isFertilizingEnabled,
-                    "repottingEnabled": isRepottingEnabled
-                ]
+                let careReminder = CareReminderInsert(
+                    careReminderID: userPlantID.uuidString,
+                    upcomingReminderForWater: currentDate,
+                    upcomingReminderForFertilizers: currentDate,
+                    upcomingReminderForRepotted: currentDate,
+                    isWateringCompleted: isWateringEnabled,  // Set to false if enabled, true if disabled
+                    isFertilizingCompleted: isFertilizingEnabled,  // Set to false if enabled, true if disabled
+                    isRepottingCompleted: isRepottingEnabled  // Set to false if enabled, true if disabled
+                )
                 
                 // Insert the care reminder with all fields
                 try await supabase

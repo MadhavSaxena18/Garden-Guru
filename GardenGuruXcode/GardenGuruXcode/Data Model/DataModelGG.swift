@@ -287,9 +287,6 @@ struct CareReminder_: Codable, Hashable {
     var lastWaterCompletedDate: Date?
     var lastFertilizerCompletedDate: Date?
     var lastRepotCompletedDate: Date?
-    var wateringEnabled: Bool?
-    var fertilizingEnabled: Bool?
-    var repottingEnabled: Bool?
     
     init(careReminderID: UUID,
          upcomingReminderForWater: Date? = nil,
@@ -300,10 +297,7 @@ struct CareReminder_: Codable, Hashable {
          isRepottingCompleted: Bool? = nil,
          lastWaterCompletedDate: Date? = nil,
          lastFertilizerCompletedDate: Date? = nil,
-         lastRepotCompletedDate: Date? = nil,
-         wateringEnabled: Bool? = nil,
-         fertilizingEnabled: Bool? = nil,
-         repottingEnabled: Bool? = nil) {
+         lastRepotCompletedDate: Date? = nil) {
         self.careReminderID = careReminderID
         self.upcomingReminderForWater = upcomingReminderForWater
         self.upcomingReminderForFertilizers = upcomingReminderForFertilizers
@@ -314,9 +308,6 @@ struct CareReminder_: Codable, Hashable {
         self.lastWaterCompletedDate = lastWaterCompletedDate
         self.lastFertilizerCompletedDate = lastFertilizerCompletedDate
         self.lastRepotCompletedDate = lastRepotCompletedDate
-        self.wateringEnabled = wateringEnabled
-        self.fertilizingEnabled = fertilizingEnabled
-        self.repottingEnabled = repottingEnabled
     }
     
     enum CodingKeys: String, CodingKey {
@@ -330,9 +321,6 @@ struct CareReminder_: Codable, Hashable {
         case lastWaterCompletedDate
         case lastFertilizerCompletedDate
         case lastRepotCompletedDate
-        case wateringEnabled
-        case fertilizingEnabled
-        case repottingEnabled
     }
     
     init(from decoder: Decoder) throws {
@@ -387,9 +375,6 @@ struct CareReminder_: Codable, Hashable {
         isWateringCompleted = try container.decodeIfPresent(Bool.self, forKey: .isWateringCompleted)
         isFertilizingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isFertilizingCompleted)
         isRepottingCompleted = try container.decodeIfPresent(Bool.self, forKey: .isRepottingCompleted)
-        wateringEnabled = try container.decodeIfPresent(Bool.self, forKey: .wateringEnabled)
-        fertilizingEnabled = try container.decodeIfPresent(Bool.self, forKey: .fertilizingEnabled)
-        repottingEnabled = try container.decodeIfPresent(Bool.self, forKey: .repottingEnabled)
         
         // Print decoded dates for debugging
         print("📅 Decoded Water Date: \(upcomingReminderForWater?.description ?? "nil")")
