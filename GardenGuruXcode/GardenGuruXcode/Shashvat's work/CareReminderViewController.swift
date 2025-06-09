@@ -157,7 +157,11 @@ class CareReminderViewController: UIViewController {
                 print("Is water date > current? \(waterDate > currentDate)")
                 if calendar.isDateInToday(waterDate) {
                     print("- Water reminder is for today")
-                    todayReminders[0].append(reminder)
+                    todayReminders[0].append(reminder)  // Always add to today if it's today's task
+                    if reminder.reminder.isWateringCompleted == true {
+                        // If completed, also add to upcoming
+                        upcomingReminders[0].append(reminder)
+                    }
                 } else if waterDate > currentDate {
                     print("- Water reminder is upcoming")
                     upcomingReminders[0].append(reminder)
@@ -171,7 +175,11 @@ class CareReminderViewController: UIViewController {
                 print("Is fertilizer date > current? \(fertDate > currentDate)")
                 if calendar.isDateInToday(fertDate) {
                     print("- Fertilizer reminder is for today")
-                    todayReminders[1].append(reminder)
+                    todayReminders[1].append(reminder)  // Always add to today if it's today's task
+                    if reminder.reminder.isFertilizingCompleted == true {
+                        // If completed, also add to upcoming
+                        upcomingReminders[1].append(reminder)
+                    }
                 } else if fertDate > currentDate {
                     print("- Fertilizer reminder is upcoming")
                     upcomingReminders[1].append(reminder)
@@ -185,7 +193,11 @@ class CareReminderViewController: UIViewController {
                 print("Is pruning date > current? \(pruneDate > currentDate)")
                 if calendar.isDateInToday(pruneDate) {
                     print("- Pruning reminder is for today")
-                    todayReminders[2].append(reminder)
+                    todayReminders[2].append(reminder)  // Always add to today if it's today's task
+                    if reminder.reminder.isRepottingCompleted == true {
+                        // If completed, also add to upcoming
+                        upcomingReminders[2].append(reminder)
+                    }
                 } else if pruneDate > currentDate {
                     print("- Pruning reminder is upcoming")
                     upcomingReminders[2].append(reminder)
@@ -442,7 +454,9 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         let isToday = careReminderSegmentedControl.selectedSegmentIndex == 0
         let isTomorrow = dueDate.map { Calendar.current.isDateInTomorrow($0) } ?? false
         let isInToday = dueDate.map { Calendar.current.isDateInToday($0) } ?? false
-        let shouldEnableCheckbox = isInToday || (isTomorrow && !isToday)
+        
+        // Always enable checkbox for today's tasks, regardless of completion status
+        let shouldEnableCheckbox = isToday || (isTomorrow && !isToday)
         
         cell.configure(
             with: reminder,
@@ -546,17 +560,9 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         )
         print("✅ Notification posted")
         
-        // If this is a today's reminder, ensure it stays in today's section
-        if let reminderDate = currentReminderDate,
-           Calendar.current.isDateInToday(reminderDate) {
-            print("📅 Today's reminder - reloading data...")
-            // Force a reload without changing the reminder's date
-            DispatchQueue.main.async { [weak self] in
-                self?.loadData()
-            }
-        } else {
-            print("📅 Not today's reminder - normal reload")
-            loadData()
+        // Always reload data to ensure proper sorting and visibility
+        DispatchQueue.main.async { [weak self] in
+            self?.loadData()
         }
         print("=== Checkbox Toggle Handling Complete ===\n")
     }
