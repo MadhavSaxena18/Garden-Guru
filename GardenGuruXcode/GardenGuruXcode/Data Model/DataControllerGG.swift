@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import Supabase
 import CoreLocation
+import UserNotifications
 
 class supaBaseController {
     static let shared = supaBaseController()
@@ -1074,7 +1075,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 // Set the completion date to now
                 update.last_water_completed_date = dateFormatter.string(from: currentDate)
                 
-                // Calculate next reminder date based on plant's water frequency
+                // Calculate next reminder date based on plant's watering frequency
                 if let waterFreq = userPlant.plant.waterFrequency {
                     let nextDate = Calendar.current.date(byAdding: .day, value: Int(waterFreq), to: currentDate)
                     update.upcomingReminderForWater = dateFormatter.string(from: nextDate ?? currentDate)
@@ -1094,7 +1095,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 // Set the completion date to now
                 update.last_fertilizer_completed_date = dateFormatter.string(from: currentDate)
                 
-                // Calculate next reminder date based on plant's fertilizer frequency
+                // Calculate next reminder date based on plant's fertilizing frequency
                 if let fertilizerFreq = userPlant.plant.fertilizerFrequency {
                     let nextDate = Calendar.current.date(byAdding: .day, value: Int(fertilizerFreq), to: currentDate)
                     update.upcomingReminderForFertilizers = dateFormatter.string(from: nextDate ?? currentDate)
@@ -1102,8 +1103,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 }
             } else {
                 // Reset upcoming date to last completion date
-                if let lastFertilizerDate = currentReminder.last_fertilizer_completed_date {
-                    update.upcomingReminderForFertilizers = dateFormatter.string(from: lastFertilizerDate)
+                if let lastFertDate = currentReminder.last_fertilizer_completed_date {
+                    update.upcomingReminderForFertilizers = dateFormatter.string(from: lastFertDate)
                     print("🌱 Reset fertilizer date to last completion: \(update.upcomingReminderForFertilizers ?? "nil")")
                 }
             }
@@ -1148,6 +1149,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .execute()
         
         print("✅ Successfully updated reminder")
+        
+        // Schedule notifications for the updated reminder
+        // First, get the updated reminder
+        if let updatedReminder = try await getCareReminders(for: userPlantID) {
+            updateReminders(for: updatedReminder, plant: userPlant.plant, nickname: userPlant.userPlant.userPlantNickName)
+        }
     }
     
     // Synchronous wrapper for updateCareReminderWithDetails
@@ -2871,6 +2878,220 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 return "Network error while getting location"
             case .unknown(let error):
                 return "Unknown error: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    // MARK: - Push Notification Methods
+    
+    func requestNotificationPermission(completion: @escaping (Bool) -> Void) {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                print("❌ Notification permission error: \(error)")
+                completion(false)
+                return
+            }
+            
+            print("✅ Notification permission granted: \(granted)")
+            completion(granted)
+            
+            // Register for remote notifications on main thread
+            DispatchQueue.main.async {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+        }
+    }
+    
+    func scheduleReminder(for plant: Plant, nickname: String?, type: String, dueDate: Date) {
+        print("\n=== Scheduling Reminder ===")
+        print("🪴 Plant: \(plant.plantName)")
+        print("📝 Nickname: \(nickname ?? "None")")
+        print("📅 Due Date: \(dueDate)")
+        
+        let content = UNMutableNotificationContent()
+        let plantName = nickname ?? plant.plantName
+        
+        // Create notification content based on reminder type
+        switch type.lowercased() {
+        case "water":
+            content.title = "Time to Water! 💧"
+            content.body = "Your \(plantName) is thirsty and needs watering."
+            print("💧 Water reminder content created")
+        case "fertilizer":
+            content.title = "Fertilizer Time! 🌱"
+            content.body = "Your \(plantName) needs some nutrients today."
+            print("🌱 Fertilizer reminder content created")
+        case "repot":
+            content.title = "Repotting Time! 🪴"
+            content.body = "Your \(plantName) has outgrown its pot and needs repotting."
+            print("🪴 Repot reminder content created")
+        default:
+            print("❌ Invalid reminder type: \(type)")
+            return
+        }
+        
+        content.sound = .default
+        content.badge = 1
+        
+        // FOR TESTING: Schedule notification for 1 minute from now
+        #if DEBUG
+        let testInterval: TimeInterval = 60 // 1 minute
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: testInterval, repeats: false)
+        print("🧪 TEST MODE: Notification will appear in 1 minute")
+        print("⏰ Scheduled for: \(Date().addingTimeInterval(testInterval))")
+        #else
+        // Production code: Schedule for 8 AM
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: dueDate)
+        components.hour = 8
+        components.minute = 0
+        components.second = 0
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        if let nextDate = trigger.nextTriggerDate() {
+            print("⏰ PROD MODE: Scheduled for \(nextDate)")
+        }
+        #endif
+        
+        // Create unique identifier for this reminder
+        let identifier = "\(plant.plantID.uuidString)_\(type)_\(dueDate.timeIntervalSince1970)"
+        print("🔑 Notification identifier: \(identifier)")
+        
+        // Create the request
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        // First, check current notification settings
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("\n📱 Current Notification Settings:")
+            print("- Authorization Status: \(settings.authorizationStatus.rawValue)")
+            print("- Alert Setting: \(settings.alertSetting.rawValue)")
+            print("- Sound Setting: \(settings.soundSetting.rawValue)")
+            print("- Badge Setting: \(settings.badgeSetting.rawValue)")
+            
+            guard settings.authorizationStatus == .authorized else {
+                print("❌ Notifications not authorized")
+                return
+            }
+            
+            // Schedule the notification
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Error scheduling notification: \(error)")
+                } else {
+                    print("✅ Notification scheduled successfully")
+                    
+                    // Verify the notification was scheduled
+                    UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+                        print("\n📋 Current pending notifications: \(requests.count)")
+                        if let request = requests.first(where: { $0.identifier == identifier }) {
+                            print("✅ Verified: Notification is in pending requests")
+                            print("📱 Notification details:")
+                            if let trigger = request.trigger as? UNCalendarNotificationTrigger {
+                                print("- Next trigger date: \(trigger.nextTriggerDate() ?? Date())")
+                            } else if let trigger = request.trigger as? UNTimeIntervalNotificationTrigger {
+                                print("- Will trigger in \(trigger.timeInterval) seconds")
+                                print("- Will trigger at \(Date().addingTimeInterval(trigger.timeInterval))")
+                            }
+                            print("- Title: \(request.content.title)")
+                            print("- Body: \(request.content.body)")
+                            print("- Sound enabled: \(request.content.sound != nil)")
+                        } else {
+                            print("⚠️ Warning: Notification not found in pending requests")
+                        }
+                    }
+                }
+            }
+        }
+        
+        print("=== Reminder Scheduling Complete ===\n")
+    }
+    
+    func updateReminders(for reminder: CareReminder_, plant: Plant, nickname: String?) {
+        print("\n=== Updating Reminders ===")
+        
+        // Remove existing notifications for this plant
+        let identifiers = [
+            "\(reminder.careReminderID.uuidString)_water",
+            "\(reminder.careReminderID.uuidString)_fertilizer",
+            "\(reminder.careReminderID.uuidString)_repot"
+        ]
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+        print("🗑 Removed existing notifications")
+        
+        // Only schedule notifications if they're enabled
+        if reminder.wateringEnabled, let waterDate = reminder.upcomingReminderForWater {
+            print("💧 Scheduling water reminder (enabled)")
+            scheduleReminder(for: plant, nickname: nickname, type: "water", dueDate: waterDate)
+        } else {
+            print("💧 Water reminders disabled or no date")
+        }
+        
+        if reminder.fertilizerEnabled, let fertilizerDate = reminder.upcomingReminderForFertilizers {
+            print("🌱 Scheduling fertilizer reminder (enabled)")
+            scheduleReminder(for: plant, nickname: nickname, type: "fertilizer", dueDate: fertilizerDate)
+        } else {
+            print("🌱 Fertilizer reminders disabled or no date")
+        }
+        
+        if reminder.repottingEnabled, let repotDate = reminder.upcomingReminderForRepotted {
+            print("🪴 Scheduling repot reminder (enabled)")
+            scheduleReminder(for: plant, nickname: nickname, type: "repot", dueDate: repotDate)
+        } else {
+            print("🪴 Repot reminders disabled or no date")
+        }
+        
+        // Verify all scheduled notifications
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            print("\n📋 All pending notifications (\(requests.count) total):")
+            for request in requests {
+                print("- ID: \(request.identifier)")
+                if let trigger = request.trigger as? UNCalendarNotificationTrigger {
+                    print("  Next trigger: \(trigger.nextTriggerDate() ?? Date())")
+                }
+            }
+        }
+        
+        print("=== Reminder Update Complete ===\n")
+    }
+    
+    func scheduleNotification(for plant: Plant, type: String, date: Date) {
+        let content = UNMutableNotificationContent()
+        content.title = "Garden Guru - \(plant.plantName) needs care!"
+        
+        switch type {
+        case "watering":
+            content.body = "Time to water your \(plant.plantName)! 💧"
+        case "fertilizer":
+            content.body = "Time to fertilize your \(plant.plantName)! 🌱"
+        case "repotting":
+            content.body = "Time to repot your \(plant.plantName)! 🪴"
+        default:
+            content.body = "Your \(plant.plantName) needs attention!"
+        }
+        
+        content.sound = .default
+        content.badge = 1
+        content.threadIdentifier = "garden_guru_\(plant.plantID)"
+        content.categoryIdentifier = "GARDEN_REMINDER"
+        
+        // Add user info for handling the notification
+        content.userInfo = [
+            "plantId": plant.plantID,
+            "reminderType": type,
+            "dueDate": date.timeIntervalSince1970
+        ]
+        
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date),
+            repeats: false
+        )
+        
+        let identifier = "\(type)_\(plant.plantID)_\(date.timeIntervalSince1970)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error scheduling notification: \(error)")
+            } else {
+                print("✅ Successfully scheduled \(type) notification for \(plant.plantName) at \(date)")
             }
         }
     }

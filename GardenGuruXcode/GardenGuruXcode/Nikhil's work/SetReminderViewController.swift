@@ -229,9 +229,9 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
         print("\n📝 Getting reminder states from UI...")
         // Get switch states for reminders
-        var isWateringEnabled = false
-        var isFertilizingEnabled = false
-        var isRepottingEnabled = false
+        var isWateringEnabled = true
+        var isFertilizingEnabled = true
+        var isRepottingEnabled = true
         
         for index in 0..<reminders.count {
             let indexPath = IndexPath(row: index, section: 0)
@@ -273,12 +273,15 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             upcomingReminderForWater: waterDate,
             upcomingReminderForFertilizers: fertilizerDate,
             upcomingReminderForRepotted: repottingDate,
-            isWateringCompleted: isWateringEnabled,
-            isFertilizingCompleted: isFertilizingEnabled,
-            isRepottingCompleted: isRepottingEnabled,
+            isWateringCompleted: false,
+            isFertilizingCompleted: false,
+            isRepottingCompleted: false,
             last_water_completed_date: currentDate,
             last_fertilizer_completed_date: currentDate,
-            last_repot_completed_date: currentDate
+            last_repot_completed_date: currentDate,
+            wateringEnabled: isWateringEnabled,
+            fertilizerEnabled: isFertilizingEnabled,
+            repottingEnabled: isRepottingEnabled
         )
         
         print("\n📝 Adding plant to database...")
