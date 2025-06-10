@@ -40,33 +40,43 @@ class SectionWiseDetailViewController: UIViewController {
 
         // Debug print for received section and segment
         print("🔍 SectionWiseDetailViewController - viewDidLoad")
-        print("🔍 SectionWiseDetailViewController - sectionNumber = \(String(describing: sectionNumber))")
-        print("🔍 SectionWiseDetailViewController - selectedSegmentIndex = \(String(describing: selectedSegmentIndex))")
-        print("🔍 SectionWiseDetailViewController - headerData = \(String(describing: headerData))")
+        print("🔍 sectionNumber = \(String(describing: sectionNumber))")
+        print("🔍 selectedSegmentIndex = \(String(describing: selectedSegmentIndex))")
+        print("🔍 headerData = \(String(describing: headerData))")
 
-        // Only handle known sections
-        if let section = sectionNumber, let segmentIndex = selectedSegmentIndex, segmentIndex == 1 {
+        // 🌿 Use section title to make behavior flexible
+        if let section = sectionNumber,
+           let segmentIndex = selectedSegmentIndex,
+           segmentIndex == 1,
+           let sectionTitle = headerData?[section] {
+            
             print("🔍 SectionWiseDetailViewController - Processing For My Plants segment")
-            if section == 0, let filteredDiseases = filteredItems as? [Diseases] {
-                print("🔍 SectionWiseDetailViewController - Setting filtered diseases: \(filteredDiseases.count) items")
+            print("🔍 Section title: \(sectionTitle)")
+
+            if sectionTitle == "Common Issues in your Plant",
+               let filteredDiseases = filteredItems as? [Diseases] {
+                print("🔍 Setting filtered diseases: \(filteredDiseases.count) items")
                 self.diseases = filteredDiseases
                 self.dataType = .diseases
                 self.plants = []
                 didSetFiltered = true
-            } else if section == 1 {
-                print("🔍 SectionWiseDetailViewController - Setting empty state for Common Fertilizers")
+            } else if sectionTitle == "Common Fertilizers" {
+                print("🔍 Setting empty state for Common Fertilizers")
                 self.diseases = []
                 self.plants = []
-                self.dataType = .none // Set to empty state
+                self.dataType = .none
                 didSetFiltered = true
             }
         }
+
         if !didSetFiltered {
-            print("🔍 SectionWiseDetailViewController - Loading data through loadData()")
-        loadData()
+            print("🔍 Loading data through loadData()")
+            loadData()
         }
+
         updateTitle()
     }
+
     
     private func updateTitle() {
         guard let section = sectionNumber, let headerData = headerData else { return }
