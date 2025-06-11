@@ -34,10 +34,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     
                     // Schedule a test notification for 30 seconds from now
                     let content = UNMutableNotificationContent()
-                    content.title = "Test Notification"
-                    content.body = "This is a test notification from Garden Guru"
+                    content.title = "🌿 Welcome to Garden Guru!"
+                    content.body = "We’re thrilled to have you in the Garden Guru family! Let’s grow something beautiful together. 🌼"
                     content.sound = .default
                     content.badge = 1
+
                     
                     // Add thread identifier for grouping
                     content.threadIdentifier = "garden_guru_notifications"
