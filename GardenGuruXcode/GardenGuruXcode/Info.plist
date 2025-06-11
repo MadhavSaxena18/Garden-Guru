@@ -25,7 +25,5 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>UILaunchStoryboardName</key>
-	<string>General/Base.lproj/LaunchScreen</string>
 </dict>
 </plist>
