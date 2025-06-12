@@ -55,30 +55,30 @@ private struct UserPlantInsert: Encodable {
     let lastRepotted: String?  // ISO8601 date string
 }
 
-// Add this struct near other model definitions
-struct CareReminderUpdate: Encodable {
-    var upcomingReminderForWater: String?
-    var upcomingReminderForFertilizers: String?
-    var upcomingReminderForRepotted: String?
-    var isWateringCompleted: Bool?
-    var isFertilizingCompleted: Bool?
-    var isRepottingCompleted: Bool?
-    var last_water_completed_date: String?
-    var last_fertilizer_completed_date: String?
-    var last_repot_completed_date: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case upcomingReminderForWater
-        case upcomingReminderForFertilizers
-        case upcomingReminderForRepotted
-        case isWateringCompleted
-        case isFertilizingCompleted
-        case isRepottingCompleted
-        case last_water_completed_date
-        case last_fertilizer_completed_date
-        case last_repot_completed_date
-    }
-}
+//// Add this struct near other model definitions
+//struct CareReminderUpdate: Encodable {
+//    var upcomingReminderForWater: String?
+//    var upcomingReminderForFertilizers: String?
+//    var upcomingReminderForRepotted: String?
+//    var isWateringCompleted: Bool?
+//    var isFertilizingCompleted: Bool?
+//    var isRepottingCompleted: Bool?
+//    var last_water_completed_date: String?
+//    var last_fertilizer_completed_date: String?
+//    var last_repot_completed_date: String?
+//    
+//    enum CodingKeys: String, CodingKey {
+//        case upcomingReminderForWater
+//        case upcomingReminderForFertilizers
+//        case upcomingReminderForRepotted
+//        case isWateringCompleted
+//        case isFertilizingCompleted
+//        case isRepottingCompleted
+//        case last_water_completed_date
+//        case last_fertilizer_completed_date
+//        case last_repot_completed_date
+//    }
+//}
 
 class DataControllerGG: NSObject, CLLocationManagerDelegate {
     static let shared = DataControllerGG()
@@ -1234,38 +1234,38 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .execute()
     }
     
-    // Add this struct near other model definitions
-    private struct CareReminderInsert: Encodable {
-        let careReminderID: String
-        let upcomingReminderForWater: String
-        let upcomingReminderForFertilizers: String?
-        let upcomingReminderForRepotted: String?
-        let isWateringCompleted: Bool
-        let isFertilizingCompleted: Bool
-        let isRepottingCompleted: Bool
-        let last_water_completed_date: String?
-        let last_fertilizer_completed_date: String?
-        let last_repot_completed_date: String?
-        let wateringEnabled: Bool
-        let fertilizerEnabled: Bool
-        let repottingEnabled: Bool
-
-        enum CodingKeys: String, CodingKey {
-            case careReminderID
-            case upcomingReminderForWater
-            case upcomingReminderForFertilizers
-            case upcomingReminderForRepotted
-            case isWateringCompleted
-            case isFertilizingCompleted
-            case isRepottingCompleted
-            case last_water_completed_date
-            case last_fertilizer_completed_date
-            case last_repot_completed_date
-            case wateringEnabled
-            case fertilizerEnabled
-            case repottingEnabled
-        }
-    }
+//    // Add this struct near other model definitions
+//    private struct CareReminderInsert: Encodable {
+//        let careReminderID: String
+//        let upcomingReminderForWater: String
+//        let upcomingReminderForFertilizers: String?
+//        let upcomingReminderForRepotted: String?
+//        let isWateringCompleted: Bool
+//        let isFertilizingCompleted: Bool
+//        let isRepottingCompleted: Bool
+//        let last_water_completed_date: String?
+//        let last_fertilizer_completed_date: String?
+//        let last_repot_completed_date: String?
+//        let wateringEnabled: Bool
+//        let fertilizerEnabled: Bool
+//        let repottingEnabled: Bool
+//
+//        enum CodingKeys: String, CodingKey {
+//            case careReminderID
+//            case upcomingReminderForWater
+//            case upcomingReminderForFertilizers
+//            case upcomingReminderForRepotted
+//            case isWateringCompleted
+//            case isFertilizingCompleted
+//            case isRepottingCompleted
+//            case last_water_completed_date
+//            case last_fertilizer_completed_date
+//            case last_repot_completed_date
+//            case wateringEnabled
+//            case fertilizerEnabled
+//            case repottingEnabled
+//        }
+//    }
     
     // Synchronous wrapper for addCareReminder
     func addCareReminderSync(userPlantID: UUID, reminderAllowed: Bool, isWateringEnabled: Bool = false, isFertilizingEnabled: Bool = false, isRepottingEnabled: Bool = false) {
@@ -1288,12 +1288,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 // Create a properly typed care reminder
                 let careReminder = CareReminderInsert(
                     careReminderID: userPlantID.uuidString,
-                    upcomingReminderForWater: currentDate,
+                    upcomingReminderForWater: isWateringEnabled ? currentDate : nil,
                     upcomingReminderForFertilizers: isFertilizingEnabled ? currentDate : nil,
                     upcomingReminderForRepotted: isRepottingEnabled ? currentDate : nil,
-                    isWateringCompleted: !isWateringEnabled,
-                    isFertilizingCompleted: !isFertilizingEnabled,
-                    isRepottingCompleted: !isRepottingEnabled,
+                    isWateringCompleted: false,  // Always start as not completed
+                    isFertilizingCompleted: false,  // Always start as not completed
+                    isRepottingCompleted: false,  // Always start as not completed
                     last_water_completed_date: currentDate,
                     last_fertilizer_completed_date: currentDate,
                     last_repot_completed_date: currentDate,
@@ -1304,7 +1304,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 
                 print("\n📝 Preparing to insert care reminder:")
                 print("🆔 Care Reminder ID: \(careReminder.careReminderID)")
-                print("💧 Water Next Date: \(careReminder.upcomingReminderForWater)")
+                print("💧 Water Next Date: \(careReminder.upcomingReminderForWater ?? "nil")")
                 print("🌱 Fertilizer Next Date: \(String(describing: careReminder.upcomingReminderForFertilizers))")
                 print("🪴 Repotting Next Date: \(String(describing: careReminder.upcomingReminderForRepotted))")
                 print("✅ Water Completed: \(careReminder.isWateringCompleted)")
