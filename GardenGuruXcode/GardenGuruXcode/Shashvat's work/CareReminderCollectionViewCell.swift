@@ -79,12 +79,12 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         }
     }
     
-    func configure(with reminderData: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), 
-                  isCompleted: Bool, 
-                  dueDate: Date?, 
-                  isUpcoming: Bool,
-                  isTomorrow: Bool,
-                  shouldEnableCheckbox: Bool) {
+    func configure(with reminderData: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_),
+                isCompleted: Bool,
+                dueDate: Date?,
+                isUpcoming: Bool,
+                isTomorrow: Bool,
+                shouldEnableCheckbox: Bool) {
         
         print("\n=== Configuring Care Reminder Cell ===")
         print("Plant: \(reminderData.plant.plantName)")
@@ -116,15 +116,23 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         
         checkBoxButton.setImage(checkBoxImage, for: .normal)
         
+        // Apply visual style for completed tasks
+        if isCompleted {
+            contentView.alpha = 0.7
+            plantNameCareReminderLabel.textColor = .systemGray
+            nickNameCareReminderLabel.textColor = .systemGray2
+        } else {
+            contentView.alpha = 1.0
+            plantNameCareReminderLabel.textColor = .label
+            nickNameCareReminderLabel.textColor = .secondaryLabel
+        }
+        
         // Ensure the button is properly configured for touch
         checkBoxButton.isExclusiveTouch = true
         
         print("Checkbox state:")
         print("- Enabled: \(checkBoxButton.isEnabled)")
         print("- User Interaction: \(checkBoxButton.isUserInteractionEnabled)")
-        print("- Alpha: \(checkBoxButton.alpha)")
-        print("- Image: \(isCompleted ? "checkmark.square.fill" : "square")")
-        print("- Frame: \(checkBoxButton.frame)")
         
         // Configure due date label with appropriate color and text
         configureDueDate(dueDate: dueDate, isCompleted: isCompleted, isUpcoming: isUpcoming, isTomorrow: isTomorrow)
