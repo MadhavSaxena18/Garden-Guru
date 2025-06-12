@@ -300,6 +300,17 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         )
         print("✅ Added care reminder to DataController")
         
+        // Schedule initial notifications
+        if isWateringEnabled {
+            dataController.scheduleReminder(for: plant, nickname: nickname, type: "water", dueDate: waterDate!)
+        }
+        if isFertilizingEnabled {
+            dataController.scheduleReminder(for: plant, nickname: nickname, type: "fertilizer", dueDate: fertilizerDate!)
+        }
+        if isRepottingEnabled {
+            dataController.scheduleReminder(for: plant, nickname: nickname, type: "repot", dueDate: repottingDate!)
+        }
+        
         // Post notification
         NotificationCenter.default.post(
             name: .plantAdded,

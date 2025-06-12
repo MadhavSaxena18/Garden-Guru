@@ -8,7 +8,7 @@ class CareReminderViewController: UIViewController {
     @IBOutlet weak var editButton: UIBarButtonItem?
     
     private let dataController = DataControllerGG.shared
-    private let reminderTypes = ["Watering", "Fertilization", "Pruning"]
+    private let reminderTypes = ["Watering", "Fertilization", "Repotting"]
     
     private var reminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
     private var todayReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
@@ -186,20 +186,20 @@ class CareReminderViewController: UIViewController {
                 }
             }
             
-            // Pruning reminders
-            if let pruneDate = reminder.reminder.upcomingReminderForRepotted {
-                print("Pruning date: \(pruneDate)")
-                print("Is pruning date today? \(calendar.isDateInToday(pruneDate))")
-                print("Is pruning date > current? \(pruneDate > currentDate)")
-                if calendar.isDateInToday(pruneDate) {
-                    print("- Pruning reminder is for today")
+            // Repotting reminders
+            if let repotDate = reminder.reminder.upcomingReminderForRepotted {
+                print("Repotting date: \(repotDate)")
+                print("Is repotting date today? \(calendar.isDateInToday(repotDate))")
+                print("Is repotting date > current? \(repotDate > currentDate)")
+                if calendar.isDateInToday(repotDate) {
+                    print("- Repotting reminder is for today")
                     todayReminders[2].append(reminder)  // Always add to today if it's today's task
                     if reminder.reminder.isRepottingCompleted == true {
                         // If completed, also add to upcoming
                         upcomingReminders[2].append(reminder)
                     }
-                } else if pruneDate > currentDate {
-                    print("- Pruning reminder is upcoming")
+                } else if repotDate > currentDate {
+                    print("- Repotting reminder is upcoming")
                     upcomingReminders[2].append(reminder)
                 }
             }

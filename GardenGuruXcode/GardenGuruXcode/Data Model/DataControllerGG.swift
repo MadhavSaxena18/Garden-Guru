@@ -2904,104 +2904,96 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     func scheduleReminder(for plant: Plant, nickname: String?, type: String, dueDate: Date) {
         print("\n=== Scheduling Reminder ===")
-        print("🪴 Plant: \(plant.plantName)")
-        print("📝 Nickname: \(nickname ?? "None")")
+        print("🌿 Plant: \(plant.plantName)")
         print("📅 Due Date: \(dueDate)")
+        print("📝 Type: \(type)")
         
+        // Create notification content
         let content = UNMutableNotificationContent()
+        content.sound = .default
+        content.badge = 1
+        
         let plantName = nickname ?? plant.plantName
         
-        // Create notification content based on reminder type
-        switch type.lowercased() {
+        // Create two notifications: one for initial setup and one for the due date
+        let initialContent = UNMutableNotificationContent()
+        initialContent.sound = .default
+        initialContent.badge = 1
+        
+        // Set up initial notification content
+        switch type {
         case "water":
-            content.title = "Time to Water! 💧"
-            content.body = "Your \(plantName) is thirsty and needs watering."
-            print("💧 Water reminder content created")
+            initialContent.title = "Plant Added - Watering Schedule"
+            initialContent.body = "Your \(plantName) will need watering on \(formatDate(dueDate))"
+            content.title = "Watering Time! 💧"
+            content.body = "Your \(plantName) needs watering."
         case "fertilizer":
+            initialContent.title = "Plant Added - Fertilizer Schedule"
+            initialContent.body = "Your \(plantName) will need fertilizer on \(formatDate(dueDate))"
             content.title = "Fertilizer Time! 🌱"
             content.body = "Your \(plantName) needs some nutrients today."
-            print("🌱 Fertilizer reminder content created")
         case "repot":
+            initialContent.title = "Plant Added - Repotting Schedule"
+            initialContent.body = "Your \(plantName) will need repotting on \(formatDate(dueDate))"
             content.title = "Repotting Time! 🪴"
             content.body = "Your \(plantName) has outgrown its pot and needs repotting."
-            print("🪴 Repot reminder content created")
         default:
             print("❌ Invalid reminder type: \(type)")
             return
         }
         
-        content.sound = .default
-        content.badge = 1
-        
-        // FOR TESTING: Schedule notification for 1 minute from now
-        #if DEBUG
-        let testInterval: TimeInterval = 60 // 1 minute
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: testInterval, repeats: false)
-        print("🧪 TEST MODE: Notification will appear in 1 minute")
-        print("⏰ Scheduled for: \(Date().addingTimeInterval(testInterval))")
-        #else
-        // Production code: Schedule for 8 AM
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: dueDate)
-        components.hour = 8
-        components.minute = 0
-        components.second = 0
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        if let nextDate = trigger.nextTriggerDate() {
-            print("⏰ PROD MODE: Scheduled for \(nextDate)")
-        }
-        #endif
-        
-        // Create unique identifier for this reminder
+        // Remove any existing notifications for this plant and type
         let identifier = "\(plant.plantID.uuidString)_\(type)_\(dueDate.timeIntervalSince1970)"
-        print("🔑 Notification identifier: \(identifier)")
+        let initialIdentifier = "\(plant.plantID.uuidString)_\(type)_initial"
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier, initialIdentifier])
         
-        // Create the request
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        // Schedule initial notification for 1 minute from now
+        let initialTrigger = UNTimeIntervalNotificationTrigger(timeInterval: 60, repeats: false)
+        let initialRequest = UNNotificationRequest(identifier: initialIdentifier, content: initialContent, trigger: initialTrigger)
         
-        // First, check current notification settings
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            print("\n📱 Current Notification Settings:")
-            print("- Authorization Status: \(settings.authorizationStatus.rawValue)")
-            print("- Alert Setting: \(settings.alertSetting.rawValue)")
-            print("- Sound Setting: \(settings.soundSetting.rawValue)")
-            print("- Badge Setting: \(settings.badgeSetting.rawValue)")
-            
-            guard settings.authorizationStatus == .authorized else {
-                print("❌ Notifications not authorized")
-                return
+        // Schedule the initial notification
+        UNUserNotificationCenter.current().add(initialRequest) { error in
+            if let error = error {
+                print("❌ Error scheduling initial notification: \(error)")
+            } else {
+                print("✅ Initial notification scheduled")
             }
+        }
+        
+        // Only schedule due date notification if the due date is in the future
+        let calendar = Calendar.current
+        if dueDate > Date() {
+            // Set notification for 8 AM on the due date
+            var components = calendar.dateComponents([.year, .month, .day], from: dueDate)
+            components.hour = 8
+            components.minute = 0
+            components.second = 0
+            
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            
+            // Create the request
+            let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
             
             // Schedule the notification
             UNUserNotificationCenter.current().add(request) { error in
                 if let error = error {
-                    print("❌ Error scheduling notification: \(error)")
+                    print("❌ Error scheduling due date notification: \(error)")
                 } else {
-                    print("✅ Notification scheduled successfully")
-                    
-                    // Verify the notification was scheduled
-                    UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
-                        print("\n📋 Current pending notifications: \(requests.count)")
-                        if let request = requests.first(where: { $0.identifier == identifier }) {
-                            print("✅ Verified: Notification is in pending requests")
-                            print("📱 Notification details:")
-                            if let trigger = request.trigger as? UNCalendarNotificationTrigger {
-                                print("- Next trigger date: \(trigger.nextTriggerDate() ?? Date())")
-                            } else if let trigger = request.trigger as? UNTimeIntervalNotificationTrigger {
-                                print("- Will trigger in \(trigger.timeInterval) seconds")
-                                print("- Will trigger at \(Date().addingTimeInterval(trigger.timeInterval))")
-                            }
-                            print("- Title: \(request.content.title)")
-                            print("- Body: \(request.content.body)")
-                            print("- Sound enabled: \(request.content.sound != nil)")
-                        } else {
-                            print("⚠️ Warning: Notification not found in pending requests")
-                        }
-                    }
+                    print("✅ Due date notification scheduled for \(dueDate)")
                 }
             }
+        } else {
+            print("⏭ Skipping due date notification for past date: \(dueDate)")
         }
         
         print("=== Reminder Scheduling Complete ===\n")
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
     
     func updateReminders(for reminder: CareReminder_, plant: Plant, nickname: String?) {
