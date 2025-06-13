@@ -346,18 +346,20 @@ class OTPViewController: UIViewController {
 
 extension OTPViewController: UITextFieldDelegate {
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        // Allow backspace
+        // Handle backspace
         if string.isEmpty {
-            // Move to previous field if exists
+            // Clear current field
+            textField.text = ""
+            
+            // Move to previous field if exists, without clearing it
             if textField.tag > 0 {
                 otpTextFields[textField.tag - 1].becomeFirstResponder()
-                otpTextFields[textField.tag - 1].text = ""
             }
-            return true
+            return false
         }
         
-        // Only allow numbers
-        if !string.isEmpty && !CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: string)) {
+        // Only allow single digit numbers
+        guard string.count == 1, CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: string)) else {
             return false
         }
         
@@ -368,9 +370,34 @@ extension OTPViewController: UITextFieldDelegate {
         if textField.tag < otpTextFields.count - 1 {
             otpTextFields[textField.tag + 1].becomeFirstResponder()
         } else {
-            textField.resignFirstResponder()
+            // If we're on the last field, check if the OTP is complete
+            let otp = otpTextFields.map { $0.text ?? "" }.joined()
+            if otp.count == 6 {
+                textField.resignFirstResponder()
+            }
         }
         
         return false
+    }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        // Highlight the current field
+        UIView.animate(withDuration: 0.2) {
+            textField.transform = CGAffineTransform(scaleX: 1.1, y: 1.1)
+            textField.layer.borderWidth = 1
+            textField.layer.borderColor = UIColor(hex: "284329").cgColor
+        }
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        // Remove highlight
+        UIView.animate(withDuration: 0.2) {
+            textField.transform = .identity
+            textField.layer.borderWidth = 0
+        }
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        view.endEditing(true)
     }
 } 
