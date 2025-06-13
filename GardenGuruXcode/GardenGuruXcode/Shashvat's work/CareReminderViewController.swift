@@ -163,20 +163,22 @@ class CareReminderViewController: UIViewController {
                 if calendar.isDateInToday(lastCompletedDate) {
                     print("- Water reminder was completed today")
                     todayReminders[0].append(reminder)
-                } else {
-                    // Calculate the next due date based on last completed date
-                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
-                        print("Last completed: \(lastCompletedDate)")
-                        print("Next due date: \(nextDueDate)")
-                        
-                        // If the next due date is today or in the past, it belongs in today's reminders
-                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
-                            print("- Water reminder is for today")
+                }
+                
+                // Calculate the next due date based on last completed date
+                if let nextDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
+                    print("Last completed: \(lastCompletedDate)")
+                    print("Next due date: \(nextDueDate)")
+                    
+                    // If the next due date is today or in the past, it belongs in today's reminders
+                    if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                        print("- Water reminder is for today")
+                        if !todayReminders[0].contains(where: { $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID }) {
                             todayReminders[0].append(reminder)
-                        } else if nextDueDate > currentDate {
-                            print("- Water reminder is upcoming")
-                            upcomingReminders[0].append(reminder)
                         }
+                    } else if nextDueDate > currentDate {
+                        print("- Water reminder is upcoming")
+                        upcomingReminders[0].append(reminder)
                     }
                 }
             }
@@ -190,20 +192,22 @@ class CareReminderViewController: UIViewController {
                 if calendar.isDateInToday(lastCompletedDate) {
                     print("- Fertilizer reminder was completed today")
                     todayReminders[1].append(reminder)
-                } else {
-                    // Calculate the next due date based on last completed date
-                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
-                        print("Last completed: \(lastCompletedDate)")
-                        print("Next due date: \(nextDueDate)")
-                        
-                        // If the next due date is today or in the past, it belongs in today's reminders
-                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
-                            print("- Fertilizer reminder is for today")
+                }
+                
+                // Calculate the next due date based on last completed date
+                if let nextDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
+                    print("Last completed: \(lastCompletedDate)")
+                    print("Next due date: \(nextDueDate)")
+                    
+                    // If the next due date is today or in the past, it belongs in today's reminders
+                    if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                        print("- Fertilizer reminder is for today")
+                        if !todayReminders[1].contains(where: { $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID }) {
                             todayReminders[1].append(reminder)
-                        } else if nextDueDate > currentDate {
-                            print("- Fertilizer reminder is upcoming")
-                            upcomingReminders[1].append(reminder)
                         }
+                    } else if nextDueDate > currentDate {
+                        print("- Fertilizer reminder is upcoming")
+                        upcomingReminders[1].append(reminder)
                     }
                 }
             }
@@ -217,20 +221,22 @@ class CareReminderViewController: UIViewController {
                 if calendar.isDateInToday(lastCompletedDate) {
                     print("- Repotting reminder was completed today")
                     todayReminders[2].append(reminder)
-                } else {
-                    // Calculate the next due date based on last completed date
-                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
-                        print("Last completed: \(lastCompletedDate)")
-                        print("Next due date: \(nextDueDate)")
-                        
-                        // If the next due date is today or in the past, it belongs in today's reminders
-                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
-                            print("- Repotting reminder is for today")
+                }
+                
+                // Calculate the next due date based on last completed date
+                if let nextDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
+                    print("Last completed: \(lastCompletedDate)")
+                    print("Next due date: \(nextDueDate)")
+                    
+                    // If the next due date is today or in the past, it belongs in today's reminders
+                    if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                        print("- Repotting reminder is for today")
+                        if !todayReminders[2].contains(where: { $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID }) {
                             todayReminders[2].append(reminder)
-                        } else if nextDueDate > currentDate {
-                            print("- Repotting reminder is upcoming")
-                            upcomingReminders[2].append(reminder)
                         }
+                    } else if nextDueDate > currentDate {
+                        print("- Repotting reminder is upcoming")
+                        upcomingReminders[2].append(reminder)
                     }
                 }
             }
