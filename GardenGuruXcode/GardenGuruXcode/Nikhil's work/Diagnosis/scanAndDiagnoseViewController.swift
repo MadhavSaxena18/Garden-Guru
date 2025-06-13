@@ -399,7 +399,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     }
     
     private func runDiseaseDetection(_ image: UIImage) -> String? {
-        guard let model = try? VNCoreMLModel(for: GardenGuruDiseasesDetection_2().model),
+        guard let model = try? VNCoreMLModel(for: GG_Diseases_1().model),
               let cgImage = image.cgImage else { return nil }
         
         var resultIdentifier: String?
