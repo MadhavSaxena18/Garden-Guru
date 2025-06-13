@@ -16,7 +16,7 @@ class LoginViewController: UIViewController {
     
     private let logoImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: "GG1")
+        imageView.image = UIImage(named: "GG11")
         imageView.contentMode = .scaleAspectFit
         imageView.layer.shadowColor = UIColor.black.cgColor
         imageView.layer.shadowOffset = CGSize(width: 0, height: 2)
