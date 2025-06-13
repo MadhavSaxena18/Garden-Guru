@@ -20,6 +20,12 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     let PlantCarAI = UIImageView()
     
     var identifier = 0
+    private var isLoadingLocation = false // Add this property to track loading state
+    
+    // Add caching properties
+    private var lastLocationFetch: Date?
+    private var cachedWeather: WeatherService.WeatherResponse?
+    private let locationCacheDuration: TimeInterval = 300 // 5 minutes
     
     @IBOutlet weak var plantCarAI: UIImageView!
     
@@ -48,6 +54,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     private var diseases: [Diseases] = []
     private var fertilizers: [Fertilizer] = []
     private var careTipOfTheDay: CareTip?
+    private var preventionTips: [PreventionTip] = []
     @IBOutlet weak var tableView: UITableView!
     
     // Add a label to show when there are no plants in 'For My Plants'
@@ -64,9 +71,26 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     private let imageCache = NSCache<NSString, UIImage>()
     
-    // Add a function to fetch weather and update plants
+    private func shouldFetchNewLocation() -> Bool {
+        guard let lastFetch = lastLocationFetch else { return true }
+        return Date().timeIntervalSince(lastFetch) > locationCacheDuration
+    }
+
     private func fetchWeatherAndUpdatePlants() async {
+        // Check if we have cached weather data that's still valid
+        if !shouldFetchNewLocation(), let cachedWeather = cachedWeather {
+            print("Using cached weather data")
+            await updatePlantsForCurrentWeather(cachedWeather)
+            return
+        }
+
         print("Starting weather fetch...")
+        await MainActor.run {
+            isLoadingLocation = true
+            discoverCategories = []
+            collectionView.reloadData()
+        }
+        
         do {
             let location = try await locationManager.requestLocation()
             print("Got location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
@@ -77,16 +101,20 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 longitude: location.coordinate.longitude
             )
             
-            // Only update self.currentWeather here if needed
-            self.currentWeather = weather
+            // Cache the weather data and update timestamp
+            self.cachedWeather = weather
+            self.lastLocationFetch = Date()
+            
             await self.updatePlantsForCurrentWeather(weather)
 
             await MainActor.run {
+                isLoadingLocation = false
                 print("🟢 Discover categories updated and reloading collection view.")
             }
         } catch {
             print("Error in fetchWeatherAndUpdatePlants: \(error)")
             await MainActor.run {
+                isLoadingLocation = false
                 // Handle the error appropriately
                 if (error as NSError).domain == "Location Access Denied" {
                     // Show alert to user about location access
@@ -112,7 +140,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
-    
+
     private func updatePlantsForCurrentWeather(_ weather: WeatherService.WeatherResponse) {
         print("[DEBUG] Entered updatePlantsForCurrentWeather")
         print("[DEBUG] Weather passed in: \(weather)")
@@ -126,10 +154,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 return "winter"
             case 15..<25:
                 return "spring"
-            case 25..<35:
+            case 25..<50:
                 return "summer"
             default:
-                return "autumn"
+                return "extreme summer"
             }
         }
 
@@ -154,9 +182,17 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 print("🌱 Plants matching mapped season \(mappedSeason): \(plantsForWeather.count)")
                 print("🌱 Plant names for season \(mappedSeason): \(plantsForWeather.map { $0.plantName })")
 
-                // 🧹 Step 4: Deduplicate and limit
-                let uniqueRecommendedPlants = Array(Set(plantsForWeather)).prefix(5)
-                print("✅ Unique recommended plants after deduplication: \(uniqueRecommendedPlants.count)")
+                // 🧹 Step 4: Deduplicate and limit while preserving order
+                var orderedUniqueRecommendedPlants: [Plant] = []
+                var seenPlantIDs: Set<UUID> = []
+                for plant in plantsForWeather {
+                    if !seenPlantIDs.contains(plant.plantID) {
+                        orderedUniqueRecommendedPlants.append(plant)
+                        seenPlantIDs.insert(plant.plantID)
+                    }
+                }
+                let finalRecommendedPlants = Array(orderedUniqueRecommendedPlants.prefix(5))
+                print("✅ Unique recommended plants after deduplication: \(finalRecommendedPlants.count)")
 
                 // 🖼️ Step 5: Update UI if in Discover segment
                 if selectedSegment == 0 {
@@ -169,11 +205,19 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                             newDiscoverCategories.append(("Care Tip of the Day", [tip]))
                         }
 
-                        // Add Current Season Plants (weather-filtered)
-                        newDiscoverCategories.append(("Current Season Plants", Array(uniqueRecommendedPlants)))
+                        // Only add Current Season Plants and Common Issues if we have data
+                        if !finalRecommendedPlants.isEmpty {
+                            newDiscoverCategories.append(("Current Season Plants", Array(finalRecommendedPlants)))
+                        }
+                        
+                        if !allCommonIssues.isEmpty {
+                            newDiscoverCategories.append(("Common Issues", allCommonIssues))
+                        }
 
-                        // Add Common Issues
-                        newDiscoverCategories.append(("Common Issues", allCommonIssues))
+                        // Add new category for Pest & Disease Prevention if there are tips
+                        if !self.preventionTips.isEmpty {
+                            newDiscoverCategories.append(("Pest & Disease Prevention", self.preventionTips))
+                        }
 
                         self.discoverCategories = newDiscoverCategories
 
@@ -226,8 +270,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         Task {
             let authStatus = locationManager.getAuthorizationStatus()
             if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
-                // Only fetch weather if we're in Discover segment
-                if selectedSegment == 0 {
+                // Only fetch weather if we're in Discover segment and need new data
+                if selectedSegment == 0 && shouldFetchNewLocation() {
                     await fetchWeatherAndUpdatePlants()
                 }
             } else {
@@ -260,11 +304,14 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         super.viewWillAppear(animated)
         print("📱 View will appear")
         
-        // Always refresh data when view appears to ensure latest weather plants are shown
+        // Only refresh data if needed
         Task {
             await fetchDataFromSupabase()
-            if selectedSegment == 0 {
+            if selectedSegment == 0 && shouldFetchNewLocation() {
                 await fetchWeatherAndUpdatePlants()
+            } else if selectedSegment == 0, let cachedWeather = cachedWeather {
+                // Use cached weather data if available
+                await updatePlantsForCurrentWeather(cachedWeather)
             }
             await MainActor.run {
                 self.collectionView.reloadData()
@@ -330,6 +377,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let careTipNib = UINib(nibName: "CareTipCollectionViewCell", bundle: nil)
         collectionView.register(careTipNib, forCellWithReuseIdentifier: "CareTipCell")
         
+        // Register the new PreventionTipCollectionViewCell
+        collectionView.register(PreventionTipCollectionViewCell.self, forCellWithReuseIdentifier: PreventionTipCollectionViewCell.reuseIdentifier)
+        
     }
     func setupSegmentedControl() {
         // Optionally customize the segmented control
@@ -394,6 +444,14 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 print("✅ Care Tip: \(self.careTipOfTheDay?.message ?? "None")")
             } catch {
                 print("❌ Failed to fetch care tip: \(error)")
+            }
+
+            // 🌿 Fetch prevention tips
+            do {
+                self.preventionTips = try await dataController.getPreventionTips()
+                print("✅ Successfully fetched \(self.preventionTips.count) prevention tips")
+            } catch {
+                print("❌ Failed to fetch prevention tips: \(error)")
             }
 
             // 🌠 Preload disease images
@@ -646,6 +704,16 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
            let tip = item as? CareTip {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CareTipCell", for: indexPath) as! CareTipCollectionViewCell
             cell.configure(with: tip.message)
+            
+            // Add styling for the Care Tip of the Day card
+            cell.contentView.layer.masksToBounds = true
+            cell.layer.cornerRadius = 11 // Consistent with other cards
+            cell.layer.shadowColor = UIColor.black.cgColor
+            cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+            cell.layer.shadowRadius = 4
+            cell.layer.shadowOpacity = 0.2
+            cell.layer.masksToBounds = false // Crucial for shadow visibility
+            
             return cell
         }
 
@@ -719,6 +787,18 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             return cell
         }
 
+        // ✅ STEP 5: PEST & DISEASE PREVENTION
+        else if category.title == "Pest & Disease Prevention" {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PreventionTipCollectionViewCell.reuseIdentifier, for: indexPath) as! PreventionTipCollectionViewCell
+            if let preventionTip = item as? PreventionTip {
+                cell.configure(with: preventionTip.title ?? "", message: preventionTip.message ?? "", imageUrl: URL(string: preventionTip.imageUrl ?? ""))
+            }
+            cell.setNeedsLayout()
+            cell.layoutIfNeeded()
+            // Styling already applied in PreventionTipCollectionViewCell.swift's setupViews
+            return cell
+        }
+
         return UICollectionViewCell()
     }
 
@@ -767,9 +847,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         heightDimension: .estimated(100)
                     )
                     let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+                    group.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20)
 
                     section = NSCollectionLayoutSection(group: group)
-                    section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
                     section.interGroupSpacing = 12
                     print("🎨 Using layout for Care Tip of the Day")
 
@@ -778,6 +858,19 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
                 case "Common Issues":
                     section = generateSection2Layout()
+
+                case "Pest & Disease Prevention":
+                    let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+                    let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+                    let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.9), heightDimension: .estimated(220))
+                    let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+                    group.contentInsets = NSDirectionalEdgeInsets(top: 20, leading: 20, bottom: 10, trailing: 0)
+
+                    section = NSCollectionLayoutSection(group: group)
+                    section.interGroupSpacing = 5
+                    section.orthogonalScrollingBehavior = .groupPaging
+                    print("🎨 Using layout for Pest & Disease Prevention")
 
                 default:
                     print("❌ Invalid category title: \(categoryTitle)")
@@ -1011,6 +1104,12 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let selectedCategory = categories[indexPath.section]
         let selectedItem = selectedCategory.items[indexPath.row]
 
+        // Make Care Tip of the Day non-clickable
+        if selectedCategory.title == "Care Tip of the Day" {
+            print("🚫 Care Tip of the Day tapped, but it's non-clickable.")
+            return // Do nothing
+        }
+
         if let disease = selectedItem as? Diseases,
            (selectedCategory.title == "Common Issues" || selectedCategory.title == "Common Issues in your Plant") {
             if let detailVC = UIStoryboard(name: "exploreTab", bundle: nil)
@@ -1028,6 +1127,17 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             detailVC.title = "Fertilizer Details"
             let navVC = UINavigationController(rootViewController: detailVC)
             navVC.modalPresentationStyle = .formSheet
+            present(navVC, animated: true)
+        } else if let preventionTip = selectedItem as? PreventionTip {
+            let detailVC = PreventionTipDetailViewController()
+            detailVC.preventionTip = preventionTip
+            let navVC = UINavigationController(rootViewController: detailVC)
+            navVC.modalPresentationStyle = .pageSheet
+            if let sheet = navVC.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                sheet.prefersGrabberVisible = true
+                sheet.preferredCornerRadius = 25
+            }
             present(navVC, animated: true)
         } else {
             // Show regular CardsDetailViewController for other items
