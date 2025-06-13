@@ -23,6 +23,22 @@ class Section1CollectionViewCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         setupUI()
+        
+        // Add explicit constraints for labels to ensure consistent padding
+        plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        plantDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            // Constraints for plantNameLabel
+            plantNameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            plantNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            plantNameLabel.topAnchor.constraint(equalTo: plantImage.bottomAnchor, constant: 8),
+            
+            // Constraints for plantDescriptionLabel
+            plantDescriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            plantDescriptionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            plantDescriptionLabel.topAnchor.constraint(equalTo: plantNameLabel.bottomAnchor, constant: 4)
+        ])
     }
     
     private func setupUI() {
@@ -53,6 +69,6 @@ class Section1CollectionViewCell: UICollectionViewCell {
         
         plantNameLabel.text = plant.plantName
         plantDescriptionLabel.text = plant.plantDescription
-        }
+    }
 }
 

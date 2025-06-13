@@ -22,7 +22,7 @@ struct DataOfSection1InDicoverSegment {
     var category: Category?
     
     init(from plant: Plant) {
-        self.image = plant.plantImage ?? ""
+        self.image = plant.imageURLs.first ?? ""
         self.plantName = plant.plantName
         self.plantDescription = plant.plantDescription ?? ""
         self.plantID = plant.plantID

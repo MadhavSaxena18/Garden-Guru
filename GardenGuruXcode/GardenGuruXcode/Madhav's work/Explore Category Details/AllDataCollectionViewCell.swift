@@ -159,4 +159,18 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         layoutIfNeeded()
     }
     
+    func configureForPreventionTip(with preventionTip: PreventionTip) {
+        nameLabel.text = preventionTip.title
+        descriptionLabel.text = preventionTip.message
+        
+        if let urlString = preventionTip.imageUrl, let url = URL(string: urlString) {
+            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(systemName: "leaf.fill")) // Use a generic leaf placeholder
+        } else {
+            plantImageView.image = UIImage(systemName: "leaf.fill")
+        }
+        
+        nameLabel.setNeedsLayout()
+        descriptionLabel.setNeedsLayout()
+        layoutIfNeeded()
+    }
 }

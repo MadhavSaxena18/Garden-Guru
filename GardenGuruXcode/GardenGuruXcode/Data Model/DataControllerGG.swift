@@ -2900,7 +2900,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         formatter.calendar = Calendar(identifier: .iso8601)
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ" // or SSSZ if no microseconds
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ" // Ensure this format handles fractional seconds
         decoder.dateDecodingStrategy = .formatted(formatter)
 
         let tips = try decoder.decode([CareTip].self, from: response.data)
@@ -3113,6 +3113,41 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             } else {
                 print("✅ Successfully scheduled \(type) notification for \(plant.plantName) at \(date)")
             }
+        }
+    }
+    
+    func getPreventionTips() async throws -> [PreventionTip] {
+        print("🔍 Fetching all prevention tips...")
+        let response = try await supabase
+            .database
+            .from("prevention_tips")
+            .select()
+            .order("sort_order", ascending: true)
+            .execute()
+        
+        guard let jsonData = response.data as? Data else {
+            print("❌ No data received for prevention tips.")
+            return []
+        }
+        
+        print("📡 Raw prevention tips response: \(jsonData.count) bytes")
+        do {
+            let decoder = JSONDecoder()
+            
+            // Use a standard DateFormatter for precise ISO8601 decoding with fractional seconds
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ" // Handles up to 6 fractional seconds
+            formatter.calendar = Calendar(identifier: .iso8601)
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0) // Ensure timezone is handled consistently
+            decoder.dateDecodingStrategy = .formatted(formatter)
+            
+            let tips = try decoder.decode([PreventionTip].self, from: jsonData)
+            print("✅ Successfully decoded \(tips.count) prevention tips")
+            return tips
+        } catch {
+            print("❌ Decoding error for prevention tips: \(error)")
+            throw error
         }
     }
 

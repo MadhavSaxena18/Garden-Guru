@@ -19,12 +19,14 @@ class SectionWiseDetailViewController: UIViewController {
     
     private var plants: [Plant] = []
     private var diseases: [Diseases] = []
+    private var preventionTips: [PreventionTip] = []
     private var isShowingPlants = true
     private var dataType: DataType = .plants
     
     private enum DataType {
         case plants
         case diseases
+        case preventionTips
         case none // Added for empty state
     }
     // MARK: - Dependencies
@@ -81,6 +83,12 @@ class SectionWiseDetailViewController: UIViewController {
                 self.dataType = .none
                 didSetFiltered = true
                 print("🔍 SectionWiseDetailViewController - Set empty state for Common Fertilizers from viewDidLoad")
+            } else if segmentIndex == 0 && sectionTitle == "Pest & Disease Prevention",
+                      let filteredPreventionTips = receivedFilteredItems as? [PreventionTip] {
+                self.preventionTips = filteredPreventionTips
+                self.dataType = .preventionTips
+                didSetFiltered = true
+                print("🔍 SectionWiseDetailViewController - Set filtered prevention tips from viewDidLoad: \(filteredPreventionTips.count) items")
             }
         }
 
@@ -232,6 +240,8 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             return diseases.count
         case .none:
             return 0
+        case .preventionTips:
+            return preventionTips.count
         }
     }
     
@@ -248,7 +258,6 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 return cell
             }
             let plant = plants[indexPath.item]
-            print("Configuring cell with plant: \(plant.plantName)")
             cell.configure(with: plant)
         case .diseases:
             guard indexPath.item < diseases.count else {
@@ -256,11 +265,17 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 return cell
             }
             let disease = diseases[indexPath.item]
-            print("Configuring cell with disease: \(disease.diseaseName)")
             cell.configureForDisease(with: disease)
         case .none:
             // Return a blank cell (will never be called since numberOfItemsInSection returns 0)
+            return cell
+        case .preventionTips:
+            guard indexPath.item < preventionTips.count else {
+                print("Prevention Tip index out of bounds")
                 return cell
+            }
+            let preventionTip = preventionTips[indexPath.item]
+            cell.configureForPreventionTip(with: preventionTip)
         }
         return cell
     }
@@ -282,6 +297,19 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             }
         case .none:
             print("Helllllo")
+        case .preventionTips:
+            if let detailVC = PreventionTipDetailViewController() as? PreventionTipDetailViewController {
+                detailVC.preventionTip = preventionTips[indexPath.item]
+                let navVC = UINavigationController(rootViewController: detailVC)
+                navVC.modalPresentationStyle = .pageSheet // Or .formSheet for iPad compatibility
+                if let sheet = navVC.sheetPresentationController {
+                    sheet.detents = [.medium(), .large()]
+                    sheet.prefersGrabberVisible = true
+                    sheet.preferredCornerRadius = 25
+                }
+                present(navVC, animated: true)
+            }
+            break
         }
     }
 }

@@ -51,11 +51,15 @@ class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
         }
         
         func updateWithPlantInfo(_ plant: Plant) {
-            if let imageString = plant.plantImage?.components(separatedBy: ";").first?.trimmingCharacters(in: .whitespacesAndNewlines),
-               let url = URL(string: imageString), !imageString.isEmpty {
+            // Try to get the second image URL, fall back to the first if not available
+            if let imageURLString = plant.imageURLs[safe: 1] ?? plant.imageURLs[safe: 0], // Get second image, or first as fallback
+               let url = URL(string: imageURLString.replacingOccurrences(of: "//01", with: "/01").replacingOccurrences(of: "//", with: "/").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") {
                 // Use SDWebImage to fetch the image from URL
                 SDWebImageManager.shared.loadImage(with: url, options: [], progress: nil) { [weak self] image, _, error, _, _, _ in
-                    if let image = image {
+                    if let error = error {
+                        print("❌ Error loading plant image for Section 3: \(error.localizedDescription)")
+                        self?.images = []
+                    } else if let image = image {
                         self?.images = [image]
                     } else {
                         self?.images = []
@@ -63,6 +67,7 @@ class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
                     self?.reloadCollectionView()
                 }
             } else {
+                print("❌ No valid image URL found for plant in Section 3: \(plant.plantName)")
                 self.images = []
                 self.reloadCollectionView()
             }
