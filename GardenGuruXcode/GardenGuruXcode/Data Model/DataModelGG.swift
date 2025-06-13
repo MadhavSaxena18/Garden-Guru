@@ -532,6 +532,13 @@ struct DiseaseFertilizer: Codable, Hashable {
     var fertilizerId: UUID //FK FOR FETRTILIZER
 }
 
+struct CareTip: Codable {
+    let tipID: UUID
+    let message: String
+    let dayIndex: Int
+    let createdAt: Date
+}
+
 // Add notification name extension
 extension Notification.Name {
     static let plantAdded = Notification.Name("NewPlantAdded")

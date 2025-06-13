@@ -118,7 +118,7 @@ struct CardDetailsSection3{
 class ExploreScreen{
     private static let dataController = DataControllerGG.shared
     
-    static var headerData: [String] = ["Current Season Plants", "Common Issues"]
+    static var headerData: [String] = ["Current Season Plants", "Common Issues", "Care Tip of the Day"]
     static var headerForInMyPlantSegment: [String] = ["Common Issues in your Plant", "Common fertilizer"]
     
     // MARK: - Data Fetching Methods

@@ -40,33 +40,58 @@ class SectionWiseDetailViewController: UIViewController {
 
         // Debug print for received section and segment
         print("🔍 SectionWiseDetailViewController - viewDidLoad")
-        print("🔍 SectionWiseDetailViewController - sectionNumber = \(String(describing: sectionNumber))")
-        print("🔍 SectionWiseDetailViewController - selectedSegmentIndex = \(String(describing: selectedSegmentIndex))")
-        print("🔍 SectionWiseDetailViewController - headerData = \(String(describing: headerData))")
+        print("🔍 sectionNumber = \(String(describing: sectionNumber))")
+        print("🔍 selectedSegmentIndex = \(String(describing: selectedSegmentIndex))")
+        print("🔍 headerData = \(String(describing: headerData))")
 
-        // Only handle known sections
-        if let section = sectionNumber, let segmentIndex = selectedSegmentIndex, segmentIndex == 1 {
-            print("🔍 SectionWiseDetailViewController - Processing For My Plants segment")
-            if section == 0, let filteredDiseases = filteredItems as? [Diseases] {
-                print("🔍 SectionWiseDetailViewController - Setting filtered diseases: \(filteredDiseases.count) items")
+        // Use filteredItems if available for Discover segment as well
+        if let section = sectionNumber,
+           let segmentIndex = selectedSegmentIndex,
+           let headerData = headerData,
+           section < headerData.count,
+           let receivedFilteredItems = filteredItems {
+            
+            let sectionTitle = headerData[section]
+            print("🔍 SectionWiseDetailViewController - Checking filteredItems for section title: \(sectionTitle)")
+            print("🔍 SectionWiseDetailViewController - receivedFilteredItems count: \(receivedFilteredItems.count)")
+            print("🔍 SectionWiseDetailViewController - receivedFilteredItems type: \(type(of: receivedFilteredItems))")
+
+            if segmentIndex == 0 && sectionTitle == "Current Season Plants",
+               let filteredPlants = receivedFilteredItems as? [Plant] {
+                self.plants = filteredPlants
+                self.dataType = .plants
+                didSetFiltered = true
+                print("🔍 SectionWiseDetailViewController - Set filtered plants from viewDidLoad: \(filteredPlants.count) items")
+            } else if segmentIndex == 0 && sectionTitle == "Common Issues",
+                      let filteredDiseases = receivedFilteredItems as? [Diseases] {
+                self.diseases = filteredDiseases
+                self.dataType = .diseases
+                didSetFiltered = true
+                print("🔍 SectionWiseDetailViewController - Set filtered diseases from viewDidLoad: \(filteredDiseases.count) items")
+            } else if segmentIndex == 1 && sectionTitle == "Common Issues in your Plant",
+                      let filteredDiseases = receivedFilteredItems as? [Diseases] {
                 self.diseases = filteredDiseases
                 self.dataType = .diseases
                 self.plants = []
                 didSetFiltered = true
-            } else if section == 1 {
-                print("🔍 SectionWiseDetailViewController - Setting empty state for Common Fertilizers")
+                print("🔍 SectionWiseDetailViewController - Set filtered diseases for My Plants from viewDidLoad: \(filteredDiseases.count) items")
+            } else if segmentIndex == 1 && sectionTitle == "Common Fertilizers" {
                 self.diseases = []
                 self.plants = []
-                self.dataType = .none // Set to empty state
+                self.dataType = .none
                 didSetFiltered = true
+                print("🔍 SectionWiseDetailViewController - Set empty state for Common Fertilizers from viewDidLoad")
             }
         }
+
         if !didSetFiltered {
-            print("🔍 SectionWiseDetailViewController - Loading data through loadData()")
-        loadData()
+            print("🔍 Loading data through loadData()")
+            loadData()
         }
+
         updateTitle()
     }
+
     
     private func updateTitle() {
         guard let section = sectionNumber, let headerData = headerData else { return }
@@ -119,7 +144,7 @@ class SectionWiseDetailViewController: UIViewController {
     
     
     private func loadData() {
-        guard let section = sectionNumber, let segmentIndex = selectedSegmentIndex else {
+        guard let section = sectionNumber, let segmentIndex = selectedSegmentIndex, let headerData = headerData else {
             print("❌ SectionWiseDetailViewController - Section or segment index is nil")
             return
         }
@@ -127,44 +152,51 @@ class SectionWiseDetailViewController: UIViewController {
         print("🔍 SectionWiseDetailViewController - Loading data for segment: \(segmentIndex), section: \(section)")
         Task {
             do {
-        switch segmentIndex {
-        case 0: // Discover
-                    print("🔍 SectionWiseDetailViewController - Processing Discover segment")
-            switch section {
-            case 0: // Top Winter Plants
-                        print("🔍 SectionWiseDetailViewController - Loading winter plants")
-                dataType = .plants
-                        plants = try await dataController.getPlants()
-                        print("🔍 SectionWiseDetailViewController - Loaded winter plants: \(plants.count)")
-            case 1: // Common Issues
-                        print("🔍 SectionWiseDetailViewController - Loading common issues")
-                dataType = .diseases
+                switch segmentIndex {
+                case 0: // Discover
+                    let sectionTitle = headerData[section]
+                    print("🔍 SectionWiseDetailViewController - Discover section title: \(sectionTitle)")
+                    switch sectionTitle {
+                    case "Current Season Plants":
+                        dataType = .plants
+                        if let plants = filteredItems as? [Plant] {
+                            self.plants = plants
+                            print("🔍 SectionWiseDetailViewController - Using filtered plants: \(plants.count)")
+                        } else {
+                            // This should ideally not be hit if ExploreViewController passes filteredItems
+                            // If filteredItems is nil or wrong type, it means no plants will be shown.
+                            // This prevents fetching all plants as a fallback, ensuring only filtered ones are used.
+                            self.plants = [] // Ensure plants array is empty if filteredItems not set/wrong type
+                            print("🔍 SectionWiseDetailViewController - No filtered plants received or wrong type.")
+                        }
+                    case "Common Issues":
+                        dataType = .diseases
                         diseases = try await dataController.getCommonIssues()
                         print("🔍 SectionWiseDetailViewController - Loaded common issues: \(diseases.count)")
-            default:
-                        print("❌ SectionWiseDetailViewController - Unknown section in Discover segment")
-                break
-            }
-        case 1: // For My Plants
+                    default:
+                        dataType = .none
+                        print("🔍 SectionWiseDetailViewController - No data for this section title")
+                    }
+                case 1: // For My Plants
                     print("🔍 SectionWiseDetailViewController - Processing For My Plants segment")
-            switch section {
-            case 0: // Common Issues for User Plants
+                    switch section {
+                    case 0: // Common Issues for User Plants
                         print("🔍 SectionWiseDetailViewController - Setting up diseases for user plants")
-                dataType = .diseases
-                if let filteredDiseases = filteredItems as? [Diseases] {
-                    diseases = filteredDiseases
+                        dataType = .diseases
+                        if let filteredDiseases = filteredItems as? [Diseases] {
+                            diseases = filteredDiseases
                             print("🔍 SectionWiseDetailViewController - Using filtered diseases: \(diseases.count)")
-                }
-            default:
+                        }
+                    default:
                         print("❌ SectionWiseDetailViewController - Unknown section for For My Plants segment")
-            }
-        default:
+                    }
+                default:
                     print("❌ SectionWiseDetailViewController - Unknown segment index")
-        }
+                }
                 print("🔍 SectionWiseDetailViewController - Final data counts - Plants: \(plants.count), Diseases: \(diseases.count)")
                 print("🔍 SectionWiseDetailViewController - Current data type: \(dataType)")
                 await MainActor.run {
-            self.collectionView.reloadData()
+                    self.collectionView.reloadData()
                 }
             } catch {
                 print("Error loading data: \(error)")

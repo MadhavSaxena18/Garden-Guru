@@ -55,38 +55,45 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
     }
     
     private func loadUserData() {
-        // Get user data and update username
+        print("[DEBUG] loadUserData called")
         if let user = DataControllerGG.shared.getUserSync() {
             userData = user
             userNameLabel.text = user.userName
         }
-        
-        // Update email from UserDefaults
         if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
             emailLabel.text = userEmail
         }
-        
-        // Get location and update location label
-        Task {
-            do {
-                let location = try await locationManager.requestLocation()
-                let weather = try await weatherService.fetchWeather(
-                    latitude: location.coordinate.latitude,
-                    longitude: location.coordinate.longitude
-                )
-                
-                // Update UI on main thread
-                await MainActor.run {
-                    userLocationLabel.text = weather.name
-                }
-            } catch {
-                print("Error fetching location/weather: \(error)")
-                // Fallback to stored location from DataController
-                if let user = userData {
-                    userLocationLabel.text = user.location
+
+        func fetchLocationAndWeatherWithRetry(retryCount: Int = 0) {
+            Task {
+                print("[DEBUG] Entered Task in loadUserData")
+                do {
+                    let location = try await locationManager.requestLocation()
+                    print("Fetched location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+                    let weather = try await weatherService.fetchWeather(
+                        latitude: location.coordinate.latitude,
+                        longitude: location.coordinate.longitude
+                    )
+                    print("Fetched weather name: \(String(describing: weather.name))")
+                    await MainActor.run {
+                        userLocationLabel.text = weather.name
+                    }
+                } catch {
+                    print("[DEBUG] Error fetching location/weather: \(error)")
+                    if let nsError = error as NSError?, nsError.domain == "Location request already in progress", retryCount < 3 {
+                        print("[DEBUG] Retrying location request in 0.5s...")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            fetchLocationAndWeatherWithRetry(retryCount: retryCount + 1)
+                        }
+                    } else if let user = userData {
+                        print("Fallback to user location: \(user.location)")
+                        userLocationLabel.text = user.location
+                    }
                 }
             }
         }
+
+        fetchLocationAndWeatherWithRetry()
     }
     
     @objc private func editButtonTapped() {

@@ -47,7 +47,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     private var plants: [Plant] = []
     private var diseases: [Diseases] = []
     private var fertilizers: [Fertilizer] = []
-    
+    private var careTipOfTheDay: CareTip?
     @IBOutlet weak var tableView: UITableView!
     
     // Add a label to show when there are no plants in 'For My Plants'
@@ -77,12 +77,12 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 longitude: location.coordinate.longitude
             )
             
+            // Only update self.currentWeather here if needed
+            self.currentWeather = weather
+            await self.updatePlantsForCurrentWeather(weather)
+
             await MainActor.run {
-                print("Got weather for location: \(weather.name ?? "Unknown")")
-                print("Temperature: \(weather.main.temp)°C")
-                print("Weather condition: \(weather.weather.first?.main ?? "Unknown")")
-                self.currentWeather = weather
-                self.updatePlantsForCurrentWeather(weather)
+                print("🟢 Discover categories updated and reloading collection view.")
             }
         } catch {
             print("Error in fetchWeatherAndUpdatePlants: \(error)")
@@ -114,65 +114,78 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
     
     private func updatePlantsForCurrentWeather(_ weather: WeatherService.WeatherResponse) {
-        // Get temperature and weather condition
-        let temperature = weather.main.temp
-        let condition = weather.weather.first?.main.lowercased() ?? ""
-        
-        // Start async task to fetch and update plants
+        print("[DEBUG] Entered updatePlantsForCurrentWeather")
+        print("[DEBUG] Weather passed in: \(weather)")
+        let condition = weather.weather.first?.main.lowercased() ?? "unknown"
+        print("🌦️ Current Weather Condition: \(condition)")
+
+        // Helper function to map temperature to season
+        func seasonForTemperature(_ temp: Double) -> String {
+            switch temp {
+            case ..<15:
+                return "winter"
+            case 15..<25:
+                return "spring"
+            case 25..<35:
+                return "summer"
+            default:
+                return "autumn"
+            }
+        }
+
+        print("[DEBUG] Before Task in updatePlantsForCurrentWeather")
         Task {
+            print("[DEBUG] Inside Task in updatePlantsForCurrentWeather")
             do {
-                // Fetch plants asynchronously
-                let allPlants = try await dataController.getPlants()
-                
-                // Fetch all diseases using a zero UUID
-                let allCommonIssues = try await dataController.getDiseases(for: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!)
-        
-        // Filter plants based on weather conditions
-        var recommendedPlants: [Plant] = []
-        
-        // Example logic - customize based on your needs
-        if temperature < 10 {
-                    recommendedPlants = allPlants.filter { plant in
-                        plant.favourableSeason == .Winter
-            }
-        } else if temperature > 25 {
-                    recommendedPlants = allPlants.filter { plant in
-                        plant.favourableSeason == .Summer
-            }
-        }
-        
-        if condition.contains("rain") {
-                    recommendedPlants.append(contentsOf: allPlants.filter { plant in
-                        plant.favourableSeason == .Spring || plant.favourableSeason == .Autumn
-            })
-        }
-        
-        // Make sure we have some default plants if none match the weather conditions
-        if recommendedPlants.isEmpty {
-                    recommendedPlants = allPlants
-        }
-        
-        // Take only first 5 plants
-        recommendedPlants = Array(recommendedPlants.prefix(5))
-        
-        // Update discover categories while preserving the structure
-        if selectedSegment == 0 { // Only update if we're in the Discover tab
+                // 🔍 Step 1: Use already fetched plants and common issues
+                let allPlants = self.plants // Use already fetched plants
+                print("🌿 Using already fetched plants: \(allPlants.count)")
+
+                let allCommonIssues = self.diseases // Use already fetched diseases
+                print("🦠 Using already fetched common issues: \(allCommonIssues.count)")
+
+                // 🔍 Step 2: Determine season based on temperature
+                let temp = weather.main.temp
+                let mappedSeason = seasonForTemperature(temp)
+                print("🌡️ Temperature: \(temp)°C mapped to season: \(mappedSeason)")
+
+                // 🔍 Step 3: Filter plants by mapped season
+                let plantsForWeather = allPlants.filter { $0.favourableSeason?.rawValue.lowercased() == mappedSeason }
+                print("🌱 Plants matching mapped season \(mappedSeason): \(plantsForWeather.count)")
+                print("🌱 Plant names for season \(mappedSeason): \(plantsForWeather.map { $0.plantName })")
+
+                // 🧹 Step 4: Deduplicate and limit
+                let uniqueRecommendedPlants = Array(Set(plantsForWeather)).prefix(5)
+                print("✅ Unique recommended plants after deduplication: \(uniqueRecommendedPlants.count)")
+
+                // 🖼️ Step 5: Update UI if in Discover segment
+                if selectedSegment == 0 {
                     await MainActor.run {
-            self.discoverCategories = [
-                ("Current Season Plants", recommendedPlants),
-                            ("Common Issues", allCommonIssues)
-            ]
-            
-            // Update filtered categories if search is active
-            if self.isSearchActive {
-                self.filteredDiscoverCategories = self.discoverCategories
-            }
-            
-                        self.collectionView.reloadData()
+                        // Reconstruct discoverCategories completely for clarity and robustness
+                        var newDiscoverCategories: [(title: String, items: [Any])] = []
+
+                        // Add Care Tip of the Day (if available)
+                        if let tip = self.careTipOfTheDay {
+                            newDiscoverCategories.append(("Care Tip of the Day", [tip]))
+                        }
+
+                        // Add Current Season Plants (weather-filtered)
+                        newDiscoverCategories.append(("Current Season Plants", Array(uniqueRecommendedPlants)))
+
+                        // Add Common Issues
+                        newDiscoverCategories.append(("Common Issues", allCommonIssues))
+
+                        self.discoverCategories = newDiscoverCategories
+
+                        if self.isSearchActive {
+                            self.filteredDiscoverCategories = self.discoverCategories
+                        }
+
+                        print("🟢 Discover categories updated and reloading collection view.")
                     }
                 }
             } catch {
-                print("Error updating plants for weather: \(error)")
+                print("[DEBUG] Error in updatePlantsForCurrentWeather: \(error)")
                 await MainActor.run {
                     let alert = UIAlertController(
                         title: "Error",
@@ -185,11 +198,18 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
        
-        // Initialize categories first
+        // Initialize categories structure
+        self.discoverCategories = [
+            ("Care Tip of the Day", []),
+            ("Current Season Plants", []),
+            ("Common Issues", []),
+        ]
+
+        // Update data for selected segment (will trigger initial fetch)
         updateDataForSelectedSegment()
         
         plantCarAI.isUserInteractionEnabled = true
@@ -206,22 +226,27 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         Task {
             let authStatus = locationManager.getAuthorizationStatus()
             if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
-            await fetchWeatherAndUpdatePlants()
+                // Only fetch weather if we're in Discover segment
+                if selectedSegment == 0 {
+                    await fetchWeatherAndUpdatePlants()
+                }
             } else {
                 print("⚠️ Location access not granted. Authorization status: \(authStatus)")
-                // Handle the case where location access is not granted
                 await MainActor.run {
                     let alert = UIAlertController(
                         title: "Location Access Required",
                         message: "Please enable location access in Settings to see weather-appropriate plants for your area.",
                         preferredStyle: .alert
                     )
+                    
                     alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
                         if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(settingsURL)
                         }
                     })
+                    
                     alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                    
                     self.present(alert, animated: true)
                 }
             }
@@ -234,8 +259,13 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         print("📱 View will appear")
+        
+        // Always refresh data when view appears to ensure latest weather plants are shown
         Task {
             await fetchDataFromSupabase()
+            if selectedSegment == 0 {
+                await fetchWeatherAndUpdatePlants()
+            }
             await MainActor.run {
                 self.collectionView.reloadData()
                 self.updateNoPlantsLabelVisibility()
@@ -246,24 +276,23 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         print("📱 View did appear")
-        Task {
-            // Force a data refresh and UI update
-            print("🔄 Forcing data refresh in viewDidAppear")
-            await fetchDataFromSupabase()
-            await MainActor.run {
-                print("🎯 Updating UI in viewDidAppear")
-                self.discoverCategories = [
-                    ("Current Season Plants", self.plants),
-                    ("Common Issues", self.diseases)
-                ]
-                if self.isSearchActive {
-                    self.filteredDiscoverCategories = self.discoverCategories
-                }
-                self.collectionView.reloadData()
-                self.updateNoPlantsLabelVisibility()
-                print("✅ UI update completed in viewDidAppear")
-            }
-        }
+        // Removed redundant data refresh in viewDidAppear, as viewWillAppear handles it.
+        // Task {
+        //     print("🔄 Forcing data refresh in viewDidAppear")
+        //     await fetchDataFromSupabase()
+        //     if selectedSegment == 0 {
+        //         await fetchWeatherAndUpdatePlants()
+        //     }
+        //     await MainActor.run {
+        //         print("🎯 Updating UI in viewDidAppear")
+        //         if self.isSearchActive {
+        //             self.filteredDiscoverCategories = self.discoverCategories
+        //         }
+        //         self.collectionView.reloadData()
+        //         self.updateNoPlantsLabelVisibility()
+        //         print("✅ UI update completed in viewDidAppear")
+        //     }
+        // }
     }
 
     func configureSearchController() {
@@ -297,6 +326,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(HeaderSectionCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "HeaderSectionCollectionReusableView")
+        
+        let careTipNib = UINib(nibName: "CareTipCollectionViewCell", bundle: nil)
+        collectionView.register(careTipNib, forCellWithReuseIdentifier: "CareTipCell")
         
     }
     func setupSegmentedControl() {
@@ -344,18 +376,27 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     func fetchDataFromSupabase() async {
         print("\n=== Fetching Data from Supabase ===")
         do {
-            // Always fetch and update Discover segment data first
+            // 🌿 Fetch plants
             print("🌿 Fetching plants...")
             let plants = try await dataController.getPlants()
             print("✅ Successfully fetched \(plants.count) plants")
             self.plants = plants
-            
+
+            // 🦠 Fetch common issues
             print("🦠 Fetching common issues...")
             let diseases = try await dataController.getCommonIssues()
             print("✅ Successfully fetched \(diseases.count) diseases")
             self.diseases = diseases
-            
-            // Preload disease images
+
+            // 🌼 Fetch care tip of the day
+            do {
+                self.careTipOfTheDay = try await dataController.getCareTipOfTheDay()
+                print("✅ Care Tip: \(self.careTipOfTheDay?.message ?? "None")")
+            } catch {
+                print("❌ Failed to fetch care tip: \(error)")
+            }
+
+            // 🌠 Preload disease images
             Task {
                 for disease in diseases {
                     if let imageUrlString = disease.diseaseImage,
@@ -370,43 +411,23 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 }
             }
 
-            // Always update discover categories immediately
-            await MainActor.run {
-                print("🔄 Updating Discover segment data")
-                self.discoverCategories = [
-                    ("Current Season Plants", self.plants),
-                    ("Common Issues", self.diseases)
-                ]
-                
-                if self.isSearchActive {
-                    self.filteredDiscoverCategories = self.discoverCategories
-                }
-                
-                // Always update Discover UI if in Discover segment
-                if self.selectedSegment == 0 {
-                    self.collectionView.reloadData()
-                }
-            }
-
-            // Separately handle For My Plants segment data
+            // 🔄 FOR MY PLANTS SECTION (unchanged)
             var shouldUpdateForMyPlants = false
             if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
                 print("\n=== Checking User Data ===")
                 print("🔍 Checking UserTable for email: \(userEmail)")
-                
+
                 if let user = try await dataController.getUser() {
                     print("✅ Found existing user with ID: \(user.id)")
-                    
-                    // Get diseases for user's plants
+
                     print("🔍 Fetching diseases for user's plants...")
                     let userPlantDiseases = try await dataController.getDiseasesForUserPlants(userEmail: userEmail)
                     print("✅ Found \(userPlantDiseases.count) diseases for user's plants")
-                    
-                    // Fetch fertilizers for each disease
+
                     print("🌱 Fetching fertilizers for diseases...")
                     var allFertilizers: [Fertilizer] = []
                     var fertilizerSet = Set<UUID>()
-                    
+
                     for disease in userPlantDiseases {
                         let fertilizers = try await dataController.getFertilizers(for: disease.diseaseID)
                         for fert in fertilizers {
@@ -416,27 +437,25 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                             }
                         }
                     }
+
                     print("✅ Found \(allFertilizers.count) unique fertilizers")
-                        
-                        await MainActor.run {
+
+                    await MainActor.run {
                         if !userPlantDiseases.isEmpty {
                             var categories: [(title: String, items: [Any])] = [
                                 ("Common Issues in your Plant", userPlantDiseases)
                             ]
                             if !allFertilizers.isEmpty {
-                                let onlyFertilizers = allFertilizers.filter { $0 is Fertilizer }
-                                categories.append(("Common Fertilizers", onlyFertilizers))
+                                categories.append(("Common Fertilizers", allFertilizers))
                             }
                             self.forMyPlantCategories = categories
-                            // Debug print to check types
-                            print("forMyPlantCategories: \(self.forMyPlantCategories.map { ($0.title, $0.items.map { type(of: $0) }) })")
                         } else {
                             self.forMyPlantCategories = []
                         }
-                            
-                            if self.isSearchActive {
-                                self.filteredForMyPlantCategories = self.forMyPlantCategories
-                            }
+
+                        if self.isSearchActive {
+                            self.filteredForMyPlantCategories = self.forMyPlantCategories
+                        }
                         shouldUpdateForMyPlants = true
                     }
                 } else {
@@ -444,28 +463,27 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                     await MainActor.run {
                         self.forMyPlantCategories = []
                         shouldUpdateForMyPlants = true
-                        }
                     }
-                } else {
+                }
+            } else {
                 print("❌ No user email found in UserDefaults")
                 await MainActor.run {
                     self.forMyPlantCategories = []
                     shouldUpdateForMyPlants = true
                 }
-                    }
-                    
-            // Update UI only for For My Plants segment if needed
+            }
+
+            // 🔄 Refresh UI if needed
             if shouldUpdateForMyPlants {
                 await MainActor.run {
                     if self.selectedSegment == 1 {
-                    self.updateNoPlantsLabelVisibility()
+                        self.updateNoPlantsLabelVisibility()
                         self.collectionView.reloadData()
                     }
                 }
             }
         } catch {
             print("❌ Error fetching data: \(error)")
-            print("Error details: \(error)")
             await MainActor.run {
                 let alert = UIAlertController(
                     title: "Error",
@@ -477,16 +495,23 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
+
     
     private func updateDataForSelectedSegment() {
         print("🔄 Updating data for segment: \(selectedSegment)")
         selectedSegment = segmentControlOnExplore.selectedSegmentIndex
         
-        // Start loading data
+        // Always trigger a full data refresh for the selected segment
         Task {
-            print("🚀 Starting async data fetch...")
-            await fetchDataFromSupabase()
-            self.updateNoPlantsLabelVisibility()
+            print("🚀 Starting async data fetch for segment: \(selectedSegment)");
+            await fetchDataFromSupabase();
+            if selectedSegment == 0 {
+                await fetchWeatherAndUpdatePlants();
+            }
+            await MainActor.run {
+                self.collectionView.reloadData();
+                self.updateNoPlantsLabelVisibility();
+            }
         }
     }
     
@@ -526,7 +551,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             // Similar structure for For My Plants segment
             filteredForMyPlantCategories = forMyPlantCategories.compactMap { category in
                 switch category.title {
-                    case "Common Issues in your Plant":
+                    case   "Common Issues in your Plant":
                         let filteredDiseases = category.items.filter { item in
                             guard let disease = item as? Diseases else { return false }
                             return disease.diseaseName.lowercased().contains(searchText)
@@ -616,6 +641,15 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let category = categories[indexPath.section]
         let item = category.items[indexPath.row]
 
+        // ✅ STEP 1: CARE TIP SECTION
+        if category.title == "Care Tip of the Day",
+           let tip = item as? CareTip {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CareTipCell", for: indexPath) as! CareTipCollectionViewCell
+            cell.configure(with: tip.message)
+            return cell
+        }
+
+        // ✅ STEP 2: SEASONAL PLANTS
         if category.title == "Current Season Plants" {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
             if let plant = item as? Plant {
@@ -629,29 +663,31 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             cell.layer.shadowOpacity = 0.2
             cell.layer.masksToBounds = false
             return cell
-        } else if category.title == "Common Issues" || category.title == "Common Issues in your Plant" {
+        }
+
+        // ✅ STEP 3: COMMON ISSUES
+        else if category.title == "Common Issues" || category.title == "Common Issues in your Plant" {
             if selectedSegment == 0 {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
-            if let disease = item as? Diseases {
-                    // Check cache first
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "second", for: indexPath) as! Section2CollectionViewCell
+                if let disease = item as? Diseases {
                     if let imageUrlString = disease.diseaseImage,
                        let cachedImage = imageCache.object(forKey: imageUrlString as NSString) {
                         print("📸 Using cached image for disease: \(disease.diseaseName)")
                         cell.disease = DataOfSection2InDiscoverSegment(from: disease)
                         cell.imageViewLabel.image = cachedImage
                     } else {
-                cell.disease = DataOfSection2InDiscoverSegment(from: disease)
+                        cell.disease = DataOfSection2InDiscoverSegment(from: disease)
                     }
-            }
-            cell.contentView.layer.masksToBounds = true
-            cell.layer.cornerRadius = 11
-            cell.layer.shadowColor = UIColor.black.cgColor
-            cell.layer.shadowOffset = CGSize(width: 0, height: 2)
-            cell.layer.shadowRadius = 4
-            cell.layer.shadowOpacity = 0.2
-            cell.layer.masksToBounds = false
-            return cell
-        } else {
+                }
+                cell.contentView.layer.masksToBounds = true
+                cell.layer.cornerRadius = 11
+                cell.layer.shadowColor = UIColor.black.cgColor
+                cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+                cell.layer.shadowRadius = 4
+                cell.layer.shadowOpacity = 0.2
+                cell.layer.masksToBounds = false
+                return cell
+            } else {
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FirstForMyPlant", for: indexPath) as! Section1InForMyPlantSegmentCollectionViewCell
                 if let disease = item as? Diseases {
                     cell.configure(with: disease)
@@ -665,68 +701,93 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 cell.layer.masksToBounds = false
                 return cell
             }
-        } else if category.title == "Common Fertilizers" {
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
-                if let fertilizer = item as? Fertilizer {
-                    cell.configure(with: fertilizer)
-                }
-                cell.contentView.layer.cornerRadius = 25
-                cell.contentView.layer.masksToBounds = true
-                cell.layer.shadowColor = UIColor.black.cgColor
-                cell.layer.shadowOffset = CGSize(width: 0, height: 2)
-                cell.layer.shadowRadius = 4
-                cell.layer.shadowOpacity = 0.2
-                cell.layer.masksToBounds = false
-                return cell
+        }
+
+        // ✅ STEP 4: COMMON FERTILIZERS
+        else if category.title == "Common Fertilizers" {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SecondForMyPlant", for: indexPath) as! Section2InForMyPlantCollectionViewCell
+            if let fertilizer = item as? Fertilizer {
+                cell.configure(with: fertilizer)
             }
-        
+            cell.contentView.layer.cornerRadius = 25
+            cell.contentView.layer.masksToBounds = true
+            cell.layer.shadowColor = UIColor.black.cgColor
+            cell.layer.shadowOffset = CGSize(width: 0, height: 2)
+            cell.layer.shadowRadius = 4
+            cell.layer.shadowOpacity = 0.2
+            cell.layer.masksToBounds = false
+            return cell
+        }
+
         return UICollectionViewCell()
     }
-    
+
     
     func generateLayout() -> UICollectionViewCompositionalLayout {
         let layout = UICollectionViewCompositionalLayout { [self]
             (sectionIndex, environment) -> NSCollectionLayoutSection? in
-            
+
             print("🎨 Generating layout for section \(sectionIndex)")
             print("🎨 Current segment: \(selectedSegment)")
-            
+
             // Get the current categories based on segment and search state
             let categories = selectedSegment == 0 ?
                 (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
                 (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
-            
+
             print("🎨 Categories count: \(categories.count)")
             guard sectionIndex < categories.count else {
                 print("❌ Section index out of bounds")
                 return nil
             }
-            
+
             // Get the category title for this section
             let categoryTitle = categories[sectionIndex].title
             print("🎨 Category title: \(categoryTitle)")
-            
+
             let section: NSCollectionLayoutSection
-            
+
             if selectedSegment == 1 {
-                // For My Plants segment - use a consistent layout for diseases
+                // For My Plants segment - use a consistent layout for diseases/fertilizers
                 section = generateSection1LayoutInForMyPlants()
                 print("🎨 Using For My Plants layout")
             } else {
                 // Discover segment - choose layout based on category title
-            switch categoryTitle {
+                switch categoryTitle {
+                case "Care Tip of the Day":
+                    // ✅ Layout for Care Tip of the Day (one full-width cell)
+                    let itemSize = NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1.0),
+                        heightDimension: .estimated(100)
+                    )
+                    let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+                    let groupSize = NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1.0),
+                        heightDimension: .estimated(100)
+                    )
+                    let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+                    section = NSCollectionLayoutSection(group: group)
+                    section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+                    section.interGroupSpacing = 12
+                    print("🎨 Using layout for Care Tip of the Day")
+
                 case "Current Season Plants":
                     section = generateSection1Layout()
-            case "Common Issues":
+
+                case "Common Issues":
                     section = generateSection2Layout()
-            default:
-                    print("❌ Invalid category title")
-                return nil
+
+                default:
+                    print("❌ Invalid category title: \(categoryTitle)")
+                    return nil
                 }
+
                 print("🎨 Using Discover layout for \(categoryTitle)")
             }
-            
-            // Add header for both segments
+
+            // Add header for all sections
             let headerSize = NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
                 heightDimension: .absolute(45)
@@ -737,9 +798,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 alignment: .top
             )
             section.boundarySupplementaryItems = [header]
-            
+
             return section
         }
+
         return layout
     }
     
@@ -823,74 +885,104 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader {
-            let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "HeaderSectionCollectionReusableView", for: indexPath) as! HeaderSectionCollectionReusableView
+            let headerView = collectionView.dequeueReusableSupplementaryView(
+                ofKind: kind,
+                withReuseIdentifier: "HeaderSectionCollectionReusableView",
+                for: indexPath
+            ) as! HeaderSectionCollectionReusableView
             
             let categories = selectedSegment == 0 ?
                 (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
                 (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
             
-            headerView.headerTitle.text = categories[indexPath.section].title
+            let sectionTitle = categories[indexPath.section].title
+            
+            headerView.headerTitle.text = sectionTitle
             headerView.headerTitle.font = UIFont.systemFont(ofSize: 18, weight: .bold)
             headerView.headerTitle.textColor = UIColor(hex: "284329")
-            headerView.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
-            headerView.button.tintColor = UIColor(hex: "284329")
-            headerView.button.tag = indexPath.section
-            headerView.button.imageEdgeInsets = UIEdgeInsets(top: 9, left: 0, bottom: 0, right: 0)
-            headerView.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
+            
+            if sectionTitle == "Care Tip of the Day" {
+                headerView.button.isHidden = true
+                
+            } else {
+                headerView.button.isHidden = false
+                headerView.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+                headerView.button.tintColor = UIColor(hex: "284329")
+                headerView.button.tag = indexPath.section
+                headerView.button.imageEdgeInsets = UIEdgeInsets(top: 9, left: 0, bottom: 0, right: 0)
+                headerView.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
+            }
+
             headerView.isHidden = false
             
             return headerView
         }
         return UICollectionReusableView()
     }
+
     
     
     @objc func sectionButtonTapped(_ sender: UIButton) {
-        // Use filtered categories when search is active
-        let categories = selectedSegment == 0 ?
+        // Full list and currently visible list
+        let fullCategories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
+        let activeCategories = selectedSegment == 0 ?
             (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
             (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
-        
-        let selectedCategory = categories[sender.tag]
-        
-        // Debug print for tapped section
-        print("🔍 ExploreViewController - Tapped section index: \(sender.tag)")
-        print("🔍 ExploreViewController - Current segment index: \(selectedSegment)")
-        print("🔍 ExploreViewController - Selected category title: \(selectedCategory.title)")
-        
-        // Instantiate the detail view controller
+
+        guard sender.tag < activeCategories.count else {
+            print("❌ Invalid section index tapped")
+            return
+        }
+
+        let selectedCategory = activeCategories[sender.tag]
+
+        // Skip Care Tip section
+        if selectedCategory.title == "Care Tip of the Day" {
+            print("⛔️ Skipping navigation for Care Tip section")
+            return
+        }
+
+        // Instantiate view controller
         let storyBoard = UIStoryboard(name: "exploreTab", bundle: nil)
         guard let VC = storyBoard.instantiateViewController(withIdentifier: "SectionWiseDetailViewController") as? SectionWiseDetailViewController else {
             print("❌ Could not instantiate SectionWiseDetailViewController")
             return
         }
-        
-        // Always use the index from the currently displayed categories
-        VC.sectionNumber = sender.tag
-        
-        // Pass the correct filteredItems for For My Plants segment
-        if selectedSegment == 1 {
-            // Always set filteredItems for For My Plants segment
-            VC.filteredItems = selectedCategory.items
-        } else if isSearchActive {
+
+        // Find the correct section number in the full categories array
+        if let index = fullCategories.firstIndex(where: { $0.title == selectedCategory.title }) {
+            VC.sectionNumber = index
+            print("📌 Passing sectionNumber: \(VC.sectionNumber) for category: \(selectedCategory.title)")
+        } else {
+            VC.sectionNumber = sender.tag
+            print("⚠️ Could not find exact match, using sender tag: \(sender.tag)")
+        }
+
+        // For Current Season Plants, only pass the weather-mapped plants
+        if selectedCategory.title == "Current Season Plants" {
+            // Get the current weather-mapped plants from the active categories
+            if let currentSeasonCategory = activeCategories.first(where: { $0.title == "Current Season Plants" }) {
+                VC.filteredItems = currentSeasonCategory.items
+                print("🌡️ Passing weather-mapped plants: \(currentSeasonCategory.items.count)")
+                print("🌡️ Plant names being passed to SectionWiseDetailVC: \(currentSeasonCategory.items.compactMap { ($0 as? Plant)?.plantName})")
+            }
+        } else {
+            // For other sections, pass all items
             VC.filteredItems = selectedCategory.items
         }
         
-        // Set the segment and pass the correct data
         VC.selectedSegmentIndex = selectedSegment
-        
-        // Pass the correct header data and items based on segment
+
         if selectedSegment == 0 {
-            VC.headerData = ExploreScreen.headerData
+            VC.headerData = discoverCategories.map { $0.title }
         } else {
             VC.headerData = ExploreScreen.headerForInMyPlantSegment
-            // For My Plants segment - only pass the diseases for user's plants
+
             if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
                 Task {
                     do {
                         let userPlantDiseases = try await dataController.getDiseasesForUserPlants(userEmail: userEmail)
                         await MainActor.run {
-                            // Use the new setDiseases method
                             VC.setDiseases(userPlantDiseases)
                         }
                     } catch {
@@ -899,18 +991,15 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 }
             }
         }
-        
-        // Configure back button to show "Explore"
+
         let backItem = UIBarButtonItem()
         backItem.title = "Explore"
         navigationItem.backBarButtonItem = backItem
-        
+
         navigationController?.pushViewController(VC, animated: true)
     }
-    
-    
-    
-    
+
+
 
     
     

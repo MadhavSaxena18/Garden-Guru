@@ -29,21 +29,28 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func requestLocation() async throws -> CLLocation {
         print("Requesting location...")
         
+        // Check if a request is already in progress
+        if locationCompletion != nil {
+            print("[DEBUG] Location request already in progress - resuming previous continuation with error")
+            locationCompletion?(.failure(NSError(domain: "Location request already in progress", code: -100)))
+            locationCompletion = nil
+            throw NSError(domain: "Location request already in progress", code: -100)
+        }
+        
         // Check if location services are enabled
         guard CLLocationManager.locationServicesEnabled() else {
             print("Location services are disabled")
             throw NSError(domain: "Location services are disabled", code: -1)
         }
         
-        // Check if Location Services are enabled in device settings
-        if !CLLocationManager.locationServicesEnabled() {
-            print("Location services are not enabled")
-            throw NSError(domain: "Location services not enabled", code: -1)
-        }
-        
         return try await withCheckedThrowingContinuation { continuation in
+            var didResume = false
             locationCompletion = { result in
-                continuation.resume(with: result)
+                if !didResume {
+                    didResume = true
+                    self.locationCompletion = nil
+                    continuation.resume(with: result)
+                }
             }
             
             let status = manager.authorizationStatus
@@ -55,14 +62,22 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                 manager.requestWhenInUseAuthorization()
             case .restricted, .denied:
                 print("Location access denied")
-                continuation.resume(throwing: NSError(domain: "Location Access Denied", code: -1))
+                if !didResume {
+                    didResume = true
+                    self.locationCompletion = nil
+                    continuation.resume(throwing: NSError(domain: "Location Access Denied", code: -1))
+                }
             case .authorizedWhenInUse, .authorizedAlways:
                 print("Starting location updates...")
                 // Force a fresh location request
                 manager.stopUpdatingLocation()
                 manager.startUpdatingLocation()
             @unknown default:
-                continuation.resume(throwing: NSError(domain: "Unknown Authorization Status", code: -2))
+                if !didResume {
+                    didResume = true
+                    self.locationCompletion = nil
+                    continuation.resume(throwing: NSError(domain: "Unknown Authorization Status", code: -2))
+                }
             }
         }
     }
@@ -78,7 +93,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         let locationAge = -location.timestamp.timeIntervalSinceNow
         if location.horizontalAccuracy <= 100 && locationAge < 15 {
             manager.stopUpdatingLocation()
-            locationCompletion?(.success(location))
+            if let completion = locationCompletion {
+                locationCompletion = nil
+                completion(.success(location))
+            }
         } else {
             print("Location rejected - Age: \(locationAge)s, Accuracy: \(location.horizontalAccuracy)m")
             // Continue looking for a better location
@@ -88,17 +106,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Location manager failed with error: \(error.localizedDescription)")
-        if let error = error as? CLError {
-            switch error.code {
-            case .denied:
-                print("Location access denied by user")
-            case .locationUnknown:
-                print("Unable to determine location")
-            default:
-                print("Other location error: \(error.localizedDescription)")
-            }
+        if let completion = locationCompletion {
+            locationCompletion = nil
+            completion(.failure(error))
         }
-        locationCompletion?(.failure(error))
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
@@ -107,7 +118,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         case .authorizedWhenInUse, .authorizedAlways:
             manager.startUpdatingLocation()
         case .denied, .restricted:
-            locationCompletion?(.failure(NSError(domain: "Location Access Denied", code: -1)))
+            if let completion = locationCompletion {
+                locationCompletion = nil
+                completion(.failure(NSError(domain: "Location Access Denied", code: -1)))
+            }
         default:
             break
         }

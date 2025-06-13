@@ -2882,6 +2882,34 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
     }
     
+
+    func getCareTipOfTheDay() async throws -> CareTip? {
+        let weekday = Calendar.current.component(.weekday, from: Date()) // 1 = Sunday
+        let dayIndex = (weekday + 5) % 7 // Map Monday = 0, Sunday = 6
+
+        let response = try await supabase
+            .database
+            .from("CareTips")
+            .select()
+            .eq("dayIndex", value: dayIndex)
+            .limit(1)
+            .execute()
+
+        let decoder = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .iso8601)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ" // or SSSZ if no microseconds
+        decoder.dateDecodingStrategy = .formatted(formatter)
+
+        let tips = try decoder.decode([CareTip].self, from: response.data)
+        return tips.first
+    }
+
+
+
+
     // MARK: - Push Notification Methods
     
     func requestNotificationPermission(completion: @escaping (Bool) -> Void) {
@@ -3087,5 +3115,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             }
         }
     }
+
 }
 
