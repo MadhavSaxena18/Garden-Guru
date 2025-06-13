@@ -102,37 +102,34 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         plantNameCareReminderLabel.text = reminderData.plant.plantName
         nickNameCareReminderLabel.text = reminderData.userPlant.userPlantNickName ?? reminderData.plant.plantName
         
-        // Configure checkbox state and appearance
-        isCheckboxEnabled = shouldEnableCheckbox
-        checkBoxButton.isEnabled = shouldEnableCheckbox
-        checkBoxButton.isUserInteractionEnabled = shouldEnableCheckbox
-        checkBoxButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
+        // Hide checkbox for upcoming reminders
+        checkBoxButton.isHidden = isUpcoming
         
-        // Configure checkbox image with proper sizing
-        let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular, scale: .medium)
-        let checkBoxImage = isCompleted ? 
-            UIImage(systemName: "checkmark.square.fill", withConfiguration: config)?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal) :
-            UIImage(systemName: "square", withConfiguration: config)?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
-        
-        checkBoxButton.setImage(checkBoxImage, for: .normal)
-        
-        // Apply visual style for completed tasks
-        if isCompleted {
-            contentView.alpha = 0.7
-            plantNameCareReminderLabel.textColor = .systemGray
-            nickNameCareReminderLabel.textColor = .systemGray2
-        } else {
-            contentView.alpha = 1.0
-            plantNameCareReminderLabel.textColor = .label
-            nickNameCareReminderLabel.textColor = .secondaryLabel
+        // Configure checkbox state and appearance only if not hidden
+        if !isUpcoming {
+            isCheckboxEnabled = shouldEnableCheckbox
+            checkBoxButton.isEnabled = shouldEnableCheckbox
+            checkBoxButton.isUserInteractionEnabled = shouldEnableCheckbox
+            checkBoxButton.alpha = shouldEnableCheckbox ? 1.0 : 0.5
+            
+            // Configure checkbox image with proper sizing
+            let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular, scale: .medium)
+            let checkBoxImage = isCompleted ? 
+                UIImage(systemName: "checkmark.square.fill", withConfiguration: config)?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal) :
+                UIImage(systemName: "square", withConfiguration: config)?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
+            
+            checkBoxButton.setImage(checkBoxImage, for: .normal)
+            
+            // Ensure the button is properly configured for touch
+            checkBoxButton.isExclusiveTouch = true
+            
+            print("Checkbox state:")
+            print("- Enabled: \(checkBoxButton.isEnabled)")
+            print("- User Interaction: \(checkBoxButton.isUserInteractionEnabled)")
+            print("- Alpha: \(checkBoxButton.alpha)")
+            print("- Image: \(isCompleted ? "checkmark.square.fill" : "square")")
+            print("- Frame: \(checkBoxButton.frame)")
         }
-        
-        // Ensure the button is properly configured for touch
-        checkBoxButton.isExclusiveTouch = true
-        
-        print("Checkbox state:")
-        print("- Enabled: \(checkBoxButton.isEnabled)")
-        print("- User Interaction: \(checkBoxButton.isUserInteractionEnabled)")
         
         // Configure due date label with appropriate color and text
         configureDueDate(dueDate: dueDate, isCompleted: isCompleted, isUpcoming: isUpcoming, isTomorrow: isTomorrow)

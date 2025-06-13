@@ -413,29 +413,62 @@ struct CareReminder_: Codable, Hashable {
     }
 }
 
-//struct CareReminderUpdate: Encodable {
-//    var upcomingReminderForWater: String?
-//    var upcomingReminderForFertilizers: String?
-//    var upcomingReminderForRepotted: String?
-//    var isWateringCompleted: Bool?
-//    var isFertilizingCompleted: Bool?
-//    var isRepottingCompleted: Bool?
-//    var last_water_completed_date: String?
-//    var last_fertilizer_completed_date: String?
-//    var last_repot_completed_date: String?
-//    
-//    enum CodingKeys: String, CodingKey {
-//        case upcomingReminderForWater
-//        case upcomingReminderForFertilizers
-//        case upcomingReminderForRepotted
-//        case isWateringCompleted
-//        case isFertilizingCompleted
-//        case isRepottingCompleted
-//        case last_water_completed_date
-//        case last_fertilizer_completed_date
-//        case last_repot_completed_date
-//    }
-//}
+struct CareReminderUpdate: Encodable {
+    var upcomingReminderForWater: String?
+    var upcomingReminderForFertilizers: String?
+    var upcomingReminderForRepotted: String?
+    var isWateringCompleted: Bool?
+    var isFertilizingCompleted: Bool?
+    var isRepottingCompleted: Bool?
+    var last_water_completed_date: String?
+    var last_fertilizer_completed_date: String?
+    var last_repot_completed_date: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case upcomingReminderForWater
+        case upcomingReminderForFertilizers
+        case upcomingReminderForRepotted
+        case isWateringCompleted
+        case isFertilizingCompleted
+        case isRepottingCompleted
+        case last_water_completed_date
+        case last_fertilizer_completed_date
+        case last_repot_completed_date
+    }
+}
+
+// Add this struct near other model definitions
+struct CareReminderInsert: Encodable {
+    let careReminderID: String
+    let upcomingReminderForWater: String?
+    let upcomingReminderForFertilizers: String?
+    let upcomingReminderForRepotted: String?
+    let isWateringCompleted: Bool
+    let isFertilizingCompleted: Bool
+    let isRepottingCompleted: Bool
+    let last_water_completed_date: String?
+    let last_fertilizer_completed_date: String?
+    let last_repot_completed_date: String?
+    let wateringEnabled: Bool
+    let fertilizerEnabled: Bool
+    let repottingEnabled: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case careReminderID
+        case upcomingReminderForWater
+        case upcomingReminderForFertilizers
+        case upcomingReminderForRepotted
+        case isWateringCompleted
+        case isFertilizingCompleted
+        case isRepottingCompleted
+        case last_water_completed_date
+        case last_fertilizer_completed_date
+        case last_repot_completed_date
+        case wateringEnabled
+        case fertilizerEnabled
+        case repottingEnabled
+    }
+}
 
 struct CareReminderOfUserPlant: Codable, Hashable {
     var careReminderOfUserPlantID: UUID = UUID()

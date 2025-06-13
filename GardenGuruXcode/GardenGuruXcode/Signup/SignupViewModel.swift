@@ -19,55 +19,83 @@ class SignupViewModel {
         return emailPredicate.evaluate(with: email)
     }
     
+    func isValidPassword(_ password: String) -> Bool {
+        // Check minimum length
+        guard password.count >= 8 else {
+            return false
+        }
+        
+        // Define all required character sets
+        let lowercaseSet = Set("abcdefghijklmnopqrstuvwxyz")
+        let uppercaseSet = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        let numberSet = Set("0123456789")
+        let specialSet = Set("!@#$%^&*()_+-=[]{};':\"\\|<>?,./`~")
+        
+        // Convert password to character set for comparison
+        let passwordChars = Set(password)
+        
+        // Check intersection with each required set
+        let hasLowercase = !passwordChars.intersection(lowercaseSet).isEmpty
+        let hasUppercase = !passwordChars.intersection(uppercaseSet).isEmpty
+        let hasNumber = !passwordChars.intersection(numberSet).isEmpty
+        let hasSpecial = !passwordChars.intersection(specialSet).isEmpty
+        
+        return hasLowercase && hasUppercase && hasNumber && hasSpecial
+    }
+    
+    var passwordRequirementText: String {
+        """
+        Password must contain ALL of the following:
+        • At least 8 characters total
+        • At least one lowercase letter (a-z)
+        • At least one uppercase letter (A-Z)
+        • At least one number (0-9)
+        • At least one special character
+        """
+    }
+    
     @MainActor
     func checkEmailAndSendOTP() async {
-        print("\n=== Starting Email Check and OTP Process ===")
         do {
-            // Clean up the email
+            // Clean up the email and password
             let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            print("📧 Processing email: \(cleanEmail)")
+            let cleanPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
             
-            // First validate email format
+            // Validate email and password
             guard isValidEmail(cleanEmail) else {
-                print("❌ Invalid email format")
                 onError?("Please enter a valid email address")
                 return
             }
-            print("✅ Email format is valid")
+            
+            guard isValidPassword(cleanPassword) else {
+                onError?(passwordRequirementText)
+                return
+            }
             
             // Check if user exists
-            print("🔍 Checking if user exists...")
             let (userExists, _) = try await dataController.checkUserExists(email: cleanEmail)
-            print("📝 User exists check result: \(userExists)")
             
             if userExists {
-                print("⚠️ User already exists, showing login prompt")
                 onUserExists?()
                 return
             }
             
             // Send verification email
-            print("📧 Sending verification email...")
-            try await dataController.sendSignupVerificationEmail(email: cleanEmail)
+            try await dataController.sendSignupVerificationEmail(email: cleanEmail, password: cleanPassword)
             
-            // Store the email and password in UserDefaults
-            print("💾 Storing credentials temporarily")
+            // Store the email and password securely
             UserDefaults.standard.set(cleanEmail, forKey: "userEmail")
-            UserDefaults.standard.set(password, forKey: "tempPassword")
+            KeychainManager.shared.save(cleanPassword, for: "tempPassword_\(cleanEmail)")
             
-            print("✅ OTP sent successfully")
             onOTPSent?()
             
         } catch {
-            print("❌ Error in checkEmailAndSendOTP: \(error)")
-            print("❌ Error details: \(error.localizedDescription)")
-            
             if error.localizedDescription.contains("rate limit") {
-                print("⚠️ Rate limit exceeded")
                 onError?("Please wait a moment before trying again")
             } else if error.localizedDescription.contains("Invalid email") {
-                print("❌ Invalid email format caught in error")
                 onError?("Please enter a valid email address")
+            } else if error.localizedDescription.contains("Password should contain") {
+                onError?(passwordRequirementText)
             } else {
                 onError?(error.localizedDescription)
             }
@@ -102,6 +130,9 @@ class SignupViewModel {
             print("🔍 Attempting OTP verification...")
             try await DataControllerGG.shared.verifyEmail(email: email, otp: otp)
             print("✅ OTP verified successfully")
+            
+            // Store verified status
+            UserDefaults.standard.set(true, forKey: "emailVerified_\(email)")
             onSuccess?()
         } catch {
             print("❌ OTP verification failed: \(error)")

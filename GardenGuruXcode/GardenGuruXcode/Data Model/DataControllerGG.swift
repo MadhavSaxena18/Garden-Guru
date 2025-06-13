@@ -55,30 +55,30 @@ private struct UserPlantInsert: Encodable {
     let lastRepotted: String?  // ISO8601 date string
 }
 
-// Add this struct near other model definitions
-struct CareReminderUpdate: Encodable {
-    var upcomingReminderForWater: String?
-    var upcomingReminderForFertilizers: String?
-    var upcomingReminderForRepotted: String?
-    var isWateringCompleted: Bool?
-    var isFertilizingCompleted: Bool?
-    var isRepottingCompleted: Bool?
-    var last_water_completed_date: String?
-    var last_fertilizer_completed_date: String?
-    var last_repot_completed_date: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case upcomingReminderForWater
-        case upcomingReminderForFertilizers
-        case upcomingReminderForRepotted
-        case isWateringCompleted
-        case isFertilizingCompleted
-        case isRepottingCompleted
-        case last_water_completed_date
-        case last_fertilizer_completed_date
-        case last_repot_completed_date
-    }
-}
+//// Add this struct near other model definitions
+//struct CareReminderUpdate: Encodable {
+//    var upcomingReminderForWater: String?
+//    var upcomingReminderForFertilizers: String?
+//    var upcomingReminderForRepotted: String?
+//    var isWateringCompleted: Bool?
+//    var isFertilizingCompleted: Bool?
+//    var isRepottingCompleted: Bool?
+//    var last_water_completed_date: String?
+//    var last_fertilizer_completed_date: String?
+//    var last_repot_completed_date: String?
+//    
+//    enum CodingKeys: String, CodingKey {
+//        case upcomingReminderForWater
+//        case upcomingReminderForFertilizers
+//        case upcomingReminderForRepotted
+//        case isWateringCompleted
+//        case isFertilizingCompleted
+//        case isRepottingCompleted
+//        case last_water_completed_date
+//        case last_fertilizer_completed_date
+//        case last_repot_completed_date
+//    }
+//}
 
 class DataControllerGG: NSObject, CLLocationManagerDelegate {
     static let shared = DataControllerGG()
@@ -1234,38 +1234,38 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .execute()
     }
     
-    // Add this struct near other model definitions
-    private struct CareReminderInsert: Encodable {
-        let careReminderID: String
-        let upcomingReminderForWater: String
-        let upcomingReminderForFertilizers: String?
-        let upcomingReminderForRepotted: String?
-        let isWateringCompleted: Bool
-        let isFertilizingCompleted: Bool
-        let isRepottingCompleted: Bool
-        let last_water_completed_date: String?
-        let last_fertilizer_completed_date: String?
-        let last_repot_completed_date: String?
-        let wateringEnabled: Bool
-        let fertilizerEnabled: Bool
-        let repottingEnabled: Bool
-
-        enum CodingKeys: String, CodingKey {
-            case careReminderID
-            case upcomingReminderForWater
-            case upcomingReminderForFertilizers
-            case upcomingReminderForRepotted
-            case isWateringCompleted
-            case isFertilizingCompleted
-            case isRepottingCompleted
-            case last_water_completed_date
-            case last_fertilizer_completed_date
-            case last_repot_completed_date
-            case wateringEnabled
-            case fertilizerEnabled
-            case repottingEnabled
-        }
-    }
+//    // Add this struct near other model definitions
+//    private struct CareReminderInsert: Encodable {
+//        let careReminderID: String
+//        let upcomingReminderForWater: String
+//        let upcomingReminderForFertilizers: String?
+//        let upcomingReminderForRepotted: String?
+//        let isWateringCompleted: Bool
+//        let isFertilizingCompleted: Bool
+//        let isRepottingCompleted: Bool
+//        let last_water_completed_date: String?
+//        let last_fertilizer_completed_date: String?
+//        let last_repot_completed_date: String?
+//        let wateringEnabled: Bool
+//        let fertilizerEnabled: Bool
+//        let repottingEnabled: Bool
+//
+//        enum CodingKeys: String, CodingKey {
+//            case careReminderID
+//            case upcomingReminderForWater
+//            case upcomingReminderForFertilizers
+//            case upcomingReminderForRepotted
+//            case isWateringCompleted
+//            case isFertilizingCompleted
+//            case isRepottingCompleted
+//            case last_water_completed_date
+//            case last_fertilizer_completed_date
+//            case last_repot_completed_date
+//            case wateringEnabled
+//            case fertilizerEnabled
+//            case repottingEnabled
+//        }
+//    }
     
     // Synchronous wrapper for addCareReminder
     func addCareReminderSync(userPlantID: UUID, reminderAllowed: Bool, isWateringEnabled: Bool = false, isFertilizingEnabled: Bool = false, isRepottingEnabled: Bool = false) {
@@ -1288,12 +1288,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 // Create a properly typed care reminder
                 let careReminder = CareReminderInsert(
                     careReminderID: userPlantID.uuidString,
-                    upcomingReminderForWater: currentDate,
+                    upcomingReminderForWater: isWateringEnabled ? currentDate : nil,
                     upcomingReminderForFertilizers: isFertilizingEnabled ? currentDate : nil,
                     upcomingReminderForRepotted: isRepottingEnabled ? currentDate : nil,
-                    isWateringCompleted: !isWateringEnabled,
-                    isFertilizingCompleted: !isFertilizingEnabled,
-                    isRepottingCompleted: !isRepottingEnabled,
+                    isWateringCompleted: false,  // Always start as not completed
+                    isFertilizingCompleted: false,  // Always start as not completed
+                    isRepottingCompleted: false,  // Always start as not completed
                     last_water_completed_date: currentDate,
                     last_fertilizer_completed_date: currentDate,
                     last_repot_completed_date: currentDate,
@@ -1304,7 +1304,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 
                 print("\n📝 Preparing to insert care reminder:")
                 print("🆔 Care Reminder ID: \(careReminder.careReminderID)")
-                print("💧 Water Next Date: \(careReminder.upcomingReminderForWater)")
+                print("💧 Water Next Date: \(careReminder.upcomingReminderForWater ?? "nil")")
                 print("🌱 Fertilizer Next Date: \(String(describing: careReminder.upcomingReminderForFertilizers))")
                 print("🪴 Repotting Next Date: \(String(describing: careReminder.upcomingReminderForRepotted))")
                 print("✅ Water Completed: \(careReminder.isWateringCompleted)")
@@ -1666,39 +1666,52 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     func signUp(email: String, password: String, userName: String) async throws -> (AuthResponse, userInfo?) {
         print("\n=== Signing Up New User ===")
         print("🔑 Attempting to sign up with email: \(email)")
+        print("📝 Password length: \(password.count)")
         
-        // First create the auth user in Supabase
-        let authResponse = try await supabase.auth.signUp(
-            email: email,
-            password: password,
-            data: ["email_confirm": true]
-        )
-        
-        print("✅ Authentication successful")
-        
-        if let session = authResponse.session {
-            // Save the session
-            saveSession(session)
+        do {
+            // First create the auth user in Supabase
+            let authResponse = try await supabase.auth.signUp(
+                email: email,
+                password: password
+            )
+            
+            print("✅ Authentication successful")
+            
+            if let session = authResponse.session {
+                // Save the session
+                saveSession(session)
+            }
+            
+            // Store the email for future use
+            UserDefaults.standard.set(email, forKey: "userEmail")
+            
+            // Create user in UserTable with provided name
+            print("📝 Creating user in UserTable")
+            let userData = try await createUser(
+                email: email,
+                userName: userName
+            )
+            
+            print("✅ User created in UserTable")
+            
+            // Post notification that user signed up
+            NotificationCenter.default.post(name: Notification.Name("UserSignedUp"), object: nil)
+            
+            return (authResponse, userData)
+        } catch let error as AuthError {
+            print("❌ Auth Error: \(error.localizedDescription)")
+            throw error
+        } catch {
+            print("❌ Signup Error: \(error.localizedDescription)")
+            if error.localizedDescription.contains("Password should contain") {
+                print("🔐 Password validation failed at Supabase level")
+                print("🔐 Attempted password length: \(password.count)")
+                print("🔐 Password requirements from Supabase: at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ, 0123456789, !@#$%^&*()_+-=[]{};':")
+            }
+            throw error
         }
-        
-        // Store the email for future use
-        UserDefaults.standard.set(email, forKey: "userEmail")
-        
-        // Create user in UserTable with provided name
-        print("📝 Creating user in UserTable")
-        let userData = try await createUser(
-            email: email,
-            userName: userName
-        )
-        
-        print("✅ User created in UserTable")
-        
-        // Post notification that user signed up
-        NotificationCenter.default.post(name: Notification.Name("UserSignedUp"), object: nil)
-        
-        return (authResponse, userData)
     }
-    
+
     // MARK: - Error Types
     
     struct APIError: Error {
@@ -1764,6 +1777,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .execute()
         
         print("✅ Created user data in UserTable")
+        
         
         return userInfo(
             id: userId,
@@ -2470,14 +2484,15 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Email Verification and Signup
     
-    func sendSignupVerificationEmail(email: String) async throws {
+    func sendSignupVerificationEmail(email: String, password: String) async throws {
         print("\n=== Sending Signup Verification Email ===")
         print("📧 Sending to: \(email)")
+        print("🔐 Using provided password length: \(password.count)")
         
-        // Create temporary account with email verification enabled
+        // Create account with email verification enabled
         try await supabase.auth.signUp(
             email: email,
-            password: UUID().uuidString // Temporary password, will be updated later
+            password: password
         )
         print("✅ Verification email sent")
     }
