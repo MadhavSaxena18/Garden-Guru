@@ -213,6 +213,11 @@ class LoginViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
+        // Disable scrolling since we don't need it for login screen
+        scrollView.isScrollEnabled = false
+        scrollView.bounces = false
+        scrollView.showsVerticalScrollIndicator = false
+        
         // Add subviews
         contentView.addSubview(logoImageView)
         contentView.addSubview(titleLabel)
@@ -240,16 +245,19 @@ class LoginViewController: UIViewController {
         signUpButton.isUserInteractionEnabled = true
         
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            // Update scroll view constraints to use safe area
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
+            // Fix content view to be exactly the size of the scroll view
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
             
             logoImageView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 20),
             logoImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
