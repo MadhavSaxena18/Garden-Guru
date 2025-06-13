@@ -102,25 +102,25 @@ class CompleteProfileViewModel {
     func completeProfile(name: String, age: Int, gender: String, plantPreferences: [String]) {
         Task {
             do {
-                // Get the user's email and password from UserDefaults
+                // Get the user's email and password from secure storage
                 guard let email = UserDefaults.standard.string(forKey: "userEmail"),
-                      let password = UserDefaults.standard.string(forKey: "tempPassword") else {
+                      let password = KeychainManager.shared.getPassword(for: "tempPassword_\(email)") else {
                     onError?("User credentials not found")
                     return
                 }
                 
-                await MainActor.run {
-                    // Show loading state if needed
-                }
+                print("📝 Starting profile completion for email: \(email)")
                 
-                // First complete the signup in Auth and create basic UserTable entry
+                // First complete the signup in Auth
                 try await DataControllerGG.shared.completeSignup(
                     email: email,
                     password: password,
                     userName: name
                 )
                 
-                // Then save the complete profile data
+                print("✅ Auth signup completed")
+                
+                // Save the complete profile data
                 let userData: [String: Any] = [
                     "email": email,
                     "full_name": name,
@@ -129,31 +129,37 @@ class CompleteProfileViewModel {
                     "plant_preferences": plantPreferences
                 ]
                 
-                print("📝 Updating user profile with data: \(userData)")
-                
-                // Update the user profile with additional details
+                print("📝 Saving user profile data")
                 try await DataControllerGG.shared.saveUserProfile(userData: userData)
+                print("✅ Profile data saved")
                 
-                print("✅ Profile update successful")
+                // Perform immediate login
+                print("🔑 Attempting immediate login")
+                let (session, _) = try await DataControllerGG.shared.signIn(email: email, password: password)
                 
-                // Clear temporary password from UserDefaults
-                UserDefaults.standard.removeObject(forKey: "tempPassword")
-                
-                // Notify success on main thread
-                await MainActor.run {
-                    self.onSuccess?()
+                if session.user != nil {
+                    print("✅ Login successful")
+                    // Store login state and credentials securely
+                    UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                    UserDefaults.standard.set(email, forKey: "userEmail")
+                    KeychainManager.shared.save(password, for: "userPassword_\(email)")
+                    
+                    // Clean up temporary credentials
+                    KeychainManager.shared.deletePassword(for: "tempPassword_\(email)")
+                    
+                    print("✅ Profile completion successful")
+                    
+                    await MainActor.run {
+                        self.onSuccess?()
+                    }
+                } else {
+                    throw NSError(domain: "SignupError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to complete signup"])
                 }
                 
             } catch {
-                print("❌ Profile update error: \(error)")
-                // Handle errors on main thread
+                print("❌ Profile completion error: \(error)")
                 await MainActor.run {
-                    if error.localizedDescription.contains("23505") {
-                        // This is a duplicate key error, but we've already updated the profile
-                        self.onSuccess?()
-                    } else {
-                        self.onError?(error.localizedDescription)
-                    }
+                    self.onError?(error.localizedDescription)
                 }
             }
         }

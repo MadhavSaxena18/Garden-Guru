@@ -1666,39 +1666,52 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     func signUp(email: String, password: String, userName: String) async throws -> (AuthResponse, userInfo?) {
         print("\n=== Signing Up New User ===")
         print("🔑 Attempting to sign up with email: \(email)")
+        print("📝 Password length: \(password.count)")
         
-        // First create the auth user in Supabase
-        let authResponse = try await supabase.auth.signUp(
-            email: email,
-            password: password,
-            data: ["email_confirm": true]
-        )
-        
-        print("✅ Authentication successful")
-        
-        if let session = authResponse.session {
-            // Save the session
-            saveSession(session)
+        do {
+            // First create the auth user in Supabase
+            let authResponse = try await supabase.auth.signUp(
+                email: email,
+                password: password
+            )
+            
+            print("✅ Authentication successful")
+            
+            if let session = authResponse.session {
+                // Save the session
+                saveSession(session)
+            }
+            
+            // Store the email for future use
+            UserDefaults.standard.set(email, forKey: "userEmail")
+            
+            // Create user in UserTable with provided name
+            print("📝 Creating user in UserTable")
+            let userData = try await createUser(
+                email: email,
+                userName: userName
+            )
+            
+            print("✅ User created in UserTable")
+            
+            // Post notification that user signed up
+            NotificationCenter.default.post(name: Notification.Name("UserSignedUp"), object: nil)
+            
+            return (authResponse, userData)
+        } catch let error as AuthError {
+            print("❌ Auth Error: \(error.localizedDescription)")
+            throw error
+        } catch {
+            print("❌ Signup Error: \(error.localizedDescription)")
+            if error.localizedDescription.contains("Password should contain") {
+                print("🔐 Password validation failed at Supabase level")
+                print("🔐 Attempted password length: \(password.count)")
+                print("🔐 Password requirements from Supabase: at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ, 0123456789, !@#$%^&*()_+-=[]{};':")
+            }
+            throw error
         }
-        
-        // Store the email for future use
-        UserDefaults.standard.set(email, forKey: "userEmail")
-        
-        // Create user in UserTable with provided name
-        print("📝 Creating user in UserTable")
-        let userData = try await createUser(
-            email: email,
-            userName: userName
-        )
-        
-        print("✅ User created in UserTable")
-        
-        // Post notification that user signed up
-        NotificationCenter.default.post(name: Notification.Name("UserSignedUp"), object: nil)
-        
-        return (authResponse, userData)
     }
-    
+
     // MARK: - Error Types
     
     struct APIError: Error {
@@ -1764,6 +1777,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .execute()
         
         print("✅ Created user data in UserTable")
+        
         
         return userInfo(
             id: userId,
@@ -2470,14 +2484,15 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // MARK: - Email Verification and Signup
     
-    func sendSignupVerificationEmail(email: String) async throws {
+    func sendSignupVerificationEmail(email: String, password: String) async throws {
         print("\n=== Sending Signup Verification Email ===")
         print("📧 Sending to: \(email)")
+        print("🔐 Using provided password length: \(password.count)")
         
-        // Create temporary account with email verification enabled
+        // Create account with email verification enabled
         try await supabase.auth.signUp(
             email: email,
-            password: UUID().uuidString // Temporary password, will be updated later
+            password: password
         )
         print("✅ Verification email sent")
     }
