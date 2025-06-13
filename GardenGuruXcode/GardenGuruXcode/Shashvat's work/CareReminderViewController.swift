@@ -57,6 +57,10 @@ class CareReminderViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        // Only reload data when the app starts or comes back from background
+        if reminders.isEmpty {
+            loadData()
+        }
         refreshAfterPlantDeletion(Notification(name: NSNotification.Name("PlantDeleted")))
     }
     
@@ -150,77 +154,128 @@ class CareReminderViewController: UIViewController {
         for reminder in reminders {
             print("\nProcessing reminder for plant: \(reminder.plant.plantName)")
             
-            // Watering reminders
-            if let waterDate = reminder.reminder.upcomingReminderForWater {
-                print("Water date: \(waterDate)")
-                print("Is water date today? \(calendar.isDateInToday(waterDate))")
-                print("Is water date > current? \(waterDate > currentDate)")
-                if calendar.isDateInToday(waterDate) {
-                    print("- Water reminder is for today")
-                    todayReminders[0].append(reminder)  // Always add to today if it's today's task
-                    if reminder.reminder.isWateringCompleted == true {
-                        // If completed, also add to upcoming
-                        upcomingReminders[0].append(reminder)
+            // Watering reminders - only if enabled
+            if reminder.reminder.wateringEnabled {
+                let lastCompletedDate = reminder.reminder.last_water_completed_date ?? Date.distantPast
+                let waterFreq = reminder.plant.waterFrequency ?? 0
+                
+                // If the reminder was completed today, add it to today's reminders
+                if calendar.isDateInToday(lastCompletedDate) {
+                    print("- Water reminder was completed today")
+                    todayReminders[0].append(reminder)
+                } else {
+                    // Calculate the next due date based on last completed date
+                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
+                        print("Last completed: \(lastCompletedDate)")
+                        print("Next due date: \(nextDueDate)")
+                        
+                        // If the next due date is today or in the past, it belongs in today's reminders
+                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                            print("- Water reminder is for today")
+                            todayReminders[0].append(reminder)
+                        } else if nextDueDate > currentDate {
+                            print("- Water reminder is upcoming")
+                            upcomingReminders[0].append(reminder)
+                        }
                     }
-                } else if waterDate > currentDate {
-                    print("- Water reminder is upcoming")
-                    upcomingReminders[0].append(reminder)
                 }
             }
             
-            // Fertilizing reminders
-            if let fertDate = reminder.reminder.upcomingReminderForFertilizers {
-                print("Fertilizer date: \(fertDate)")
-                print("Is fertilizer date today? \(calendar.isDateInToday(fertDate))")
-                print("Is fertilizer date > current? \(fertDate > currentDate)")
-                if calendar.isDateInToday(fertDate) {
-                    print("- Fertilizer reminder is for today")
-                    todayReminders[1].append(reminder)  // Always add to today if it's today's task
-                    if reminder.reminder.isFertilizingCompleted == true {
-                        // If completed, also add to upcoming
-                        upcomingReminders[1].append(reminder)
+            // Fertilizing reminders - only if enabled
+            if reminder.reminder.fertilizerEnabled {
+                let lastCompletedDate = reminder.reminder.last_fertilizer_completed_date ?? Date.distantPast
+                let fertFreq = reminder.plant.fertilizerFrequency ?? 0
+                
+                // If the reminder was completed today, add it to today's reminders
+                if calendar.isDateInToday(lastCompletedDate) {
+                    print("- Fertilizer reminder was completed today")
+                    todayReminders[1].append(reminder)
+                } else {
+                    // Calculate the next due date based on last completed date
+                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
+                        print("Last completed: \(lastCompletedDate)")
+                        print("Next due date: \(nextDueDate)")
+                        
+                        // If the next due date is today or in the past, it belongs in today's reminders
+                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                            print("- Fertilizer reminder is for today")
+                            todayReminders[1].append(reminder)
+                        } else if nextDueDate > currentDate {
+                            print("- Fertilizer reminder is upcoming")
+                            upcomingReminders[1].append(reminder)
+                        }
                     }
-                } else if fertDate > currentDate {
-                    print("- Fertilizer reminder is upcoming")
-                    upcomingReminders[1].append(reminder)
                 }
             }
             
-            // Repotting reminders
-            if let repotDate = reminder.reminder.upcomingReminderForRepotted {
-                print("Repotting date: \(repotDate)")
-                print("Is repotting date today? \(calendar.isDateInToday(repotDate))")
-                print("Is repotting date > current? \(repotDate > currentDate)")
-                if calendar.isDateInToday(repotDate) {
-                    print("- Repotting reminder is for today")
-                    todayReminders[2].append(reminder)  // Always add to today if it's today's task
-                    if reminder.reminder.isRepottingCompleted == true {
-                        // If completed, also add to upcoming
-                        upcomingReminders[2].append(reminder)
+            // Repotting reminders - only if enabled
+            if reminder.reminder.repottingEnabled {
+                let lastCompletedDate = reminder.reminder.last_repot_completed_date ?? Date.distantPast
+                let repotFreq = reminder.plant.repottingFrequency ?? 0
+                
+                // If the reminder was completed today, add it to today's reminders
+                if calendar.isDateInToday(lastCompletedDate) {
+                    print("- Repotting reminder was completed today")
+                    todayReminders[2].append(reminder)
+                } else {
+                    // Calculate the next due date based on last completed date
+                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
+                        print("Last completed: \(lastCompletedDate)")
+                        print("Next due date: \(nextDueDate)")
+                        
+                        // If the next due date is today or in the past, it belongs in today's reminders
+                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                            print("- Repotting reminder is for today")
+                            todayReminders[2].append(reminder)
+                        } else if nextDueDate > currentDate {
+                            print("- Repotting reminder is upcoming")
+                            upcomingReminders[2].append(reminder)
+                        }
                     }
-                } else if repotDate > currentDate {
-                    print("- Repotting reminder is upcoming")
-                    upcomingReminders[2].append(reminder)
                 }
             }
         }
         
         // Sort reminders by date within each section
         for i in 0..<3 {
+            // Sort today's reminders by completion status (uncompleted first)
             todayReminders[i].sort { first, second in
+                let isFirstCompleted: Bool
+                let isSecondCompleted: Bool
+                
+                switch i {
+                case 0:
+                    isFirstCompleted = first.reminder.isWateringCompleted ?? false
+                    isSecondCompleted = second.reminder.isWateringCompleted ?? false
+                case 1:
+                    isFirstCompleted = first.reminder.isFertilizingCompleted ?? false
+                    isSecondCompleted = second.reminder.isFertilizingCompleted ?? false
+                case 2:
+                    isFirstCompleted = first.reminder.isRepottingCompleted ?? false
+                    isSecondCompleted = second.reminder.isRepottingCompleted ?? false
+                default:
+                    return false
+                }
+                
+                // Uncompleted reminders come first
+                if isFirstCompleted != isSecondCompleted {
+                    return !isFirstCompleted
+                }
+                
+                // If completion status is the same, sort by last completed date
                 let date1: Date?
                 let date2: Date?
                 
                 switch i {
                 case 0:
-                    date1 = first.reminder.upcomingReminderForWater
-                    date2 = second.reminder.upcomingReminderForWater
+                    date1 = first.reminder.last_water_completed_date
+                    date2 = second.reminder.last_water_completed_date
                 case 1:
-                    date1 = first.reminder.upcomingReminderForFertilizers
-                    date2 = second.reminder.upcomingReminderForFertilizers
+                    date1 = first.reminder.last_fertilizer_completed_date
+                    date2 = second.reminder.last_fertilizer_completed_date
                 case 2:
-                    date1 = first.reminder.upcomingReminderForRepotted
-                    date2 = second.reminder.upcomingReminderForRepotted
+                    date1 = first.reminder.last_repot_completed_date
+                    date2 = second.reminder.last_repot_completed_date
                 default:
                     return false
                 }
@@ -229,20 +284,51 @@ class CareReminderViewController: UIViewController {
                 return d1 < d2
             }
             
+            // Sort upcoming reminders by next due date
             upcomingReminders[i].sort { first, second in
                 let date1: Date?
                 let date2: Date?
                 
                 switch i {
                 case 0:
-                    date1 = first.reminder.upcomingReminderForWater
-                    date2 = second.reminder.upcomingReminderForWater
+                    if let lastCompleted1 = first.reminder.last_water_completed_date,
+                       let freq1 = first.plant.waterFrequency {
+                        date1 = calendar.date(byAdding: .day, value: Int(freq1), to: lastCompleted1)
+                    } else {
+                        date1 = nil
+                    }
+                    if let lastCompleted2 = second.reminder.last_water_completed_date,
+                       let freq2 = second.plant.waterFrequency {
+                        date2 = calendar.date(byAdding: .day, value: Int(freq2), to: lastCompleted2)
+                    } else {
+                        date2 = nil
+                    }
                 case 1:
-                    date1 = first.reminder.upcomingReminderForFertilizers
-                    date2 = second.reminder.upcomingReminderForFertilizers
+                    if let lastCompleted1 = first.reminder.last_fertilizer_completed_date,
+                       let freq1 = first.plant.fertilizerFrequency {
+                        date1 = calendar.date(byAdding: .day, value: Int(freq1), to: lastCompleted1)
+                    } else {
+                        date1 = nil
+                    }
+                    if let lastCompleted2 = second.reminder.last_fertilizer_completed_date,
+                       let freq2 = second.plant.fertilizerFrequency {
+                        date2 = calendar.date(byAdding: .day, value: Int(freq2), to: lastCompleted2)
+                    } else {
+                        date2 = nil
+                    }
                 case 2:
-                    date1 = first.reminder.upcomingReminderForRepotted
-                    date2 = second.reminder.upcomingReminderForRepotted
+                    if let lastCompleted1 = first.reminder.last_repot_completed_date,
+                       let freq1 = first.plant.repottingFrequency {
+                        date1 = calendar.date(byAdding: .day, value: Int(freq1), to: lastCompleted1)
+                    } else {
+                        date1 = nil
+                    }
+                    if let lastCompleted2 = second.reminder.last_repot_completed_date,
+                       let freq2 = second.plant.repottingFrequency {
+                        date2 = calendar.date(byAdding: .day, value: Int(freq2), to: lastCompleted2)
+                    } else {
+                        date2 = nil
+                    }
                 default:
                     return false
                 }
@@ -277,14 +363,34 @@ class CareReminderViewController: UIViewController {
     }
     // MARK: - Actions
     @IBAction func didChangeSegmentCareReminder(_ sender: UISegmentedControl) {
+        print("\n=== Changing Care Reminder Segment ===")
+        print("Selected segment: \(sender.selectedSegmentIndex)")
+        
         // Update the no reminders message based on selected segment
         if let label = noRemindersView.viewWithTag(100) as? UILabel {
             label.text = sender.selectedSegmentIndex == 0 ? "Relax!! No work today" : "No upcoming reminders"
         }
         
+        // Sort reminders to ensure they're in the correct sections
         sortReminders()
+        
+        // Update UI visibility based on whether there are any reminders in the current view
+        let hasReminders = sender.selectedSegmentIndex == 0 ?
+            !todayReminders.allSatisfy({ $0.isEmpty }) :
+            !upcomingReminders.allSatisfy({ $0.isEmpty })
+        
+        print("Has reminders: \(hasReminders)")
+        
+        noRemindersView.isHidden = hasReminders
+        careReminderCollectionView.isHidden = !hasReminders
+        
+        // Update the collection view
+        DispatchQueue.main.async { [weak self] in
+            self?.careReminderCollectionView.reloadData()
+        }
+        
         updateEditButtonVisibility()
-        careReminderCollectionView.reloadData()
+        print("=== Care Reminder Segment Changed ===\n")
     }
     
     @IBAction func editButtonCareReminderTapped(_ sender: UIBarButtonItem) {
@@ -381,7 +487,9 @@ class CareReminderViewController: UIViewController {
         editButton?.isEnabled = careReminderSegmentedControl.selectedSegmentIndex == 0
     }
     private func markAllTodayRemindersAsCompleted() {
+        print("\n=== Marking All Today's Reminders as Completed ===")
         let currentDate = Date()
+        
         for (type, reminders) in todayReminders.enumerated() {
             for reminder in reminders {
                 let reminderType: String
@@ -395,14 +503,41 @@ class CareReminderViewController: UIViewController {
                 default:
                     continue
                 }
+                
+                print("Updating reminder for plant: \(reminder.plant.plantName)")
+                print("Type: \(reminderType)")
+                
+                // Update the database
                 dataController.updateCareReminderWithDetailsSync(
                     userPlantID: reminder.userPlant.userPlantRelationID,
                     type: reminderType,
                     isCompleted: true
                 )
+                
+                // Update the reminder in the main array
+                for (index, r) in self.reminders.enumerated() {
+                    if r.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID {
+                        switch type {
+                        case 0:
+                            self.reminders[index].reminder.isWateringCompleted = true
+                        case 1:
+                            self.reminders[index].reminder.isFertilizingCompleted = true
+                        case 2:
+                            self.reminders[index].reminder.isRepottingCompleted = true
+                        default:
+                            break
+                        }
+                    }
+                }
             }
         }
-        loadData()
+        
+        // Update the UI without reloading data
+        DispatchQueue.main.async { [weak self] in
+            self?.careReminderCollectionView.reloadData()
+        }
+        
+        print("=== All Today's Reminders Marked as Completed ===\n")
     }
     deinit {
         NotificationCenter.default.removeObserver(self)
@@ -500,43 +635,34 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         
         let isCompleted: Bool
         let reminderType: String
+        let reminderDate: Date?
         
         switch type {
         case 0:
             isCompleted = reminder.reminder.isWateringCompleted ?? false
             reminderType = "water"
+            reminderDate = reminder.reminder.upcomingReminderForWater
             print("Water reminder - Current state: \(isCompleted)")
         case 1:
             isCompleted = reminder.reminder.isFertilizingCompleted ?? false
             reminderType = "fertilizer"
+            reminderDate = reminder.reminder.upcomingReminderForFertilizers
             print("Fertilizer reminder - Current state: \(isCompleted)")
         case 2:
             isCompleted = reminder.reminder.isRepottingCompleted ?? false
             reminderType = "repot"
+            reminderDate = reminder.reminder.upcomingReminderForRepotted
             print("Repot reminder - Current state: \(isCompleted)")
         default:
             print("❌ Invalid reminder type: \(type)")
             return
         }
         
+        // Check if this is a today's reminder
+        let isTodayReminder = reminderDate.map { Calendar.current.isDateInToday($0) } ?? false
+        print("Is today's reminder: \(isTodayReminder)")
+        
         print("Toggling state from \(isCompleted) to \(!isCompleted)")
-        
-        // Store the current date of the reminder before updating
-        let currentReminderDate: Date?
-        switch type {
-        case 0:
-            currentReminderDate = reminder.reminder.upcomingReminderForWater
-        case 1:
-            currentReminderDate = reminder.reminder.upcomingReminderForFertilizers
-        case 2:
-            currentReminderDate = reminder.reminder.upcomingReminderForRepotted
-        default:
-            currentReminderDate = nil
-        }
-        
-        if let currentDate = currentReminderDate {
-            print("Current reminder date: \(currentDate)")
-        }
         
         // Update the database
         print("📝 Updating database...")
@@ -555,15 +681,40 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             userInfo: [
                 "reminderId": reminder.reminder.careReminderID,
                 "reminderType": reminderType.capitalized,
-                "isCompleted": !isCompleted
+                "isCompleted": !isCompleted,
+                "isTodayReminder": isTodayReminder
             ]
         )
         print("✅ Notification posted")
         
-        // Always reload data to ensure proper sorting and visibility
-        DispatchQueue.main.async { [weak self] in
-            self?.loadData()
+        // If it's a today's reminder, update the UI without reloading data
+        if isTodayReminder {
+            print("📅 Today's reminder - updating UI without reloading data...")
+            // Update the reminder in the main array
+            for (index, r) in reminders.enumerated() {
+                if r.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID {
+                    switch type {
+                    case 0:
+                        reminders[index].reminder.isWateringCompleted = !isCompleted
+                    case 1:
+                        reminders[index].reminder.isFertilizingCompleted = !isCompleted
+                    case 2:
+                        reminders[index].reminder.isRepottingCompleted = !isCompleted
+                    default:
+                        break
+                    }
+                }
+            }
+            
+            // Update the UI without reloading data
+            DispatchQueue.main.async { [weak self] in
+                self?.careReminderCollectionView.reloadData()
+            }
+        } else {
+            print("📅 Not today's reminder - normal reload")
+            loadData()
         }
+        
         print("=== Checkbox Toggle Handling Complete ===\n")
     }
 }
