@@ -8,7 +8,7 @@
 import UIKit
 import SDWebImage
 
-class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchResultsUpdating, UICollectionViewDelegateFlowLayout {
+class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchResultsUpdating, UICollectionViewDelegateFlowLayout, MySpaceStatsCellDelegate {
     // Static array to store newly added plants
     static var newlyAddedPlants: [UserPlant] = []
     
@@ -27,6 +27,8 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     
     // Add property to store newly added plant
     private var newlyAddedPlant: (userPlant: UserPlant, plant: Plant)? = nil
+    
+    private var selectedCategory: String = "All"
     
     @IBOutlet weak var mySpaceCollectionView: UICollectionView!
     
@@ -137,8 +139,22 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             "Medicinal": categoryCount[.medical] ?? 0
         ]
         
+        // Filter by selectedCategory
+        var filteredPlantsWithDetails = plantsWithDetails
+        if selectedCategory != "All" {
+            filteredPlantsWithDetails = plantsWithDetails.filter { detail in
+                guard let cat = detail.plant.category_new else { return false }
+                switch selectedCategory {
+                case "Ornamental": return cat == .ornamental
+                case "Flowering": return cat == .flowering
+                case "Medicinal": return cat == .medical
+                default: return true
+                }
+            }
+        }
+        
         // Group plants by name with debug info
-        let groupedPlants = Dictionary(grouping: plantsWithDetails) { tuple in
+        let groupedPlants = Dictionary(grouping: filteredPlantsWithDetails) { tuple in
             tuple.plant.plantName
         }
         
@@ -236,7 +252,8 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if indexPath.section == statsSectionIndex {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "StatsCell", for: indexPath) as! MySpaceStatsCell
-            cell.configure(with: userStats)
+            cell.configure(with: userStats, selectedCategory: selectedCategory)
+            cell.delegate = self
             return cell
         }
         let plants = isSearching ? filteredCategorizedPlants : categorizedPlants
@@ -462,6 +479,11 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         // Update UI
         loadData()
         mySpaceCollectionView.reloadData()
+    }
+    
+    func didTapStat(category: String) {
+        selectedCategory = category
+        loadData()
     }
     
     // Don't forget to remove observer in deinit

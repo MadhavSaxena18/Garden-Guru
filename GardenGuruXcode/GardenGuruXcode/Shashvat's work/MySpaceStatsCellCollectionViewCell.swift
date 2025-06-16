@@ -1,6 +1,12 @@
 import UIKit
 
+protocol MySpaceStatsCellDelegate: AnyObject {
+    func didTapStat(category: String)
+}
+
 class MySpaceStatsCell: UICollectionViewCell {
+    weak var delegate: MySpaceStatsCellDelegate?
+    var selectedCategory: String = "All"
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -55,6 +61,8 @@ class MySpaceStatsCell: UICollectionViewCell {
         return stack
     }()
     
+    private var statViewsRefs: [UIView] = []
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -108,12 +116,18 @@ class MySpaceStatsCell: UICollectionViewCell {
         rightStackView.spacing = 12
     }
     
-    private func createStatView(title: String, value: Int, icon: String, isTotal: Bool = false) -> UIView {
+    private func createStatView(title: String, value: Int, icon: String, isTotal: Bool = false, isSelected: Bool = false) -> UIView {
         let container = UIView()
-        container.backgroundColor = UIColor(hex: "F5F9F5")
+        if isSelected {
+            container.backgroundColor = UIColor(hex: "D0F5D8")
+            container.layer.borderColor = UIColor(hex: "284329").cgColor
+            container.layer.borderWidth = 2
+        } else {
+            container.backgroundColor = UIColor(hex: "F5F9F5")
+            container.layer.borderColor = UIColor(hex: "284329").withAlphaComponent(0.1).cgColor
+            container.layer.borderWidth = 1
+        }
         container.layer.cornerRadius = 15
-        container.layer.borderWidth = 1
-        container.layer.borderColor = UIColor(hex: "284329").withAlphaComponent(0.1).cgColor
         
         // Main vertical stack view
         let mainStack = UIStackView()
@@ -130,25 +144,25 @@ class MySpaceStatsCell: UICollectionViewCell {
         
         // Icon container
         let iconContainer = UIView()
-        iconContainer.backgroundColor = isTotal ? UIColor(hex: "284329") : UIColor(hex: "284329").withAlphaComponent(0.1)
+        iconContainer.backgroundColor = isSelected ? UIColor(hex: "284329") : UIColor(hex: "284329").withAlphaComponent(0.1)
         iconContainer.layer.cornerRadius = 20
         iconContainer.translatesAutoresizingMaskIntoConstraints = false
         
         let iconImage = UIImageView()
+        iconImage.tintColor = isSelected ? .white : UIColor(hex: "284329")
         iconImage.image = UIImage(systemName: icon)
-        iconImage.tintColor = isTotal ? .white : UIColor(hex: "284329")
         iconImage.contentMode = .scaleAspectFit
         iconImage.translatesAutoresizingMaskIntoConstraints = false
         
         let valueLabel = UILabel()
         valueLabel.text = "\(value)"
-        valueLabel.font = .systemFont(ofSize: 24, weight: .bold)
+        valueLabel.font = isSelected ? .systemFont(ofSize: 24, weight: .bold) : .systemFont(ofSize: 24, weight: .regular)
         valueLabel.textColor = UIColor(hex: "284329")
         
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = .systemFont(ofSize: 13, weight: isTotal ? .bold : .medium)
-        titleLabel.textColor = UIColor(hex: "284329").withAlphaComponent(isTotal ? 1.0 : 0.8)
+        titleLabel.font = isSelected ? .systemFont(ofSize: 13, weight: .bold) : .systemFont(ofSize: 13, weight: .medium)
+        titleLabel.textColor = isSelected ? UIColor(hex: "284329") : UIColor(hex: "284329").withAlphaComponent(0.8)
         titleLabel.numberOfLines = 0
         titleLabel.lineBreakMode = .byWordWrapping
         
@@ -193,24 +207,38 @@ class MySpaceStatsCell: UICollectionViewCell {
         return container
     }
     
-    func configure(with stats: [String: Int]) {
+    func configure(with stats: [String: Int], selectedCategory: String) {
+        self.selectedCategory = selectedCategory
         leftStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         rightStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        
+        statViewsRefs.removeAll()
         let statViews = [
-            ("Total Plants", stats["Total Plants"] ?? 0, "leaf.fill", true),
-            ("Ornamental Plants", stats["Ornamental"] ?? 0, "tree.fill", false),
-            ("Flowering Plants", stats["Flowering"] ?? 0, "camera.macro", false),
-            ("Medicinal Plants", stats["Medicinal"] ?? 0, "cross.case.fill", false)
+            ("Total Plants", stats["Total Plants"] ?? 0, "leaf.fill", true, "All"),
+            ("Ornamental Plants", stats["Ornamental"] ?? 0, "tree.fill", false, "Ornamental"),
+            ("Flowering Plants", stats["Flowering"] ?? 0, "camera.macro", false, "Flowering"),
+            ("Medicinal Plants", stats["Medicinal"] ?? 0, "cross.case.fill", false, "Medicinal")
         ]
-        
         for (index, statData) in statViews.enumerated() {
-            let statView = createStatView(title: statData.0, value: statData.1, icon: statData.2, isTotal: statData.3)
+            let isSelected = selectedCategory == statData.4
+            let statView = createStatView(title: statData.0, value: statData.1, icon: statData.2, isTotal: statData.3, isSelected: isSelected)
+            statView.isUserInteractionEnabled = true
+            statView.tag = index
+            let tap = UITapGestureRecognizer(target: self, action: #selector(handleStatTap(_:)))
+            statView.addGestureRecognizer(tap)
+            statViewsRefs.append(statView)
             if index % 2 == 0 {
                 leftStackView.addArrangedSubview(statView)
             } else {
                 rightStackView.addArrangedSubview(statView)
             }
         }
+    }
+    
+    @objc private func handleStatTap(_ sender: UITapGestureRecognizer) {
+        guard let view = sender.view else { return }
+        let categories = ["All", "Ornamental", "Flowering", "Medicinal"]
+        let idx = view.tag
+        let category = categories[idx]
+        delegate?.didTapStat(category: category)
     }
 }
