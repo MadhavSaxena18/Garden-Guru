@@ -140,7 +140,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             }
         }
     }
-
+    
     private func updatePlantsForCurrentWeather(_ weather: WeatherService.WeatherResponse) {
         print("[DEBUG] Entered updatePlantsForCurrentWeather")
         print("[DEBUG] Weather passed in: \(weather)")
@@ -182,7 +182,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 print("🌱 Plants matching mapped season \(mappedSeason): \(plantsForWeather.count)")
                 print("🌱 Plant names for season \(mappedSeason): \(plantsForWeather.map { $0.plantName })")
 
-                // 🧹 Step 4: Deduplicate and limit while preserving order
+                // 🧹 Step 4: Deduplicate while preserving order
                 var orderedUniqueRecommendedPlants: [Plant] = []
                 var seenPlantIDs: Set<UUID> = []
                 for plant in plantsForWeather {
@@ -191,8 +191,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         seenPlantIDs.insert(plant.plantID)
                     }
                 }
-                let finalRecommendedPlants = Array(orderedUniqueRecommendedPlants.prefix(5))
-                print("✅ Unique recommended plants after deduplication: \(finalRecommendedPlants.count)")
+                
+                // For main view, show only first 5 plants
+                let displayPlants = Array(orderedUniqueRecommendedPlants.prefix(5))
+                print("✅ Unique recommended plants for display: \(displayPlants.count)")
 
                 // 🖼️ Step 5: Update UI if in Discover segment
                 if selectedSegment == 0 {
@@ -206,8 +208,9 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         }
 
                         // Only add Current Season Plants and Common Issues if we have data
-                        if !finalRecommendedPlants.isEmpty {
-                            newDiscoverCategories.append(("Current Season Plants", Array(finalRecommendedPlants)))
+                        if !displayPlants.isEmpty {
+                            // Store all matching plants for section view, but show only 5 in main view
+                            newDiscoverCategories.append(("Current Season Plants", orderedUniqueRecommendedPlants))
                         }
                         
                         if !allCommonIssues.isEmpty {
@@ -682,9 +685,19 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         let categories = isSearchActive ? filteredDiscoverCategories : discoverCategories
         guard section < categories.count else { return 0 }
-        let count = (categories[section].items as? [Any])?.count ?? 0
-        print("📱 Discover items count: \(count)")
-        return count
+        
+        let category = categories[section]
+        if selectedSegment == 0 && category.title == "Current Season Plants" {
+            // Limit to 5 plants in the main Explore view
+            let fullCount = (category.items as? [Any])?.count ?? 0
+            print("📱 Discover - Current Season Plants items count (full): \(fullCount), limited to: \(min(fullCount, 5))")
+            return min(fullCount, 5)
+        } else {
+            // For other categories, return the full count
+            let count = (category.items as? [Any])?.count ?? 0
+            print("📱 Discover items count: \(count)")
+            return count
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -1051,11 +1064,15 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             print("⚠️ Could not find exact match, using sender tag: \(sender.tag)")
         }
 
-        // For Current Season Plants, only pass the weather-mapped plants
+        // For Current Season Plants, pass the weather-mapped plants and current weather
         if selectedCategory.title == "Current Season Plants" {
             // Get the current weather-mapped plants from the active categories
             if let currentSeasonCategory = activeCategories.first(where: { $0.title == "Current Season Plants" }) {
                 VC.filteredItems = currentSeasonCategory.items
+                // Pass the current weather data
+                if let weather = currentWeather {
+                    VC.currentWeather = weather
+                }
                 print("🌡️ Passing weather-mapped plants: \(currentSeasonCategory.items.count)")
                 print("🌡️ Plant names being passed to SectionWiseDetailVC: \(currentSeasonCategory.items.compactMap { ($0 as? Plant)?.plantName})")
             }

@@ -51,7 +51,7 @@ class CardDataSection1: UICollectionViewCell {
             infoLabel1Outlet.text = "Every \(plant.waterFrequency ?? 0) days"
             
             // Fertilizer frequency
-            infoImage2Outlet.image = UIImage(systemName: "leaf.fill")
+//            infoImage2Outlet.image = UIImage(systemName: "leaf.fill")
             print("DEBUG: Raw fertilizerFrequency: \(String(describing: plant.fertilizerFrequency))")
             infoLabel2Outlet.text = "Every \(plant.fertilizerFrequency ?? 0) days"
             

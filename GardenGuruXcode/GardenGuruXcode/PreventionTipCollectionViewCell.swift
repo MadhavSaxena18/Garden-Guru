@@ -151,3 +151,4 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
         // visualEffectView.contentView.backgroundColor = nil
     }
 } 
+ 

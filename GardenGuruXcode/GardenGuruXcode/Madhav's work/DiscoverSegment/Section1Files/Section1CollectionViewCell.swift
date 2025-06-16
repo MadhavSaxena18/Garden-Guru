@@ -69,6 +69,6 @@ class Section1CollectionViewCell: UICollectionViewCell {
         
         plantNameLabel.text = plant.plantName
         plantDescriptionLabel.text = plant.plantDescription
-    }
+        }
 }
 

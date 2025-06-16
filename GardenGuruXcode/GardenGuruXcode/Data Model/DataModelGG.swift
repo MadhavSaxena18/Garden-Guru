@@ -481,6 +481,7 @@ enum Season: String, Codable, Hashable {
     case Summer = "summer"
     case Spring = "spring"
     case Autumn = "autumn"
+    case Rainy = "rainy"
 }
 
 enum Category: String, Codable, Hashable {

@@ -36,7 +36,7 @@ class Section2CollectionViewCell: UICollectionViewCell {
         imageViewLabel.clipsToBounds = true
         
         // Configure labels
-        diseaseNameLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        diseaseNameLabel.font = UIFont.boldSystemFont(ofSize: 25)
         plantNameLabel.font = UIFont.systemFont(ofSize: 14)
         plantDescriptionLabel.font = UIFont.systemFont(ofSize: 14)
         plantDescriptionLabel.numberOfLines = 2
