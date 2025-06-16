@@ -16,15 +16,18 @@ class SectionWiseDetailViewController: UIViewController {
     var sectionNumber: Int?
     var selectedSegmentIndex: Int?
     var headerData: [String]?
+    var currentWeather: WeatherService.WeatherResponse?
     
     private var plants: [Plant] = []
     private var diseases: [Diseases] = []
+    private var preventionTips: [PreventionTip] = []
     private var isShowingPlants = true
     private var dataType: DataType = .plants
     
     private enum DataType {
         case plants
         case diseases
+        case preventionTips
         case none // Added for empty state
     }
     // MARK: - Dependencies
@@ -56,31 +59,42 @@ class SectionWiseDetailViewController: UIViewController {
             print("🔍 SectionWiseDetailViewController - receivedFilteredItems count: \(receivedFilteredItems.count)")
             print("🔍 SectionWiseDetailViewController - receivedFilteredItems type: \(type(of: receivedFilteredItems))")
 
-            if segmentIndex == 0 && sectionTitle == "Current Season Plants",
-               let filteredPlants = receivedFilteredItems as? [Plant] {
-                self.plants = filteredPlants
-                self.dataType = .plants
-                didSetFiltered = true
-                print("🔍 SectionWiseDetailViewController - Set filtered plants from viewDidLoad: \(filteredPlants.count) items")
-            } else if segmentIndex == 0 && sectionTitle == "Common Issues",
-                      let filteredDiseases = receivedFilteredItems as? [Diseases] {
-                self.diseases = filteredDiseases
-                self.dataType = .diseases
-                didSetFiltered = true
-                print("🔍 SectionWiseDetailViewController - Set filtered diseases from viewDidLoad: \(filteredDiseases.count) items")
-            } else if segmentIndex == 1 && sectionTitle == "Common Issues in your Plant",
-                      let filteredDiseases = receivedFilteredItems as? [Diseases] {
-                self.diseases = filteredDiseases
-                self.dataType = .diseases
-                self.plants = []
-                didSetFiltered = true
-                print("🔍 SectionWiseDetailViewController - Set filtered diseases for My Plants from viewDidLoad: \(filteredDiseases.count) items")
-            } else if segmentIndex == 1 && sectionTitle == "Common Fertilizers" {
-                self.diseases = []
-                self.plants = []
-                self.dataType = .none
-                didSetFiltered = true
-                print("🔍 SectionWiseDetailViewController - Set empty state for Common Fertilizers from viewDidLoad")
+            // Use filteredItems for all relevant sections in Discover segment
+            if segmentIndex == 0 {
+                if sectionTitle == "Current Season Plants",
+                   let filteredPlants = receivedFilteredItems as? [Plant] {
+                    self.plants = filteredPlants
+                    self.dataType = .plants
+                    didSetFiltered = true
+                    print("🔍 SectionWiseDetailViewController - Set filtered plants for Current Season from viewDidLoad: \(filteredPlants.count) items")
+                } else if sectionTitle == "Common Issues",
+                   let filteredDiseases = receivedFilteredItems as? [Diseases] {
+                    self.diseases = filteredDiseases
+                    self.dataType = .diseases
+                    didSetFiltered = true
+                    print("🔍 SectionWiseDetailViewController - Set filtered diseases from viewDidLoad: \(filteredDiseases.count) items")
+                } else if sectionTitle == "Pest & Disease Prevention",
+                          let filteredPreventionTips = receivedFilteredItems as? [PreventionTip] {
+                    self.preventionTips = filteredPreventionTips
+                    self.dataType = .preventionTips
+                    didSetFiltered = true
+                    print("🔍 SectionWiseDetailViewController - Set filtered prevention tips from viewDidLoad: \(filteredPreventionTips.count) items")
+                }
+            } else if segmentIndex == 1 { // For My Plants segment
+                if sectionTitle == "Common Issues in your Plant",
+                          let filteredDiseases = receivedFilteredItems as? [Diseases] {
+                    self.diseases = filteredDiseases
+                    self.dataType = .diseases
+                    self.plants = []
+                    didSetFiltered = true
+                    print("🔍 SectionWiseDetailViewController - Set filtered diseases for My Plants from viewDidLoad: \(filteredDiseases.count) items")
+                } else if sectionTitle == "Common Fertilizers" {
+                    self.diseases = []
+                    self.plants = []
+                    self.dataType = .none
+                    didSetFiltered = true
+                    print("🔍 SectionWiseDetailViewController - Set empty state for Common Fertilizers from viewDidLoad")
+                }
             }
         }
 
@@ -159,16 +173,46 @@ class SectionWiseDetailViewController: UIViewController {
                     switch sectionTitle {
                     case "Current Season Plants":
                         dataType = .plants
-                        if let plants = filteredItems as? [Plant] {
-                            self.plants = plants
-                            print("🔍 SectionWiseDetailViewController - Using filtered plants: \(plants.count)")
+                        // Use the passed filtered plants if available
+                        if let filteredPlants = filteredItems as? [Plant] {
+                            self.plants = filteredPlants
+                            print("🔍 SectionWiseDetailViewController - Using passed filtered plants: \(self.plants.count)")
+                            print("🔍 SectionWiseDetailViewController - Plant names: \(self.plants.map { $0.plantName })")
                         } else {
-                            // This should ideally not be hit if ExploreViewController passes filteredItems
-                            // If filteredItems is nil or wrong type, it means no plants will be shown.
-                            // This prevents fetching all plants as a fallback, ensuring only filtered ones are used.
-                            self.plants = [] // Ensure plants array is empty if filteredItems not set/wrong type
-                            print("🔍 SectionWiseDetailViewController - No filtered plants received or wrong type.")
+                            // Fallback to fetching all plants if no filtered plants were passed
+                            let allPlants = try await dataController.getPlants()
+                            
+                            // Use passed weather data if available
+                            if let weather = currentWeather {
+                                let temp = weather.main.temp
+                                let mappedSeason = seasonForTemperature(temp)
+                                self.plants = allPlants.filter { $0.favourableSeason?.rawValue.lowercased() == mappedSeason }
+                                print("🔍 SectionWiseDetailViewController - Loaded plants for current season based on passed weather: \(self.plants.count)")
+                            } else {
+                                // Fallback to location-based weather
+                                let weatherService = WeatherService()
+                                let latitude = UserDefaults.standard.double(forKey: "userLatitude")
+                                let longitude = UserDefaults.standard.double(forKey: "userLongitude")
+                                
+                                if latitude != 0 && longitude != 0 {
+                                    if let weather = try? await weatherService.fetchWeather(latitude: latitude, longitude: longitude) {
+                                        let temp = weather.main.temp
+                                        let mappedSeason = seasonForTemperature(temp)
+                                        self.plants = allPlants.filter { $0.favourableSeason?.rawValue.lowercased() == mappedSeason }
+                                        print("🔍 SectionWiseDetailViewController - Loaded plants for current season based on location weather: \(self.plants.count)")
+                                    } else {
+                                        let currentSeason = dataController.getCurrentSeason()
+                                        self.plants = allPlants.filter { $0.favourableSeason == currentSeason }
+                                        print("🔍 SectionWiseDetailViewController - Fallback: Loaded plants for current season: \(self.plants.count)")
+                                    }
+                                } else {
+                                    let currentSeason = dataController.getCurrentSeason()
+                                    self.plants = allPlants.filter { $0.favourableSeason == currentSeason }
+                                    print("🔍 SectionWiseDetailViewController - No location data, using current season: \(self.plants.count)")
+                                }
+                            }
                         }
+                    
                     case "Common Issues":
                         dataType = .diseases
                         diseases = try await dataController.getCommonIssues()
@@ -219,6 +263,20 @@ class SectionWiseDetailViewController: UIViewController {
         self.dataType = .diseases
         collectionView?.reloadData()
     }
+
+    // Helper function to map temperature to season (same as in ExploreViewController)
+    private func seasonForTemperature(_ temp: Double) -> String {
+        switch temp {
+        case ..<15:
+            return "winter"
+        case 15..<25:
+            return "spring"
+        case 25..<50:
+            return "summer"
+        default:
+            return "extreme summer"
+        }
+    }
 }
 
 // MARK: - UICollectionView DataSource & Delegate
@@ -232,6 +290,8 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             return diseases.count
         case .none:
             return 0
+        case .preventionTips:
+            return preventionTips.count
         }
     }
     
@@ -248,7 +308,6 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 return cell
             }
             let plant = plants[indexPath.item]
-            print("Configuring cell with plant: \(plant.plantName)")
             cell.configure(with: plant)
         case .diseases:
             guard indexPath.item < diseases.count else {
@@ -256,11 +315,17 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 return cell
             }
             let disease = diseases[indexPath.item]
-            print("Configuring cell with disease: \(disease.diseaseName)")
             cell.configureForDisease(with: disease)
         case .none:
             // Return a blank cell (will never be called since numberOfItemsInSection returns 0)
+            return cell
+        case .preventionTips:
+            guard indexPath.item < preventionTips.count else {
+                print("Prevention Tip index out of bounds")
                 return cell
+            }
+            let preventionTip = preventionTips[indexPath.item]
+            cell.configureForPreventionTip(with: preventionTip)
         }
         return cell
     }
@@ -282,6 +347,19 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             }
         case .none:
             print("Helllllo")
+        case .preventionTips:
+            if let detailVC = PreventionTipDetailViewController() as? PreventionTipDetailViewController {
+                detailVC.preventionTip = preventionTips[indexPath.item]
+                let navVC = UINavigationController(rootViewController: detailVC)
+                navVC.modalPresentationStyle = .pageSheet // Or .formSheet for iPad compatibility
+                if let sheet = navVC.sheetPresentationController {
+                    sheet.detents = [.medium(), .large()]
+                    sheet.prefersGrabberVisible = true
+                    sheet.preferredCornerRadius = 25
+                }
+                present(navVC, animated: true)
+            }
+            break
         }
     }
 }

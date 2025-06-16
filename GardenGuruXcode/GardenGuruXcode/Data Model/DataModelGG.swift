@@ -60,6 +60,12 @@ struct Plant: Codable, Hashable, Equatable {
     var favourableSeason: Season?
     var category_new: Category?
     
+    // Computed property to parse comma-separated image URLs
+    var imageURLs: [String] {
+        guard let imageString = plantImage, !imageString.isEmpty else { return [] }
+        return imageString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+    }
+    
     enum CodingKeys: String, CodingKey {
         case plantID
         case plantName
@@ -475,6 +481,7 @@ enum Season: String, Codable, Hashable {
     case Summer = "summer"
     case Spring = "spring"
     case Autumn = "autumn"
+    case Rainy = "rainy"
 }
 
 enum Category: String, Codable, Hashable {

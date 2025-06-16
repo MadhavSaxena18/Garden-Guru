@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class CardDataSection1: UICollectionViewCell {
     
@@ -32,29 +33,27 @@ class CardDataSection1: UICollectionViewCell {
 
         if let plant = data as? Plant {
             // Set plant image from URL if available
-            if let urlString = plant.plantImage, let url = URL(string: urlString) {
-                URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-                    guard let self = self, let data = data, error == nil else {
-                        DispatchQueue.main.async {
-                            self?.plantImageOutlet.image = UIImage(named: "defaultPlantImage")
-                        }
-                        return
+            if let urlString = plant.imageURLs.first, let url = URL(string: urlString.replacingOccurrences(of: "//01", with: "/01").replacingOccurrences(of: "//", with: "/").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") {
+                plantImageOutlet.sd_setImage(with: url, placeholderImage: UIImage(named: "defaultPlantImage")) { image, error, cacheType, url in
+                    if let error = error {
+                        print("❌ Error loading plant image: \(error.localizedDescription)")
+                    } else {
+                        print("✅ Successfully loaded plant image from: \(url?.absoluteString ?? "unknown URL")")
                     }
-                    DispatchQueue.main.async {
-                        self.plantImageOutlet.image = UIImage(data: data)
-                    }
-                }.resume()
+                }
             } else {
                 plantImageOutlet.image = UIImage(named: "defaultPlantImage")
+                print("❌ Plant image URL is nil or malformed for plant: \(plant.plantName)")
             }
             
             // Water frequency
-            let waterDays = plant.waterFrequency
-            infoLabel1Outlet.text = "Every \(waterDays) days"
+            print("DEBUG: Raw waterFrequency: \(String(describing: plant.waterFrequency))")
+            infoLabel1Outlet.text = "Every \(plant.waterFrequency ?? 0) days"
             
             // Fertilizer frequency
-            let fertilizerDays = plant.fertilizerFrequency
-            infoLabel2Outlet.text = "Every \(fertilizerDays) days"
+//            infoImage2Outlet.image = UIImage(systemName: "leaf.fill")
+            print("DEBUG: Raw fertilizerFrequency: \(String(describing: plant.fertilizerFrequency))")
+            infoLabel2Outlet.text = "Every \(plant.fertilizerFrequency ?? 0) days"
             
             // Handle optional season
             if let season = plant.favourableSeason {

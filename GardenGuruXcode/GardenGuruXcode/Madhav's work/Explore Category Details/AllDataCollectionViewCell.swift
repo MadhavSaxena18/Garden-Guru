@@ -64,10 +64,18 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         nameLabel.text = plant.plantName
         descriptionLabel.text = plant.plantDescription
         
-        if let urlString = plant.plantImage, let url = URL(string: urlString) {
-            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "placeholder_plant"))
+        // Load image from imageURLs.first
+        if let urlString = plant.imageURLs.first, let url = URL(string: urlString.replacingOccurrences(of: "//01", with: "/01").replacingOccurrences(of: "//", with: "/").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") {
+            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "placeholder_plant")) { image, error, cacheType, url in
+                if let error = error {
+                    print("❌ Error loading plant image in AllDataCollectionViewCell: \(error.localizedDescription)")
+                } else {
+                    print("✅ Successfully loaded plant image in AllDataCollectionViewCell from: \(url?.absoluteString ?? "unknown URL")")
+                }
+            }
         } else {
             plantImageView.image = UIImage(named: "placeholder_plant")
+            print("❌ Plant image URL is nil or malformed for plant in AllDataCollectionViewCell: \(plant.plantName)")
         }
         
         nameLabel.setNeedsLayout()
@@ -159,4 +167,18 @@ class AllDataCollectionViewCell: UICollectionViewCell {
         layoutIfNeeded()
     }
     
+    func configureForPreventionTip(with preventionTip: PreventionTip) {
+        nameLabel.text = preventionTip.title
+        descriptionLabel.text = preventionTip.message
+        
+        if let urlString = preventionTip.imageUrl, let url = URL(string: urlString) {
+            plantImageView.sd_setImage(with: url, placeholderImage: UIImage(systemName: "leaf.fill")) // Use a generic leaf placeholder
+        } else {
+            plantImageView.image = UIImage(systemName: "leaf.fill")
+        }
+        
+        nameLabel.setNeedsLayout()
+        descriptionLabel.setNeedsLayout()
+        layoutIfNeeded()
+    }
 }
