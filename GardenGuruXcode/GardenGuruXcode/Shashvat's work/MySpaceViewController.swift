@@ -275,17 +275,41 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         }
         // Set up 3-dots menu if needed
         cell.optionsHandler = { [weak self] in
+            guard let self = self else { return }
             let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-            alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { _ in
-                self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
-                self?.loadData()
+            alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self, weak alert] _ in
+                guard let self = self else { return }
+                
+                // Present confirmation alert before deleting
+                let confirmAlert = UIAlertController(
+                    title: "Confirm Deletion",
+                    message: "Are you sure you want to delete this plant? This action cannot be undone.",
+                    preferredStyle: .alert
+                )
+                
+                confirmAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                confirmAlert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+                    self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
+                    self?.loadData()
+                })
+                
+                // Dismiss the action sheet first, then present the confirmation alert from the top-most view controller
+                alert?.dismiss(animated: true) {
+                    DispatchQueue.main.async { // Ensure presentation happens on the next run loop cycle
+                        if let topVC = UIApplication.shared.keyWindow?.rootViewController {
+                            topVC.present(confirmAlert, animated: true, completion: nil)
+                        } else {
+                            self.present(confirmAlert, animated: true, completion: nil)
+                        }
+                    }
+                }
             })
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
             if let popover = alert.popoverPresentationController {
                 popover.sourceView = cell
                 popover.sourceRect = cell.bounds
             }
-            self?.present(alert, animated: true)
+            self.present(alert, animated: true)
         }
         return cell
     }
@@ -435,17 +459,39 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         let item = sender.tag & 0xFFFF
         let plants = isSearching ? filteredCategorizedPlants : categorizedPlants
         let userPlant = plants[section - 1][item]
+        
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
-            self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
-            self?.loadData()
+        
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self, weak alert] _ in
+            guard let self = self else { return }
+            
+            // Dismiss the action sheet first
+            alert?.dismiss(animated: true) {
+                // Ensure presentation happens from the top-most view controller
+                guard let topVC = UIApplication.shared.keyWindow?.rootViewController else { return }
+                
+                let confirmAlert = UIAlertController(
+                    title: "Confirm Deletion",
+                    message: "Are you sure you want to delete this plant? This action cannot be undone.",
+                    preferredStyle: .alert
+                )
+                
+                confirmAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                
+                confirmAlert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+                    self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
+                    self?.loadData()
+                })
+                
+                topVC.present(confirmAlert, animated: true, completion: nil)
+            }
         })
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         if let popover = alert.popoverPresentationController {
             popover.sourceView = sender
             popover.sourceRect = sender.bounds
         }
-        present(alert, animated: true)
+        self.present(alert, animated: true)
     }
     
     @objc private func handleNewPlantAdded(_ notification: Notification) {
