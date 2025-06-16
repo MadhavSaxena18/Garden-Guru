@@ -1,79 +1,101 @@
 import UIKit
 
 class DiseaseDetailTableViewCell: UITableViewCell {
-    @IBOutlet private weak var titleLabel: UILabel!
-    @IBOutlet private weak var contentLabel: UILabel!
-    @IBOutlet private weak var backgroundCardView: UIView!
+    // Remove @IBOutlets
+    private let titleLabel = UILabel()
+    private let contentLabel = UILabel()
+    private let backgroundCardView = UIView()
+    private let collapsibleContentContainer = UIView()
+    private let stackView = UIStackView()
     
     var isExpanded: Bool = true {
         didSet {
             UIView.animate(withDuration: 0.3) {
-                self.contentLabel.alpha = self.isExpanded ? 1.0 : 0.0
+                self.collapsibleContentContainer.isHidden = !self.isExpanded
+                self.superview?.layoutIfNeeded()
+                self.layoutIfNeeded()
             }
         }
     }
     
-    override func awakeFromNib() {
-        super.awakeFromNib()
+    // MARK: - Initialization
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        // No longer loading from XIB, but keeping for required initializer
         setupUI()
     }
     
     private func setupUI() {
         contentView.backgroundColor = .clear
         
-        // Configure background card view
+        // Configure background card view (outer card)
         backgroundCardView.backgroundColor = .white
         backgroundCardView.layer.cornerRadius = 12
         backgroundCardView.clipsToBounds = true
+        backgroundCardView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(backgroundCardView)
         
         // Configure title label
         titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         titleLabel.textColor = UIColor(hex: "#2E7D32") // Dark green color
         titleLabel.numberOfLines = 0
         titleLabel.backgroundColor = .clear
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         // Configure content label
         contentLabel.font = UIFont.systemFont(ofSize: 16)
         contentLabel.textColor = .darkGray
         contentLabel.numberOfLines = 0
         contentLabel.backgroundColor = .clear
-        
-        // Add padding to content
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentLabel.translatesAutoresizingMaskIntoConstraints = false
-        backgroundCardView.translatesAutoresizingMaskIntoConstraints = false
         
-        contentView.addSubview(backgroundCardView)
-        backgroundCardView.addSubview(titleLabel)
-        backgroundCardView.addSubview(contentLabel)
+        // Configure collapsible content container (inner view)
+        collapsibleContentContainer.backgroundColor = .white // Set initial background (can be transparent grey later)
+        collapsibleContentContainer.layer.cornerRadius = 12
+        collapsibleContentContainer.clipsToBounds = true
+        collapsibleContentContainer.translatesAutoresizingMaskIntoConstraints = false
+        collapsibleContentContainer.addSubview(contentLabel)
         
+        // Configure stack view
+        stackView.axis = .vertical
+        stackView.spacing = 12
+        stackView.distribution = .fill
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.addArrangedSubview(titleLabel)
+        stackView.addArrangedSubview(collapsibleContentContainer)
+        
+        backgroundCardView.addSubview(stackView)
+        
+        // Setup constraints
         NSLayoutConstraint.activate([
+            // Background Card View constraints
             backgroundCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             backgroundCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             backgroundCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             backgroundCardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
             
-            titleLabel.topAnchor.constraint(equalTo: backgroundCardView.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: backgroundCardView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -16),
+            // Stack View constraints (pinned inside backgroundCardView)
+            stackView.topAnchor.constraint(equalTo: backgroundCardView.topAnchor, constant: 20),
+            stackView.leadingAnchor.constraint(equalTo: backgroundCardView.leadingAnchor, constant: 20),
+            stackView.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -20),
+            stackView.bottomAnchor.constraint(equalTo: backgroundCardView.bottomAnchor, constant: -20),
             
-            contentLabel.leadingAnchor.constraint(equalTo: backgroundCardView.leadingAnchor, constant: 16),
-            contentLabel.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -16),
-            contentLabel.bottomAnchor.constraint(equalTo: backgroundCardView.bottomAnchor, constant: -16)
+            // Content Label constraints (pinned inside collapsibleContentContainer)
+            contentLabel.topAnchor.constraint(equalTo: collapsibleContentContainer.topAnchor, constant: 16),
+            contentLabel.leadingAnchor.constraint(equalTo: collapsibleContentContainer.leadingAnchor, constant: 16),
+            contentLabel.trailingAnchor.constraint(equalTo: collapsibleContentContainer.trailingAnchor, constant: -16),
+            contentLabel.bottomAnchor.constraint(equalTo: collapsibleContentContainer.bottomAnchor, constant: -16)
         ])
-        
-        // Store constraints for later activation/deactivation
-        contentLabelTopToTitleConstraint = contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8)
-        contentLabelTopToBackgroundConstraint = contentLabel.topAnchor.constraint(equalTo: backgroundCardView.topAnchor, constant: 16)
-        
-        // Initially activate the default constraint
-        contentLabelTopToTitleConstraint?.isActive = true
     }
     
-    private var contentLabelTopToTitleConstraint: NSLayoutConstraint?
-    private var contentLabelTopToBackgroundConstraint: NSLayoutConstraint?
-    
     func configure(with disease: Diseases?, section: String, showHeader: Bool = true) {
+        // Unsafe unwrapping is fine here because setupUI() ensures they are initialized
+        // The guards are for the passed `disease` object.
         guard let disease = disease else {
             titleLabel.text = section
             contentLabel.text = "No information available"
@@ -83,9 +105,7 @@ class DiseaseDetailTableViewCell: UITableViewCell {
         // Hide or show the title label based on showHeader parameter
         titleLabel.isHidden = !showHeader
         
-        // Update constraints based on showHeader
-        contentLabelTopToTitleConstraint?.isActive = showHeader
-        contentLabelTopToBackgroundConstraint?.isActive = !showHeader
+        // isExpanded property handles the collapsibleContentContainer visibility automatically
         
         switch section {
         case "Symptoms":

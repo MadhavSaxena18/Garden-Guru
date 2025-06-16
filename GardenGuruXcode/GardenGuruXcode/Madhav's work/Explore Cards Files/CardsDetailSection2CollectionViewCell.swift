@@ -7,6 +7,19 @@ class CardsDetailSection2CollectionViewCell: UICollectionViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
+        plantNameLabel.numberOfLines = 0 // Allow multiple lines for plant name
+        plantNameLabel.lineBreakMode = .byWordWrapping // Ensure text wraps
+        plantDescription.numberOfLines = 0 // Allow multiple lines for plant description
+        plantDescription.lineBreakMode = .byWordWrapping // Ensure text wraps
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Set preferredMaxLayoutWidth for labels to enable proper self-sizing
+        // The labels have 12pt leading and 15pt trailing from the content view in the XIB.
+        let availableWidth = contentView.bounds.width - 12 - 15 
+        plantNameLabel.preferredMaxLayoutWidth = availableWidth
+        plantDescription.preferredMaxLayoutWidth = availableWidth
     }
     
     func updateCardSection2(with plant: Plant?) {
@@ -18,6 +31,8 @@ class CardsDetailSection2CollectionViewCell: UICollectionViewCell {
 
         plantNameLabel.text = plant.plantName
         plantDescription.text = plant.plantDescription
+        setNeedsLayout()
+        layoutIfNeeded()
     }
     func updateCardSection2WithDisease(with disease: Diseases?) {
             guard let disease = disease else {
@@ -42,6 +57,8 @@ class CardsDetailSection2CollectionViewCell: UICollectionViewCell {
         }
         
         plantDescription.text = descriptionText
+        setNeedsLayout()
+        layoutIfNeeded()
         }
 
 

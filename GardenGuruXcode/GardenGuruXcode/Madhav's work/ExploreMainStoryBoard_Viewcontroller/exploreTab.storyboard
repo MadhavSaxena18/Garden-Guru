@@ -241,11 +241,7 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="diseaseNameLabel" destination="oPT-yU-Tft" id="XWu-uf-NbO"/>
-                        <outlet property="diseaseSymptoms" destination="2yu-k5-UqU" id="SBB-2A-b2I"/>
-                        <outlet property="headerBackgroundView" destination="JVX-Ka-9jc" id="225-10-m0Q"/>
-                        <outlet property="headerImageView" destination="oo8-Fm-dSW" id="7Na-Gr-EHw"/>
-                        <outlet property="tableView" destination="7tY-Hg-DcZ" id="QYQ-vS-EcT"/>
+                        <!-- Remove all outlet connections since we're using programmatic UI -->
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="uzM-gs-HB3" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
