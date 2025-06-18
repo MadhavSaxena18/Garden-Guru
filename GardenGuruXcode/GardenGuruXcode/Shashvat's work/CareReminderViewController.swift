@@ -14,6 +14,11 @@ class CareReminderViewController: UIViewController {
     private var todayReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
     private var upcomingReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
     
+    // Add caching properties
+    private var cachedReminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
+    private var isDataLoaded = false
+    private var isLoading = false
+    
     private lazy var noRemindersView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -57,9 +62,23 @@ class CareReminderViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Only reload data when the app starts or comes back from background
-        if reminders.isEmpty {
-            loadData()
+        
+        // Only reload data if not already loaded or if cache is empty
+        if !isDataLoaded || cachedReminders.isEmpty {
+            loadDataAsync()
+        } else {
+            // Use cached data and just sort reminders - this should be instant
+            reminders = cachedReminders
+            sortReminders()
+            careReminderCollectionView.reloadData()
+            
+            // Update UI visibility immediately
+            let hasReminders = careReminderSegmentedControl.selectedSegmentIndex == 0 ?
+                !todayReminders.allSatisfy({ $0.isEmpty }) :
+                !upcomingReminders.allSatisfy({ $0.isEmpty })
+            
+            noRemindersView.isHidden = hasReminders
+            careReminderCollectionView.isHidden = !hasReminders
         }
         refreshAfterPlantDeletion(Notification(name: NSNotification.Name("PlantDeleted")))
     }
@@ -165,20 +184,20 @@ class CareReminderViewController: UIViewController {
                     todayReminders[0].append(reminder)
                 }
                 
-                // Calculate the next due date based on last completed date
-                if let nextDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
-                    print("Last completed: \(lastCompletedDate)")
-                    print("Next due date: \(nextDueDate)")
-                    
-                    // If the next due date is today or in the past, it belongs in today's reminders
-                    if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
-                        print("- Water reminder is for today")
+                    // Calculate the next due date based on last completed date
+                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
+                        print("Last completed: \(lastCompletedDate)")
+                        print("Next due date: \(nextDueDate)")
+                        
+                        // If the next due date is today or in the past, it belongs in today's reminders
+                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                            print("- Water reminder is for today")
                         if !todayReminders[0].contains(where: { $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID }) {
                             todayReminders[0].append(reminder)
                         }
-                    } else if nextDueDate > currentDate {
-                        print("- Water reminder is upcoming")
-                        upcomingReminders[0].append(reminder)
+                        } else if nextDueDate > currentDate {
+                            print("- Water reminder is upcoming")
+                            upcomingReminders[0].append(reminder)
                     }
                 }
             }
@@ -194,20 +213,20 @@ class CareReminderViewController: UIViewController {
                     todayReminders[1].append(reminder)
                 }
                 
-                // Calculate the next due date based on last completed date
-                if let nextDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
-                    print("Last completed: \(lastCompletedDate)")
-                    print("Next due date: \(nextDueDate)")
-                    
-                    // If the next due date is today or in the past, it belongs in today's reminders
-                    if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
-                        print("- Fertilizer reminder is for today")
+                    // Calculate the next due date based on last completed date
+                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
+                        print("Last completed: \(lastCompletedDate)")
+                        print("Next due date: \(nextDueDate)")
+                        
+                        // If the next due date is today or in the past, it belongs in today's reminders
+                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                            print("- Fertilizer reminder is for today")
                         if !todayReminders[1].contains(where: { $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID }) {
                             todayReminders[1].append(reminder)
                         }
-                    } else if nextDueDate > currentDate {
-                        print("- Fertilizer reminder is upcoming")
-                        upcomingReminders[1].append(reminder)
+                        } else if nextDueDate > currentDate {
+                            print("- Fertilizer reminder is upcoming")
+                            upcomingReminders[1].append(reminder)
                     }
                 }
             }
@@ -223,20 +242,20 @@ class CareReminderViewController: UIViewController {
                     todayReminders[2].append(reminder)
                 }
                 
-                // Calculate the next due date based on last completed date
-                if let nextDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
-                    print("Last completed: \(lastCompletedDate)")
-                    print("Next due date: \(nextDueDate)")
-                    
-                    // If the next due date is today or in the past, it belongs in today's reminders
-                    if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
-                        print("- Repotting reminder is for today")
+                    // Calculate the next due date based on last completed date
+                    if let nextDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
+                        print("Last completed: \(lastCompletedDate)")
+                        print("Next due date: \(nextDueDate)")
+                        
+                        // If the next due date is today or in the past, it belongs in today's reminders
+                        if calendar.isDateInToday(nextDueDate) || nextDueDate < currentDate {
+                            print("- Repotting reminder is for today")
                         if !todayReminders[2].contains(where: { $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID }) {
                             todayReminders[2].append(reminder)
                         }
-                    } else if nextDueDate > currentDate {
-                        print("- Repotting reminder is upcoming")
-                        upcomingReminders[2].append(reminder)
+                        } else if nextDueDate > currentDate {
+                            print("- Repotting reminder is upcoming")
+                            upcomingReminders[2].append(reminder)
                     }
                 }
             }
@@ -410,23 +429,17 @@ class CareReminderViewController: UIViewController {
     }
     
     @objc private func refreshAfterPlantDeletion(_ notification: Notification) {
+        // Only clear cache if we have data loaded (meaning a plant was actually deleted)
+        if isDataLoaded {
+            isDataLoaded = false
+            cachedReminders.removeAll()
+        }
+        
         reminders = []
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
-        guard let firstUser = dataController.getUserSync() else { return }
-
-        // Only load reminders once, do not append in a loop
-        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
         
-        sortReminders()
-        DispatchQueue.main.async { [weak self] in
-            self?.careReminderCollectionView.reloadData()
-            let hasReminders = self?.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
-                self?.todayReminders.contains(where: { !$0.isEmpty }) ?? false :
-                self?.upcomingReminders.contains(where: { !$0.isEmpty }) ?? false
-            self?.noRemindersView.isHidden = hasReminders
-            self?.careReminderCollectionView.isHidden = !hasReminders
-        }
+        loadDataAsync()
     }
     
     @objc private func refreshAfterStatusUpdate(_ notification: Notification) {
@@ -547,6 +560,67 @@ class CareReminderViewController: UIViewController {
     }
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+    
+    // Add async data loading method
+    private func loadDataAsync() {
+        guard !isLoading else { return }
+        isLoading = true
+        
+        // Show loading state immediately
+        DispatchQueue.main.async { [weak self] in
+            self?.careReminderCollectionView.isHidden = true
+            self?.noRemindersView.isHidden = false
+            if let label = self?.noRemindersView.viewWithTag(100) as? UILabel {
+                label.text = "Loading reminders..."
+            }
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            print("\n=== Loading Care Reminder Data Async ===")
+            
+            guard let firstUser = self.dataController.getUserSync() else {
+                print("❌ No user found")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    self.careReminderCollectionView.isHidden = false
+                    self.noRemindersView.isHidden = true
+                }
+                return
+            }
+            print("✅ Found user: \(firstUser.userEmail)")
+            
+            // Load reminders using the sync wrapper
+            let loadedReminders = self.dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
+            print("📱 Loaded \(loadedReminders.count) reminders")
+            
+            // Cache the data
+            self.cachedReminders = loadedReminders
+            self.isDataLoaded = true
+            
+            // Update UI on main thread
+            DispatchQueue.main.async {
+                self.reminders = loadedReminders
+                self.sortReminders()
+                self.careReminderCollectionView.reloadData()
+                self.isLoading = false
+                
+                // Update UI visibility
+                let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
+                    !self.todayReminders.allSatisfy({ $0.isEmpty }) :
+                    !self.upcomingReminders.allSatisfy({ $0.isEmpty })
+                
+                self.noRemindersView.isHidden = hasReminders
+                self.careReminderCollectionView.isHidden = !hasReminders
+                
+                // Update no reminders message
+                if let label = self.noRemindersView.viewWithTag(100) as? UILabel {
+                    label.text = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ? "Relax!! No work today" : "No upcoming reminders"
+                }
+            }
+        }
     }
 }
 // MARK: - UICollectionView DataSource & Delegate
@@ -717,8 +791,11 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
                 self?.careReminderCollectionView.reloadData()
             }
         } else {
-            print("📅 Not today's reminder - normal reload")
-            loadData()
+            print("📅 Not today's reminder - updating cache and reloading...")
+            // Update cache and reload data asynchronously
+            isDataLoaded = false
+            cachedReminders.removeAll()
+            loadDataAsync()
         }
         
         print("=== Checkbox Toggle Handling Complete ===\n")

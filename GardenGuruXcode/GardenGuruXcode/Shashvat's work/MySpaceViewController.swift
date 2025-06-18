@@ -30,6 +30,11 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     
     private var selectedCategory: String = "All"
     
+    // Add caching properties
+    private var cachedPlantsWithDetails: [(userPlant: UserPlant, plant: Plant)] = []
+    private var isDataLoaded = false
+    private var isLoading = false
+    
     @IBOutlet weak var mySpaceCollectionView: UICollectionView!
     
     override func viewDidLoad() {
@@ -69,8 +74,14 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         print("viewWillAppear")
-        loadData()
-        mySpaceCollectionView.reloadData()
+        
+        // Only load data if not already loaded, cache is empty, or we have new plants
+        if !isDataLoaded || cachedPlantsWithDetails.isEmpty || !MySpaceViewController.newlyAddedPlants.isEmpty {
+            loadDataAsync()
+        } else {
+            // Just update the UI with cached data - this should be instant
+            updateUIWithCachedData()
+        }
     }
     
     override func viewDidLayoutSubviews() {
@@ -91,34 +102,64 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         }
     }
     
-    private func loadData() {
-        print("\n=== MySpaceViewController loadData started ===")
-        print("🔑 Checking UserDefaults...")
-        print("isLoggedIn: \(UserDefaults.standard.bool(forKey: "isLoggedIn"))")
-        print("userEmail: \(UserDefaults.standard.string(forKey: "userEmail") ?? "nil")")
+    // Add async data loading method
+    private func loadDataAsync() {
+        guard !isLoading else { return }
+        isLoading = true
         
-        guard let user = dataController.getUserSync() else {
-            print("❌ ERROR: No users found in DataController")
-            return
+        // Show loading state immediately
+        DispatchQueue.main.async { [weak self] in
+            self?.mySpaceCollectionView.isHidden = true
+            // You could add a loading indicator here if needed
         }
         
-        print("✅ Found user: \(user.userEmail)")
-        
-        // Get plants with details using the sync wrapper
-        print("🌿 Fetching plants for user...")
-        let plantsWithDetails = dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail!) ?? []
-        
-        print("\n📊 Plant Details Summary:")
-        print("Total plants found: \(plantsWithDetails.count)")
-        
-        plantsWithDetails.forEach { plantWithDetails in
-            print("\nPlant: \(plantWithDetails.plant.plantName)")
-            print("- ID: \(plantWithDetails.userPlant.userplantID?.uuidString ?? "nil")")
-            print("- Nickname: \(plantWithDetails.userPlant.userPlantNickName ?? "nil")")
-            print("DEBUG: Plant name: \(plantWithDetails.plant.plantName), category_new: \(String(describing: plantWithDetails.plant.category_new))")
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            print("\n=== MySpaceViewController loadDataAsync started ===")
+            
+            guard let user = self.dataController.getUserSync() else {
+                print("❌ ERROR: No users found in DataController")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    self.mySpaceCollectionView.isHidden = false
+                }
+                return
+            }
+            
+            print("✅ Found user: \(user.userEmail)")
+            
+            // Get plants with details using the sync wrapper
+            print("🌿 Fetching plants for user...")
+            let plantsWithDetails = self.dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail!) ?? []
+            
+            // Cache the data
+            self.cachedPlantsWithDetails = plantsWithDetails
+            self.isDataLoaded = true
+            
+            print("\n📊 Plant Details Summary:")
+            print("Total plants found: \(plantsWithDetails.count)")
+            
+            // Process data on background thread
+            let processedData = self.processPlantData(plantsWithDetails)
+            
+            // Update UI on main thread
+            DispatchQueue.main.async {
+                self.userStats = processedData.userStats
+                self.plantCategories = processedData.plantCategories
+                self.categorizedPlants = processedData.categorizedPlants
+                
+                self.mySpaceCollectionView.isHidden = false
+                self.mySpaceCollectionView.reloadData()
+                self.isLoading = false
+                
+                print("=== MySpaceViewController loadDataAsync completed ===\n")
+            }
         }
-        
-        // Calculate user stats with actual count
+    }
+    
+    // Add method to process plant data
+    private func processPlantData(_ plantsWithDetails: [(userPlant: UserPlant, plant: Plant)]) -> (userStats: [String: Int], plantCategories: [String], categorizedPlants: [[UserPlant]]) {
         let totalPlants = plantsWithDetails.count
         print("\n📈 Stats:")
         print("Total Plants: \(totalPlants)")
@@ -132,7 +173,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             }
         }
         
-        userStats = [
+        let userStats = [
             "Total Plants": totalPlants,
             "Ornamental": categoryCount[.ornamental] ?? 0,
             "Flowering": categoryCount[.flowering] ?? 0,
@@ -153,40 +194,26 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             }
         }
         
-        // Group plants by name with debug info
+        // Group plants by name
         let groupedPlants = Dictionary(grouping: filteredPlantsWithDetails) { tuple in
             tuple.plant.plantName
         }
         
-        print("\n🔍 Plant Grouping:")
-        groupedPlants.forEach { (name, plants) in
-            print("- \(name): \(plants.count) plant(s)")
-        }
-        
-        // Create categories and categorized plants
-        plantCategories = groupedPlants.keys.sorted()
-        categorizedPlants = plantCategories.map { plantName in
+        let plantCategories = groupedPlants.keys.sorted()
+        let categorizedPlants = plantCategories.map { plantName in
             groupedPlants[plantName]?.map { $0.userPlant } ?? []
         }
         
-        print("\n🏷 Categories:")
-        for (index, category) in plantCategories.enumerated() {
-            print("- \(category): \(categorizedPlants[index].count) plant(s)")
-        }
-        
-        // Update UI on main thread
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            print("\n🔄 Updating UI...")
-            self.mySpaceCollectionView.reloadData()
-            print("Collection view sections: \(self.numberOfSections(in: self.mySpaceCollectionView))")
-            for section in 0..<self.numberOfSections(in: self.mySpaceCollectionView) {
-                let items = self.collectionView(self.mySpaceCollectionView, numberOfItemsInSection: section)
-                print("Section \(section): \(items) items")
-            }
-        }
-        
-        print("=== MySpaceViewController loadData completed ===\n")
+        return (userStats, plantCategories, categorizedPlants)
+    }
+    
+    // Add method to update UI with cached data
+    private func updateUIWithCachedData() {
+        let processedData = processPlantData(cachedPlantsWithDetails)
+        userStats = processedData.userStats
+        plantCategories = processedData.plantCategories
+        categorizedPlants = processedData.categorizedPlants
+        mySpaceCollectionView.reloadData()
     }
     
     // Update the search results
@@ -290,7 +317,10 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 confirmAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
                 confirmAlert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
                     self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
-                    self?.loadData()
+                    // Clear cache and reload data asynchronously
+                    self?.isDataLoaded = false
+                    self?.cachedPlantsWithDetails.removeAll()
+                    self?.loadDataAsync()
                 })
                 
                 // Dismiss the action sheet first, then present the confirmation alert from the top-most view controller
@@ -480,7 +510,10 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 
                 confirmAlert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
                     self?.dataController.deleteUserPlantSync(userPlantID: userPlant.userPlantRelationID)
-                    self?.loadData()
+                    // Clear cache and reload data asynchronously
+                    self?.isDataLoaded = false
+                    self?.cachedPlantsWithDetails.removeAll()
+                    self?.loadDataAsync()
                 })
                 
                 topVC.present(confirmAlert, animated: true, completion: nil)
@@ -522,14 +555,22 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         // Store for UI updates
         newlyAddedPlant = (userPlant: userPlant, plant: plant)
         
-        // Update UI
-        loadData()
-        mySpaceCollectionView.reloadData()
+        // Clear cache and reload data
+        isDataLoaded = false
+        cachedPlantsWithDetails.removeAll()
+        loadDataAsync()
     }
     
     func didTapStat(category: String) {
         selectedCategory = category
-        loadData()
+        
+        // If data is already loaded, just update UI with cached data
+        if isDataLoaded {
+            updateUIWithCachedData()
+        } else {
+            // If no cached data, load asynchronously
+            loadDataAsync()
+        }
     }
     
     // Don't forget to remove observer in deinit
