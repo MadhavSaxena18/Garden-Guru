@@ -192,7 +192,7 @@
 				DEVELOPMENT_TEAM = 73B8W4ZN6V;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Garden Guru wants to access camera for diagnosing plant ";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -227,7 +227,7 @@
 				DEVELOPMENT_TEAM = 73B8W4ZN6V;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GardenGuruXcode/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Garden Guru wants to access camera for diagnosing plant ";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show weather-appropriate plants for your area.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
