@@ -433,13 +433,18 @@ class ChatViewController: UIViewController {
         messages.append(userMessage)
         inputTextField.text = ""
         
+        // Build conversation history
+        var conversation = ""
+        for message in messages {
+            if message.isUser {
+                conversation += "User: \(message.content)\n"
+            } else {
+                conversation += "Plant Doctor: \(message.content)\n"
+            }
+        }
+        // Add instruction for the model
         let prompt = """
-        Act as a Plant Doctor. For the following input: "\(text)"
-        Provide:
-        1. Definition
-        2. Examples of usage
-        3. Additional context or tips
-        Format the response clearly with headers.
+        You are a friendly plant doctor. Continue the conversation below, replying as a human expert would. Be brief, clear, and conversational.\n\n\(conversation)Plant Doctor:
         """
         
         Task {
