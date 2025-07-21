@@ -222,6 +222,7 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             userId: UUID(uuidString: user.id) ?? UUID(),
             userplantID: plant.plantID,
             userPlantNickName: nickname,
+            userPlantImage: nil, // Ensure no user image is set when adding via search
             lastWatered: currentDate,
             lastFertilized: currentDate,
             lastRepotted: currentDate
