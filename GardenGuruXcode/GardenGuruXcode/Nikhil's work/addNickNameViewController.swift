@@ -146,19 +146,17 @@ class addNickNameViewController: UIViewController {
             return
         }
         
-        // First dismiss this view controller, then present SetReminderViewController
-        dismiss(animated: true) { [weak self] in
-            let setReminderVC = SetReminderViewController()
-            setReminderVC.configure(plantName: finalPlantName, nickname: nickname)
-            
-            let navController = UINavigationController(rootViewController: setReminderVC)
-            
-            // Get the root view controller to present from
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first,
-               let rootVC = window.rootViewController {
-                rootVC.present(navController, animated: true)
+        // Dismiss self, then present SetReminderViewController from the presenting VC
+        if let presentingVC = self.presentingViewController {
+            self.dismiss(animated: true) {
+                let setReminderVC = SetReminderViewController()
+                setReminderVC.configure(plantName: finalPlantName, nickname: nickname)
+                let navController = UINavigationController(rootViewController: setReminderVC)
+                navController.modalPresentationStyle = .formSheet
+                presentingVC.present(navController, animated: true)
             }
+        } else {
+            print("❌ No presentingViewController found")
         }
     }
    
