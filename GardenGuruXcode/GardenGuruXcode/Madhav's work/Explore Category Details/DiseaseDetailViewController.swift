@@ -17,53 +17,42 @@ class DiseaseDetailViewController: UIViewController {
     private var currentImageIndex: Int = 0
     private var imageArray: [UIImage] = []
     var selectedCardData: Any?
-    @IBOutlet weak var headerImageView: UIImageView!
-    @IBOutlet weak var diseaseNameLabel: UILabel!
-    @IBOutlet weak var tableView: UITableView!
     
-    @IBOutlet weak var diseaseSymptoms: UILabel!
-    @IBOutlet weak var headerBackgroundView: UIView!
+    // UI Elements
+    private let headerImageView = UIImageView()
+    private let overlayGradientView = UIView()
+    private let diseaseNameLabel = UILabel()
+    private let diseaseSymptomsLabel = UILabel()
+    private let tableView = UITableView(frame: .zero, style: .grouped)
+    
     var isModallyPresented: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
         guard let disease = disease else {
             print("Disease is nil")
             return
         }
         selectedCardData = disease
-        setupUI()
-        configureHeaderView()
+        setupViews()
         setupNavigationBar()
-        setupHeaderGradient()
         checkIfAlreadySaved()
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        
-        // Update gradient frame when view resizes
-        if let gradientView = headerBackgroundView.subviews.last,
-           let gradientLayer = gradientView.layer.sublayers?.first as? CAGradientLayer {
-            gradientLayer.frame = headerBackgroundView.bounds
+        // Update gradient frame
+        overlayGradientView.frame = headerImageView.bounds
+        if let gradientLayer = overlayGradientView.layer.sublayers?.first as? CAGradientLayer {
+            gradientLayer.frame = overlayGradientView.bounds
         }
     }
     
     private func setupNavigationBar() {
-        // Only show Done button if modally presented
         if isModallyPresented {
-            let doneButton = UIBarButtonItem(
-                title: "Done",
-                style: .done,
-                target: self,
-                action: #selector(dismissVC)
-            )
+            let doneButton = UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(dismissVC))
             navigationItem.leftBarButtonItem = doneButton
-            
-            
         }
-        
         let heartImage = UIImage(systemName: isSaved ? "heart.fill" : "heart")
         heartButton = UIBarButtonItem(image: heartImage, style: .plain, target: self, action: #selector(toggleHeartTapped))
         navigationItem.rightBarButtonItem = heartButton
@@ -159,123 +148,84 @@ class DiseaseDetailViewController: UIViewController {
         dismiss(animated: true)
     }
     
-    private func setupUI() {
-        // Setup TableView
-        tableView.delegate = self
-        tableView.dataSource = self
-        
-        // Register cell with XIB
-        let nib = UINib(nibName: "DiseaseDetailTableViewCell", bundle: nil)
-        tableView.register(nib, forCellReuseIdentifier: "DiseaseDetailCell")
-        
-        // Remove separators and set background
-        tableView.separatorStyle = .none
-        tableView.backgroundColor = UIColor(red: 0.92, green: 0.96, blue: 0.92, alpha: 1.0)
-        tableView.estimatedRowHeight = 140
-        tableView.rowHeight = UITableView.automaticDimension
-        
-        // Setup Navigation
-        navigationItem.largeTitleDisplayMode = .never
-    }
-    
-    private func configureHeaderView() {
-        guard let disease = disease else { return }
-        
-        // Configure image
-        if let imageURL = disease.diseaseImage {
-            headerImageView.sd_setImage(with: URL(string: imageURL), 
-                                      placeholderImage: UIImage(named: "disease_placeholder"),
-                                      options: [], 
-                                      completed: { [weak self] image, error, _, _ in
-                if let error = error {
-                    print("Error loading disease image: \(error)")
-                    self?.headerImageView.image = UIImage(named: "disease_placeholder")
-                }
-            })
-        } else {
-            headerImageView.image = UIImage(named: "disease_placeholder")
-        }
+    private func setupViews() {
+        view.backgroundColor = .systemGroupedBackground
+        // Header image
         headerImageView.contentMode = .scaleAspectFill
         headerImageView.clipsToBounds = true
+        headerImageView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(headerImageView)
         
-        // Configure disease name label
-        diseaseNameLabel.text = disease.diseaseName
-        
-        // Configure symptoms label
-        if let symptoms = disease.diseaseSymptoms {
-            diseaseSymptoms.text = symptoms
-        } else {
-            diseaseSymptoms.text = "No symptoms available"
-        }
-        
-        // Style the disease name label
-        diseaseNameLabel.textColor = .white
-        diseaseNameLabel.font = .systemFont(ofSize: 32, weight: .bold)
-        diseaseNameLabel.layer.shadowColor = UIColor.black.cgColor
-        diseaseNameLabel.layer.shadowOffset = CGSize(width: 0, height: 1)
-        diseaseNameLabel.layer.shadowRadius = 3
-        diseaseNameLabel.layer.shadowOpacity = 0.5
-        
-        // Style the symptoms label
-        diseaseSymptoms.textColor = .white
-        diseaseSymptoms.font = .systemFont(ofSize: 16, weight: .medium)
-        diseaseSymptoms.layer.shadowColor = UIColor.black.cgColor
-        diseaseSymptoms.layer.shadowOffset = CGSize(width: 0, height: 1)
-        diseaseSymptoms.layer.shadowRadius = 3
-        diseaseSymptoms.layer.shadowOpacity = 0.5
-        
-        // Ensure labels are above the blur and gradient
-        diseaseNameLabel.layer.zPosition = 1
-        diseaseSymptoms.layer.zPosition = 1
-    }
-    
-    private func setupHeaderGradient() {
-        // Create and configure blur effect
-        let blurEffect = UIBlurEffect(style: .dark)  // Changed to dark for better contrast
-        let blurView = UIVisualEffectView(effect: blurEffect)
-        blurView.frame = headerBackgroundView.bounds
-        blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        
-        // Create gradient layer
+        // Gradient overlay
+        overlayGradientView.translatesAutoresizingMaskIntoConstraints = false
+        overlayGradientView.isUserInteractionEnabled = false
         let gradientLayer = CAGradientLayer()
-        gradientLayer.frame = headerBackgroundView.bounds
+        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.7).cgColor]
+        gradientLayer.locations = [0.0, 1.0]
+        overlayGradientView.layer.insertSublayer(gradientLayer, at: 0)
+        headerImageView.addSubview(overlayGradientView)
         
-        // Create an attractive gradient with multiple colors
-        let primaryColor = UIColor(red: 0.85, green: 0.1, blue: 0.1, alpha: 1.0)  // Vibrant red
-        let secondaryColor = UIColor(red: 0.6, green: 0.0, blue: 0.0, alpha: 1.0) // Darker red
+        // Disease name label
+        diseaseNameLabel.font = UIFont.preferredFont(forTextStyle: .largeTitle)
+        diseaseNameLabel.textColor = .white
+        diseaseNameLabel.numberOfLines = 2
+        diseaseNameLabel.adjustsFontForContentSizeCategory = true
+        diseaseNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerImageView.addSubview(diseaseNameLabel)
         
-        gradientLayer.colors = [
-            UIColor.clear.cgColor,                                // Transparent at top
-            primaryColor.withAlphaComponent(0.3).cgColor,        // Subtle primary color
-            primaryColor.withAlphaComponent(0.5).cgColor,        // Medium primary color
-            secondaryColor.withAlphaComponent(0.7).cgColor,      // Stronger secondary color
-            secondaryColor.withAlphaComponent(0.8).cgColor       // Most intense at bottom
-        ]
+        // Disease symptoms label
+        diseaseSymptomsLabel.font = UIFont.preferredFont(forTextStyle: .body)
+        diseaseSymptomsLabel.textColor = .white
+        diseaseSymptomsLabel.numberOfLines = 2
+        diseaseSymptomsLabel.adjustsFontForContentSizeCategory = true
+        diseaseSymptomsLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerImageView.addSubview(diseaseSymptomsLabel)
         
-        // More precise gradient positioning
-        gradientLayer.locations = [0.0, 0.3, 0.5, 0.7, 1.0]
+        // Table view
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.separatorStyle = .none
+        tableView.backgroundColor = .clear
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.register(DiseaseDetailTableViewCell.self, forCellReuseIdentifier: "DiseaseDetailCell")
+        view.addSubview(tableView)
         
-        // Adjust gradient direction slightly
-        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0.0)
-        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        // Layout constraints
+        NSLayoutConstraint.activate([
+            headerImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            headerImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            headerImageView.heightAnchor.constraint(equalToConstant: 320),
+            
+            overlayGradientView.leadingAnchor.constraint(equalTo: headerImageView.leadingAnchor),
+            overlayGradientView.trailingAnchor.constraint(equalTo: headerImageView.trailingAnchor),
+            overlayGradientView.bottomAnchor.constraint(equalTo: headerImageView.bottomAnchor),
+            overlayGradientView.topAnchor.constraint(equalTo: headerImageView.topAnchor),
+            
+            diseaseNameLabel.leadingAnchor.constraint(equalTo: headerImageView.leadingAnchor, constant: 20),
+            diseaseNameLabel.trailingAnchor.constraint(equalTo: headerImageView.trailingAnchor, constant: -20),
+            diseaseNameLabel.bottomAnchor.constraint(equalTo: diseaseSymptomsLabel.topAnchor, constant: -4),
+            
+            diseaseSymptomsLabel.leadingAnchor.constraint(equalTo: headerImageView.leadingAnchor, constant: 20),
+            diseaseSymptomsLabel.trailingAnchor.constraint(equalTo: headerImageView.trailingAnchor, constant: -20),
+            diseaseSymptomsLabel.bottomAnchor.constraint(equalTo: headerImageView.bottomAnchor, constant: -20),
+            
+            tableView.topAnchor.constraint(equalTo: headerImageView.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
         
-        // Add blur view first
-        headerBackgroundView.addSubview(blurView)
-        
-        // Add gradient on top of blur
-        let gradientView = UIView(frame: headerBackgroundView.bounds)
-        gradientView.layer.addSublayer(gradientLayer)
-        gradientView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        headerBackgroundView.addSubview(gradientView)
-        
-        // Make background clear to let blur work
-        headerBackgroundView.backgroundColor = .clear
-        
-        // Enhanced shadow effect
-        headerBackgroundView.layer.shadowColor = UIColor.black.cgColor
-        headerBackgroundView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        headerBackgroundView.layer.shadowRadius = 4
-        headerBackgroundView.layer.shadowOpacity = 0.2
+        // Set data
+        if let disease = disease {
+            if let imageURLString = disease.diseaseImage, let url = URL(string: imageURLString) {
+                headerImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "disease_placeholder"), options: [], completed: nil)
+            } else {
+                headerImageView.image = UIImage(named: "disease_placeholder")
+            }
+            diseaseNameLabel.text = disease.diseaseName
+            diseaseSymptomsLabel.text = disease.diseaseSymptoms ?? ""
+        }
     }
 }
 
@@ -286,127 +236,90 @@ extension DiseaseDetailViewController: UITextViewDelegate {
     }
 }
 
+// Update the tableView section header to use a modern, rounded, system-style header with chevron
 extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
         return 4 // Symptoms, Causes, Treatments, Prevention
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return expandedSections.contains(section) ? 1 : 0 // Show row only if section is expanded
+        return expandedSections.contains(section) ? 1 : 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "DiseaseDetailCell", for: indexPath) as! DiseaseDetailTableViewCell
-        
         guard let disease = disease else {
             cell.configure(with: nil, section: "", showHeader: false)
             return cell
         }
-        
-        cell.isExpanded = true // Always show content when row is visible
-        
+        cell.isExpanded = true
+        // Configure the cell as before, let the cell handle its own layout
         switch indexPath.section {
-        case 0: // Symptoms
-            cell.configure(with: disease, section: "Symptoms", showHeader: false)
-        case 1: // Causes
-            cell.configure(with: disease, section: "Causes", showHeader: false)
-        case 2: // Treatments
-            cell.configure(with: disease, section: "Treatment", showHeader: false)
-        case 3: // Prevention
-            cell.configure(with: disease, section: "Prevention", showHeader: false)
-        default:
-            cell.configure(with: nil, section: "", showHeader: false)
+        case 0: cell.configure(with: disease, section: "Symptoms", showHeader: false)
+        case 1: cell.configure(with: disease, section: "Causes", showHeader: false)
+        case 2: cell.configure(with: disease, section: "Treatment", showHeader: false)
+        case 3: cell.configure(with: disease, section: "Prevention", showHeader: false)
+        default: cell.configure(with: nil, section: "", showHeader: false)
         }
-        
+        cell.backgroundColor = .clear
+        cell.layer.cornerRadius = 0
+        cell.layer.masksToBounds = false
         return cell
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerView = UIView()
-        headerView.backgroundColor = .clear
-        
-        // Create container view with gray background
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = UIColor(white: 0.95, alpha: 1.0) // Solid light gray background
-        containerView.layer.cornerRadius = 16
-        
-        // Add subtle shadow
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 1)
-        containerView.layer.shadowRadius = 1
-        containerView.layer.shadowOpacity = 0.1
-        
-        // Create title label
-        let titleLabel = UILabel()
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.textColor = .black
-        titleLabel.font = .systemFont(ofSize: 22, weight: .medium) // Adjusted font size and weight to match image
-        
-        // Set title based on section
-        switch section {
-        case 0:
-            titleLabel.text = "Symptoms"
-        case 1:
-            titleLabel.text = "Causes"
-        case 2:
-            titleLabel.text = "Treatment"
-        case 3:
-            titleLabel.text = "Prevention"
-        default:
-            titleLabel.text = ""
-        }
-        
-        // Create chevron image view
-        let chevronImage = UIImageView(image: UIImage(systemName: expandedSections.contains(section) ? "chevron.down" : "chevron.right"))
-        chevronImage.translatesAutoresizingMaskIntoConstraints = false
-        chevronImage.tintColor = .gray
-        chevronImage.contentMode = .scaleAspectFit
-        
-        headerView.addSubview(containerView)
-        containerView.addSubview(titleLabel)
-        containerView.addSubview(chevronImage)
-        
-        NSLayoutConstraint.activate([
-            // Container view constraints - adjusted for better spacing
-            containerView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
-            containerView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
-            containerView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 8),
-            containerView.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8),
-            
-            // Title label constraints
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 24),
-            titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            
-            // Chevron image constraints
-            chevronImage.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -24),
-            chevronImage.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            chevronImage.widthAnchor.constraint(equalToConstant: 20),
-            chevronImage.heightAnchor.constraint(equalToConstant: 20)
-        ])
-        
+        let container = UIView()
+        container.backgroundColor = .clear
+        let header = UIView()
+        header.backgroundColor = .tertiarySystemGroupedBackground
+        header.layer.cornerRadius = 14
+        header.layer.masksToBounds = true
+        header.tag = section
+        header.isUserInteractionEnabled = true
         // Add tap gesture
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(headerTapped(_:)))
-        headerView.addGestureRecognizer(tapGesture)
-        headerView.tag = section
-        headerView.isUserInteractionEnabled = true
-        
-        return headerView
+        let tap = UITapGestureRecognizer(target: self, action: #selector(headerTapped(_:)))
+        header.addGestureRecognizer(tap)
+        // Title label
+        let titleLabel = UILabel()
+        titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
+        titleLabel.textColor = .label
+        let titles = ["Symptoms", "Causes", "Treatment", "Prevention"]
+        titleLabel.text = "  " + titles[section]
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(titleLabel)
+        // Chevron
+        let chevron = UIImageView(image: UIImage(systemName: expandedSections.contains(section) ? "chevron.down" : "chevron.right"))
+        chevron.tintColor = .systemGray
+        chevron.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(chevron)
+        container.addSubview(header)
+        header.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            header.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            header.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            header.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            header.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
+            titleLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 0),
+            titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            chevron.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            chevron.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
+            chevron.widthAnchor.constraint(equalToConstant: 20),
+            chevron.heightAnchor.constraint(equalToConstant: 20)
+        ])
+        return container
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 60 // Increased height to match design
+        return 48
     }
     
     @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
         guard let section = gesture.view?.tag else { return }
-        
         if expandedSections.contains(section) {
             expandedSections.remove(section)
         } else {
             expandedSections.insert(section)
         }
-        
         tableView.reloadSections(IndexSet(integer: section), with: .automatic)
     }
     

@@ -153,8 +153,10 @@ class AllDataCollectionViewCell: UICollectionViewCell {
     }
     
     func configureForFertilizer(with fertilizer: Fertilizer) {
-        nameLabel.text = fertilizer.fertilizerName
+        print("[DEBUG] Configuring fertilizer cell for: \(fertilizer.fertilizerName)")
+        nameLabel.text = fertilizer.fertilizerName ?? "No Name"
         descriptionLabel.text = fertilizer.fertilizerDescription ?? "No description available"
+        contentView.backgroundColor = .white // Set card background to white
         
         if let urlString = fertilizer.fertilizerImage, let url = URL(string: urlString) {
             plantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "fertilizer_placeholder"))
