@@ -1088,15 +1088,18 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         } else {
             VC.headerData = ExploreScreen.headerForInMyPlantSegment
 
-            if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
-                Task {
-                    do {
-                        let userPlantDiseases = try await dataController.getDiseasesForUserPlants(userEmail: userEmail)
-                        await MainActor.run {
-                            VC.setDiseases(userPlantDiseases)
+            // Only fetch diseases if we're in the Common Issues section
+            if selectedCategory.title == "Common Issues in your Plant" {
+                if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
+                    Task {
+                        do {
+                            let userPlantDiseases = try await dataController.getDiseasesForUserPlants(userEmail: userEmail)
+                            await MainActor.run {
+                                VC.setDiseases(userPlantDiseases)
+                            }
+                        } catch {
+                            print("❌ Error fetching user plant diseases: \(error)")
                         }
-                    } catch {
-                        print("❌ Error fetching user plant diseases: \(error)")
                     }
                 }
             }

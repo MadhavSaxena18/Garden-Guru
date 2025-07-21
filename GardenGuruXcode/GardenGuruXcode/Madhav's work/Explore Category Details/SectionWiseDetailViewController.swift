@@ -21,6 +21,7 @@ class SectionWiseDetailViewController: UIViewController {
     private var plants: [Plant] = []
     private var diseases: [Diseases] = []
     private var preventionTips: [PreventionTip] = []
+    private var fertilizers: [Fertilizer] = []
     private var isShowingPlants = true
     private var dataType: DataType = .plants
     
@@ -28,6 +29,7 @@ class SectionWiseDetailViewController: UIViewController {
         case plants
         case diseases
         case preventionTips
+        case fertilizers
         case none // Added for empty state
     }
     // MARK: - Dependencies
@@ -88,6 +90,14 @@ class SectionWiseDetailViewController: UIViewController {
                     self.plants = []
                     didSetFiltered = true
                     print("🔍 SectionWiseDetailViewController - Set filtered diseases for My Plants from viewDidLoad: \(filteredDiseases.count) items")
+                } else if sectionTitle == "Common Fertilizers",
+                          let filteredFertilizers = receivedFilteredItems as? [Fertilizer] {
+                    self.fertilizers = filteredFertilizers
+                    self.dataType = .fertilizers
+                    self.diseases = []
+                    self.plants = []
+                    didSetFiltered = true
+                    print("🔍 SectionWiseDetailViewController - Set filtered fertilizers for My Plants from viewDidLoad: \(filteredFertilizers.count) items")
                 } else if sectionTitle == "Common Fertilizers" {
                     self.diseases = []
                     self.plants = []
@@ -231,6 +241,13 @@ class SectionWiseDetailViewController: UIViewController {
                             diseases = filteredDiseases
                             print("🔍 SectionWiseDetailViewController - Using filtered diseases: \(diseases.count)")
                         }
+                    case 1: // Common Fertilizers
+                        print("🔍 SectionWiseDetailViewController - Setting up fertilizers for user plants")
+                        dataType = .fertilizers
+                        if let filteredFertilizers = filteredItems as? [Fertilizer] {
+                            fertilizers = filteredFertilizers
+                            print("🔍 SectionWiseDetailViewController - Using filtered fertilizers: \(fertilizers.count)")
+                        }
                     default:
                         print("❌ SectionWiseDetailViewController - Unknown section for For My Plants segment")
                     }
@@ -292,6 +309,8 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             return 0
         case .preventionTips:
             return preventionTips.count
+        case .fertilizers:
+            return fertilizers.count
         }
     }
     
@@ -326,6 +345,15 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
             }
             let preventionTip = preventionTips[indexPath.item]
             cell.configureForPreventionTip(with: preventionTip)
+        case .fertilizers:
+            print("[DEBUG] cellForItemAt called for fertilizer at index \(indexPath.item)")
+            guard indexPath.item < fertilizers.count else {
+                print("Fertilizer index out of bounds")
+                return cell
+            }
+            let fertilizer = fertilizers[indexPath.item]
+            print("[DEBUG] cellForItemAt: Configuring fertilizer cell for: \(fertilizer.fertilizerName)")
+            cell.configureForFertilizer(with: fertilizer)
         }
         return cell
     }
@@ -360,6 +388,14 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
                 present(navVC, animated: true)
             }
             break
+        case .fertilizers:
+            let fertilizer = fertilizers[indexPath.item]
+            let detailVC = FertilizerDetailViewController()
+            detailVC.fertilizer = fertilizer
+            detailVC.title = fertilizer.fertilizerName
+            let navVC = UINavigationController(rootViewController: detailVC)
+            navVC.modalPresentationStyle = .formSheet
+            present(navVC, animated: true)
         }
     }
 }
