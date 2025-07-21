@@ -1088,6 +1088,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         } else {
             VC.headerData = ExploreScreen.headerForInMyPlantSegment
 
+            // Only fetch diseases if we're in the Common Issues section
+            if selectedCategory.title == "Common Issues in your Plant" {
             if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
                 Task {
                     do {
@@ -1097,6 +1099,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         }
                     } catch {
                         print("❌ Error fetching user plant diseases: \(error)")
+                        }
                     }
                 }
             }
