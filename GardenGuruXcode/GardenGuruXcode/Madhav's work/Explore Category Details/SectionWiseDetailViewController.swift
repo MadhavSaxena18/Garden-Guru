@@ -391,11 +391,10 @@ extension SectionWiseDetailViewController: UICollectionViewDataSource, UICollect
         case .fertilizers:
             let fertilizer = fertilizers[indexPath.item]
             let detailVC = FertilizerDetailViewController()
+            detailVC.isPresentedModally = false
             detailVC.fertilizer = fertilizer
             detailVC.title = fertilizer.fertilizerName
-            let navVC = UINavigationController(rootViewController: detailVC)
-            navVC.modalPresentationStyle = .formSheet
-            present(navVC, animated: true)
+            navigationController?.pushViewController(detailVC, animated: true)
         }
     }
 }
