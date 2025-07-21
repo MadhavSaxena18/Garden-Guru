@@ -94,33 +94,24 @@ class DiseaseDetailTableViewCell: UITableViewCell {
     }
     
     func configure(with disease: Diseases?, section: String, showHeader: Bool = true) {
-        // Unsafe unwrapping is fine here because setupUI() ensures they are initialized
-        // The guards are for the passed `disease` object.
         guard let disease = disease else {
             titleLabel.text = section
             contentLabel.text = "No information available"
             return
         }
-        
-        // Hide or show the title label based on showHeader parameter
         titleLabel.isHidden = !showHeader
-        
-        // isExpanded property handles the collapsibleContentContainer visibility automatically
-        
         switch section {
         case "Symptoms":
             contentLabel.text = disease.diseaseSymptoms?.isEmpty == false ? disease.diseaseSymptoms : "No symptoms information available"
-            
+        case "Causes":
+            contentLabel.text = "No causes information available"
         case "Treatment":
             contentLabel.text = disease.diseaseCure?.isEmpty == false ? disease.diseaseCure : "No treatment information available"
-            
         case "Prevention":
             contentLabel.text = disease.diseaseFertilizers?.isEmpty == false ? disease.diseaseFertilizers : "No prevention information available"
-            
         default:
             contentLabel.text = "Information not available"
         }
-        
         layoutIfNeeded()
     }
     
