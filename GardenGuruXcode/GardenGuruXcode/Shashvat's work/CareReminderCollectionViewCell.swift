@@ -91,9 +91,13 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         print("Is Completed: \(isCompleted)")
         print("Should Enable Checkbox: \(shouldEnableCheckbox)")
         
-        if let imageUrlString = reminderData.plant.plantImage,
-           let imageUrl = URL(string: imageUrlString) {
-            careReminderPlantImageView.sd_setImage(with: imageUrl, placeholderImage: UIImage(named: "placeholder_plant"))
+        // Prefer userPlantImage if available, else fallback to plantImage
+        if let userImageUrlString = reminderData.userPlant.userPlantImage, !userImageUrlString.isEmpty,
+           let userImageUrl = URL(string: userImageUrlString) {
+            careReminderPlantImageView.sd_setImage(with: userImageUrl, placeholderImage: UIImage(named: "placeholder_plant"))
+        } else if let plantImageUrlString = reminderData.plant.plantImage, !plantImageUrlString.isEmpty,
+                  let plantImageUrl = URL(string: plantImageUrlString) {
+            careReminderPlantImageView.sd_setImage(with: plantImageUrl, placeholderImage: UIImage(named: "placeholder_plant"))
         } else {
             careReminderPlantImageView.image = UIImage(named: "placeholder_plant")
         }
