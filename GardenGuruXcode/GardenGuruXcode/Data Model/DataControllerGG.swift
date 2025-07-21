@@ -3166,5 +3166,39 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
     }
 
+    func signInWithApple(idToken: String) async throws -> (Session, userInfo?) {
+        print("\n=== Signing In with Apple ===")
+        
+        // Sign in with Supabase using Apple token
+        let session = try await supabase.auth.signInWithIdToken(
+            credentials: .init(
+                provider: .apple,
+                idToken: idToken
+            )
+        )
+        
+        print("✅ Apple authentication successful")
+        
+        // Save the session
+        saveSession(session)
+        
+        // Get the user's email from the session
+        guard let email = session.user.email else {
+            throw AuthError.noAuthenticatedUser
+        }
+        
+        // Store the email for future use
+        UserDefaults.standard.set(email, forKey: "userEmail")
+        
+        // After successful authentication, fetch user data
+        print("🔍 Fetching user data from UserTable")
+        let userData = try await initializeUser(email: email)
+        
+        // Post notification that user signed in
+        NotificationCenter.default.post(name: Notification.Name("UserSignedIn"), object: nil)
+        
+        return (session, userData)
+    }
+
 }
 

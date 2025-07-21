@@ -1,4 +1,5 @@
 import UIKit
+import AuthenticationServices
 
 extension Notification.Name {
     static let userDidCompleteProfile1 = Notification.Name("userDidCompleteProfile")
@@ -247,6 +248,18 @@ class SignupViewController: UIViewController {
         setupActions()
         setupBindings()
         
+        // Debug button setup
+        signUpWithAppleButton.addAction(UIAction { [weak self] _ in
+            print("Apple button tapped in Signup")
+        }, for: .touchUpInside)
+        
+        // Verify button properties
+        print("📱 Button Setup Verification:")
+        print("Apple Button isEnabled: \(signUpWithAppleButton.isEnabled)")
+        print("Apple Button isUserInteractionEnabled: \(signUpWithAppleButton.isUserInteractionEnabled)")
+        print("Apple Button frame: \(signUpWithAppleButton.frame)")
+        print("Apple Button superview: \(String(describing: signUpWithAppleButton.superview))")
+        
         // Hide navigation bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
@@ -430,6 +443,14 @@ class SignupViewController: UIViewController {
         signInButton.addTarget(self, action: #selector(signInButtonTapped), for: .touchUpInside)
         signUpWithAppleButton.addTarget(self, action: #selector(appleSignUpTapped), for: .touchUpInside)
         signUpWithGoogleButton.addTarget(self, action: #selector(googleSignUpTapped), for: .touchUpInside)
+        
+        // Add debug print to verify button setup
+        print("🔘 Setup Actions - Buttons connected:")
+        print("✓ Sign Up Button")
+        print("✓ Resend Button")
+        print("✓ Sign In Button")
+        print("✓ Apple Sign Up Button")
+        print("✓ Google Sign Up Button")
     }
     
     private func setupBindings() {
@@ -579,11 +600,6 @@ class SignupViewController: UIViewController {
                 return
             }
             
-//            guard isValidPassword(password) else {
-//                showAlert(title: "Invalid Password", message: passwordRequirements)
-//                return
-//            }
-            
             // Validate confirm password
             guard let confirmPassword = confirmPasswordTextField.text,
                   !confirmPassword.isEmpty else {
@@ -598,13 +614,47 @@ class SignupViewController: UIViewController {
             
             // Store email and password temporarily
             UserDefaults.standard.set(email, forKey: "userEmail")
-            UserDefaults.standard.set(password, forKey: "tempPassword")
+            KeychainManager.shared.save(password, for: "tempPassword_\(email)")
             
             showLoadingIndicator()
             viewModel.email = email
             viewModel.password = password
             Task {
-                await viewModel.checkEmailAndSendOTP()
+                do {
+                    // First create auth user
+                    let (authResponse, _) = try await DataControllerGG.shared.signUp(
+                        email: email,
+                        password: password,
+                        userName: email.components(separatedBy: "@")[0] // Use email prefix as initial username
+                    )
+                    
+                    if let session = authResponse.session, session.accessToken != nil {
+                        // Create user in UserTable
+                        let userName = email.components(separatedBy: "@")[0]
+                        try await DataControllerGG.shared.createUser(
+                            email: email,
+                            userName: userName,
+                            location: "North India"
+                        )
+                        
+                        print("✅ User created in both Auth and UserTable")
+                        
+                        // Store login state
+                        UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                        UserDefaults.standard.set(email, forKey: "userEmail")
+                        
+                        hideLoadingIndicator()
+                        // Show complete profile screen
+                        let completeProfileVC = CompleteProfileViewController()
+                        completeProfileVC.modalPresentationStyle = .fullScreen
+                        present(completeProfileVC, animated: true)
+                    } else {
+                        throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "Failed to create user - no valid session"])
+                    }
+                } catch {
+                    hideLoadingIndicator()
+                    showAlert(title: "Error", message: error.localizedDescription)
+                }
             }
             
         case .otp:
@@ -640,7 +690,14 @@ class SignupViewController: UIViewController {
     }
     
     @objc private func appleSignUpTapped() {
-        showAlert(title: "Coming Soon", message: "Apple Sign Up will be available soon!")
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let request = appleIDProvider.createRequest()
+        request.requestedScopes = [.fullName, .email]
+        
+        let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        authorizationController.delegate = self
+        authorizationController.presentationContextProvider = self
+        authorizationController.performRequests()
     }
     
     @objc private func googleSignUpTapped() {
@@ -657,6 +714,118 @@ class SignupViewController: UIViewController {
         loadingIndicator.stopAnimating()
         updateUIForCurrentStep()
         signupButton.isEnabled = true
+    }
+}
+
+// MARK: - ASAuthorizationControllerDelegate
+extension SignupViewController: ASAuthorizationControllerDelegate {
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
+            let userIdentifier = appleIDCredential.user
+            let fullName = appleIDCredential.fullName
+            let email = appleIDCredential.email
+            
+            // Store the user identifier
+            UserDefaults.standard.set(userIdentifier, forKey: "appleUserIdentifier")
+            
+            // Get the identity token
+            guard let identityToken = appleIDCredential.identityToken,
+                  let idTokenString = String(data: identityToken, encoding: .utf8) else {
+                showAlert(title: "Error", message: "Could not get identity token")
+                return
+            }
+            
+            // Sign in with Supabase using Apple token
+            Task {
+                do {
+                    showLoadingIndicator()
+                    let (session, userData) = try await DataControllerGG.shared.signInWithApple(idToken: idTokenString)
+                    
+                    // Check if we have a valid session
+                    if session.accessToken != nil {
+                        // Get user email - first try Apple credential, then session
+                        let userEmail = email ?? session.user.email
+                        
+                        // Create user name from Apple credential
+                        var finalUserName = ""
+                        if let givenName = fullName?.givenName, let familyName = fullName?.familyName {
+                            finalUserName = "\(givenName) \(familyName)"
+                        } else if let givenName = fullName?.givenName {
+                            finalUserName = givenName
+                        } else if let familyName = fullName?.familyName {
+                            finalUserName = familyName
+                        } else {
+                            // If no name provided, use email prefix
+                            if let emailPrefix = userEmail?.components(separatedBy: "@").first {
+                                finalUserName = emailPrefix
+                            } else {
+                                finalUserName = "User_\(userIdentifier.prefix(8))"  // Fallback username
+                            }
+                        }
+                        
+                        print("📝 User Data:")
+                        print("Email: \(userEmail ?? "No email")")
+                        print("Name: \(finalUserName)")
+                        
+                        // If user data doesn't exist, create new user profile
+                        if userData == nil {
+                            // Create user in UserTable with all available data
+                            try await DataControllerGG.shared.createUser(
+                                email: userEmail ?? "",
+                                userName: finalUserName,
+                                location: "North India"
+                            )
+                            
+                            // Try to save additional profile data
+                            try await DataControllerGG.shared.saveUserProfile(userData: [
+                                "id": userIdentifier,
+                                "user_email": userEmail ?? "",
+                                "userName": finalUserName,
+                                "user_name": finalUserName,
+                                "location": "North India",
+                                "reminderAllowed": true,
+                                "age": 0,
+                                "gender": "",
+                                "plant_preferences": []
+                            ])
+                            
+                            print("✅ User profile created in UserTable with full data")
+                        } else {
+                            // Update existing user's data if needed
+                            try await DataControllerGG.shared.saveUserProfile(userData: [
+                                "user_email": userEmail ?? "",
+                                "userName": finalUserName,
+                                "user_name": finalUserName
+                            ])
+                            print("✅ Updated existing user profile with Apple data")
+                        }
+                        
+                        // Store login state
+                        UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                        UserDefaults.standard.set(userEmail ?? "", forKey: "userEmail")
+                        
+                        hideLoadingIndicator()
+                        NotificationCenter.default.post(name: .showMainApp, object: nil)
+                    } else {
+                        throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "Invalid session"])
+                    }
+                } catch {
+                    hideLoadingIndicator()
+                    showAlert(title: "Error", message: error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        showAlert(title: "Error", message: error.localizedDescription)
+    }
+}
+
+// MARK: - ASAuthorizationControllerPresentationContextProviding
+extension SignupViewController: ASAuthorizationControllerPresentationContextProviding {
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        return view.window!
     }
 }
 

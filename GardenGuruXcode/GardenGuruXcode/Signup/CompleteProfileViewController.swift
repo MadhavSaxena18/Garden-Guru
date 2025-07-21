@@ -5,6 +5,9 @@ extension Notification.Name {
 }
 
 class CompleteProfileViewController: UIViewController {
+    // Add property to identify Apple Sign In
+    var isAppleSignIn = false
+    
     // MARK: - UICollectionViewDelegateFlowLayout
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = (collectionView.bounds.width - 20) / 2 // 2 cells per row with 20pt total spacing
@@ -255,7 +258,13 @@ class CompleteProfileViewController: UIViewController {
         setupUI()
         setupConstraints()
         setupActions()
-        setupBindings()
+        
+        // Pre-fill data if coming from Apple Sign In
+        if isAppleSignIn {
+            if let userName = UserDefaults.standard.string(forKey: "tempUserName") {
+                nameTextField.text = userName
+            }
+        }
     }
     
     // MARK: - Setup
@@ -499,10 +508,41 @@ class CompleteProfileViewController: UIViewController {
         }
         
         showLoadingIndicator()
-        viewModel.completeProfile(name: name,
-                                age: age,
-                                gender: selectedGender.lowercased(),
-                                plantPreferences: selectedPreferences)
+        
+        Task {
+            do {
+                // Create or update user profile in UserTable
+                try await DataControllerGG.shared.saveUserProfile(userData: [
+                    "email": UserDefaults.standard.string(forKey: "userEmail") ?? "", // Assuming email is available
+                    "user_email": UserDefaults.standard.string(forKey: "userEmail") ?? "",
+                    "userName": name,
+                    "age": age,
+                    "gender": selectedGender.lowercased(),
+                    "location": "North India",
+                    "reminderAllowed": true,
+                    "plant_preferences": selectedPreferences
+                ])
+                
+                // Update login state from temporary to permanent
+                UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                UserDefaults.standard.removeObject(forKey: "tempLoginState")
+                
+                // Clean up temporary data
+                if isAppleSignIn {
+                    UserDefaults.standard.removeObject(forKey: "tempUserName")
+                }
+                
+                hideLoadingIndicator()
+                
+                // Post notification to show main app
+                NotificationCenter.default.post(name: .userDidCompleteProfile, object: nil)
+                self.view.window?.rootViewController?.dismiss(animated: true)
+                
+            } catch {
+                hideLoadingIndicator()
+                showAlert(title: "Error", message: error.localizedDescription)
+            }
+        }
     }
     
     @objc internal override func dismissKeyboard() {

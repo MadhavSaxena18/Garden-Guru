@@ -1,4 +1,5 @@
 import UIKit
+import AuthenticationServices
 
 class LoginViewController: UIViewController {
     
@@ -204,6 +205,18 @@ class LoginViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupActions()
+        
+        // Debug button setup
+        signInWithAppleButton.addAction(UIAction { [weak self] _ in
+            print("Apple button tapped in Login")
+        }, for: .touchUpInside)
+        
+        // Verify button properties
+        print("📱 Button Setup Verification:")
+        print("Apple Button isEnabled: \(signInWithAppleButton.isEnabled)")
+        print("Apple Button isUserInteractionEnabled: \(signInWithAppleButton.isUserInteractionEnabled)")
+        print("Apple Button frame: \(signInWithAppleButton.frame)")
+        print("Apple Button superview: \(String(describing: signInWithAppleButton.superview))")
     }
     
     private func setupUI() {
@@ -341,10 +354,18 @@ class LoginViewController: UIViewController {
         loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         showPasswordButton.addTarget(self, action: #selector(togglePasswordVisibility), for: .touchUpInside)
         forgotPasswordButton.addTarget(self, action: #selector(forgotPasswordButtonTapped), for: .touchUpInside)
-        
-        // Add target with debug print
         signUpButton.addTarget(self, action: #selector(signUpButtonTapped), for: .touchUpInside)
-        print("Sign up button target added")
+        signInWithAppleButton.addTarget(self, action: #selector(appleSignInTapped), for: .touchUpInside)
+        signInWithGoogleButton.addTarget(self, action: #selector(googleSignInTapped), for: .touchUpInside)
+        
+        // Add debug print to verify button setup
+        print("🔘 Setup Actions - Buttons connected:")
+        print("✓ Login Button")
+        print("✓ Show Password Button")
+        print("✓ Forgot Password Button")
+        print("✓ Sign Up Button")
+        print("✓ Apple Sign In Button")
+        print("✓ Google Sign In Button")
         
         // Add text field delegates
         emailTextField.delegate = self
@@ -500,6 +521,21 @@ class LoginViewController: UIViewController {
         
         present(navigationController, animated: true)
     }
+
+    @objc private func appleSignInTapped() {
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let request = appleIDProvider.createRequest()
+        request.requestedScopes = [.fullName, .email]
+        
+        let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        authorizationController.delegate = self
+        authorizationController.presentationContextProvider = self
+        authorizationController.performRequests()
+    }
+
+    @objc private func googleSignInTapped() {
+        showAlert(message: "Google Sign In will be available soon!")
+    }
 }
 
 // MARK: - UITextFieldDelegate
@@ -529,5 +565,62 @@ extension LoginViewController: UITextFieldDelegate {
             loginButtonTapped()
         }
         return true
+    }
+}
+
+// MARK: - ASAuthorizationControllerDelegate
+extension LoginViewController: ASAuthorizationControllerDelegate {
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
+            let userIdentifier = appleIDCredential.user
+            
+            // Get the identity token
+            guard let identityToken = appleIDCredential.identityToken,
+                  let idTokenString = String(data: identityToken, encoding: .utf8) else {
+                showAlert(message: "Could not get identity token")
+                return
+            }
+            
+            // Sign in with Supabase using Apple token
+            Task {
+                do {
+                    loadingIndicator.startAnimating()
+                    let (session, userData) = try await dataController.signInWithApple(idToken: idTokenString)
+                    
+                    if session.accessToken != nil {
+                        // Store login state
+                        UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                        UserDefaults.standard.set(userIdentifier, forKey: "appleUserIdentifier")
+                        
+                        if userData == nil {
+                            print("⚠️ Warning: User authenticated but no profile data found")
+                        }
+                        
+                        await MainActor.run { [weak self] in
+                            self?.hideLoadingIndicator()
+                            self?.showSuccessAndNavigate()
+                        }
+                    } else {
+                        throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "Invalid session"])
+                    }
+                } catch {
+                    await MainActor.run { [weak self] in
+                        self?.hideLoadingIndicator()
+                        self?.showAlert(message: error.localizedDescription)
+                    }
+                }
+            }
+        }
+    }
+    
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        showAlert(message: error.localizedDescription)
+    }
+}
+
+// MARK: - ASAuthorizationControllerPresentationContextProviding
+extension LoginViewController: ASAuthorizationControllerPresentationContextProviding {
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        return view.window!
     }
 } 
