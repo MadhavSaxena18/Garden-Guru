@@ -106,7 +106,7 @@ class PlantCarAIViewController: UIViewController {
     }
     
     private func setupNavigation() {
-        self.title = "PlantCarAI"
+        self.title = "Plant Doctor"
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         
@@ -184,14 +184,18 @@ class PlantCarAIViewController: UIViewController {
         messages.append(userMessage)
         inputTextField.text = ""
         
+        // Build conversation history
+        var conversation = ""
+        for message in messages {
+            if message.isUser {
+                conversation += "User: \(message.content)\n"
+            } else {
+                conversation += "Plant Doctor: \(message.content)\n"
+            }
+        }
+        // Add instruction for the model
         let prompt = """
-        Act as a plant care expert. For the following question: "\(text)"
-        Provide:
-        1. Direct answer to the question
-        2. Additional care tips
-        3. Common mistakes to avoid
-        4. Best practices
-        Format the response clearly with headers.
+        You are a friendly plant doctor. Continue the conversation below, replying as a human expert would. Be brief, clear, and conversational.\n\n\(conversation)Plant Doctor:
         """
         
         Task {
