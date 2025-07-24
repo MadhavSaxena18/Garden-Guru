@@ -31,6 +31,8 @@ class CardDetailsSection3CollectionViewCell: UICollectionViewCell {
             layout.minimumInteritemSpacing = 0
             layout.itemSize = CGSize(width: contentView.frame.width * 0.8, height: contentView.frame.height)
             
+            
+            
             // Create collection view
             collectionView = UICollectionView(frame: contentView.bounds, collectionViewLayout: layout)
             collectionView.backgroundColor = .clear
