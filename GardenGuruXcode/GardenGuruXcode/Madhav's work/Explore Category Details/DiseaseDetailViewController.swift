@@ -12,11 +12,12 @@ class DiseaseDetailViewController: UIViewController {
     private var isSaved = false
     private var heartButton: UIBarButtonItem!
     var disease: Diseases?
-    private var expandedSections: Set<Int> = [0] // Start with first section expanded
     private var fullscreenImageView: UIImageView?
     private var currentImageIndex: Int = 0
     private var imageArray: [UIImage] = []
     var selectedCardData: Any?
+    // Collapsible state
+    private var expandedSection: Int? = nil
     
     // UI Elements
     private let headerImageView = UIImageView()
@@ -37,6 +38,8 @@ class DiseaseDetailViewController: UIViewController {
         setupViews()
         setupNavigationBar()
         checkIfAlreadySaved()
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 120
     }
     
     override func viewDidLayoutSubviews() {
@@ -236,14 +239,14 @@ extension DiseaseDetailViewController: UITextViewDelegate {
     }
 }
 
-// Update the tableView section header to use a modern, rounded, system-style header with chevron
+// TableView Delegate/DataSource: Remove collapsible logic, just return 1 row per section
 extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
         return 4 // Symptoms, Causes, Treatments, Prevention
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return expandedSections.contains(section) ? 1 : 0
+        return expandedSection == section ? 1 : 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -252,8 +255,7 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
             cell.configure(with: nil, section: "", showHeader: false)
             return cell
         }
-        cell.isExpanded = true
-        // Configure the cell as before, let the cell handle its own layout
+        cell.isExpanded = true // Always show content if row is visible
         switch indexPath.section {
         case 0: cell.configure(with: disease, section: "Symptoms", showHeader: false)
         case 1: cell.configure(with: disease, section: "Causes", showHeader: false)
@@ -288,7 +290,7 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(titleLabel)
         // Chevron
-        let chevron = UIImageView(image: UIImage(systemName: expandedSections.contains(section) ? "chevron.down" : "chevron.right"))
+        let chevron = UIImageView(image: UIImage(systemName: expandedSection == section ? "chevron.down" : "chevron.right"))
         chevron.tintColor = .systemGray
         chevron.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(chevron)
@@ -315,130 +317,11 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
     
     @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
         guard let section = gesture.view?.tag else { return }
-        if expandedSections.contains(section) {
-            expandedSections.remove(section)
+        if expandedSection == section {
+            expandedSection = nil // Collapse if already open
         } else {
-            expandedSections.insert(section)
+            expandedSection = section // Expand tapped section
         }
-        tableView.reloadSections(IndexSet(integer: section), with: .automatic)
-    }
-    
-    // Optional: Animate height changes
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard let cell = cell as? DiseaseDetailTableViewCell else { return }
-        cell.isExpanded = true // Always show content when row is visible
-    }
-    
-    @objc private func imageTapped(_ gesture: UITapGestureRecognizer) {
-        guard let tappedImageView = gesture.view as? UIImageView,
-              let image = tappedImageView.image else { return }
-        
-        // Get all images from the stack view
-        if let stackView = tappedImageView.superview as? UIStackView {
-            imageArray = stackView.arrangedSubviews.compactMap { view in
-                guard let imageView = view as? UIImageView else { return nil }
-                return imageView.image
-            }
-            
-            // Set current index to the tapped image
-            if let index = imageArray.firstIndex(of: image) {
-                currentImageIndex = index
-            }
-        }
-        
-        // Create fullscreen image view
-        let fullscreenView = UIView(frame: UIScreen.main.bounds)
-        fullscreenView.backgroundColor = .black.withAlphaComponent(0.9)
-        
-        let imageView = UIImageView(frame: fullscreenView.bounds)
-        imageView.image = image
-        imageView.contentMode = .scaleAspectFit
-        imageView.isUserInteractionEnabled = true
-        
-        // Add swipe gestures
-        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
-        leftSwipe.direction = .left
-        let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
-        rightSwipe.direction = .right
-        
-        fullscreenView.addGestureRecognizer(leftSwipe)
-        fullscreenView.addGestureRecognizer(rightSwipe)
-        
-        // Add tap gesture to dismiss
-        let dismissTap = UITapGestureRecognizer(target: self, action: #selector(dismissFullscreenImage))
-        fullscreenView.addGestureRecognizer(dismissTap)
-        
-        fullscreenView.addSubview(imageView)
-        
-        // Add close button
-        let closeButton = UIButton(type: .system)
-        closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-        closeButton.tintColor = .white
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.addTarget(self, action: #selector(dismissFullscreenImage), for: .touchUpInside)
-        fullscreenView.addSubview(closeButton)
-        
-        // Add page indicator
-        let pageLabel = UILabel()
-        pageLabel.translatesAutoresizingMaskIntoConstraints = false
-        pageLabel.textColor = .white
-        pageLabel.text = "\(currentImageIndex + 1)/\(imageArray.count)"
-        pageLabel.font = .systemFont(ofSize: 16, weight: .medium)
-        fullscreenView.addSubview(pageLabel)
-        
-        NSLayoutConstraint.activate([
-            closeButton.topAnchor.constraint(equalTo: fullscreenView.safeAreaLayoutGuide.topAnchor, constant: 16),
-            closeButton.trailingAnchor.constraint(equalTo: fullscreenView.trailingAnchor, constant: -16),
-            closeButton.widthAnchor.constraint(equalToConstant: 32),
-            closeButton.heightAnchor.constraint(equalToConstant: 32),
-            
-            pageLabel.bottomAnchor.constraint(equalTo: fullscreenView.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            pageLabel.centerXAnchor.constraint(equalTo: fullscreenView.centerXAnchor)
-        ])
-        
-        // Add to window with animation
-        if let window = view.window {
-            fullscreenView.alpha = 0
-            window.addSubview(fullscreenView)
-            
-            UIView.animate(withDuration: 0.3) {
-                fullscreenView.alpha = 1
-            }
-            
-            self.fullscreenImageView = imageView
-        }
-    }
-    
-    @objc private func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
-        guard let fullscreenView = fullscreenImageView?.superview,
-              let pageLabel = fullscreenView.subviews.first(where: { $0 is UILabel }) as? UILabel else { return }
-        
-        if gesture.direction == .left && currentImageIndex < imageArray.count - 1 {
-            currentImageIndex += 1
-        } else if gesture.direction == .right && currentImageIndex > 0 {
-            currentImageIndex -= 1
-        } else {
-            return
-        }
-        
-        // Update image and page indicator
-        UIView.transition(with: fullscreenImageView!,
-                         duration: 0.3,
-                         options: .transitionCrossDissolve,
-                         animations: {
-            self.fullscreenImageView?.image = self.imageArray[self.currentImageIndex]
-            pageLabel.text = "\(self.currentImageIndex + 1)/\(self.imageArray.count)"
-        }, completion: nil)
-    }
-    
-    @objc private func dismissFullscreenImage() {
-        guard let fullscreenView = fullscreenImageView?.superview else { return }
-        
-        UIView.animate(withDuration: 0.3, animations: {
-            fullscreenView.alpha = 0
-        }) { _ in
-            fullscreenView.removeFromSuperview()
-            self.fullscreenImageView = nil
-        }
+        tableView.reloadData()
     }
 }
