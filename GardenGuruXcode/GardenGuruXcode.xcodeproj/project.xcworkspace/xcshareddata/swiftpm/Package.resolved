@@ -1,5 +1,5 @@
 {
-  "originHash" : "ecd3def9dce20f8d176e85be12929d6095a2025dcb22a8df906049b1023cefa7",
+  "originHash" : "f65362ede6e11c2f62ba972cafc6760247dfeb28172e8f5e77b0e03edc7a54ce",
   "pins" : [
     {
       "identity" : "generative-ai-swift",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SDWebImage/SDWebImage",
       "state" : {
-        "revision" : "cac9a55a3ae92478a2c95042dcc8d9695d2129ca",
-        "version" : "5.21.0"
+        "revision" : "b62cb63bf4ed1f04c961a56c9c6c9d5ab8524ec6",
+        "version" : "5.21.1"
       }
     },
     {
