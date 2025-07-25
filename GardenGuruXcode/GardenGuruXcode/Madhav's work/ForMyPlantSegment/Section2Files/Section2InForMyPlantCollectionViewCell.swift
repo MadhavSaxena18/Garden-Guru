@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class Section2InForMyPlantCollectionViewCell: UICollectionViewCell {
 
@@ -25,8 +26,9 @@ class Section2InForMyPlantCollectionViewCell: UICollectionViewCell {
     
     // Configure cell with a Fertilizer object
     func configure(with fertilizer: Fertilizer) {
-        if let imageName = fertilizer.fertilizerImage {
-            imageViewForMyPlantSegment.image = UIImage(named: imageName) ?? UIImage(named: "fertilizer_placeholder")
+        if let urlString = fertilizer.fertilizerImage?.trimmingCharacters(in: .whitespacesAndNewlines),
+           let url = URL(string: urlString) {
+            imageViewForMyPlantSegment.sd_setImage(with: url, placeholderImage: UIImage(named: "fertilizer_placeholder"))
         } else {
             imageViewForMyPlantSegment.image = UIImage(named: "fertilizer_placeholder")
         }

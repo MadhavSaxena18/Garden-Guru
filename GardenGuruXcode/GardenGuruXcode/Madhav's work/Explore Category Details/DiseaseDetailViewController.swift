@@ -241,8 +241,31 @@ extension DiseaseDetailViewController: UITextViewDelegate {
 
 // TableView Delegate/DataSource: Remove collapsible logic, just return 1 row per section
 extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSource {
+    // Define all sections you want to show
+    enum DiseaseDetailSection: Int, CaseIterable {
+        case symptoms
+      
+        case vitaminsRequired
+     
+        case cure
+        case fertilizers
+        case prevention
+
+        var title: String {
+            switch self {
+            case .symptoms: return "Symptoms"
+//            case .causes: return "Causes"
+            case .vitaminsRequired: return "Vitamins Required"
+//            case .treatment: return "Treatment"
+            case .cure: return "Cure"
+            case .fertilizers: return "Fertilizers"
+            case .prevention: return "Prevention"
+            }
+        }
+    }
+
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 4 // Symptoms, Causes, Treatments, Prevention
+        return DiseaseDetailSection.allCases.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -255,20 +278,28 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
             cell.configure(with: nil, section: "", showHeader: false)
             return cell
         }
-        cell.isExpanded = true // Always show content if row is visible
-        switch indexPath.section {
-        case 0: cell.configure(with: disease, section: "Symptoms", showHeader: false)
-        case 1: cell.configure(with: disease, section: "Causes", showHeader: false)
-        case 2: cell.configure(with: disease, section: "Treatment", showHeader: false)
-        case 3: cell.configure(with: disease, section: "Prevention", showHeader: false)
-        default: cell.configure(with: nil, section: "", showHeader: false)
+        cell.isExpanded = expandedSection == indexPath.section
+        let sectionType = DiseaseDetailSection(rawValue: indexPath.section)!
+        switch sectionType {
+        case .symptoms:
+            cell.configure(with: disease, section: "Symptoms", showHeader: true)
+       
+        case .vitaminsRequired:
+            cell.configure(with: disease, section: "Vitamins Required", showHeader: true)
+        
+        case .cure:
+            cell.configure(with: disease, section: "Cure", showHeader: true)
+        case .fertilizers:
+            cell.configure(with: disease, section: "Fertilizers", showHeader: true)
+        case .prevention:
+            cell.configure(with: disease, section: "Prevention", showHeader: true)
         }
         cell.backgroundColor = .clear
         cell.layer.cornerRadius = 0
         cell.layer.masksToBounds = false
         return cell
     }
-    
+
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let container = UIView()
         container.backgroundColor = .clear
@@ -285,8 +316,8 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
         let titleLabel = UILabel()
         titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
         titleLabel.textColor = .label
-        let titles = ["Symptoms", "Causes", "Treatment", "Prevention"]
-        titleLabel.text = "  " + titles[section]
+        let sectionType = DiseaseDetailSection(rawValue: section)!
+        titleLabel.text = "  " + sectionType.title
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(titleLabel)
         // Chevron
@@ -310,11 +341,11 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
         ])
         return container
     }
-    
+
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 48
     }
-    
+
     @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
         guard let section = gesture.view?.tag else { return }
         if expandedSection == section {

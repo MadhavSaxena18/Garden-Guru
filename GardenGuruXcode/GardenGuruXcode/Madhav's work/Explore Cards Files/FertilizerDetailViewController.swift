@@ -1,4 +1,5 @@
 import UIKit
+import SDWebImage
 
 class FertilizerDetailViewController: UIViewController {
     // Add this property at the top with other properties
@@ -226,10 +227,12 @@ class FertilizerDetailViewController: UIViewController {
         guard let fertilizer = fertilizer else { return }
         
         // Configure image
-        if let imageName = fertilizer.fertilizerImage, let image = UIImage(named: imageName) {
-            headerImageView.image = image
+        if let urlString = fertilizer.fertilizerImage?.trimmingCharacters(in: .whitespacesAndNewlines),
+           let url = URL(string: urlString) {
+            headerImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "fertilizer_placeholder"))
         } else {
             // Fallback to a placeholder if image not found
+            headerImageView.image = UIImage(named: "fertilizer_placeholder")
             headerImageView.backgroundColor = .systemGray5
             print("Could not load fertilizer image")
         }
@@ -237,15 +240,62 @@ class FertilizerDetailViewController: UIViewController {
         titleLabel.text = fertilizer.fertilizerName
         descriptionLabel.text = fertilizer.fertilizerDescription ?? "No description available"
         
-        // Hide or remove sections that don't have corresponding data
-        typeLabel.isHidden = true
-        applicationMethodTitleLabel.isHidden = true
-        applicationMethodLabel.isHidden = true
-        frequencyTitleLabel.isHidden = true
-        frequencyLabel.isHidden = true
-        warningsTitleLabel.isHidden = true
-        warningsStackView.isHidden = true
-        alternativesTitleLabel.isHidden = true
-        alternativesStackView.isHidden = true
+        // Show and fill type
+        if let type = fertilizer.fertilizerType, !type.isEmpty {
+            typeLabel.text = "Type: \(type)"
+            typeLabel.isHidden = false
+        } else {
+            typeLabel.isHidden = true
+        }
+        // Show and fill application method
+        if let method = fertilizer.applicationMethod, !method.isEmpty {
+            applicationMethodLabel.text = method
+            applicationMethodTitleLabel.isHidden = false
+            applicationMethodLabel.isHidden = false
+        } else {
+            applicationMethodTitleLabel.isHidden = true
+            applicationMethodLabel.isHidden = true
+        }
+        // Show and fill frequency
+        if let freq = fertilizer.applicationFrequency, !freq.isEmpty {
+            frequencyLabel.text = freq
+            frequencyTitleLabel.isHidden = false
+            frequencyLabel.isHidden = false
+        } else {
+            frequencyTitleLabel.isHidden = true
+            frequencyLabel.isHidden = true
+        }
+        // Show and fill warning signs
+        if let warnings = fertilizer.warningSigns, !warnings.isEmpty {
+            warningsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            for warning in warnings {
+                let label = UILabel()
+                label.font = .systemFont(ofSize: 16)
+                label.textColor = .label
+                label.text = "• " + warning
+                warningsStackView.addArrangedSubview(label)
+            }
+            warningsTitleLabel.isHidden = false
+            warningsStackView.isHidden = false
+        } else {
+            warningsTitleLabel.isHidden = true
+            warningsStackView.isHidden = true
+        }
+        // Show and fill alternative fertilizers
+        if let alternatives = fertilizer.alternativeFertilizers, !alternatives.isEmpty {
+            alternativesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            for alt in alternatives {
+                let label = UILabel()
+                label.font = .systemFont(ofSize: 16)
+                label.textColor = .label
+                label.text = "• " + alt
+                alternativesStackView.addArrangedSubview(label)
+            }
+            alternativesTitleLabel.isHidden = false
+            alternativesStackView.isHidden = false
+        } else {
+            alternativesTitleLabel.isHidden = true
+            alternativesStackView.isHidden = true
+        }
     }
 }

@@ -113,6 +113,7 @@ struct Diseases: Codable, Hashable {
     var diseaseFertilizers: String?
     var cureDuration: Int64?
     var diseaseSeason: Season?
+    var diseaseVitaminsRequired: String?
     var diseasePreventiveMeasures: String?
     var diseaseVideoSolution: String?
     
@@ -125,6 +126,7 @@ struct Diseases: Codable, Hashable {
         case diseaseFertilizers = "diseaseFertilizers"
         case cureDuration = "cureDuration"
         case diseaseSeason = "diseaseSeason"
+        case diseaseVitaminsRequired = "diseaseVitaminsRequired"
         case diseasePreventiveMeasures = "diseasePreventiveMeasures"
         case diseaseVideoSolution = "diseaseVideoSolution"
     }
@@ -180,6 +182,10 @@ struct Diseases: Codable, Hashable {
             if let season = try container.decodeIfPresent(Season.self, forKey: .diseaseSeason) {
                 print("📝 Decoded season: \(season)")
                 diseaseSeason = season
+            }
+            
+            if let vitamins = try container.decodeIfPresent(String.self, forKey: .diseaseVitaminsRequired) {
+                diseaseVitaminsRequired = vitamins
             }
             
             if let preventiveMeasures = try container.decodeIfPresent(String.self, forKey: .diseasePreventiveMeasures) {
@@ -506,30 +512,43 @@ struct Fertilizer: Codable, Hashable {
     var fertilizerName: String
     var fertilizerImage: String?
     var fertilizerDescription: String?
+    // New fields for detailed fertilizer info
+    var fertilizerType: String?
+    var applicationMethod: String?
+    var applicationFrequency: String?
+    var warningSigns: [String]?
+    var alternativeFertilizers: [String]?
     
     enum CodingKeys: String, CodingKey {
         case fertilizerId
         case fertilizerName
         case fertilizerImage
         case fertilizerDescription
+        case fertilizerType
+        case applicationMethod
+        case applicationFrequency
+        case warningSigns
+        case alternativeFertilizers
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        
         // Handle UUID decoding
         if let uuidString = try? container.decode(String.self, forKey: .fertilizerId) {
             fertilizerId = UUID(uuidString: uuidString) ?? UUID()
         } else {
             fertilizerId = UUID()
         }
-        
         // Decode required fields
         fertilizerName = try container.decode(String.self, forKey: .fertilizerName)
-        
         // Decode optional fields
         fertilizerImage = try container.decodeIfPresent(String.self, forKey: .fertilizerImage)
         fertilizerDescription = try container.decodeIfPresent(String.self, forKey: .fertilizerDescription)
+        fertilizerType = try container.decodeIfPresent(String.self, forKey: .fertilizerType)
+        applicationMethod = try container.decodeIfPresent(String.self, forKey: .applicationMethod)
+        applicationFrequency = try container.decodeIfPresent(String.self, forKey: .applicationFrequency)
+        warningSigns = try container.decodeIfPresent([String].self, forKey: .warningSigns)
+        alternativeFertilizers = try container.decodeIfPresent([String].self, forKey: .alternativeFertilizers)
     }
 }
 

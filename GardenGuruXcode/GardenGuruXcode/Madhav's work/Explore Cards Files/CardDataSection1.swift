@@ -63,22 +63,36 @@ class CardDataSection1: UICollectionViewCell {
             }
             
         } else if let disease = data as? Diseases {
-            if let urlString = disease.diseaseImage, let url = URL(string: urlString) {
-                URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-                    guard let self = self, let data = data, error == nil else {
-                        DispatchQueue.main.async {
-                            self?.plantImageOutlet.image = UIImage(named: "defaultDiseaseImage")
-                        }
-                        return
+            if let urlString = disease.diseaseImage?.trimmingCharacters(in: .whitespacesAndNewlines), let url = URL(string: urlString) {
+                plantImageOutlet.sd_setImage(with: url, placeholderImage: UIImage(named: "defaultDiseaseImage")) { image, error, cacheType, url in
+                    if let error = error {
+                        print("❌ Error loading disease image: \(error.localizedDescription)")
+                    } else {
+                        print("✅ Successfully loaded disease image from: \(url?.absoluteString ?? "unknown URL")")
                     }
-                    DispatchQueue.main.async {
-                        self.plantImageOutlet.image = UIImage(data: data)
-                    }
-                }.resume()
+                }
             } else {
                 plantImageOutlet.image = UIImage(named: "defaultDiseaseImage")
             }
             resetInfoLabels()
+        } else if let fertilizer = data as? Fertilizer {
+            // Load fertilizer image using SDWebImage with the raw URL, trimmed
+            if let urlString = fertilizer.fertilizerImage?.trimmingCharacters(in: .whitespacesAndNewlines), let url = URL(string: urlString) {
+                plantImageOutlet.sd_setImage(with: url, placeholderImage: UIImage(named: "fertilizer_placeholder")) { image, error, cacheType, url in
+                    if let error = error {
+                        print("❌ Error loading fertilizer image: \(error.localizedDescription)")
+                    } else {
+                        print("✅ Successfully loaded fertilizer image from: \(url?.absoluteString ?? "unknown URL")")
+                    }
+                }
+            } else {
+                plantImageOutlet.image = UIImage(named: "fertilizer_placeholder")
+                print("❌ Fertilizer image URL is nil or malformed for fertilizer: \(fertilizer.fertilizerName ?? "Unknown")")
+            }
+            // Set info labels for fertilizer (customize as needed)
+            infoLabel1Outlet.text = fertilizer.fertilizerName ?? "N/A"
+            infoLabel2Outlet.text = fertilizer.fertilizerDescription ?? "N/A"
+            infoLabel3Outlet.text = "Fertilizer"
         }
     }
 

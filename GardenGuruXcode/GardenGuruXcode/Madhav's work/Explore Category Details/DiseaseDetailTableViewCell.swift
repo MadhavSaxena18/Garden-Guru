@@ -104,11 +104,21 @@ class DiseaseDetailTableViewCell: UITableViewCell {
         case "Symptoms":
             contentLabel.text = disease.diseaseSymptoms?.isEmpty == false ? disease.diseaseSymptoms : "No symptoms information available"
         case "Causes":
-            contentLabel.text = "No causes information available"
+            contentLabel.text = "(Add more causes info if available)"
+        case "Vitamins Required":
+            contentLabel.text = disease.diseaseVitaminsRequired?.isEmpty == false ? disease.diseaseVitaminsRequired : "No vitamins information available"
         case "Treatment":
-            contentLabel.text = disease.diseaseCure?.isEmpty == false ? disease.diseaseCure : "No treatment information available"
+            contentLabel.text = "(Add more treatment info if available)"
+        case "Cure":
+            contentLabel.text = disease.diseaseCure?.isEmpty == false ? disease.diseaseCure : "No cure information available"
+        case "Fertilizers":
+            contentLabel.text = disease.diseaseFertilizers?.isEmpty == false ? disease.diseaseFertilizers : "No fertilizers information available"
         case "Prevention":
-            contentLabel.text = disease.diseaseFertilizers?.isEmpty == false ? disease.diseaseFertilizers : "No prevention information available"
+            var preventionText = ""
+            if let measures = disease.diseasePreventiveMeasures, !measures.isEmpty {
+                preventionText += "Preventive Measures: \(measures)\n"
+            }
+            contentLabel.text = preventionText.isEmpty ? "No prevention information available" : preventionText
         default:
             contentLabel.text = "Information not available"
         }
