@@ -13,9 +13,12 @@ class CommunityViewController: UIViewController {
     
     private let dataController = DataControllerGG.shared
     private var posts: [CommunityPost] = []
+    private var filteredPosts: [CommunityPost] = []
+    private var isSearching = false
     private var isLoading = false
     private var currentPage = 0
     private let postsPerPage = 20
+    private var lastScrollOffset: CGFloat = 0
     
     // MARK: - UI Components
     
@@ -87,6 +90,17 @@ class CommunityViewController: UIViewController {
         return label
     }()
     
+    private lazy var searchController: UISearchController = {
+        let search = UISearchController(searchResultsController: nil)
+        search.searchResultsUpdater = self
+        search.delegate = self
+        search.obscuresBackgroundDuringPresentation = false
+        search.searchBar.placeholder = "Search posts..."
+        search.searchBar.tintColor = UIColor(hex: "284329")
+        search.searchBar.searchTextField.backgroundColor = UIColor(hex: "F5F9F5")
+        return search
+    }()
+    
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
@@ -121,6 +135,15 @@ class CommunityViewController: UIViewController {
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
         navigationController?.navigationBar.tintColor = UIColor(hex: "284329")
         navigationController?.navigationBar.prefersLargeTitles = false
+        
+        // Add search button to navigation bar (search bar will appear on scroll up)
+        let searchButton = UIBarButtonItem(
+            barButtonSystemItem: .search,
+            target: self,
+            action: #selector(searchButtonTapped)
+        )
+        searchButton.tintColor = UIColor(hex: "284329")
+        navigationItem.rightBarButtonItem = searchButton
         
         // Add subviews
         view.addSubview(collectionView)
@@ -260,9 +283,34 @@ class CommunityViewController: UIViewController {
     }
     
     private func updateEmptyState() {
-        let isEmpty = posts.isEmpty
+        let isEmpty = isSearching ? filteredPosts.isEmpty : posts.isEmpty
         emptyStateView.isHidden = !isEmpty
         collectionView.isHidden = isEmpty
+        
+        if isSearching && isEmpty {
+            emptyStateLabel.text = "No posts found.\nTry a different search."
+        } else {
+            emptyStateLabel.text = "No posts yet.\nBe the first to share!"
+        }
+    }
+    
+    @objc private func searchButtonTapped() {
+        print("🔍 Search button tapped")
+        
+        // Show search bar in navigation
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        definesPresentationContext = true
+        
+        // Scroll to top to reveal search bar
+        if !posts.isEmpty {
+            collectionView.setContentOffset(CGPoint(x: 0, y: -collectionView.contentInset.top), animated: true)
+        }
+        
+        // Activate search bar after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.searchController.searchBar.becomeFirstResponder()
+        }
     }
     
     // MARK: - Actions
@@ -353,7 +401,7 @@ class CommunityViewController: UIViewController {
 
 extension CommunityViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return posts.count
+        return isSearching ? filteredPosts.count : posts.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -364,10 +412,58 @@ extension CommunityViewController: UICollectionViewDataSource {
             return UICollectionViewCell()
         }
         
-        let post = posts[indexPath.item]
+        let post = isSearching ? filteredPosts[indexPath.item] : posts[indexPath.item]
         cell.configure(with: post)
         
         return cell
+    }
+}
+
+// MARK: - UISearchResultsUpdating
+
+extension CommunityViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let searchText = searchController.searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+              !searchText.isEmpty else {
+            isSearching = false
+            filteredPosts = []
+            collectionView.reloadData()
+            updateEmptyState()
+            return
+        }
+        
+        isSearching = true
+        
+        // Filter posts by plant name, description, or user name
+        filteredPosts = posts.filter { post in
+            let plantNameMatch = post.plantName.lowercased().contains(searchText)
+            let descriptionMatch = post.description.lowercased().contains(searchText)
+            let userNameMatch = post.userName?.lowercased().contains(searchText) ?? false
+            
+            return plantNameMatch || descriptionMatch || userNameMatch
+        }
+        
+        print("🔍 Search: '\(searchText)' - Found \(filteredPosts.count) results")
+        
+        collectionView.reloadData()
+        updateEmptyState()
+    }
+}
+
+// MARK: - UISearchControllerDelegate
+
+extension CommunityViewController: UISearchControllerDelegate {
+    func didDismissSearchController(_ searchController: UISearchController) {
+        // When search is dismissed, remove the search bar
+        isSearching = false
+        filteredPosts = []
+        collectionView.reloadData()
+        updateEmptyState()
+        
+        // Remove search bar from navigation after dismissal
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.navigationItem.searchController = nil
+        }
     }
 }
 
@@ -375,9 +471,25 @@ extension CommunityViewController: UICollectionViewDataSource {
 
 extension CommunityViewController: UICollectionViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        // Hide FAB when scrolling down, show when scrolling up
+        let currentOffset = scrollView.contentOffset.y
         let translation = scrollView.panGestureRecognizer.translation(in: scrollView.superview)
         
+        // Show search bar when scrolling up (like Photos app)
+        if currentOffset < lastScrollOffset && currentOffset < -50 {
+            // Scrolling up - show search bar
+            if navigationItem.searchController == nil {
+                navigationItem.searchController = searchController
+                navigationItem.hidesSearchBarWhenScrolling = false
+                definesPresentationContext = true
+            }
+        } else if currentOffset > 50 && navigationItem.searchController != nil && !searchController.isActive {
+            // Scrolling down and search not active - hide search bar completely
+            navigationItem.searchController = nil
+        }
+        
+        lastScrollOffset = currentOffset
+        
+        // Hide FAB when scrolling down, show when scrolling up
         if translation.y < 0 {
             // Scrolling down
             UIView.animate(withDuration: 0.3) {
@@ -390,15 +502,17 @@ extension CommunityViewController: UICollectionViewDelegate {
             }
         }
         
-        // Load more posts when reaching bottom
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        let height = scrollView.frame.size.height
-        
-        if offsetY > contentHeight - height - 200 && !isLoading {
-            currentPage += 1
-            Task {
-                await fetchPosts(refresh: false)
+        // Load more posts when reaching bottom (only when not searching)
+        if !isSearching {
+            let offsetY = scrollView.contentOffset.y
+            let contentHeight = scrollView.contentSize.height
+            let height = scrollView.frame.size.height
+            
+            if offsetY > contentHeight - height - 200 && !isLoading {
+                currentPage += 1
+                Task {
+                    await fetchPosts(refresh: false)
+                }
             }
         }
     }
