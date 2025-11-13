@@ -22,6 +22,7 @@
                     <connections>
                         <segue destination="oQH-AN-bBh" kind="relationship" relationship="viewControllers" id="Mp9-4V-epG"/>
                         <segue destination="XD5-aF-xam" kind="relationship" relationship="viewControllers" id="owh-zF-hUg"/>
+                        <segue destination="Com-Tab-Ref" kind="relationship" relationship="viewControllers" id="Com-Segue-Main"/>
                         <segue destination="SwI-P9-8aM" kind="relationship" relationship="viewControllers" id="bkh-Vz-vo7"/>
                     </connections>
                 </tabBarController>
@@ -49,6 +50,16 @@
             </objects>
             <point key="canvasLocation" x="1137" y="-162"/>
         </scene>
+        <!--communityTab-->
+        <scene sceneID="Com-Tab-Scene">
+            <objects>
+                <viewControllerPlaceholder storyboardName="communityTab" id="Com-Tab-Ref" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Community" image="person.3.fill" catalog="system" id="Com-Tab-Item"/>
+                </viewControllerPlaceholder>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Com-Tab-First" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1137" y="12"/>
+        </scene>
         <!--mySpaceTab-->
         <scene sceneID="wbD-hq-ufg">
             <objects>
@@ -62,5 +73,6 @@
     </scenes>
     <resources>
         <image name="camera" catalog="system" width="128" height="93"/>
+        <image name="person.3.fill" catalog="system" width="128" height="66"/>
     </resources>
 </document>

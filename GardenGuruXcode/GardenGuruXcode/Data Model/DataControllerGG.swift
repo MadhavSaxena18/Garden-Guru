@@ -3199,6 +3199,334 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         
         return (session, userData)
     }
+    
+    // MARK: - Community Functions
+    
+    /// Fetches community posts from Supabase with pagination support
+    /// - Parameters:
+    ///   - limit: Maximum number of posts to fetch (default: 20)
+    ///   - offset: Number of posts to skip for pagination (default: 0)
+    /// - Returns: Array of CommunityPost objects sorted by creation date (newest first)
+    func fetchCommunityPosts(limit: Int = 20, offset: Int = 0) async throws -> [CommunityPost] {
+        print("\n=== Fetching Community Posts ===")
+        print("📊 Limit: \(limit), Offset: \(offset)")
+        
+        let response = try await supabase
+            .database
+            .from("CommunityPost")
+            .select()
+            .order("createdAt", ascending: false)
+            .range(from: offset, to: offset + limit - 1)
+            .execute()
+        
+        print("📡 Raw community posts response: \(String(describing: response.data))")
+        
+        guard let jsonData = response.data as? Data else {
+            print("❌ No data received for community posts")
+            return []
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            var posts = try decoder.decode([CommunityPost].self, from: jsonData)
+            print("✅ Successfully decoded \(posts.count) community posts")
+            
+            // Fetch user info for each post
+            for i in 0..<posts.count {
+                if let user = try? await getUserForPost(userID: posts[i].userID) {
+                    posts[i].userName = user.userName
+                    posts[i].userEmail = user.userEmail
+                }
+            }
+            
+            return posts
+        } catch {
+            print("❌ Error decoding community posts: \(error)")
+            throw error
+        }
+    }
+    
+    /// Creates a new community post with image upload
+    /// - Parameters:
+    ///   - plantName: Name of the plant (2-50 characters)
+    ///   - description: Post description (10-500 characters)
+    ///   - image: UIImage to upload
+    /// - Returns: Created CommunityPost object
+    func createCommunityPost(plantName: String, description: String, image: UIImage) async throws -> CommunityPost {
+        print("\n=== Creating Community Post ===")
+        print("🌱 Plant Name: \(plantName)")
+        print("📝 Description: \(description)")
+        
+        // Validate input
+        guard plantName.count >= 2 && plantName.count <= 50 else {
+            print("❌ Invalid plant name length: \(plantName.count)")
+            throw CommunityError.invalidInput("Plant name must be between 2 and 50 characters")
+        }
+        
+        guard description.count >= 10 && description.count <= 500 else {
+            print("❌ Invalid description length: \(description.count)")
+            throw CommunityError.invalidInput("Description must be between 10 and 500 characters")
+        }
+        
+        // Get current user
+        print("🔍 Getting current user...")
+        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+            print("❌ No user email in UserDefaults")
+            throw CommunityError.unauthorized
+        }
+        print("📧 User email: \(userEmail)")
+        
+        guard let user = try await initializeUser(email: userEmail) else {
+            print("❌ Could not initialize user")
+            throw CommunityError.unauthorized
+        }
+        print("✅ User found: \(user.userName) (ID: \(user.id))")
+        
+        guard let userID = UUID(uuidString: user.id) else {
+            print("❌ Invalid user ID format: \(user.id)")
+            throw CommunityError.unauthorized
+        }
+        print("✅ User ID parsed: \(userID)")
+        
+        // Generate post ID
+        let postID = UUID()
+        print("🆔 Generated post ID: \(postID)")
+        
+        // Upload image first
+        print("📤 Uploading image...")
+        let imageURL = try await uploadPostImage(postID: postID, image: image)
+        print("✅ Image uploaded: \(imageURL)")
+        
+        // Create post record using encodable struct
+        struct PostInsert: Encodable {
+            let postID: String
+            let userID: String
+            let plantName: String
+            let description: String
+            let imageURL: String
+        }
+        
+        let postData = PostInsert(
+            postID: postID.uuidString,
+            userID: userID.uuidString,
+            plantName: plantName,
+            description: description,
+            imageURL: imageURL
+        )
+        
+        print("📡 Inserting post into database...")
+        let response = try await supabase
+            .database
+            .from("CommunityPost")
+            .insert(postData)
+            .select()
+            .execute()
+        
+        guard let jsonData = response.data as? Data else {
+            throw CommunityError.postCreationFailed
+        }
+        
+        let decoder = JSONDecoder()
+        var posts = try decoder.decode([CommunityPost].self, from: jsonData)
+        
+        guard var post = posts.first else {
+            throw CommunityError.postCreationFailed
+        }
+        
+        // Add user info
+        post.userName = user.userName
+        post.userEmail = user.userEmail
+        
+        print("✅ Community post created successfully")
+        
+        // Post notification
+        NotificationCenter.default.post(name: .communityPostCreated, object: post)
+        
+        return post
+    }
+    
+    /// Uploads a post image to Supabase Storage
+    /// - Parameters:
+    ///   - postID: UUID of the post
+    ///   - image: UIImage to upload
+    /// - Returns: Public URL of the uploaded image
+    func uploadPostImage(postID: UUID, image: UIImage) async throws -> String {
+        print("\n=== Uploading Post Image ===")
+        
+        // Compress and resize image
+        guard let compressedImage = compressImage(image, maxSizeInMB: 2, maxWidth: 1080) else {
+            throw CommunityError.imageUploadFailed
+        }
+        
+        guard let imageData = compressedImage.jpegData(compressionQuality: 0.8) else {
+            throw CommunityError.imageUploadFailed
+        }
+        
+        print("📊 Image size: \(Double(imageData.count) / 1_000_000) MB")
+        
+        // Get current user ID for folder structure
+        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail"),
+              let user = try await initializeUser(email: userEmail) else {
+            throw CommunityError.unauthorized
+        }
+        
+        // Create file path: userID/postID.jpg
+        let fileName = "\(user.id)/\(postID.uuidString).jpg"
+        
+        print("📤 Uploading to: community-posts/\(fileName)")
+        
+        // Upload to Supabase Storage
+        let uploadResponse = try await supabase.storage
+            .from("community-posts")
+            .upload(
+                path: fileName,
+                file: imageData,
+                options: FileOptions(
+                    contentType: "image/jpeg",
+                    upsert: true
+                )
+            )
+        
+        // Get public URL
+        let publicURL = try supabase.storage
+            .from("community-posts")
+            .getPublicURL(path: fileName)
+        
+        print("✅ Image uploaded successfully: \(publicURL)")
+        return publicURL.absoluteString
+    }
+    
+    /// Deletes a community post and its associated image
+    /// - Parameter postID: UUID of the post to delete
+    func deleteCommunityPost(postID: UUID) async throws {
+        print("\n=== Deleting Community Post ===")
+        print("🗑️ Post ID: \(postID)")
+        
+        // Get the post first to retrieve image URL
+        let response = try await supabase
+            .database
+            .from("CommunityPost")
+            .select()
+            .eq("postID", value: postID.uuidString)
+            .execute()
+        
+        guard let jsonData = response.data as? Data else {
+            throw CommunityError.fetchFailed
+        }
+        
+        let decoder = JSONDecoder()
+        let posts = try decoder.decode([CommunityPost].self, from: jsonData)
+        
+        guard let post = posts.first else {
+            print("⚠️ Post not found")
+            return
+        }
+        
+        // Extract file path from URL
+        if let url = URL(string: post.imageURL),
+           let pathComponents = url.pathComponents.dropFirst(5).joined(separator: "/") as String? {
+            // Delete image from storage
+            print("🗑️ Deleting image: \(pathComponents)")
+            try await supabase.storage
+                .from("community-posts")
+                .remove(paths: [pathComponents])
+        }
+        
+        // Delete post from database
+        print("🗑️ Deleting post from database...")
+        try await supabase
+            .database
+            .from("CommunityPost")
+            .delete()
+            .eq("postID", value: postID.uuidString)
+            .execute()
+        
+        print("✅ Community post deleted successfully")
+        
+        // Post notification
+        NotificationCenter.default.post(name: .communityPostDeleted, object: postID)
+    }
+    
+    /// Fetches user information for a post
+    /// - Parameter userID: UUID of the user
+    /// - Returns: userInfo object or nil if not found
+    func getUserForPost(userID: UUID) async throws -> userInfo? {
+        let response = try await supabase
+            .database
+            .from("UserTable")
+            .select()
+            .eq("id", value: userID.uuidString)
+            .execute()
+        
+        guard let jsonData = response.data as? Data else {
+            return nil
+        }
+        
+        let decoder = JSONDecoder()
+        let users = try decoder.decode([userInfo].self, from: jsonData)
+        return users.first
+    }
+    
+    /// Compresses an image to a maximum size while maintaining aspect ratio
+    /// - Parameters:
+    ///   - image: Original UIImage
+    ///   - maxSizeInMB: Maximum file size in megabytes
+    ///   - maxWidth: Maximum width in pixels
+    /// - Returns: Compressed UIImage or nil if compression fails
+    private func compressImage(_ image: UIImage, maxSizeInMB: Double, maxWidth: CGFloat) -> UIImage? {
+        // Resize if needed
+        var resizedImage = image
+        if image.size.width > maxWidth {
+            let ratio = maxWidth / image.size.width
+            let newHeight = image.size.height * ratio
+            let newSize = CGSize(width: maxWidth, height: newHeight)
+            
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+            resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+            UIGraphicsEndImageContext()
+        }
+        
+        // Compress to target size
+        let maxSizeInBytes = maxSizeInMB * 1_000_000
+        var compression: CGFloat = 0.8
+        var imageData = resizedImage.jpegData(compressionQuality: compression)
+        
+        while let data = imageData, Double(data.count) > maxSizeInBytes && compression > 0.1 {
+            compression -= 0.1
+            imageData = resizedImage.jpegData(compressionQuality: compression)
+        }
+        
+        guard let finalData = imageData else { return nil }
+        return UIImage(data: finalData)
+    }
+}
 
+// MARK: - Community Error Types
+
+enum CommunityError: Error {
+    case networkUnavailable
+    case imageUploadFailed
+    case postCreationFailed
+    case fetchFailed
+    case invalidInput(String)
+    case unauthorized
+    
+    var localizedDescription: String {
+        switch self {
+        case .networkUnavailable:
+            return "No internet connection. Please check your network."
+        case .imageUploadFailed:
+            return "Failed to upload image. Please try again."
+        case .postCreationFailed:
+            return "Failed to create post. Please try again."
+        case .fetchFailed:
+            return "Failed to load posts. Pull to refresh."
+        case .invalidInput(let message):
+            return message
+        case .unauthorized:
+            return "You must be logged in to perform this action."
+        }
+    }
 }
 
