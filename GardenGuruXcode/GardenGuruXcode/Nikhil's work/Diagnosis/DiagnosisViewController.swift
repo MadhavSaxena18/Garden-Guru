@@ -328,16 +328,53 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "DiagnosisCell", for: indexPath)
+
+        // Show actual images for the "Related Images" section
+        if sectionTitles[indexPath.section] == "Related Images",
+           let urlString = selectedPlant?.sectionDetails[sectionTitles[indexPath.section]]?[indexPath.row],
+           let url = URL(string: urlString) {
+            // Clear text and set placeholder
+            cell.textLabel?.text = nil
+            cell.imageView?.image = UIImage(systemName: "photo")
+            cell.imageView?.contentMode = .scaleAspectFill
+            cell.imageView?.clipsToBounds = true
+
+            // Load image asynchronously
+            URLSession.shared.dataTask(with: url) { data, _, _ in
+                guard let data = data, let image = UIImage(data: data) else { return }
+                DispatchQueue.main.async {
+                    // Resize to a thumbnail to fit default imageView nicely
+                    let targetSize = CGSize(width: 160, height: 160)
+                    UIGraphicsBeginImageContextWithOptions(targetSize, false, 0.0)
+                    image.draw(in: CGRect(origin: .zero, size: targetSize))
+                    let resized = UIGraphicsGetImageFromCurrentImageContext()
+                    UIGraphicsEndImageContext()
+
+                    // To avoid wrong images on reused cells, ensure the cell is still visible at this indexPath
+                    if let visibleCell = tableView.cellForRow(at: indexPath) {
+                        visibleCell.imageView?.image = resized ?? image
+                        visibleCell.setNeedsLayout()
+                    }
+                }
+            }.resume()
+
+            return cell
+        }
+
         if let sectionData = selectedPlant?.sectionDetails[sectionTitles[indexPath.section]] {
             let text = sectionData[indexPath.row]
             cell.textLabel?.text = text
             cell.textLabel?.numberOfLines = 0
             cell.textLabel?.textColor = UIColor(hex: "#004E05")
+            cell.imageView?.image = nil
         }
         return cell
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        if sectionTitles[indexPath.section] == "Related Images" {
+            return 180
+        }
         return UITableView.automaticDimension
     }
 
@@ -488,6 +525,10 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         if let treatment = disease.diseaseCure {
             dict["Treatment"] = treatment.components(separatedBy: "; ")
         }
+        if let videoSolution = disease.diseaseVideoSolution {
+            dict["Video Guide"] = [videoSolution]
+        }
+
         // Add Related Images section if disease has images
         if let imageURL = disease.diseaseImage, !imageURL.isEmpty {
             dict["Related Images"] = [imageURL]
@@ -945,3 +986,4 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         ])
     }
 }
+
