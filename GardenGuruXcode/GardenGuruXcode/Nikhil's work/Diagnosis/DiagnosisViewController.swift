@@ -350,10 +350,13 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         headerButton.contentHorizontalAlignment = .left
         headerButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
 
-        let chevronImage = UIImage(systemName: "chevron.down")
+        // Determine chevron direction based on expanded state
+        let isExpanded = expandedSections.contains(section)
+        let chevronImage = UIImage(systemName: isExpanded ? "chevron.up" : "chevron.down")
         let chevronImageView = UIImageView(image: chevronImage)
         chevronImageView.tintColor = .gray
         chevronImageView.translatesAutoresizingMaskIntoConstraints = false
+        chevronImageView.tag = 999 // Tag to find it later for rotation
         headerButton.addSubview(chevronImageView)
         
         chevronImageView.centerYAnchor.constraint(equalTo: headerButton.centerYAnchor).isActive = true
@@ -374,10 +377,25 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     @objc func handleExpandCollapse(_ sender: UIButton) {
         let section = sender.tag
+        
+        // Toggle expanded state
         if expandedSections.contains(section) {
             expandedSections.remove(section)
         } else {
             expandedSections.insert(section)
+        }
+        
+        // Animate the chevron rotation
+        if let chevronImageView = sender.viewWithTag(999) as? UIImageView {
+            let isNowExpanded = expandedSections.contains(section)
+            UIView.transition(with: chevronImageView, duration: 0.3, options: .transitionCrossDissolve) {
+                chevronImageView.image = UIImage(systemName: isNowExpanded ? "chevron.up" : "chevron.down")
+            }
+        }
+        
+        // Reload the section with animation
+        tableView.reloadSections(IndexSet(integer: section), with: .automatic)
+    }
         }
         tableView.reloadSections(IndexSet(integer: section), with: .automatic)
     }

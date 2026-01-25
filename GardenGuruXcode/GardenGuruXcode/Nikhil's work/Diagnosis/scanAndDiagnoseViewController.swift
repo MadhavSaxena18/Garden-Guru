@@ -22,7 +22,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     @IBOutlet weak var snapImage2: UIImageView!
     @IBOutlet weak var snapImage3: UIImageView!
     
-    let instruction: [String] = ["1. Snap The whole Plant", "2. Snap the infected area", "3. Now take the same with different angle"]
+    let instruction: [String] = ["1. Snap the whole plant", "2. Snap the infected area", "3. Now take the same with different angle"]
     var captureSession: AVCaptureSession!
     var previewLayer: AVCaptureVideoPreviewLayer!
     var photoOutput: AVCapturePhotoOutput!

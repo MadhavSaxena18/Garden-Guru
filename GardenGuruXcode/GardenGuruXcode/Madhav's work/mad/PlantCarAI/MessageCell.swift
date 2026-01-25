@@ -83,10 +83,10 @@ class MessageCell: UITableViewCell {
             
             if message.isUser {
                 // User message (right side)
-                bubbleView.backgroundColor = .systemBlue
+                bubbleView.backgroundColor = UIColor(hex: "284329")
                 messageLabel.textColor = .white
                 profileImageView.image = UIImage(systemName: "person.circle.fill")
-                profileImageView.tintColor = .systemBlue
+                profileImageView.tintColor = UIColor(hex: "284329")
                 
                 userConstraints = [
                     profileImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
