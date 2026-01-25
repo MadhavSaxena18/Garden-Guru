@@ -18,7 +18,7 @@ class CommunityViewController: UIViewController {
     private var isLoading = false
     private var currentPage = 0
     private let postsPerPage = 20
-    private var lastScrollOffset: CGFloat = 0
+    private var hasMorePosts = true // Track if there are more posts to load
     
     // Sort options
     private enum SortOption {
@@ -283,10 +283,17 @@ class CommunityViewController: UIViewController {
     private func fetchPosts(refresh: Bool = false) async {
         guard !isLoading else { return }
         
+        // Don't fetch if we know there are no more posts (unless refreshing)
+        if !refresh && !hasMorePosts {
+            print("⏹️ No more posts to load")
+            return
+        }
+        
         isLoading = true
         
         if refresh {
             currentPage = 0
+            hasMorePosts = true // Reset when refreshing
         }
         
         do {
@@ -296,6 +303,14 @@ class CommunityViewController: UIViewController {
             )
             
             await MainActor.run {
+                // Check if we got any new posts
+                if newPosts.isEmpty {
+                    print("📭 No more posts available")
+                    self.hasMorePosts = false
+                } else {
+                    print("📬 Loaded \(newPosts.count) posts")
+                }
+                
                 if refresh {
                     self.posts = newPosts
                 } else {
@@ -337,13 +352,8 @@ class CommunityViewController: UIViewController {
         navigationItem.hidesSearchBarWhenScrolling = false
         definesPresentationContext = true
         
-        // Scroll to top to reveal search bar
-        if !posts.isEmpty {
-            collectionView.setContentOffset(CGPoint(x: 0, y: -collectionView.contentInset.top), animated: true)
-        }
-        
-        // Activate search bar after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Activate search bar immediately
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.searchController.searchBar.becomeFirstResponder()
         }
     }
@@ -574,23 +584,7 @@ extension CommunityViewController: UISearchControllerDelegate {
 
 extension CommunityViewController: UICollectionViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let currentOffset = scrollView.contentOffset.y
         let translation = scrollView.panGestureRecognizer.translation(in: scrollView.superview)
-        
-        // Show search bar when scrolling up (like Photos app)
-        if currentOffset < lastScrollOffset && currentOffset < -50 {
-            // Scrolling up - show search bar
-            if navigationItem.searchController == nil {
-                navigationItem.searchController = searchController
-                navigationItem.hidesSearchBarWhenScrolling = false
-                definesPresentationContext = true
-            }
-        } else if currentOffset > 50 && navigationItem.searchController != nil && !searchController.isActive {
-            // Scrolling down and search not active - hide search bar completely
-            navigationItem.searchController = nil
-        }
-        
-        lastScrollOffset = currentOffset
         
         // Hide FAB when scrolling down, show when scrolling up
         if translation.y < 0 {
@@ -606,12 +600,13 @@ extension CommunityViewController: UICollectionViewDelegate {
         }
         
         // Load more posts when reaching bottom (only when not searching)
-        if !isSearching {
+        if !isSearching && hasMorePosts {
             let offsetY = scrollView.contentOffset.y
             let contentHeight = scrollView.contentSize.height
             let height = scrollView.frame.size.height
             
             if offsetY > contentHeight - height - 200 && !isLoading {
+                print("📄 Loading more posts... (page \(currentPage + 1))")
                 currentPage += 1
                 Task {
                     await fetchPosts(refresh: false)

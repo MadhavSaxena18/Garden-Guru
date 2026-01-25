@@ -275,8 +275,18 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 
                 for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
                     if let diseaseResult = runDiseaseDetection(image) {
-                        print("Disease Detection Result for image \(index + 1): \(diseaseResult)")
-                        diseaseResults.append(diseaseResult)
+                        // Trim whitespace from disease name
+                        let cleanedResult = diseaseResult.trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        // Only add non-empty results
+                        if !cleanedResult.isEmpty {
+                            print("Disease Detection Result for image \(index + 1): \(cleanedResult)")
+                            diseaseResults.append(cleanedResult)
+                        } else {
+                            print("⚠️ Empty disease result after trimming for image \(index + 1)")
+                        }
+                    } else {
+                        print("⚠️ No disease detected for image \(index + 1) (confidence too low)")
                     }
                 }
                 
@@ -409,8 +419,8 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         let request = VNCoreMLRequest(model: model) { request, _ in
             if let results = request.results as? [VNClassificationObservation],
                let topResult = results.first {
-                // Only accept results with confidence above 0.5
-                if topResult.confidence > 0.5 {
+                // Accept results with confidence above 0.4 (lowered from 0.5)
+                if topResult.confidence > 0.4 {
                     resultIdentifier = topResult.identifier
                     resultConfidence = topResult.confidence
                 }
@@ -423,7 +433,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         semaphore.wait()
         
         // If confidence is too low, return nil instead of a potentially incorrect result
-        return resultConfidence > 0.5 ? resultIdentifier : nil
+        return resultConfidence > 0.4 ? resultIdentifier : nil
     }
     
     private func mostFrequentResult(_ results: [String]) -> String {
@@ -440,15 +450,33 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             counts[result, default: 0] += 1
         }
         
-        // Get the most frequent result
-        if let (result, count) = frequency.max(by: { $0.value < $1.value }) {
-            // Only return disease if it appears in more than one image
-            if count > 1 && !result.lowercased().contains("healthy") {
-                return result
-            } else {
-                // If disease only appears once or result is "healthy", return healthy
-                return "Healthy"
+        print("📊 Disease frequency: \(frequency)")
+        
+        // Separate healthy and disease results
+        let healthyResults = frequency.filter { $0.key.lowercased().contains("healthy") }
+        let diseaseResults = frequency.filter { !$0.key.lowercased().contains("healthy") }
+        
+        // If we have any disease detections, prefer them over healthy
+        if !diseaseResults.isEmpty {
+            // Get the most frequent disease
+            // In case of tie, prefer the one with highest count, then alphabetically
+            let sortedDiseases = diseaseResults.sorted { first, second in
+                if first.value != second.value {
+                    return first.value > second.value  // Higher frequency wins
+                }
+                return first.key < second.key  // Alphabetical tie-breaker
             }
+            
+            if let (disease, count) = sortedDiseases.first {
+                print("✅ Returning disease: \(disease) (count: \(count))")
+                return disease
+            }
+        }
+        
+        // If only healthy results or no diseases detected
+        if let (result, count) = frequency.max(by: { $0.value < $1.value }) {
+            print("✅ Returning result: \(result) (count: \(count))")
+            return result
         }
         
         return "Healthy"
