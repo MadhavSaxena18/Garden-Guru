@@ -27,6 +27,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				"Madhav's work/mad/AiGenerative.plist",
 			);
 			target = 8EB683382D311C110091572C /* GardenGuruXcode */;
 		};

@@ -20,6 +20,28 @@ class CommunityViewController: UIViewController {
     private let postsPerPage = 20
     private var lastScrollOffset: CGFloat = 0
     
+    // Sort options
+    private enum SortOption {
+        case newest
+        case oldest
+        
+        var title: String {
+            switch self {
+            case .newest: return "Newest First"
+            case .oldest: return "Oldest First"
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .newest: return "arrow.down"
+            case .oldest: return "arrow.up"
+            }
+        }
+    }
+    
+    private var currentSortOption: SortOption = .newest
+    
     // MARK: - UI Components
     
     private lazy var collectionView: UICollectionView = {
@@ -143,7 +165,17 @@ class CommunityViewController: UIViewController {
             action: #selector(searchButtonTapped)
         )
         searchButton.tintColor = UIColor(hex: "284329")
-        navigationItem.rightBarButtonItem = searchButton
+        
+        // Add filter button
+        let filterButton = UIBarButtonItem(
+            image: UIImage(systemName: "arrow.up.arrow.down"),
+            style: .plain,
+            target: self,
+            action: #selector(filterButtonTapped)
+        )
+        filterButton.tintColor = UIColor(hex: "284329")
+        
+        navigationItem.rightBarButtonItems = [searchButton, filterButton]
         
         // Add subviews
         view.addSubview(collectionView)
@@ -270,6 +302,9 @@ class CommunityViewController: UIViewController {
                     self.posts.append(contentsOf: newPosts)
                 }
                 
+                // Apply current sort option
+                self.sortPosts()
+                
                 self.collectionView.reloadData()
                 self.isLoading = false
                 self.updateEmptyState()
@@ -310,6 +345,74 @@ class CommunityViewController: UIViewController {
         // Activate search bar after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.searchController.searchBar.becomeFirstResponder()
+        }
+    }
+    
+    @objc private func filterButtonTapped() {
+        print("🔽 Filter button tapped")
+        
+        let alert = UIAlertController(
+            title: "Sort Posts",
+            message: "Choose how to sort community posts",
+            preferredStyle: .actionSheet
+        )
+        
+        // Newest First option
+        let newestAction = UIAlertAction(title: "Newest First", style: .default) { [weak self] _ in
+            self?.applySortOption(.newest)
+        }
+        if currentSortOption == .newest {
+            newestAction.setValue(UIImage(systemName: "checkmark"), forKey: "image")
+        }
+        
+        // Oldest First option
+        let oldestAction = UIAlertAction(title: "Oldest First", style: .default) { [weak self] _ in
+            self?.applySortOption(.oldest)
+        }
+        if currentSortOption == .oldest {
+            oldestAction.setValue(UIImage(systemName: "checkmark"), forKey: "image")
+        }
+        
+        alert.addAction(newestAction)
+        alert.addAction(oldestAction)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        // For iPad
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItems?.last
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func applySortOption(_ option: SortOption) {
+        print("📊 Applying sort: \(option.title)")
+        currentSortOption = option
+        sortPosts()
+        collectionView.reloadData()
+        
+        // Scroll to top to show the newly sorted posts
+        if !posts.isEmpty {
+            collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
+        }
+        
+        // Show feedback
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+    }
+    
+    private func sortPosts() {
+        switch currentSortOption {
+        case .newest:
+            posts.sort { $0.createdAt > $1.createdAt }
+            if isSearching {
+                filteredPosts.sort { $0.createdAt > $1.createdAt }
+            }
+        case .oldest:
+            posts.sort { $0.createdAt < $1.createdAt }
+            if isSearching {
+                filteredPosts.sort { $0.createdAt < $1.createdAt }
+            }
         }
     }
     
@@ -359,8 +462,8 @@ class CommunityViewController: UIViewController {
             await fetchPosts(refresh: true)
             
             await MainActor.run {
-                // Scroll to top to show new post
-                if !self.posts.isEmpty {
+                // Scroll to top to show new post (if sorting by newest)
+                if !self.posts.isEmpty && self.currentSortOption == .newest {
                     self.collectionView.scrollToItem(
                         at: IndexPath(item: 0, section: 0),
                         at: .top,
