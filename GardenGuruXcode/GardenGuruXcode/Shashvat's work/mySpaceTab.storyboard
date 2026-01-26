@@ -78,34 +78,11 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="OR" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Sob-fy-5HK">
-                                <rect key="frame" x="177" y="409" width="39" height="34"/>
-                                <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lGc-gO-F5t">
-                                <rect key="frame" x="124.66666666666669" y="493" width="144" height="120"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" image="camera.circle.fill" catalog="system" title="">
-                                    <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" configurationType="pointSize" pointSize="80"/>
-                                </buttonConfiguration>
-                                <connections>
-                                    <action selector="openCamera:" destination="mqh-fK-l9V" eventType="touchUpInside" id="wj9-wX-kBV"/>
-                                </connections>
-                            </button>
                             <searchBar contentMode="redraw" searchBarStyle="minimal" placeholder="Search Plants" translatesAutoresizingMaskIntoConstraints="NO" id="d95-7P-oeP">
-                                <rect key="frame" x="11.666666666666657" y="303" width="370" height="56"/>
+                                <rect key="frame" x="16" y="115" width="361" height="56"/>
                                 <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="370" id="C0V-vM-rja"/>
-                                </constraints>
                                 <color key="barTintColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="words" keyboardAppearance="alert" returnKeyType="search" textContentType="name"/>
-                                <scopeButtonTitles>
-                                    <string>Title</string>
-                                    <string>Title</string>
-                                </scopeButtonTitles>
                                 <connections>
                                     <outlet property="delegate" destination="mqh-fK-l9V" id="r8m-GK-zS6"/>
                                 </connections>
@@ -115,12 +92,9 @@
                         <color key="backgroundColor" red="0.92156862745098034" green="0.95686274509803915" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="tintColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="d95-7P-oeP" firstAttribute="centerX" secondItem="NgV-sH-Qoy" secondAttribute="centerX" id="CHc-dh-1Of"/>
-                            <constraint firstItem="lGc-gO-F5t" firstAttribute="top" secondItem="Sob-fy-5HK" secondAttribute="bottom" constant="50" id="E5B-qP-YPR"/>
-                            <constraint firstItem="Sob-fy-5HK" firstAttribute="centerX" secondItem="NgV-sH-Qoy" secondAttribute="centerX" id="TeJ-5k-sSo"/>
-                            <constraint firstItem="lGc-gO-F5t" firstAttribute="centerX" secondItem="NgV-sH-Qoy" secondAttribute="centerX" id="ck4-ag-4UJ"/>
-                            <constraint firstItem="Sob-fy-5HK" firstAttribute="centerY" secondItem="NgV-sH-Qoy" secondAttribute="centerY" id="qjI-OD-vve"/>
-                            <constraint firstItem="Sob-fy-5HK" firstAttribute="top" secondItem="d95-7P-oeP" secondAttribute="bottom" constant="50" id="rQz-Ym-1Aa"/>
+                            <constraint firstItem="d95-7P-oeP" firstAttribute="leading" secondItem="oFJ-s2-lw2" secondAttribute="leading" constant="16" id="CHc-dh-1Of"/>
+                            <constraint firstItem="oFJ-s2-lw2" firstAttribute="trailing" secondItem="d95-7P-oeP" secondAttribute="trailing" constant="16" id="dHf-3k-9Lm"/>
+                            <constraint firstItem="d95-7P-oeP" firstAttribute="top" secondItem="oFJ-s2-lw2" secondAttribute="top" constant="12" id="rQz-Ym-1Aa"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Add Plant" id="jaB-5g-QHY"/>
