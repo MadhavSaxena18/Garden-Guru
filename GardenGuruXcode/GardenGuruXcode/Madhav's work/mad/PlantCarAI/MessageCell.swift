@@ -1,8 +1,4 @@
-//
-//  MessageCell.swift
-//  ReadBuddyAi
-//
-//  Created by Deepanshu-Maliyan-Mac on 16/01/25.
+
 
 import UIKit
 
