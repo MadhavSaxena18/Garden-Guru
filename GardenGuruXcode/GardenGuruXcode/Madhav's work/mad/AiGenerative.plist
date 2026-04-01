@@ -2,7 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>GEMINI_API_KEY</key>
+	<string>AIzaSyBq5KXBQD1Mqx20ckIVK8QtlPGYUTNNVRk</string>
 	<key>API_KEY</key>
-	<string>AIzaSyCzQbnYwAOMNoAMl0pTZfHqH3cz2Y0ZIrI</string>
+	<string>AIzaSyBq5KXBQD1Mqx20ckIVK8QtlPGYUTNNVRk</string>
 </dict>
 </plist>

@@ -235,86 +235,115 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         print("\nAll YOLO results: \(yoloResults)")
         
-        // Check if majority of YOLO results are plants
+        // IMPROVED VALIDATION: Check if majority of YOLO results are actually plants
         let plantDetections = yoloResults.filter {
-            $0.contains("pottedplant") || $0.contains("vase") || $0.contains("no objects detected")
+            $0.contains("pottedplant")  // Only accept actual plant detections
         }.count
         
-        if plantDetections >= 2 {  // At least 2 images detected as plants
-            // Step 2: Run plant classifier on first image only
-            if let firstImage = scanAndDiagnoseViewController.capturedImages.first,
-               let plantType = runPlantClassifier(firstImage) {
-                print("Plant Classification Result: \(plantType)")
-                
-                // Check if it's a non-plant object
-                if isNonPlantObject(plantType) {
-                    DispatchQueue.main.async {
-                        DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
-                        DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                        self.showPlantNotIdentifiedAlert()
-                    }
-                    return
+        let nonPlantDetections = yoloResults.filter {
+            $0.contains("chair") || $0.contains("table") || $0.contains("person") ||
+            $0.contains("bottle") || $0.contains("cup") || $0.contains("book") ||
+            $0.contains("laptop") || $0.contains("keyboard") || $0.contains("mouse") ||
+            $0.contains("cell phone") || $0.contains("tv") || $0.contains("couch") ||
+            $0.contains("bed") || $0.contains("dining table") || $0.contains("toilet") ||
+            $0.contains("car") || $0.contains("bicycle") || $0.contains("motorcycle")
+        }.count
+        
+        print("📊 Plant detections: \(plantDetections), Non-plant detections: \(nonPlantDetections)")
+        
+        // If we detected non-plant objects, reject immediately
+        if nonPlantDetections > 0 {
+            print("❌ Non-plant objects detected - rejecting scan")
+            DispatchQueue.main.async {
+                DiagnosisViewController.plantNameLabel.text = "Not a Plant"
+                DiagnosisViewController.diagnosisLabel.text = "Object detected"
+                self.showNonPlantObjectAlert()
+            }
+            return
+        }
+        
+        // Require at least 2 out of 3 images to detect plants
+        if plantDetections < 2 {
+            print("❌ Insufficient plant detections - rejecting scan")
+            DispatchQueue.main.async {
+                DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
+                DiagnosisViewController.diagnosisLabel.text = "No plant detected"
+                self.showPlantNotIdentifiedAlert()
+            }
+            return
+        }
+        
+        print("✅ Plant validation passed - proceeding with classification")
+        
+        // Step 2: Run plant classifier on first image only
+        if let firstImage = scanAndDiagnoseViewController.capturedImages.first,
+           let plantType = runPlantClassifier(firstImage) {
+            print("Plant Classification Result: \(plantType)")
+            
+            // IMPROVED: Check if it's a non-plant object with better detection
+            if isNonPlantObject(plantType) || isCommonNonPlantResult(plantType) {
+                print("❌ Non-plant object detected by classifier: \(plantType)")
+                DispatchQueue.main.async {
+                    DiagnosisViewController.plantNameLabel.text = "Not a Plant"
+                    DiagnosisViewController.diagnosisLabel.text = "Object detected"
+                    self.showNonPlantObjectAlert()
                 }
-                
-                // Check if plant exists in database before proceeding
-                if findPlantCaseInsensitive(name: plantType) == nil {
-                    DispatchQueue.main.async {
-                        DiagnosisViewController.plantNameLabel.text = plantType
-                        DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                        self.showPlantNotFoundAlert()
-                    }
-                    return
-                }
-                
+                return
+            }
+            
+            // Check if plant exists in database before proceeding
+            if findPlantCaseInsensitive(name: plantType) == nil {
                 DispatchQueue.main.async {
                     DiagnosisViewController.plantNameLabel.text = plantType
+                    DiagnosisViewController.diagnosisLabel.text = "No disease detected"
+                    self.showPlantNotFoundAlert()
                 }
-                
-                // Step 3: Run disease detection on all images
-                var diseaseResults: [String] = []
-                
-                for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
-                    if let diseaseResult = runDiseaseDetection(image) {
-                        // Trim whitespace from disease name
-                        let cleanedResult = diseaseResult.trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        // Only add non-empty results
-                        if !cleanedResult.isEmpty {
-                            print("Disease Detection Result for image \(index + 1): \(cleanedResult)")
-                            diseaseResults.append(cleanedResult)
-                        } else {
-                            print("⚠️ Empty disease result after trimming for image \(index + 1)")
-                        }
-                    } else {
-                        print("⚠️ No disease detected for image \(index + 1) (confidence too low)")
-                    }
-                }
-                
-                // Get most frequent disease result
-                if !diseaseResults.isEmpty {
-                    let mostFrequentDisease = mostFrequentResult(diseaseResults)
-                    print("Most frequent disease: \(mostFrequentDisease)")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                DiagnosisViewController.plantNameLabel.text = plantType
+            }
+            
+            // Step 3: Run disease detection on all images
+            var diseaseResults: [String] = []
+            
+            for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
+                if let diseaseResult = runDiseaseDetection(image) {
+                    // Trim whitespace from disease name
+                    let cleanedResult = diseaseResult.trimmingCharacters(in: .whitespacesAndNewlines)
                     
-                    DispatchQueue.main.async {
-                        DiagnosisViewController.diagnosisLabel.text = "\(mostFrequentDisease)"
+                    // Only add non-empty results
+                    if !cleanedResult.isEmpty {
+                        print("Disease Detection Result for image \(index + 1): \(cleanedResult)")
+                        diseaseResults.append(cleanedResult)
+                    } else {
+                        print("⚠️ Empty disease result after trimming for image \(index + 1)")
                     }
                 } else {
-                    DispatchQueue.main.async {
-                        DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                    }
+                    print("⚠️ No disease detected for image \(index + 1) (confidence too low)")
+                }
+            }
+            
+            // Get most frequent disease result
+            if !diseaseResults.isEmpty {
+                let mostFrequentDisease = mostFrequentResult(diseaseResults)
+                print("Most frequent disease: \(mostFrequentDisease)")
+                
+                DispatchQueue.main.async {
+                    DiagnosisViewController.diagnosisLabel.text = "\(mostFrequentDisease)"
                 }
             } else {
                 DispatchQueue.main.async {
-                    DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
                     DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                   // self.showPlantNotIdentifiedAlert()
                 }
             }
         } else {
+            print("❌ Plant classifier returned no result")
             DispatchQueue.main.async {
                 DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
-                DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-              //  self.showPlantNotIdentifiedAlert()
+                DiagnosisViewController.diagnosisLabel.text = "No plant detected"
+                self.showPlantNotIdentifiedAlert()
             }
         }
     }
@@ -491,6 +520,47 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         return nonPlantPrefixes.contains { result.hasPrefix($0) }
     }
     
+    // NEW: Additional check for common non-plant results from the classifier
+    private func isCommonNonPlantResult(_ result: String) -> Bool {
+        let lowercaseResult = result.lowercased()
+        let nonPlantKeywords = [
+            "chair", "table", "desk", "furniture",
+            "person", "human", "face", "hand",
+            "bottle", "cup", "glass", "mug",
+            "book", "paper", "document",
+            "laptop", "computer", "keyboard", "mouse", "phone",
+            "tv", "monitor", "screen",
+            "wall", "floor", "ceiling", "door", "window",
+            "car", "vehicle", "bicycle", "motorcycle",
+            "food", "plate", "bowl",
+            "clothing", "shirt", "pants", "shoe",
+            "toy", "ball", "doll"
+        ]
+        
+        return nonPlantKeywords.contains { lowercaseResult.contains($0) }
+    }
+    
+    private func showNonPlantObjectAlert() {
+        let alert = UIAlertController(
+            title: "Not a Plant Detected",
+            message: "We detected a non-plant object in your images. Please scan an actual plant.\n\nMake sure:\n• You're scanning a real plant\n• The plant is clearly visible\n• There's good lighting\n• No other objects are in the frame",
+            preferredStyle: .alert
+        )
+        
+        let retryAction = UIAlertAction(title: "Try Again", style: .default) { [weak self] _ in
+            self?.resetForNewScan()
+            self?.resetState()
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+            self?.navigationController?.popToRootViewController(animated: true)
+        }
+        
+        alert.addAction(retryAction)
+        alert.addAction(cancelAction)
+        present(alert, animated: true)
+    }
+    
     private func showPlantNotIdentifiedAlert() {
         let alert = UIAlertController(
             title: "Plant Not Identified",
@@ -571,14 +641,16 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             
             let plantName = DiagnosisViewController.plantNameLabel.text ?? "Unknown Plant"
             
-            // Check if the result is a non-plant object
-            if self.isNonPlantObject(plantName) {
-                self.showPlantNotIdentifiedAlert()
+            // IMPROVED: Check if the result is a non-plant object or common non-plant keyword
+            if self.isNonPlantObject(plantName) || self.isCommonNonPlantResult(plantName) {
+                print("❌ Non-plant object detected in final check: \(plantName)")
+                self.showNonPlantObjectAlert()
                 return
             }
             
-            // Check if plant name is empty or unknown
-            if plantName.isEmpty || plantName == "Unknown Plant" {
+            // Check if plant name is empty, unknown, or "Not a Plant"
+            if plantName.isEmpty || plantName == "Unknown Plant" || plantName == "Not a Plant" {
+                print("❌ Invalid plant name in final check: \(plantName)")
                 self.showPlantNotIdentifiedAlert()
                 return
             }

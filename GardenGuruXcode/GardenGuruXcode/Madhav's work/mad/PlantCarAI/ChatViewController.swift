@@ -4,6 +4,8 @@ import GoogleGenerativeAI
 
 class ChatViewController: UIViewController {
     private var messages: [Message] = []
+    private var userPlants: [(userPlant: UserPlant, plant: Plant)] = []
+    private var userEmail: String?
 //    private let model = GenerativeModel(name: "", apiKey: "APIConfig.geminiAPIKey")
     
     private let tableView: UITableView = {
@@ -71,21 +73,43 @@ class ChatViewController: UIViewController {
             setupNavigation()
             setupUI()
             setupActions()
+            loadUserPlants()
+        }
+        
+        private func loadUserPlants() {
+            userEmail = UserDefaults.standard.string(forKey: "userEmail")
+            guard let email = userEmail else { return }
+            
+            Task {
+                do {
+                    userPlants = try await DataControllerGG.shared.getUserPlantsWithBasicDetails(for: email)
+                    print("✅ Loaded \(userPlants.count) user plants for ChatViewController")
+                } catch {
+                    print("❌ Error loading user plants: \(error)")
+                }
+            }
         }
         
         private func setupGeminiModel() {
-            do {
-                let apiKey = try ConfigManager.shared.getGeminiAPIKey()
-                model = GenerativeModel(name: "gemini-1.5-flash-002", apiKey: apiKey)
-            } catch {
+            // Validate configuration first
+            guard APIConfig.validateConfiguration() else {
+                print("❌ API configuration validation failed")
                 showAPIKeyError()
+                return
             }
+            
+            let apiKey = APIConfig.geminiAPIKey
+            print("🔑 Using API Key from configuration")
+            print("🌐 Model: \(APIConfig.geminiModel)")
+            
+            model = GenerativeModel(name: APIConfig.geminiModel, apiKey: apiKey)
+            print("✅ Gemini model initialized successfully")
         }
         
         private func showAPIKeyError() {
             let alert = UIAlertController(
                 title: "Configuration Error",
-                message: "Failed to load API key. Please check your Config.plist file.",
+                message: "Failed to load API key. Please check your configuration.",
                 preferredStyle: .alert
             )
             alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -201,16 +225,35 @@ class ChatViewController: UIViewController {
                 conversation += "Plant Doctor: \(message.content)\n"
             }
         }
+        // Build context about user's plants
+        var plantContext = ""
+        if !userPlants.isEmpty {
+            let plantNames = userPlants.map { $0.plant.plantName }.joined(separator: ", ")
+            plantContext = "\n\nUser's Plants: \(plantNames)"
+        }
+        
+        // Get current season
+        let month = Calendar.current.component(.month, from: Date())
+        let season = getSeason(for: month)
+        
         // Add instruction for the model
         let prompt = """
-        You are a friendly plant doctor. Continue the conversation below, replying as a human expert would. Be brief, clear, and conversational.\n\n\(conversation)Plant Doctor:
+        You are a friendly plant doctor helping a gardener. Continue the conversation below, replying as a human expert would. Be brief, clear, and conversational.\(plantContext)
+        Current Season: \(season)
+        Location: India
+        
+        IMPORTANT: Write in plain text without any markdown formatting. Don't use asterisks, underscores, or special characters for emphasis. Use simple bullet points (•) if listing items. Write naturally as if texting a friend.
+        
+        \(conversation)Plant Doctor:
         """
         
         Task {
             do {
                 let response = try await model.generateContent(prompt)
                 if let responseText = response.text {
-                    let botMessage = Message(content: responseText, isUser: false)
+                    // Clean up markdown formatting for more natural appearance
+                    let cleanedText = cleanMarkdownFormatting(responseText)
+                    let botMessage = Message(content: cleanedText, isUser: false)
                     messages.append(botMessage)
                     
                     DispatchQueue.main.async {
@@ -236,25 +279,40 @@ class ChatViewController: UIViewController {
     
     
     @objc private func showQuickReplies() {
-        let alertController = UIAlertController(title: "Quick Replies",
+        let alertController = UIAlertController(title: "Quick Questions",
                                                 message: nil,
                                                 preferredStyle: .actionSheet)
         
-//        let actions = [
-//            "What's the meaning of this word?",
-//            "Give me examples of usage",
-//            "What are the synonyms?",
-//            "How do I pronounce this?",
-//            "Explain the grammar"
-//        ]
-        let actions = [
-            "What's the meaning of this word?",
+        var actions: [String] = []
+        
+        // Add plant-specific questions if user has plants
+        if !userPlants.isEmpty {
+            let plantNames = userPlants.prefix(3).map { $0.plant.plantName }
             
-        ]
+            if plantNames.count == 1 {
+                actions.append("How do I care for my \(plantNames[0])?")
+                actions.append("Is my \(plantNames[0]) getting enough light?")
+            } else {
+                actions.append("Care tips for my plants")
+                actions.append("Which of my plants needs more attention?")
+            }
+        }
+        
+        // Add seasonal questions
+        let month = Calendar.current.component(.month, from: Date())
+        let season = getSeason(for: month)
+        actions.append("Best plants to grow in \(season)")
+        actions.append("What should I plant this season?")
+        
+        // Add general questions
+        actions.append("Signs of overwatering")
+        actions.append("Common plant diseases and treatments")
+        actions.append("Best organic fertilizers")
 
         actions.forEach { action in
             alertController.addAction(UIAlertAction(title: action, style: .default) { [weak self] _ in
                 self?.inputTextField.text = action
+                self?.sendMessage()
             })
         }
         
@@ -267,6 +325,38 @@ class ChatViewController: UIViewController {
         }
         
         present(alertController, animated: true)
+    }
+    
+    private func getSeason(for month: Int) -> String {
+        switch month {
+        case 3...5: return "Spring"
+        case 6...9: return "Monsoon/Summer"
+        case 10...11: return "Autumn"
+        case 12, 1, 2: return "Winter"
+        default: return "Current Season"
+        }
+    }
+    
+    private func cleanMarkdownFormatting(_ text: String) -> String {
+        var cleaned = text
+        
+        // Remove bold markers (**text**)
+        cleaned = cleaned.replacingOccurrences(of: "**", with: "")
+        
+        // Remove italic markers (*text* or _text_)
+        cleaned = cleaned.replacingOccurrences(of: "*", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "_", with: "")
+        
+        // Remove code markers (`text`)
+        cleaned = cleaned.replacingOccurrences(of: "`", with: "")
+        
+        // Clean up bullet points - replace markdown bullets with proper bullets
+        cleaned = cleaned.replacingOccurrences(of: "- ", with: "• ")
+        
+        // Remove extra whitespace
+        cleaned = cleaned.replacingOccurrences(of: "  ", with: " ")
+        
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     // Add these methods to handle keyboard

@@ -54,6 +54,10 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     
     // Add this property at the top of the class
     private var existingPlant: Plant?
+    
+    // Add properties to store values before view loads
+    private var pendingPlantName: String?
+    private var pendingNickname: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -67,6 +71,16 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
         if navigationController == nil {
             print("Navigation controller is not embedded!")
+        }
+        
+        // Apply pending values if configure was called before viewDidLoad
+        if let plantName = pendingPlantName {
+            plantNameLabel.text = plantName
+            print("✅ Applied pending plant name: \(plantName)")
+        }
+        if let nickname = pendingNickname {
+            locationLabel.text = nickname
+            print("✅ Applied pending nickname: \(nickname)")
         }
     }
     
@@ -376,11 +390,28 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
     func configure(plantName: String?, nickname: String?) {
         print("\n=== Configuring SetReminderViewController ===")
         print("DataController instance: \(dataController)")
+        print("View loaded: \(isViewLoaded)")
         
+        // Store values for later if view hasn't loaded yet
+        pendingPlantName = plantName
+        pendingNickname = nickname
+        
+        // If view is already loaded, apply immediately
+        if isViewLoaded {
+            if let plantName = plantName {
+                self.plantNameLabel.text = plantName
+                print("✅ Setting plant name to: '\(plantName)'")
+            }
+            if let nickname = nickname {
+                self.locationLabel.text = nickname
+                print("✅ Setting nickname to: '\(nickname)'")
+            }
+        } else {
+            print("⏳ View not loaded yet, values will be applied in viewDidLoad")
+        }
+        
+        // Verify plant exists in database
         if let plantName = plantName {
-            self.plantNameLabel.text = plantName
-            print("Setting plant name to: '\(plantName)'")
-            
             Task {
                 do {
                     if let plant = try await dataController.getPlantbyName(by: plantName) {
@@ -414,13 +445,6 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
             }
         } else {
             print("❌ No plant name provided to SetReminderViewController")
-        }
-        
-        if let nickname = nickname {
-            self.locationLabel.text = nickname
-            print("Setting nickname to: '\(nickname)'")
-        } else {
-            print("❌ No nickname provided to SetReminderViewController")
         }
     }
 }
