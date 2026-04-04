@@ -35,11 +35,30 @@ class Section2CollectionViewCell: UICollectionViewCell {
         imageViewLabel.contentMode = .scaleAspectFill
         imageViewLabel.clipsToBounds = true
         
-        // Configure labels
-        diseaseNameLabel.font = UIFont.boldSystemFont(ofSize: 25)
+        // Configure disease name label (maximum bold title)
+        if let sfProBlack = UIFont(name: "SFProDisplay-Black", size: 25) {
+            diseaseNameLabel.font = sfProBlack
+        } else if let sfProHeavy = UIFont(name: "SFProDisplay-Heavy", size: 25) {
+            diseaseNameLabel.font = sfProHeavy
+        } else if let sfProBold = UIFont(name: "SFProDisplay-Bold", size: 25) {
+            diseaseNameLabel.font = sfProBold
+        } else {
+            diseaseNameLabel.font = UIFont.systemFont(ofSize: 25, weight: .black)
+        }
+        diseaseNameLabel.numberOfLines = 0
+        diseaseNameLabel.lineBreakMode = .byWordWrapping
+        
+        // Configure plant name label (if used)
         plantNameLabel.font = UIFont.systemFont(ofSize: 14)
+        plantNameLabel.numberOfLines = 1
+        plantNameLabel.lineBreakMode = .byTruncatingTail
+        
+        // Configure description label
         plantDescriptionLabel.font = UIFont.systemFont(ofSize: 14)
-        plantDescriptionLabel.numberOfLines = 2
+        plantDescriptionLabel.numberOfLines = 0
+        plantDescriptionLabel.lineBreakMode = .byWordWrapping
+        plantDescriptionLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
+        plantDescriptionLabel.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
     }
     
     private func updateUI() {
@@ -60,8 +79,20 @@ class Section2CollectionViewCell: UICollectionViewCell {
             imageViewLabel.image = UIImage(named: "placeholder_disease")
         }
         
+        // Set disease name with proper formatting
         diseaseNameLabel.text = disease.diseaseName
+        
+        // Debug font info
+        print("[DEBUG] Font being used: \(diseaseNameLabel.font.fontName), size: \(diseaseNameLabel.font.pointSize)")
+        
+        // Set plant name if available (currently commented out)
         //plantNameLabel.text = disease.diseaseName
+        
+        // Set description with proper wrapping
         plantDescriptionLabel.text = disease.diseaseCure
+        
+        // Force layout update to ensure proper text wrapping
+        setNeedsLayout()
+        layoutIfNeeded()
     }
 }

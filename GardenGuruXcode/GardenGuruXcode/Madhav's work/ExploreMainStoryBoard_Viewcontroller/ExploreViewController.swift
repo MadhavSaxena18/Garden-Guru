@@ -87,7 +87,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         print("Starting weather fetch...")
         await MainActor.run {
             isLoadingLocation = true
-            discoverCategories = []
+            // Don't clear categories here - let updatePlantsForCurrentWeather handle it
             collectionView.reloadData()
         }
         
@@ -100,44 +100,21 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude
             )
+            print("Weather fetched successfully: \(weather.main.temp)°C")
             
-            // Cache the weather data and update timestamp
+            // Cache the weather and location
             self.cachedWeather = weather
             self.lastLocationFetch = Date()
             
-            await self.updatePlantsForCurrentWeather(weather)
-
-            await MainActor.run {
-                isLoadingLocation = false
-                print("🟢 Discover categories updated and reloading collection view.")
-            }
+            await updatePlantsForCurrentWeather(weather)
         } catch {
-            print("Error in fetchWeatherAndUpdatePlants: \(error)")
-            await MainActor.run {
-                isLoadingLocation = false
-                // Handle the error appropriately
-                if (error as NSError).domain == "Location Access Denied" {
-                    // Show alert to user about location access
-                    let alert = UIAlertController(
-                        title: "Location Access Required",
-                        message: "Please enable location access in Settings to see weather-appropriate plants for your area.",
-                        preferredStyle: .alert
-                    )
-                    
-                    alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
-                        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(settingsURL)
-                        }
-                    })
-                    
-                    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-                    
-                    self.present(alert, animated: true)
-                } else {
-                    // Handle other errors
-                    print("Error fetching weather: \(error)")
-                }
-            }
+            print("Error fetching weather: \(error)")
+            // Load default data without weather filtering
+            await loadDefaultExploreData()
+        }
+
+        await MainActor.run {
+            isLoadingLocation = false
         }
     }
     
@@ -148,19 +125,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         print("🌦️ Current Weather Condition: \(condition)")
 
         // Helper function to map temperature to season
-        func seasonForTemperature(_ temp: Double) -> String {
-            switch temp {
-            case ..<15:
-                return "winter"
-            case 15..<25:
-                return "spring"
-            case 25..<50:
-                return "summer"
-            default:
-                return "extreme summer"
-            }
-        }
-
         print("[DEBUG] Before Task in updatePlantsForCurrentWeather")
         Task {
             print("[DEBUG] Inside Task in updatePlantsForCurrentWeather")
@@ -249,12 +213,15 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     override func viewDidLoad() {
         super.viewDidLoad()
        
-        // Initialize categories structure
+        // Initialize categories structure with empty arrays to prevent crash
         self.discoverCategories = [
             ("Care Tip of the Day", []),
-            ("Current Season Plants", []),
+            ("Top Season Plants", []), // Will be updated to specific season
             ("Common Issues", []),
+            ("Pest & Disease Prevention", [])
         ]
+        
+        self.forMyPlantCategories = []
 
         // Update data for selected segment (will trigger initial fetch)
         updateDataForSelectedSegment()
@@ -279,6 +246,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 }
             } else {
                 print("⚠️ Location access not granted. Authorization status: \(authStatus)")
+                // Load default data without weather filtering
+                await loadDefaultExploreData()
                 await MainActor.run {
                     let alert = UIAlertController(
                         title: "Location Access Required",
@@ -301,6 +270,60 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         // Add prefetching delegate
         collectionView.prefetchDataSource = self
+    }
+    
+    private func loadDefaultExploreData() async {
+        print("🔄 Loading default explore data without weather filtering")
+        await MainActor.run {
+            // Reconstruct discoverCategories with all available data
+            var newDiscoverCategories: [(title: String, items: [Any])] = []
+
+            // Add Care Tip of the Day (if available)
+            if let tip = self.careTipOfTheDay {
+                newDiscoverCategories.append(("Care Tip of the Day", [tip]))
+            }
+
+            // Add plants (will be filtered by season)
+            if !self.plants.isEmpty {
+                let currentSeason = self.getCurrentSeasonForDisplay()
+                let seasonalPlants = self.filterPlantsBySeason(self.plants, season: currentSeason)
+                let seasonDisplayName = self.getSeasonDisplayName(currentSeason)
+
+                print(" Found \(seasonalPlants.count) plants for \(seasonDisplayName) season (default data)")
+
+                if !seasonalPlants.isEmpty {
+                    newDiscoverCategories.append(("Top \(seasonDisplayName) Season Plants", seasonalPlants))
+                } else {
+                    // Fallback 1: Try to show plants for adjacent seasons
+                    let adjacentSeasonPlants = self.getPlantsForAdjacentSeasons()
+                    if !adjacentSeasonPlants.isEmpty {
+                        newDiscoverCategories.append(("Recommended Plants", adjacentSeasonPlants))
+                    } else {
+                        // Fallback 2: Show all plants
+                        newDiscoverCategories.append(("All Plants", self.plants))
+                    }
+                }
+            }
+
+            // Add common issues
+            if !self.diseases.isEmpty {
+                newDiscoverCategories.append(("Common Issues", self.diseases))
+            }
+
+            // Add prevention tips if available
+            if !self.preventionTips.isEmpty {
+                newDiscoverCategories.append(("Pest & Disease Prevention", self.preventionTips))
+            }
+
+            self.discoverCategories = newDiscoverCategories
+
+            if self.isSearchActive {
+                self.filteredDiscoverCategories = self.discoverCategories
+            }
+
+            print("🟢 Default explore categories loaded. Reloading collection view.")
+            self.collectionView.reloadData()
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -470,6 +493,56 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                         }
                     }
                 }
+            }
+
+            // 🔄 Update discover categories with fetched data
+            await MainActor.run {
+                var newDiscoverCategories: [(title: String, items: [Any])] = []
+
+                // Add Care Tip of the Day (if available)
+                if let tip = self.careTipOfTheDay {
+                    newDiscoverCategories.append(("Care Tip of the Day", [tip]))
+                }
+
+                // Add plants (will be filtered by season)
+                if !self.plants.isEmpty {
+                    let currentSeason = self.getCurrentSeasonForDisplay()
+                    let seasonalPlants = self.filterPlantsBySeason(self.plants, season: currentSeason)
+                    let seasonDisplayName = self.getSeasonDisplayName(currentSeason)
+                    
+                    print("🌱 Found \(seasonalPlants.count) plants for \(seasonDisplayName) season")
+                    
+                    if !seasonalPlants.isEmpty {
+                        newDiscoverCategories.append(("Top \(seasonDisplayName) Season Plants", seasonalPlants))
+                    } else {
+                        // Fallback 1: Try to show plants for adjacent seasons
+                        let adjacentSeasonPlants = self.getPlantsForAdjacentSeasons()
+                        if !adjacentSeasonPlants.isEmpty {
+                            newDiscoverCategories.append(("Recommended Plants", adjacentSeasonPlants))
+                        } else {
+                            // Fallback 2: Show all plants
+                            newDiscoverCategories.append(("All Plants", self.plants))
+                        }
+                    }
+                }
+                
+                // Add common issues
+                if !self.diseases.isEmpty {
+                    newDiscoverCategories.append(("Common Issues", self.diseases))
+                }
+
+                // Add prevention tips if available
+                if !self.preventionTips.isEmpty {
+                    newDiscoverCategories.append(("Pest & Disease Prevention", self.preventionTips))
+                }
+
+                self.discoverCategories = newDiscoverCategories
+
+                if self.isSearchActive {
+                    self.filteredDiscoverCategories = self.discoverCategories
+                }
+
+                print("🟢 Discover categories updated with \(newDiscoverCategories.count) sections")
             }
 
             // 🔄 FOR MY PLANTS SECTION (unchanged)
@@ -687,10 +760,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         guard section < categories.count else { return 0 }
         
         let category = categories[section]
-        if selectedSegment == 0 && category.title == "Current Season Plants" {
+        if selectedSegment == 0 && (category.title == "Current Season Plants" || category.title == "All Plants" || category.title.contains("Season Plants") || category.title == "Recommended Plants") {
             // Limit to 5 plants in the main Explore view
             let fullCount = (category.items as? [Any])?.count ?? 0
-            print("📱 Discover - Current Season Plants items count (full): \(fullCount), limited to: \(min(fullCount, 5))")
+            print("📱 Discover - \(category.title) items count (full): \(fullCount), limited to: \(min(fullCount, 5))")
             return min(fullCount, 5)
         } else {
             // For other categories, return the full count
@@ -701,21 +774,34 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        print("🔧 Configuring cell for section: \(indexPath.section), row: \(indexPath.row)")
+        
         let categories = selectedSegment == 0 ?
             (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
             (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
         
         guard indexPath.section < categories.count else {
+            print("❌ Section index out of bounds: \(indexPath.section) >= \(categories.count)")
             return UICollectionViewCell()
         }
         
         let category = categories[indexPath.section]
+        guard indexPath.row < category.items.count else {
+            print("❌ Row index out of bounds: \(indexPath.row) >= \(category.items.count)")
+            return UICollectionViewCell()
+        }
+        
         let item = category.items[indexPath.row]
+        print("🔧 Category: \(category.title), Item type: \(type(of: item))")
 
         // ✅ STEP 1: CARE TIP SECTION
         if category.title == "Care Tip of the Day",
            let tip = item as? CareTip {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CareTipCell", for: indexPath) as! CareTipCollectionViewCell
+            print("🔧 Dequeuing CareTipCell")
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CareTipCell", for: indexPath) as? CareTipCollectionViewCell else {
+                print("❌ Failed to dequeue CareTipCell")
+                return UICollectionViewCell()
+            }
             cell.configure(with: tip.message)
             
             // Add styling for the Care Tip of the Day card
@@ -730,9 +816,13 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             return cell
         }
 
-        // ✅ STEP 2: SEASONAL PLANTS
-        if category.title == "Current Season Plants" {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! Section1CollectionViewCell
+        // ✅ STEP 2: SEASONAL PLANTS / ALL PLANTS
+        if category.title == "Current Season Plants" || category.title == "All Plants" || category.title.contains("Season Plants") || category.title == "Recommended Plants" {
+            print("🔧 Dequeuing first cell for plants")
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as? Section1CollectionViewCell else {
+                print("❌ Failed to dequeue Section1CollectionViewCell")
+                return UICollectionViewCell()
+            }
             if let plant = item as? Plant {
                 cell.plant = DataOfSection1InDicoverSegment(from: plant)
             }
@@ -802,7 +892,11 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
         // ✅ STEP 5: PEST & DISEASE PREVENTION
         else if category.title == "Pest & Disease Prevention" {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PreventionTipCollectionViewCell.reuseIdentifier, for: indexPath) as! PreventionTipCollectionViewCell
+            print("🔧 Dequeuing PreventionTipCollectionViewCell")
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PreventionTipCollectionViewCell.reuseIdentifier, for: indexPath) as? PreventionTipCollectionViewCell else {
+                print("❌ Failed to dequeue PreventionTipCollectionViewCell")
+                return UICollectionViewCell()
+            }
             if let preventionTip = item as? PreventionTip {
                 cell.configure(with: preventionTip.title ?? "", message: preventionTip.message ?? "", imageUrl: URL(string: preventionTip.imageUrl ?? ""))
             }
@@ -812,7 +906,122 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             return cell
         }
 
-        return UICollectionViewCell()
+        // Fallback cell for any unhandled cases
+        print("⚠️ Unhandled category: \(category.title), using default cell")
+        guard let fallbackCell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as? Section1CollectionViewCell else {
+            print("❌ Failed to dequeue fallback cell, returning basic UICollectionViewCell")
+            let basicCell = UICollectionViewCell()
+            basicCell.backgroundColor = .lightGray
+            return basicCell
+        }
+        fallbackCell.backgroundColor = .lightGray
+        return fallbackCell
+    }
+    
+    // MARK: - Season Helper Functions
+    
+    private func seasonForTemperature(_ temp: Double) -> String {
+        // India-optimized temperature ranges
+        switch temp {
+        case ..<20:      // Below 20°C - Winter season in most parts of India
+            return "winter"
+        case 20..<30:   // 20-30°C - Spring/Autumn - pleasant weather
+            return "spring"
+        case 30..<35:   // 30-35°C - Summer season
+            return "summer"
+        default:        // 35°C+ - Hot summer/pre-monsoon
+            return "rainy" // Map very hot to rainy season (approaching monsoon)
+        }
+    }
+    
+    private func getCurrentSeasonForDisplay() -> Season {
+        // Priority 1: Weather-based season (most accurate)
+        if let cachedWeather = self.cachedWeather {
+            let temp = cachedWeather.main.temp
+            let seasonString = seasonForTemperature(temp)
+            let season = Season(rawValue: seasonString) ?? .Spring
+            print("🌡️ Using weather-based season: \(season.rawValue)")
+            return season
+        }
+        
+        // Priority 2: India-optimized date-based season (no location needed)
+        let date = Date()
+        let calendar = Calendar.current
+        let month = calendar.component(.month, from: date)
+        let day = calendar.component(.day, from: date)
+        
+        // Indian seasons are different from standard Northern Hemisphere
+        // Winter: Dec-Feb | Spring: March-April | Summer: May-June | Monsoon: July-Sep | Autumn: Oct-Nov
+        let season: Season
+        switch (month, day) {
+        case (12, 16...), (1, _), (2, _), (3, 15...):
+            season = .Winter  // Indian Winter: Mid Dec to Mid March
+        case (3, 16...), (3, _), (4, _), (4, 30...):
+            season = .Spring  // Indian Spring: Mid March to End April
+        case (5, _), (6, _), (6, 30...):
+            season = .Summer  // Indian Summer: May to June
+        case (7, _), (8, _), (9, _), (9, 30...):
+            season = .Rainy   // Indian Monsoon: July to September
+        default: // (10, _), (11, _), (12, 1...15)
+            season = .Autumn  // Indian Autumn: October to Mid December
+        }
+        
+        print("🇮🇳 Using India-optimized season: \(season.rawValue)")
+        return season
+    }
+    
+    private func filterPlantsBySeason(_ plants: [Plant], season: Season) -> [Plant] {
+        return plants.filter { plant in
+            plant.favourableSeason == season
+        }
+    }
+    
+    private func getPlantsForAdjacentSeasons() -> [Plant] {
+        // Try to get plants for seasons that are close to current season (India-optimized)
+        let currentSeason = getCurrentSeasonForDisplay()
+        let adjacentSeasons: [Season]
+        
+        switch currentSeason {
+        case .Winter:
+            // Indian Winter (Dec-Feb) - adjacent to Autumn and Spring
+            adjacentSeasons = [.Autumn, .Spring]
+        case .Spring:
+            // Indian Spring (Mar-Apr) - adjacent to Winter and Summer
+            adjacentSeasons = [.Winter, .Summer]
+        case .Summer:
+            // Indian Summer (May-Jun) - adjacent to Spring and Monsoon
+            adjacentSeasons = [.Spring, .Rainy]
+        case .Autumn:
+            // Indian Autumn (Oct-Nov) - adjacent to Monsoon and Winter
+            adjacentSeasons = [.Rainy, .Winter]
+        case .Rainy:
+            // Indian Monsoon (Jul-Sep) - adjacent to Summer and Autumn
+            adjacentSeasons = [.Summer, .Autumn]
+        }
+        
+        var adjacentPlants: [Plant] = []
+        for season in adjacentSeasons {
+            adjacentPlants.append(contentsOf: filterPlantsBySeason(self.plants, season: season))
+        }
+        
+        // Remove duplicates and limit to reasonable number
+        let uniquePlants = Array(Set(adjacentPlants))
+        return Array(uniquePlants.prefix(10)) // Limit to 10 recommended plants
+    }
+    
+    private func getSeasonDisplayName(_ season: Season) -> String {
+        switch season {
+        case .Winter:
+            return "Winter"
+        case .Summer:
+            return "Summer"
+        case .Spring:
+            return "Spring"
+        case .Autumn:
+            return "Autumn"
+        case .Rainy:
+            return "Rainy"
+        }
     }
 
     
@@ -829,8 +1038,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                 (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
 
             print("🎨 Categories count: \(categories.count)")
-            guard sectionIndex < categories.count else {
-                print("❌ Section index out of bounds")
+            
+            // Return empty section if no categories exist yet
+            guard sectionIndex < categories.count, !categories.isEmpty else {
+                print("❌ Section index out of bounds or no categories available")
                 return nil
             }
 
@@ -866,7 +1077,13 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
                     section.interGroupSpacing = 12
                     print("🎨 Using layout for Care Tip of the Day")
 
-                case "Current Season Plants":
+                case "Current Season Plants", "All Plants":
+                    section = generateSection1Layout()
+                    
+                case let title where title.contains("Season Plants"):
+                    section = generateSection1Layout()
+                    
+                case "Recommended Plants":
                     section = generateSection1Layout()
 
                 case "Common Issues":
@@ -887,7 +1104,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
                 default:
                     print("❌ Invalid category title: \(categoryTitle)")
-                    return nil
+                    // Use default layout instead of returning nil to prevent crash
+                    section = generateSection1Layout()
                 }
 
                 print("🎨 Using Discover layout for \(categoryTitle)")
@@ -1029,18 +1247,29 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     
     
     @objc func sectionButtonTapped(_ sender: UIButton) {
+        print("\n🔘 === CHEVRON BUTTON TAPPED ===")
+        print("🔘 Button tag: \(sender.tag)")
+        
         // Full list and currently visible list
         let fullCategories = selectedSegment == 0 ? discoverCategories : forMyPlantCategories
         let activeCategories = selectedSegment == 0 ?
             (isSearchActive ? filteredDiscoverCategories : discoverCategories) :
             (isSearchActive ? filteredForMyPlantCategories : forMyPlantCategories)
 
+        print("🔘 Active categories count: \(activeCategories.count)")
+        print("🔘 Full categories count: \(fullCategories.count)")
+        
+        for (index, category) in activeCategories.enumerated() {
+            print("🔘 Category \(index): \(category.title) with \(category.items.count) items")
+        }
+
         guard sender.tag < activeCategories.count else {
-            print("❌ Invalid section index tapped")
+            print("❌ Invalid section index tapped: \(sender.tag) >= \(activeCategories.count)")
             return
         }
 
         let selectedCategory = activeCategories[sender.tag]
+        print("🔘 Selected category: \(selectedCategory.title)")
 
         // Skip Care Tip section
         if selectedCategory.title == "Care Tip of the Day" {
@@ -1064,22 +1293,26 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             print("⚠️ Could not find exact match, using sender tag: \(sender.tag)")
         }
 
-        // For Current Season Plants, pass the weather-mapped plants and current weather
-        if selectedCategory.title == "Current Season Plants" {
-            // Get the current weather-mapped plants from the active categories
-            if let currentSeasonCategory = activeCategories.first(where: { $0.title == "Current Season Plants" }) {
-                VC.filteredItems = currentSeasonCategory.items
-                // Pass the current weather data
-                if let weather = currentWeather {
-                    VC.currentWeather = weather
-                }
-                print("🌡️ Passing weather-mapped plants: \(currentSeasonCategory.items.count)")
-                print("🌡️ Plant names being passed to SectionWiseDetailVC: \(currentSeasonCategory.items.compactMap { ($0 as? Plant)?.plantName})")
+        // For Seasonal Plants (Top [Season] Season Plants) and Recommended Plants, pass the plants and current weather
+        if selectedCategory.title.contains("Season Plants") || selectedCategory.title == "Recommended Plants" {
+            // Get the seasonal plants from the selected category
+            VC.filteredItems = selectedCategory.items
+            // Pass the current weather data for seasonal context
+            if let weather = currentWeather {
+                VC.currentWeather = weather
             }
+            print("🌱 Passing seasonal/recommended plants: \(selectedCategory.items.count)")
+            print("🌱 Plant names being passed to SectionWiseDetailVC: \(selectedCategory.items.compactMap { ($0 as? Plant)?.plantName})")
+            print("🌱 Weather data passed: \(currentWeather != nil ? "YES" : "NO")")
         } else {
             // For other sections, pass all items
             VC.filteredItems = selectedCategory.items
+            print("🔍 Passing other section items: \(selectedCategory.items.count)")
         }
+        
+        print("🔍 About to push SectionWiseDetailViewController...")
+        print("🔍 Section number: \(VC.sectionNumber)")
+        print("🔍 Selected segment: \(VC.selectedSegmentIndex)")
         
         VC.selectedSegmentIndex = selectedSegment
 

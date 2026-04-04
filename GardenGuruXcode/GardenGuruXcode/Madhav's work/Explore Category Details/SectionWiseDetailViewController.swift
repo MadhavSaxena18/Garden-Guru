@@ -63,12 +63,12 @@ class SectionWiseDetailViewController: UIViewController {
 
             // Use filteredItems for all relevant sections in Discover segment
             if segmentIndex == 0 {
-                if sectionTitle == "Current Season Plants",
+                if sectionTitle.contains("Season Plants") || sectionTitle == "Recommended Plants",
                    let filteredPlants = receivedFilteredItems as? [Plant] {
                     self.plants = filteredPlants
                     self.dataType = .plants
                     didSetFiltered = true
-                    print("🔍 SectionWiseDetailViewController - Set filtered plants for Current Season from viewDidLoad: \(filteredPlants.count) items")
+                    print("🔍 SectionWiseDetailViewController - Set filtered plants for seasonal/recommended plants from viewDidLoad: \(filteredPlants.count) items")
                 } else if sectionTitle == "Common Issues",
                    let filteredDiseases = receivedFilteredItems as? [Diseases] {
                     self.diseases = filteredDiseases
@@ -181,7 +181,7 @@ class SectionWiseDetailViewController: UIViewController {
                     let sectionTitle = headerData[section]
                     print("🔍 SectionWiseDetailViewController - Discover section title: \(sectionTitle)")
                     switch sectionTitle {
-                    case "Current Season Plants":
+                    case let title where title.contains("Season Plants") || title == "Recommended Plants":
                         dataType = .plants
                         // Use the passed filtered plants if available
                         if let filteredPlants = filteredItems as? [Plant] {

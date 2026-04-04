@@ -30,7 +30,7 @@
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cJp-TN-rTD">
                         <rect key="frame" x="173" y="15" width="41.333333333333343" height="18"/>
-                        <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="15"/>
+                        <fontDescription key="fontDescription" name="SFProDisplay-Black" family="SF Pro Display" pointSize="25"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
@@ -47,13 +47,13 @@
             <constraints>
                 <constraint firstItem="ZpI-aG-vZF" firstAttribute="leading" secondItem="rAo-xl-5xy" secondAttribute="trailing" constant="10" id="1vh-DJ-jWh"/>
                 <constraint firstItem="cJp-TN-rTD" firstAttribute="leading" secondItem="rAo-xl-5xy" secondAttribute="trailing" constant="10" id="GVe-a5-oNq"/>
-                <constraint firstItem="ZpI-aG-vZF" firstAttribute="top" secondItem="cJp-TN-rTD" secondAttribute="bottom" constant="7" id="Vue-83-SeG"/>
+                <constraint firstItem="cJp-TN-rTD" firstAttribute="trailing" secondItem="gTV-IL-0wX" secondAttribute="trailing" constant="-9" id="Trl-8h-6dK"/>
+                <constraint firstItem="ZpI-aG-vZF" firstAttribute="top" secondItem="cJp-TN-rTD" secondAttribute="bottom" constant="4" id="Vue-83-SeG"/>
                 <constraint firstAttribute="trailing" secondItem="ZpI-aG-vZF" secondAttribute="trailing" constant="9" id="XlY-vc-Njy"/>
                 <constraint firstAttribute="bottom" secondItem="rAo-xl-5xy" secondAttribute="bottom" constant="9" id="aec-iC-9W5"/>
                 <constraint firstItem="rAo-xl-5xy" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="9" id="fGl-zF-oTc"/>
-                <constraint firstItem="ZpI-aG-vZF" firstAttribute="top" secondItem="cJp-TN-rTD" secondAttribute="bottom" constant="7" id="jXI-Ww-tEV"/>
-                <constraint firstItem="cJp-TN-rTD" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="15" id="ncv-f4-wXF"/>
                 <constraint firstItem="rAo-xl-5xy" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="9" id="qk5-mL-2bD"/>
+                <constraint firstItem="cJp-TN-rTD" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="8" id="ncv-f4-wXF"/>
             </constraints>
             <size key="customSize" width="254" height="50"/>
             <connections>

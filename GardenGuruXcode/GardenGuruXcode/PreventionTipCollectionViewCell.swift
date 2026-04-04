@@ -7,8 +7,6 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
     private let tipImageView = UIImageView()
     private let visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
     private let titleLabel = UILabel()
-    private let messageLabel = UILabel()
-    private let textStackView = UIStackView()
     
     static let reuseIdentifier = "PreventionTipCollectionViewCell"
     
@@ -42,33 +40,18 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
         tipImageView.clipsToBounds = true
         contentView.addSubview(tipImageView)
         
-        // Visual Effect View (Blur)
+        // Visual Effect View (Blur) - reduced height since only showing title
         visualEffectView.clipsToBounds = true
         visualEffectView.contentView.backgroundColor = .clear // Ensure blur is visible
         contentView.addSubview(visualEffectView)
         
-        // Stack View for text
-        textStackView.axis = .vertical
-        textStackView.spacing = 4 // Increased spacing to add space between heading and text
-        textStackView.distribution = .fill
-        visualEffectView.contentView.addSubview(textStackView) // Add to blur view's contentView
-        
-        // Title Label
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        // Title Label - add directly to blur view's content view
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 18) // Increased font size for better visibility
         titleLabel.textColor = .white
-        titleLabel.numberOfLines = 1 // Limit title to a single line
+        titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 1
         titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        textStackView.addArrangedSubview(titleLabel)
-        
-        // Message Label
-        messageLabel.font = UIFont.systemFont(ofSize: 14)
-        messageLabel.textColor = .white
-        messageLabel.numberOfLines = 2 // Limit message to two lines
-        messageLabel.lineBreakMode = .byTruncatingTail
-        messageLabel.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
-        textStackView.addArrangedSubview(messageLabel)
+        visualEffectView.contentView.addSubview(titleLabel)
         
         setupConstraints()
     }
@@ -76,9 +59,7 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
     private func setupConstraints() {
         tipImageView.translatesAutoresizingMaskIntoConstraints = false
         visualEffectView.translatesAutoresizingMaskIntoConstraints = false
-        textStackView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        messageLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             // Image View constraints (fills entire cell)
@@ -87,44 +68,36 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
             tipImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             tipImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             
-            // Visual Effect View constraints (pinned to bottom with fixed height)
+            // Visual Effect View constraints (pinned to bottom with reduced height for title only)
             visualEffectView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             visualEffectView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             visualEffectView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            visualEffectView.heightAnchor.constraint(equalToConstant: 60), // Further reduced height for blur
+            visualEffectView.heightAnchor.constraint(equalToConstant: 40), // Reduced from 60 to 40 since only showing title
 
-            // Text Stack View constraints (horizontally padded and vertically centered within the blur view's contentView)
-            textStackView.centerXAnchor.constraint(equalTo: visualEffectView.contentView.centerXAnchor),
-            textStackView.centerYAnchor.constraint(equalTo: visualEffectView.contentView.centerYAnchor),
-            textStackView.leadingAnchor.constraint(equalTo: visualEffectView.contentView.leadingAnchor, constant: 16),
-            textStackView.trailingAnchor.constraint(equalTo: visualEffectView.contentView.trailingAnchor, constant: -16)
+            // Title Label constraints (centered in blur view with padding)
+            titleLabel.centerXAnchor.constraint(equalTo: visualEffectView.contentView.centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: visualEffectView.contentView.centerYAnchor),
+            titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: visualEffectView.contentView.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: visualEffectView.contentView.trailingAnchor, constant: -16)
         ])
     }
     
     // MARK: - Layout
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Set preferredMaxLayoutWidth here after the cell's bounds are established
+        // Set preferredMaxLayoutWidth for title
         let textWidth = bounds.width - 32 // Cell width - leading padding - trailing padding
         titleLabel.preferredMaxLayoutWidth = textWidth
-        messageLabel.preferredMaxLayoutWidth = textWidth
-        
-        // Temporarily add background colors for debugging
-        // titleLabel.backgroundColor = .red.withAlphaComponent(0.3)
-        // messageLabel.backgroundColor = .blue.withAlphaComponent(0.3)
-        // textStackView.backgroundColor = .green.withAlphaComponent(0.3)
-        // visualEffectView.contentView.backgroundColor = .yellow.withAlphaComponent(0.3)
     }
     
     // MARK: - Configure
     func configure(with title: String, message: String, imageUrl: URL?) {
         titleLabel.text = title
-        messageLabel.text = message
+        // Message is no longer displayed in the cell - only shown on detail page
         
-        // Set preferredMaxLayoutWidth here after the cell's bounds are established
+        // Set preferredMaxLayoutWidth for title
         let textWidth = bounds.width - 32 // Cell width - leading padding - trailing padding
         titleLabel.preferredMaxLayoutWidth = textWidth
-        messageLabel.preferredMaxLayoutWidth = textWidth
         
         // Clean and load image using SDWebImage
         if let urlString = imageUrl?.absoluteString, let cleanUrlString = urlString.replacingOccurrences(of: "//01", with: "/01").replacingOccurrences(of: "//", with: "/").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed), let finalImageUrl = URL(string: cleanUrlString) {
@@ -142,13 +115,7 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
         tipImageView.sd_cancelCurrentImageLoad() // Cancel ongoing image loads
         tipImageView.image = nil
         titleLabel.text = nil
-        messageLabel.text = nil
-        
-        // Remove temporary background colors on reuse
-        // titleLabel.backgroundColor = nil
-        // messageLabel.backgroundColor = nil
-        // textStackView.backgroundColor = nil
-        // visualEffectView.contentView.backgroundColor = nil
+        // Message label is no longer used
     }
 } 
  
