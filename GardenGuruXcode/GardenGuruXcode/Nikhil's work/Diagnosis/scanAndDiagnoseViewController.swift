@@ -211,12 +211,23 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         print("Starting image processing...")
         print("Number of captured images: \(scanAndDiagnoseViewController.capturedImages.count)")
         
-        // Upload the first (full plant) image to Supabase
+        // Upload the first (full plant) image to Supabase and wait for completion
         if let firstImage = scanAndDiagnoseViewController.capturedImages.first {
             Task {
                 await uploadImageToSupabase(image: firstImage)
+                // Continue processing after upload completes
+                await MainActor.run {
+                    self.continueImageProcessing()
+                }
             }
+        } else {
+            // If no image, continue anyway
+            continueImageProcessing()
         }
+    }
+    
+    private func continueImageProcessing() {
+        print("Continuing with image processing...")
         
         // Continue with existing YOLO processing
         var yoloResults: [String] = []
@@ -237,7 +248,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         // IMPROVED VALIDATION: Check if majority of YOLO results are actually plants
         let plantDetections = yoloResults.filter {
-            $0.contains("pottedplant")  // Only accept actual plant detections
+            $0.contains("pottedplant") || $0.contains("plant")  // Accept plant detections
         }.count
         
         let nonPlantDetections = yoloResults.filter {
@@ -257,17 +268,19 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             DispatchQueue.main.async {
                 DiagnosisViewController.plantNameLabel.text = "Not a Plant"
                 DiagnosisViewController.diagnosisLabel.text = "Object detected"
+                self.stopScanningAnimation()
                 self.showNonPlantObjectAlert()
             }
             return
         }
         
-        // Require at least 2 out of 3 images to detect plants
-        if plantDetections < 2 {
+        // Require at least 1 out of 3 images to detect plants (lowered threshold)
+        if plantDetections < 1 {
             print("❌ Insufficient plant detections - rejecting scan")
             DispatchQueue.main.async {
                 DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
                 DiagnosisViewController.diagnosisLabel.text = "No plant detected"
+                self.stopScanningAnimation()
                 self.showPlantNotIdentifiedAlert()
             }
             return
@@ -292,30 +305,40 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             }
             
             // Check if plant exists in database before proceeding
-            if findPlantCaseInsensitive(name: plantType) == nil {
+            let foundPlant = findPlantCaseInsensitive(name: plantType)
+            if foundPlant == nil {
+                print("❌ Plant '\(plantType)' not found in database")
                 DispatchQueue.main.async {
                     DiagnosisViewController.plantNameLabel.text = plantType
                     DiagnosisViewController.diagnosisLabel.text = "No disease detected"
+                    self.stopScanningAnimation()
                     self.showPlantNotFoundAlert()
                 }
                 return
             }
             
+            print("✅ Plant '\(foundPlant!.plantName)' found in database")
             DispatchQueue.main.async {
-                DiagnosisViewController.plantNameLabel.text = plantType
+                DiagnosisViewController.plantNameLabel.text = foundPlant!.plantName
             }
             
-            // Step 3: Run disease detection on all images
+            // Step 3: Run disease detection on all images (focus on images 2 and 3 - infected areas)
             var diseaseResults: [String] = []
             
-            for (index, image) in scanAndDiagnoseViewController.capturedImages.enumerated() {
+            // Prioritize the last two images (infected area close-ups)
+            let imagesToCheck = scanAndDiagnoseViewController.capturedImages.count >= 2 ? 
+                Array(scanAndDiagnoseViewController.capturedImages.suffix(2)) : 
+                scanAndDiagnoseViewController.capturedImages
+            
+            for (index, image) in imagesToCheck.enumerated() {
+                print("\n--- Running disease detection on image \(index + 1) ---")
                 if let diseaseResult = runDiseaseDetection(image) {
                     // Trim whitespace from disease name
                     let cleanedResult = diseaseResult.trimmingCharacters(in: .whitespacesAndNewlines)
                     
                     // Only add non-empty results
                     if !cleanedResult.isEmpty {
-                        print("Disease Detection Result for image \(index + 1): \(cleanedResult)")
+                        print("✅ Disease Detection Result for image \(index + 1): \(cleanedResult)")
                         diseaseResults.append(cleanedResult)
                     } else {
                         print("⚠️ Empty disease result after trimming for image \(index + 1)")
@@ -328,14 +351,15 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             // Get most frequent disease result
             if !diseaseResults.isEmpty {
                 let mostFrequentDisease = mostFrequentResult(diseaseResults)
-                print("Most frequent disease: \(mostFrequentDisease)")
+                print("✅ Final disease diagnosis: \(mostFrequentDisease)")
                 
                 DispatchQueue.main.async {
-                    DiagnosisViewController.diagnosisLabel.text = "\(mostFrequentDisease)"
+                    DiagnosisViewController.diagnosisLabel.text = mostFrequentDisease
                 }
             } else {
+                print("ℹ️ No diseases detected - plant appears healthy")
                 DispatchQueue.main.async {
-                    DiagnosisViewController.diagnosisLabel.text = "No disease detected"
+                    DiagnosisViewController.diagnosisLabel.text = "Healthy"
                 }
             }
         } else {
@@ -418,51 +442,104 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     
     private func runPlantClassifier(_ image: UIImage) -> String? {
         guard let model = try? VNCoreMLModel(for: PLANT_IDENTIFICATION_MODEL_1().model),
-              let cgImage = image.cgImage else { return nil }
+              let cgImage = image.cgImage else {
+            print("❌ Failed to initialize plant classifier model")
+            return nil
+        }
         
         var resultIdentifier: String?
         let semaphore = DispatchSemaphore(value: 0)
         
-        let request = VNCoreMLRequest(model: model) { request, _ in
-            if let results = request.results as? [VNClassificationObservation],
-               let topResult = results.first {
-                resultIdentifier = topResult.identifier
-                print("Plant classified as: \(topResult.identifier) with confidence: \(topResult.confidence)")
+        let request = VNCoreMLRequest(model: model) { request, error in
+            if let error = error {
+                print("❌ Plant classification error: \(error.localizedDescription)")
+                semaphore.signal()
+                return
+            }
+            
+            if let results = request.results as? [VNClassificationObservation] {
+                // Print top 5 results for debugging
+                print("Top 5 plant classification results:")
+                for (index, result) in results.prefix(5).enumerated() {
+                    print("  \(index + 1). \(result.identifier) - confidence: \(result.confidence)")
+                }
+                
+                if let topResult = results.first {
+                    // Only accept results with confidence above 0.3
+                    if topResult.confidence > 0.3 {
+                        resultIdentifier = topResult.identifier
+                        print("✅ Selected plant: \(topResult.identifier) with confidence: \(topResult.confidence)")
+                    } else {
+                        print("⚠️ Plant classification confidence too low: \(topResult.confidence)")
+                    }
+                }
             }
             semaphore.signal()
         }
         
-        try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        request.imageCropAndScaleOption = .scaleFit
+        
+        do {
+            try VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        } catch {
+            print("❌ Failed to perform plant classification: \(error.localizedDescription)")
+        }
+        
         semaphore.wait()
         return resultIdentifier
     }
     
     private func runDiseaseDetection(_ image: UIImage) -> String? {
         guard let model = try? VNCoreMLModel(for: GG_Diseases_1().model),
-              let cgImage = image.cgImage else { return nil }
+              let cgImage = image.cgImage else {
+            print("❌ Failed to initialize disease detection model")
+            return nil
+        }
         
         var resultIdentifier: String?
         var resultConfidence: Float = 0.0
         let semaphore = DispatchSemaphore(value: 0)
         
-        let request = VNCoreMLRequest(model: model) { request, _ in
-            if let results = request.results as? [VNClassificationObservation],
-               let topResult = results.first {
-                // Accept results with confidence above 0.4 (lowered from 0.5)
-                if topResult.confidence > 0.4 {
-                    resultIdentifier = topResult.identifier
-                    resultConfidence = topResult.confidence
+        let request = VNCoreMLRequest(model: model) { request, error in
+            if let error = error {
+                print("❌ Disease detection error: \(error.localizedDescription)")
+                semaphore.signal()
+                return
+            }
+            
+            if let results = request.results as? [VNClassificationObservation] {
+                // Print top 3 results for debugging
+                print("Top 3 disease detection results:")
+                for (index, result) in results.prefix(3).enumerated() {
+                    print("  \(index + 1). \(result.identifier) - confidence: \(result.confidence)")
                 }
-                print("Disease detection: \(topResult.identifier) with confidence: \(topResult.confidence)")
+                
+                if let topResult = results.first {
+                    // Accept results with confidence above 0.5 (increased from 0.4 for better accuracy)
+                    if topResult.confidence > 0.5 {
+                        resultIdentifier = topResult.identifier
+                        resultConfidence = topResult.confidence
+                        print("✅ Selected disease: \(topResult.identifier) with confidence: \(topResult.confidence)")
+                    } else {
+                        print("⚠️ Top result confidence too low: \(topResult.confidence)")
+                    }
+                }
             }
             semaphore.signal()
         }
         
-        try? VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        request.imageCropAndScaleOption = .scaleFit
+        
+        do {
+            try VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        } catch {
+            print("❌ Failed to perform disease detection: \(error.localizedDescription)")
+        }
+        
         semaphore.wait()
         
         // If confidence is too low, return nil instead of a potentially incorrect result
-        return resultConfidence > 0.4 ? resultIdentifier : nil
+        return resultConfidence > 0.5 ? resultIdentifier : nil
     }
     
     private func mostFrequentResult(_ results: [String]) -> String {
@@ -637,13 +714,18 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
             guard let self = self else { return }
-            self.stopScanningAnimation()
             
             let plantName = DiagnosisViewController.plantNameLabel.text ?? "Unknown Plant"
+            let diagnosis = DiagnosisViewController.diagnosisLabel.text ?? "No disease detected"
+            
+            print("\n=== Final Scan Results ===")
+            print("Plant Name: \(plantName)")
+            print("Diagnosis: \(diagnosis)")
             
             // IMPROVED: Check if the result is a non-plant object or common non-plant keyword
             if self.isNonPlantObject(plantName) || self.isCommonNonPlantResult(plantName) {
                 print("❌ Non-plant object detected in final check: \(plantName)")
+                self.stopScanningAnimation()
                 self.showNonPlantObjectAlert()
                 return
             }
@@ -651,26 +733,21 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             // Check if plant name is empty, unknown, or "Not a Plant"
             if plantName.isEmpty || plantName == "Unknown Plant" || plantName == "Not a Plant" {
                 print("❌ Invalid plant name in final check: \(plantName)")
+                self.stopScanningAnimation()
                 self.showPlantNotIdentifiedAlert()
                 return
             }
             
             // Check if plant exists in database
-            if findPlantCaseInsensitive(name: plantName) == nil {
+            guard let plant = findPlantCaseInsensitive(name: plantName) else {
+                print("❌ Plant not found in database: \(plantName)")
+                self.stopScanningAnimation()
                 self.showPlantNotFoundAlert()
                 return
             }
             
-            let diagnosis = DiagnosisViewController.diagnosisLabel.text ?? "No disease detected"
-            
-            // Create DiagnosisDataModel with the processed results
-            let diagnosisData = DiagnosisDataModel(
-                plantName: plantName,
-                diagnosis: diagnosis,
-                botanicalName: "", // Will be populated in DiagnosisViewController
-                sectionDetails: [:] // Will be populated in DiagnosisViewController
-            )
-            
+            print("✅ All validations passed - navigating to diagnosis view")
+            self.stopScanningAnimation()
             self.navigateToDiagnosisView(with: diagnosis)
         }
     }
@@ -803,9 +880,18 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             
             // Store in UserDefaults immediately after successful upload
             UserDefaults.standard.set(imageURL, forKey: "tempPlantImageURL")
+            UserDefaults.standard.synchronize() // Force save
             print("✅ Image URL stored in UserDefaults")
+            
+            // Verify storage
+            if let storedURL = UserDefaults.standard.string(forKey: "tempPlantImageURL") {
+                print("✅ Verified stored URL: \(storedURL)")
+            } else {
+                print("⚠️ Failed to verify stored URL")
+            }
         } catch {
-            print("❌ Failed to upload image: \(error)")
+            print("❌ Failed to upload image: \(error.localizedDescription)")
+            // Continue anyway - image upload is not critical for diagnosis
         }
     }
 }

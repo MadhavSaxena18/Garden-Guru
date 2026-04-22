@@ -706,13 +706,16 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         // Clean up disease name - remove extra spaces and handle variations
         let cleanName = diseaseName
             .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "  ", with: " ") // Remove double spaces
         
         print("🔍 Cleaned disease name: \(cleanName)")
         
         // Handle healthy plant cases
-        if cleanName.lowercased().contains("healthy") || cleanName == "No disease detected" {
+        if cleanName.lowercased().contains("healthy") || 
+           cleanName == "No disease detected" || 
+           cleanName.lowercased() == "healthy" {
             print("✅ Plant is healthy")
             // Hide table view for healthy plants
             tableView.isHidden = true
@@ -735,12 +738,38 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             return
         }
         
-        // Try to find the disease
-        if let disease = dataController.getDiseaseByNameSync(name: cleanName) {
-            print("✅ Found disease in database: \(disease.diseaseName)")
-            updateDiseaseDetails(with: disease)
+        // Try multiple variations to find the disease
+        var disease: Diseases?
+        
+        // Try exact match first
+        disease = dataController.getDiseaseByNameSync(name: cleanName)
+        
+        // Try lowercase
+        if disease == nil {
+            disease = dataController.getDiseaseByNameSync(name: cleanName.lowercased())
+        }
+        
+        // Try capitalized
+        if disease == nil {
+            disease = dataController.getDiseaseByNameSync(name: cleanName.capitalized)
+        }
+        
+        // Try uppercase
+        if disease == nil {
+            disease = dataController.getDiseaseByNameSync(name: cleanName.uppercased())
+        }
+        
+        // Try with underscores instead of spaces
+        if disease == nil {
+            let underscoreName = cleanName.replacingOccurrences(of: " ", with: "_")
+            disease = dataController.getDiseaseByNameSync(name: underscoreName)
+        }
+        
+        if let foundDisease = disease {
+            print("✅ Found disease in database: \(foundDisease.diseaseName)")
+            updateDiseaseDetails(with: foundDisease)
         } else {
-            print("⚠️ Disease not found in database: \(cleanName)")
+            print("⚠️ Disease not found in database after trying all variations: \(cleanName)")
             
             // Hide UI elements
             tableView.isHidden = true
