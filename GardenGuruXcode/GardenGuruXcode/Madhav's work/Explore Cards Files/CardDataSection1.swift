@@ -10,19 +10,81 @@ import SDWebImage
 
 class CardDataSection1: UICollectionViewCell {
     
-    @IBOutlet var plantImageOutlet: UIImageView!
-    @IBOutlet var infoImage1Outlet: UIImageView!
-    @IBOutlet var infoImage2Outlet: UIImageView!
-    @IBOutlet var infoImage3Outlet: UIImageView!
-    @IBOutlet var infoLabel1Outlet: UILabel!
-    @IBOutlet var infoLabel2Outlet: UILabel!
-    @IBOutlet var infoLabel3Outlet: UILabel!
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        // Set up icons for the info boxes
-        infoImage1Outlet.image = UIImage(systemName: "drop.fill") // Water icon
-        //infoImage2Outlet.image = UIImage(systemName: "leaf.fill") // Fertilizer icon
-        infoImage3Outlet.image = UIImage(systemName: "sun.max.fill") // Light icon
+    private var plantImageOutlet: UIImageView!
+    
+    private var plantNameLabel: UILabel!
+    private var botanicalNameLabel: UILabel!
+    private var gradientLayer: CAGradientLayer!
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupViews()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupViews()
+    }
+    
+    private func setupViews() {
+        // Plant image view (full screen hero)
+        plantImageOutlet = UIImageView()
+        plantImageOutlet.translatesAutoresizingMaskIntoConstraints = false
+        plantImageOutlet.contentMode = .scaleAspectFill
+        plantImageOutlet.clipsToBounds = true
+        contentView.addSubview(plantImageOutlet)
+        
+        // Gradient overlay
+        gradientLayer = CAGradientLayer()
+        gradientLayer.colors = [
+            UIColor.clear.cgColor,
+            UIColor.black.withAlphaComponent(0.75).cgColor
+        ]
+        gradientLayer.locations = [0.3, 1.0]
+        plantImageOutlet.layer.addSublayer(gradientLayer)
+        
+        // Plant name label (overlaid on image)
+        plantNameLabel = UILabel()
+        plantNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        plantNameLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+        plantNameLabel.textColor = .white
+        plantNameLabel.numberOfLines = 2
+        plantNameLabel.layer.shadowColor = UIColor.black.cgColor
+        plantNameLabel.layer.shadowOffset = CGSize(width: 0, height: 2)
+        plantNameLabel.layer.shadowRadius = 4
+        plantNameLabel.layer.shadowOpacity = 0.8
+        contentView.addSubview(plantNameLabel)
+        
+        // Botanical name label
+        botanicalNameLabel = UILabel()
+        botanicalNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        botanicalNameLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        botanicalNameLabel.textColor = .white.withAlphaComponent(0.95)
+        botanicalNameLabel.layer.shadowColor = UIColor.black.cgColor
+        botanicalNameLabel.layer.shadowOffset = CGSize(width: 0, height: 1)
+        botanicalNameLabel.layer.shadowRadius = 3
+        botanicalNameLabel.layer.shadowOpacity = 0.6
+        contentView.addSubview(botanicalNameLabel)
+        
+        NSLayoutConstraint.activate([
+            plantImageOutlet.topAnchor.constraint(equalTo: contentView.topAnchor),
+            plantImageOutlet.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            plantImageOutlet.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            plantImageOutlet.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            plantNameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            plantNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            plantNameLabel.bottomAnchor.constraint(equalTo: botanicalNameLabel.topAnchor, constant: -4),
+            
+            botanicalNameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            botanicalNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            botanicalNameLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
+        ])
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        gradientLayer.frame = plantImageOutlet.bounds
     }
     
     func update(with data: Any?) {
@@ -46,21 +108,9 @@ class CardDataSection1: UICollectionViewCell {
                 print("❌ Plant image URL is nil or malformed for plant: \(plant.plantName)")
             }
             
-            // Water frequency
-            print("DEBUG: Raw waterFrequency: \(String(describing: plant.waterFrequency))")
-            infoLabel1Outlet.text = "Every \(plant.waterFrequency ?? 0) days"
-            
-            // Fertilizer frequency
-//            infoImage2Outlet.image = UIImage(systemName: "leaf.fill")
-            print("DEBUG: Raw fertilizerFrequency: \(String(describing: plant.fertilizerFrequency))")
-            infoLabel2Outlet.text = "Every \(plant.fertilizerFrequency ?? 0) days"
-            
-            // Handle optional season
-            if let season = plant.favourableSeason {
-                infoLabel3Outlet.text = "Season: \(season.rawValue)"
-            } else {
-                infoLabel3Outlet.text = "Season: Not specified"
-            }
+            // Update plant name and botanical name
+            plantNameLabel.text = plant.plantName
+            botanicalNameLabel.text = plant.plantBotanicalName ?? "Botanical name"
             
         } else if let disease = data as? Diseases {
             if let urlString = disease.diseaseImage?.trimmingCharacters(in: .whitespacesAndNewlines), let url = URL(string: urlString) {
@@ -74,7 +124,9 @@ class CardDataSection1: UICollectionViewCell {
             } else {
                 plantImageOutlet.image = UIImage(named: "defaultDiseaseImage")
             }
-            resetInfoLabels()
+            
+            plantNameLabel.text = disease.diseaseName
+            botanicalNameLabel.text = "Disease Information"
         } else if let fertilizer = data as? Fertilizer {
             // Load fertilizer image using SDWebImage with the raw URL, trimmed
             if let urlString = fertilizer.fertilizerImage?.trimmingCharacters(in: .whitespacesAndNewlines), let url = URL(string: urlString) {
@@ -89,21 +141,15 @@ class CardDataSection1: UICollectionViewCell {
                 plantImageOutlet.image = UIImage(named: "fertilizer_placeholder")
                 print("❌ Fertilizer image URL is nil or malformed for fertilizer: \(fertilizer.fertilizerName ?? "Unknown")")
             }
-            // Set info labels for fertilizer (customize as needed)
-            infoLabel1Outlet.text = fertilizer.fertilizerName ?? "N/A"
-            infoLabel2Outlet.text = fertilizer.fertilizerDescription ?? "N/A"
-            infoLabel3Outlet.text = "Fertilizer"
+            
+            plantNameLabel.text = fertilizer.fertilizerName ?? "Fertilizer"
+            botanicalNameLabel.text = "Fertilizer Information"
         }
     }
 
     private func resetCell() {
         plantImageOutlet.image = UIImage(named: "defaultPlantImage")
-        resetInfoLabels()
-    }
-    
-    private func resetInfoLabels() {
-        infoLabel1Outlet.text = "N/A"
-        infoLabel2Outlet.text = "N/A"
-        infoLabel3Outlet.text = "N/A"
+        plantNameLabel.text = ""
+        botanicalNameLabel.text = ""
     }
 }

@@ -32,41 +32,39 @@ class DiseaseDetailTableViewCell: UITableViewCell {
     
     private func setupUI() {
         contentView.backgroundColor = .clear
+        selectionStyle = .none
         
         // Configure background card view (outer card)
         backgroundCardView.backgroundColor = .white
-        backgroundCardView.layer.cornerRadius = 12
+        backgroundCardView.layer.cornerRadius = 16
         backgroundCardView.clipsToBounds = true
         backgroundCardView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(backgroundCardView)
         
         // Configure title label
-        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        titleLabel.textColor = UIColor(hex: "#2E7D32") // Dark green color
+        titleLabel.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        titleLabel.textColor = .label
         titleLabel.numberOfLines = 0
         titleLabel.backgroundColor = .clear
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         // Configure content label
-        contentLabel.font = UIFont.systemFont(ofSize: 16)
-        contentLabel.textColor = .darkGray
+        contentLabel.font = UIFont.systemFont(ofSize: 15)
+        contentLabel.textColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1.0)
         contentLabel.numberOfLines = 0
         contentLabel.backgroundColor = .clear
         contentLabel.translatesAutoresizingMaskIntoConstraints = false
         
         // Configure collapsible content container (inner view)
-        collapsibleContentContainer.backgroundColor = .white // Set initial background (can be transparent grey later)
-        collapsibleContentContainer.layer.cornerRadius = 12
-        collapsibleContentContainer.clipsToBounds = true
+        collapsibleContentContainer.backgroundColor = .clear
         collapsibleContentContainer.translatesAutoresizingMaskIntoConstraints = false
         collapsibleContentContainer.addSubview(contentLabel)
         
         // Configure stack view
         stackView.axis = .vertical
-        stackView.spacing = 12
+        stackView.spacing = 8
         stackView.distribution = .fill
         stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.addArrangedSubview(titleLabel)
         stackView.addArrangedSubview(collapsibleContentContainer)
         
         backgroundCardView.addSubview(stackView)
@@ -74,32 +72,31 @@ class DiseaseDetailTableViewCell: UITableViewCell {
         // Setup constraints
         NSLayoutConstraint.activate([
             // Background Card View constraints
-            backgroundCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            backgroundCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             backgroundCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             backgroundCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            backgroundCardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            backgroundCardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
             // Stack View constraints (pinned inside backgroundCardView)
-            stackView.topAnchor.constraint(equalTo: backgroundCardView.topAnchor, constant: 20),
-            stackView.leadingAnchor.constraint(equalTo: backgroundCardView.leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -20),
-            stackView.bottomAnchor.constraint(equalTo: backgroundCardView.bottomAnchor, constant: -20),
+            stackView.topAnchor.constraint(equalTo: backgroundCardView.topAnchor, constant: 16),
+            stackView.leadingAnchor.constraint(equalTo: backgroundCardView.leadingAnchor, constant: 16),
+            stackView.trailingAnchor.constraint(equalTo: backgroundCardView.trailingAnchor, constant: -16),
+            stackView.bottomAnchor.constraint(equalTo: backgroundCardView.bottomAnchor, constant: -16),
             
             // Content Label constraints (pinned inside collapsibleContentContainer)
-            contentLabel.topAnchor.constraint(equalTo: collapsibleContentContainer.topAnchor, constant: 16),
-            contentLabel.leadingAnchor.constraint(equalTo: collapsibleContentContainer.leadingAnchor, constant: 16),
-            contentLabel.trailingAnchor.constraint(equalTo: collapsibleContentContainer.trailingAnchor, constant: -16),
-            contentLabel.bottomAnchor.constraint(equalTo: collapsibleContentContainer.bottomAnchor, constant: -16)
+            contentLabel.topAnchor.constraint(equalTo: collapsibleContentContainer.topAnchor),
+            contentLabel.leadingAnchor.constraint(equalTo: collapsibleContentContainer.leadingAnchor),
+            contentLabel.trailingAnchor.constraint(equalTo: collapsibleContentContainer.trailingAnchor),
+            contentLabel.bottomAnchor.constraint(equalTo: collapsibleContentContainer.bottomAnchor)
         ])
     }
     
     func configure(with disease: Diseases?, section: String, showHeader: Bool = true) {
         guard let disease = disease else {
-            titleLabel.text = section
             contentLabel.text = "No information available"
             return
         }
-        titleLabel.isHidden = !showHeader
+        
         switch section {
         case "Symptoms":
             contentLabel.text = disease.diseaseSymptoms?.isEmpty == false ? disease.diseaseSymptoms : "No symptoms information available"
@@ -116,7 +113,7 @@ class DiseaseDetailTableViewCell: UITableViewCell {
         case "Prevention":
             var preventionText = ""
             if let measures = disease.diseasePreventiveMeasures, !measures.isEmpty {
-                preventionText += "Preventive Measures: \(measures)\n"
+                preventionText += measures
             }
             contentLabel.text = preventionText.isEmpty ? "No prevention information available" : preventionText
         default:

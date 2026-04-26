@@ -36,10 +36,15 @@ class Section2CollectionViewCell: UICollectionViewCell {
         imageViewLabel.clipsToBounds = true
         
         // Configure labels
-        diseaseNameLabel.font = UIFont.boldSystemFont(ofSize: 25)
+        diseaseNameLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        diseaseNameLabel.textColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+        
         plantNameLabel.font = UIFont.systemFont(ofSize: 14)
+        
         plantDescriptionLabel.font = UIFont.systemFont(ofSize: 14)
-        plantDescriptionLabel.numberOfLines = 2
+        plantDescriptionLabel.textColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1.0)
+        plantDescriptionLabel.numberOfLines = 3
+        plantDescriptionLabel.lineBreakMode = .byTruncatingTail
     }
     
     private func updateUI() {

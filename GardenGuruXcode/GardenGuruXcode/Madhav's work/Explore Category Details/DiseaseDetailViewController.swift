@@ -16,8 +16,8 @@ class DiseaseDetailViewController: UIViewController {
     private var currentImageIndex: Int = 0
     private var imageArray: [UIImage] = []
     var selectedCardData: Any?
-    // Collapsible state
-    private var expandedSection: Int? = nil
+    // Collapsible state - Symptoms expanded by default
+    private var expandedSection: Int? = 0
     
     // UI Elements
     private let headerImageView = UIImageView()
@@ -262,6 +262,16 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
             case .prevention: return "Prevention"
             }
         }
+        
+        var icon: String {
+            switch self {
+            case .symptoms: return "leaf.fill"
+            case .vitaminsRequired: return "pills.fill"
+            case .cure: return "cross.case.fill"
+            case .fertilizers: return "bag.fill"
+            case .prevention: return "drop.fill"
+            }
+        }
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -304,50 +314,97 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
         let container = UIView()
         container.backgroundColor = .clear
         let header = UIView()
-        header.backgroundColor = .tertiarySystemGroupedBackground
-        header.layer.cornerRadius = 14
+        header.backgroundColor = .white
+        header.layer.cornerRadius = 16
         header.layer.masksToBounds = true
         header.tag = section
         header.isUserInteractionEnabled = true
+        
         // Add tap gesture
         let tap = UITapGestureRecognizer(target: self, action: #selector(headerTapped(_:)))
         header.addGestureRecognizer(tap)
+        
+        let sectionType = DiseaseDetailSection(rawValue: section)!
+        
+        // Icon background view
+        let iconBackgroundView = UIView()
+        iconBackgroundView.backgroundColor = UIColor(red: 0.93, green: 0.97, blue: 0.93, alpha: 1.0) // Light green background
+        iconBackgroundView.layer.cornerRadius = 20
+        iconBackgroundView.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(iconBackgroundView)
+        
+        // Icon
+        let iconImageView = UIImageView(image: UIImage(systemName: sectionType.icon))
+        iconImageView.tintColor = UIColor(red: 0.36, green: 0.61, blue: 0.39, alpha: 1.0) // Green color
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+        iconBackgroundView.addSubview(iconImageView)
+        
         // Title label
         let titleLabel = UILabel()
-        titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
+        titleLabel.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
         titleLabel.textColor = .label
-        let sectionType = DiseaseDetailSection(rawValue: section)!
-        titleLabel.text = "  " + sectionType.title
+        titleLabel.text = sectionType.title
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(titleLabel)
-        // Chevron
-        let chevron = UIImageView(image: UIImage(systemName: expandedSection == section ? "chevron.down" : "chevron.right"))
-        chevron.tintColor = .systemGray
-        chevron.translatesAutoresizingMaskIntoConstraints = false
-        header.addSubview(chevron)
+        
+        // Chevron (only for non-symptoms sections)
+        var chevron: UIImageView?
+        if section != 0 { // Don't show chevron for Symptoms
+            chevron = UIImageView(image: UIImage(systemName: expandedSection == section ? "chevron.down" : "chevron.right"))
+            chevron?.tintColor = .systemGray
+            chevron?.translatesAutoresizingMaskIntoConstraints = false
+            header.addSubview(chevron!)
+        }
+        
         container.addSubview(header)
         header.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
+        
+        var constraints = [
             header.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
             header.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            header.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
-            header.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
-            titleLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 0),
-            titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            chevron.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            chevron.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
-            chevron.widthAnchor.constraint(equalToConstant: 20),
-            chevron.heightAnchor.constraint(equalToConstant: 20)
-        ])
+            header.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
+            header.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
+            
+            iconBackgroundView.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 16),
+            iconBackgroundView.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            iconBackgroundView.widthAnchor.constraint(equalToConstant: 40),
+            iconBackgroundView.heightAnchor.constraint(equalToConstant: 40),
+            
+            iconImageView.centerXAnchor.constraint(equalTo: iconBackgroundView.centerXAnchor),
+            iconImageView.centerYAnchor.constraint(equalTo: iconBackgroundView.centerYAnchor),
+            iconImageView.widthAnchor.constraint(equalToConstant: 22),
+            iconImageView.heightAnchor.constraint(equalToConstant: 22),
+            
+            titleLabel.leadingAnchor.constraint(equalTo: iconBackgroundView.trailingAnchor, constant: 12),
+            titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor)
+        ]
+        
+        if let chevron = chevron {
+            constraints.append(contentsOf: [
+                chevron.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+                chevron.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
+                chevron.widthAnchor.constraint(equalToConstant: 20),
+                chevron.heightAnchor.constraint(equalToConstant: 20),
+                titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -8)
+            ])
+        } else {
+            constraints.append(titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: header.trailingAnchor, constant: -16))
+        }
+        
+        NSLayoutConstraint.activate(constraints)
         return container
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 48
+        return 60
     }
 
     @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
         guard let section = gesture.view?.tag else { return }
+        // Don't allow collapsing Symptoms section (section 0)
+        if section == 0 { return }
+        
         if expandedSection == section {
             expandedSection = nil // Collapse if already open
         } else {

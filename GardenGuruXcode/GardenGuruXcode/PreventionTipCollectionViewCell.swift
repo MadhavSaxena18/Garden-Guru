@@ -5,7 +5,7 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
     
     // MARK: - Properties
     private let tipImageView = UIImageView()
-    private let visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
+    private let gradientLayer = CAGradientLayer()
     private let titleLabel = UILabel()
     private let messageLabel = UILabel()
     private let textStackView = UIStackView()
@@ -29,45 +29,46 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
         contentView.subviews.forEach { $0.removeFromSuperview() }
         
         // Card styling
-        contentView.layer.cornerRadius = 11
+        contentView.layer.cornerRadius = 16
         contentView.layer.masksToBounds = true
+        contentView.backgroundColor = .white
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOffset = CGSize(width: 0, height: 2)
-        layer.shadowRadius = 4
-        layer.shadowOpacity = 0.2
+        layer.shadowOffset = CGSize(width: 0, height: 4)
+        layer.shadowRadius = 8
+        layer.shadowOpacity = 0.15
         layer.masksToBounds = false
         
-        // Image View
+        // Image View - takes full card
         tipImageView.contentMode = .scaleAspectFill
         tipImageView.clipsToBounds = true
         contentView.addSubview(tipImageView)
         
-        // Visual Effect View (Blur)
-        visualEffectView.clipsToBounds = true
-        visualEffectView.contentView.backgroundColor = .clear // Ensure blur is visible
-        contentView.addSubview(visualEffectView)
+        // Gradient overlay for text readability
+        gradientLayer.colors = [
+            UIColor.clear.cgColor,
+            UIColor.black.withAlphaComponent(0.95).cgColor
+        ]
+        gradientLayer.locations = [0.3, 1.0]
+        tipImageView.layer.addSublayer(gradientLayer)
         
-        // Stack View for text
+        // Stack View for text - positioned at bottom
         textStackView.axis = .vertical
-        textStackView.spacing = 4 // Increased spacing to add space between heading and text
+        textStackView.spacing = 4
         textStackView.distribution = .fill
-        visualEffectView.contentView.addSubview(textStackView) // Add to blur view's contentView
+        contentView.addSubview(textStackView)
         
-        // Title Label
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        // Title Label - single line
+        titleLabel.font = UIFont.systemFont(ofSize: 22, weight: .bold)
         titleLabel.textColor = .white
-        titleLabel.numberOfLines = 1 // Limit title to a single line
+        titleLabel.numberOfLines = 1
         titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         textStackView.addArrangedSubview(titleLabel)
         
-        // Message Label
-        messageLabel.font = UIFont.systemFont(ofSize: 14)
-        messageLabel.textColor = .white
-        messageLabel.numberOfLines = 2 // Limit message to two lines
+        // Message Label - only 2 lines with ellipsis
+        messageLabel.font = UIFont.systemFont(ofSize: 15, weight: .regular)
+        messageLabel.textColor = .white.withAlphaComponent(0.95)
+        messageLabel.numberOfLines = 2
         messageLabel.lineBreakMode = .byTruncatingTail
-        messageLabel.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        messageLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
         textStackView.addArrangedSubview(messageLabel)
         
         setupConstraints()
@@ -75,10 +76,7 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
     
     private func setupConstraints() {
         tipImageView.translatesAutoresizingMaskIntoConstraints = false
-        visualEffectView.translatesAutoresizingMaskIntoConstraints = false
         textStackView.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        messageLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             // Image View constraints (fills entire cell)
@@ -87,33 +85,18 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
             tipImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             tipImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             
-            // Visual Effect View constraints (pinned to bottom with fixed height)
-            visualEffectView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            visualEffectView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            visualEffectView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            visualEffectView.heightAnchor.constraint(equalToConstant: 60), // Further reduced height for blur
-
-            // Text Stack View constraints (horizontally padded and vertically centered within the blur view's contentView)
-            textStackView.centerXAnchor.constraint(equalTo: visualEffectView.contentView.centerXAnchor),
-            textStackView.centerYAnchor.constraint(equalTo: visualEffectView.contentView.centerYAnchor),
-            textStackView.leadingAnchor.constraint(equalTo: visualEffectView.contentView.leadingAnchor, constant: 16),
-            textStackView.trailingAnchor.constraint(equalTo: visualEffectView.contentView.trailingAnchor, constant: -16)
+            // Text Stack View constraints (positioned at bottom with proper padding)
+            textStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            textStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            textStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
     
     // MARK: - Layout
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Set preferredMaxLayoutWidth here after the cell's bounds are established
-        let textWidth = bounds.width - 32 // Cell width - leading padding - trailing padding
-        titleLabel.preferredMaxLayoutWidth = textWidth
-        messageLabel.preferredMaxLayoutWidth = textWidth
-        
-        // Temporarily add background colors for debugging
-        // titleLabel.backgroundColor = .red.withAlphaComponent(0.3)
-        // messageLabel.backgroundColor = .blue.withAlphaComponent(0.3)
-        // textStackView.backgroundColor = .green.withAlphaComponent(0.3)
-        // visualEffectView.contentView.backgroundColor = .yellow.withAlphaComponent(0.3)
+        // Update gradient frame to match image view
+        gradientLayer.frame = tipImageView.bounds
     }
     
     // MARK: - Configure
@@ -121,34 +104,22 @@ class PreventionTipCollectionViewCell: UICollectionViewCell {
         titleLabel.text = title
         messageLabel.text = message
         
-        // Set preferredMaxLayoutWidth here after the cell's bounds are established
-        let textWidth = bounds.width - 32 // Cell width - leading padding - trailing padding
-        titleLabel.preferredMaxLayoutWidth = textWidth
-        messageLabel.preferredMaxLayoutWidth = textWidth
-        
         // Clean and load image using SDWebImage
         if let urlString = imageUrl?.absoluteString, let cleanUrlString = urlString.replacingOccurrences(of: "//01", with: "/01").replacingOccurrences(of: "//", with: "/").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed), let finalImageUrl = URL(string: cleanUrlString) {
             print("Attempting to load image from URL: \(finalImageUrl.absoluteString)")
-            tipImageView.sd_setImage(with: finalImageUrl, placeholderImage: UIImage(systemName: "photo")) // Using system symbol as placeholder
+            tipImageView.sd_setImage(with: finalImageUrl, placeholderImage: UIImage(systemName: "photo"))
         } else {
             print("Image URL is nil or malformed for title: \(title)")
-            tipImageView.image = UIImage(systemName: "photo") // Show placeholder if URL is nil or invalid
+            tipImageView.image = UIImage(systemName: "photo")
         }
     }
     
     // MARK: - Reuse Preparation
     override func prepareForReuse() {
         super.prepareForReuse()
-        tipImageView.sd_cancelCurrentImageLoad() // Cancel ongoing image loads
+        tipImageView.sd_cancelCurrentImageLoad()
         tipImageView.image = nil
         titleLabel.text = nil
         messageLabel.text = nil
-        
-        // Remove temporary background colors on reuse
-        // titleLabel.backgroundColor = nil
-        // messageLabel.backgroundColor = nil
-        // textStackView.backgroundColor = nil
-        // visualEffectView.contentView.backgroundColor = nil
     }
-} 
- 
+}

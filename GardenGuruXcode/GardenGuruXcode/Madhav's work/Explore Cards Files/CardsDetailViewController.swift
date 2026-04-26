@@ -18,9 +18,9 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
         override func viewDidLoad() {
             super.viewDidLoad()
             
-            // Register nibs
-            cardDetailCollectionView.register(UINib(nibName: "CardsDetailCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "first")
-            cardDetailCollectionView.register(UINib(nibName: "CardsDetailSection2CollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "second")
+            // Register cells - first cell is now programmatic
+            cardDetailCollectionView.register(CardDataSection1.self, forCellWithReuseIdentifier: "first")
+            cardDetailCollectionView.register(CardsDetailSection2CollectionViewCell.self, forCellWithReuseIdentifier: "second")
             cardDetailCollectionView.register(CardDetailsSection3CollectionViewCell.self, forCellWithReuseIdentifier: "third")
             
             // Set the layout
@@ -28,11 +28,16 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             
             cardDetailCollectionView.dataSource = self
             cardDetailCollectionView.delegate = self
+            cardDetailCollectionView.backgroundColor = UIColor(hex: "#F5F5F0")
+            
             setupNavigationBar()
             checkIfAlreadySaved()
         }
         
         private func setupNavigationBar() {
+            // Configure navigation bar appearance
+            navigationController?.navigationBar.prefersLargeTitles = false
+            
             // Only show Done button if modally presented
             if isModallyPresented {
                 let doneButton = UIBarButtonItem(
@@ -209,29 +214,29 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
             
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                 heightDimension: .absolute(220))
+                                                 heightDimension: .absolute(400))
             let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
                                                          subitems: [item])
             
             let section = NSCollectionLayoutSection(group: group)
-            section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16,
-                                                           bottom: 0, trailing: 16)
+            section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0,
+                                                           bottom: 0, trailing: 0)
             return section
         }
         
         func generateDescriptionSection() -> NSCollectionLayoutSection {
             let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                heightDimension: .estimated(250))
+                                                heightDimension: .estimated(300))
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
             
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                 heightDimension: .estimated(250))
+                                                 heightDimension: .estimated(300))
             let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
                                                          subitems: [item])
             
             let section = NSCollectionLayoutSection(group: group)
-            section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16,
-                                                           bottom: 16, trailing: 16)
+            section.contentInsets = NSDirectionalEdgeInsets(top: 20, leading: 20,
+                                                           bottom: 20, trailing: 20)
             return section
         }
         
@@ -254,9 +259,9 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             section.interGroupSpacing = 10
             section.contentInsets = NSDirectionalEdgeInsets(
                 top: 0,
-                leading: 16,
-                bottom: 16,
-                trailing: 16
+                leading: 20,
+                bottom: 20,
+                trailing: 20
             )
             return section
         }
