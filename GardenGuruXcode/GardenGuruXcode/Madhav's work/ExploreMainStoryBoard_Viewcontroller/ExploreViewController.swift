@@ -70,6 +70,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }()
     
     private let imageCache = NSCache<NSString, UIImage>()
+    private let startupSkeletonView = UIView()
+    private var hasFinishedInitialLoad = false
     
     private func shouldFetchNewLocation() -> Bool {
         guard let lastFetch = lastLocationFetch else { return true }
@@ -248,6 +250,8 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupStartupSkeletonView()
+        showStartupSkeleton()
        
         // Initialize categories structure
         self.discoverCategories = [
@@ -319,6 +323,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             await MainActor.run {
                 self.collectionView.reloadData()
                 self.updateNoPlantsLabelVisibility()
+                self.hideStartupSkeletonIfNeeded()
             }
         }
     }
@@ -1224,6 +1229,72 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         // Hide collection view when showing Coming Soon
         collectionView.isHidden = selectedSegment == 1
+    }
+
+    private func setupStartupSkeletonView() {
+        startupSkeletonView.backgroundColor = UIColor(named: "#EBF4EB") ?? UIColor(hex: "EBF4EB")
+        startupSkeletonView.translatesAutoresizingMaskIntoConstraints = false
+        startupSkeletonView.isUserInteractionEnabled = true
+        startupSkeletonView.isHidden = true
+        view.addSubview(startupSkeletonView)
+
+        let titlePlaceholder = makeSkeletonBar(height: 20, cornerRadius: 10)
+        let cardOne = makeSkeletonBar(height: 170, cornerRadius: 14)
+        let cardTwo = makeSkeletonBar(height: 140, cornerRadius: 14)
+        let cardThree = makeSkeletonBar(height: 140, cornerRadius: 14)
+
+        let stack = UIStackView(arrangedSubviews: [titlePlaceholder, cardOne, cardTwo, cardThree])
+        stack.axis = .vertical
+        stack.spacing = 14
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        startupSkeletonView.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            startupSkeletonView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            startupSkeletonView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            startupSkeletonView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            startupSkeletonView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            stack.topAnchor.constraint(equalTo: startupSkeletonView.topAnchor, constant: 86),
+            stack.leadingAnchor.constraint(equalTo: startupSkeletonView.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: startupSkeletonView.trailingAnchor, constant: -16)
+        ])
+    }
+
+    private func makeSkeletonBar(height: CGFloat, cornerRadius: CGFloat) -> UIView {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor.systemGray5
+        view.layer.cornerRadius = cornerRadius
+        view.clipsToBounds = true
+        view.heightAnchor.constraint(equalToConstant: height).isActive = true
+        return view
+    }
+
+    private func showStartupSkeleton() {
+        guard !hasFinishedInitialLoad else { return }
+        startupSkeletonView.alpha = 1
+        startupSkeletonView.isHidden = false
+        animateStartupSkeleton()
+    }
+
+    private func animateStartupSkeleton() {
+        guard !startupSkeletonView.isHidden else { return }
+        UIView.animate(withDuration: 0.9, delay: 0, options: [.autoreverse, .repeat, .allowUserInteraction], animations: {
+            self.startupSkeletonView.alpha = 0.75
+        })
+    }
+
+    private func hideStartupSkeletonIfNeeded() {
+        guard !hasFinishedInitialLoad else { return }
+        hasFinishedInitialLoad = true
+        startupSkeletonView.layer.removeAllAnimations()
+        UIView.animate(withDuration: 0.25, animations: {
+            self.startupSkeletonView.alpha = 0
+        }) { _ in
+            self.startupSkeletonView.isHidden = true
+            self.startupSkeletonView.alpha = 1
+        }
     }
     
     // Add prefetching methods
