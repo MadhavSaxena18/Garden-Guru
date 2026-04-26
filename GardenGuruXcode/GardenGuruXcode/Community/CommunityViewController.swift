@@ -584,17 +584,9 @@ extension CommunityViewController: UISearchControllerDelegate {
 
 extension CommunityViewController: UICollectionViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let translation = scrollView.panGestureRecognizer.translation(in: scrollView.superview)
-        
-        // Hide FAB when scrolling down, show when scrolling up
-        if translation.y < 0 {
-            // Scrolling down
-            UIView.animate(withDuration: 0.3) {
-                self.fabButton.transform = CGAffineTransform(translationX: 0, y: 100)
-            }
-        } else if translation.y > 0 {
-            // Scrolling up
-            UIView.animate(withDuration: 0.3) {
+        // Keep FAB visible while scrolling for consistent post creation access.
+        if fabButton.transform != .identity {
+            UIView.animate(withDuration: 0.2) {
                 self.fabButton.transform = .identity
             }
         }

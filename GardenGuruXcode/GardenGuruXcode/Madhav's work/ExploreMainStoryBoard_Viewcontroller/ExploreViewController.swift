@@ -72,6 +72,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     private let imageCache = NSCache<NSString, UIImage>()
     private let startupSkeletonView = UIView()
     private var hasFinishedInitialLoad = false
+    private var isRefreshingExploreData = false
     
     private func shouldFetchNewLocation() -> Bool {
         guard let lastFetch = lastLocationFetch else { return true }
@@ -79,6 +80,11 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
 
     private func fetchWeatherAndUpdatePlants() async {
+        if isLoadingLocation {
+            print("Skipping weather fetch because a location request is already running")
+            return
+        }
+
         // Check if we have cached weather data that's still valid
         if !shouldFetchNewLocation(), let cachedWeather = cachedWeather {
             print("Using cached weather data")
@@ -89,8 +95,6 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         print("Starting weather fetch...")
         await MainActor.run {
             isLoadingLocation = true
-            discoverCategories = []
-            collectionView.reloadData()
         }
         
         do {
@@ -106,6 +110,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             // Cache the weather data and update timestamp
             self.cachedWeather = weather
             self.lastLocationFetch = Date()
+            self.currentWeather = weather
             
             await self.updatePlantsForCurrentWeather(weather)
 
@@ -143,7 +148,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         }
     }
     
-    private func updatePlantsForCurrentWeather(_ weather: WeatherService.WeatherResponse) {
+    private func updatePlantsForCurrentWeather(_ weather: WeatherService.WeatherResponse) async {
         print("[DEBUG] Entered updatePlantsForCurrentWeather")
         print("[DEBUG] Weather passed in: \(weather)")
         let condition = weather.weather.first?.main.lowercased() ?? "unknown"
@@ -164,92 +169,115 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         }
 
         print("[DEBUG] Before Task in updatePlantsForCurrentWeather")
-        Task {
-            print("[DEBUG] Inside Task in updatePlantsForCurrentWeather")
-            do {
-                // 🔍 Step 1: Use already fetched plants and common issues
-                let allPlants = self.plants // Use already fetched plants
-                print("🌿 Using already fetched plants: \(allPlants.count)")
+        print("[DEBUG] Inside Task in updatePlantsForCurrentWeather")
+        do {
+            // 🔍 Step 1: Use already fetched plants and common issues
+            let allPlants = self.plants // Use already fetched plants
+            print("🌿 Using already fetched plants: \(allPlants.count)")
 
-                let allCommonIssues = self.diseases // Use already fetched diseases
-                print("🦠 Using already fetched common issues: \(allCommonIssues.count)")
+            let allCommonIssues = self.diseases // Use already fetched diseases
+            print("🦠 Using already fetched common issues: \(allCommonIssues.count)")
 
-                // 🔍 Step 2: Determine season based on temperature
-                let temp = weather.main.temp
-                let mappedSeason = seasonForTemperature(temp)
-                print("🌡️ Temperature: \(temp)°C mapped to season: \(mappedSeason)")
+            // 🔍 Step 2: Determine season based on temperature
+            let temp = weather.main.temp
+            let mappedSeason = seasonForTemperature(temp)
+            print("🌡️ Temperature: \(temp)°C mapped to season: \(mappedSeason)")
 
-                // 🔍 Step 3: Filter plants by mapped season
-                let plantsForWeather = allPlants.filter { $0.favourableSeason?.rawValue.lowercased() == mappedSeason }
-                print("🌱 Plants matching mapped season \(mappedSeason): \(plantsForWeather.count)")
-                print("🌱 Plant names for season \(mappedSeason): \(plantsForWeather.map { $0.plantName })")
+            // 🔍 Step 3: Filter plants by mapped season
+            let plantsForWeather = allPlants.filter { $0.favourableSeason?.rawValue.lowercased() == mappedSeason }
+            print("🌱 Plants matching mapped season \(mappedSeason): \(plantsForWeather.count)")
+            print("🌱 Plant names for season \(mappedSeason): \(plantsForWeather.map { $0.plantName })")
 
-                // 🧹 Step 4: Deduplicate while preserving order
-                var orderedUniqueRecommendedPlants: [Plant] = []
-                var seenPlantIDs: Set<UUID> = []
-                for plant in plantsForWeather {
-                    if !seenPlantIDs.contains(plant.plantID) {
-                        orderedUniqueRecommendedPlants.append(plant)
-                        seenPlantIDs.insert(plant.plantID)
-                    }
-                }
-                
-                // For main view, show only first 5 plants
-                let displayPlants = Array(orderedUniqueRecommendedPlants.prefix(5))
-                print("✅ Unique recommended plants for display: \(displayPlants.count)")
-
-                // 🖼️ Step 5: Update UI if in Discover segment
-                if selectedSegment == 0 {
-                    await MainActor.run {
-                        // Reconstruct discoverCategories completely for clarity and robustness
-                        var newDiscoverCategories: [(title: String, items: [Any])] = []
-
-                        // Add Care Tip of the Day (if available)
-                        if let tip = self.careTipOfTheDay {
-                            newDiscoverCategories.append(("Care Tip of the Day", [tip]))
-                        }
-
-                        // Only add Current Season Plants and Common Issues if we have data
-                        if !displayPlants.isEmpty {
-                            // Store all matching plants for section view, but show only 5 in main view
-                            newDiscoverCategories.append(("Current Season Plants", orderedUniqueRecommendedPlants))
-                        }
-                        
-                        if !allCommonIssues.isEmpty {
-                            newDiscoverCategories.append(("Common Issues", allCommonIssues))
-                        }
-
-                        // Add new category for Pest & Disease Prevention if there are tips
-                        if !self.preventionTips.isEmpty {
-                            newDiscoverCategories.append(("Pest & Disease Prevention", self.preventionTips))
-                        }
-
-                        self.discoverCategories = newDiscoverCategories
-
-                        if self.isSearchActive {
-                            self.filteredDiscoverCategories = self.discoverCategories
-                        }
-
-                        print("🟢 Discover categories updated and reloading collection view.")
-                    }
-                }
-            } catch {
-                print("[DEBUG] Error in updatePlantsForCurrentWeather: \(error)")
-                await MainActor.run {
-                    let alert = UIAlertController(
-                        title: "Error",
-                        message: "Failed to load plant data. Please try again later.",
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(alert, animated: true)
+            // 🧹 Step 4: Deduplicate while preserving order
+            var orderedUniqueRecommendedPlants: [Plant] = []
+            var seenPlantIDs: Set<UUID> = []
+            for plant in plantsForWeather {
+                if !seenPlantIDs.contains(plant.plantID) {
+                    orderedUniqueRecommendedPlants.append(plant)
+                    seenPlantIDs.insert(plant.plantID)
                 }
             }
+            
+            // For main view, show only first 5 plants
+            let displayPlants = Array(orderedUniqueRecommendedPlants.prefix(5))
+            print("✅ Unique recommended plants for display: \(displayPlants.count)")
+
+            // 🖼️ Step 5: Update UI if in Discover segment
+            if selectedSegment == 0 {
+                await MainActor.run {
+                    // Reconstruct discoverCategories completely for clarity and robustness
+                    var newDiscoverCategories: [(title: String, items: [Any])] = []
+
+                    // Add Care Tip of the Day (if available)
+                    if let tip = self.careTipOfTheDay {
+                        newDiscoverCategories.append(("Care Tip of the Day", [tip]))
+                    }
+
+                    // Only add Current Season Plants and Common Issues if we have data
+                    if !displayPlants.isEmpty {
+                        // Store all matching plants for section view, but show only 5 in main view
+                        newDiscoverCategories.append(("Current Season Plants", orderedUniqueRecommendedPlants))
+                    }
+                    
+                    if !allCommonIssues.isEmpty {
+                        newDiscoverCategories.append(("Common Issues", allCommonIssues))
+                    }
+
+                    // Add new category for Pest & Disease Prevention if there are tips
+                    if !self.preventionTips.isEmpty {
+                        newDiscoverCategories.append(("Pest & Disease Prevention", self.preventionTips))
+                    }
+
+                    self.discoverCategories = newDiscoverCategories
+
+                    if self.isSearchActive {
+                        self.filteredDiscoverCategories = self.discoverCategories
+                    }
+
+                    print("🟢 Discover categories updated and reloading collection view.")
+                }
+            }
+        } catch {
+            print("[DEBUG] Error in updatePlantsForCurrentWeather: \(error)")
+            await MainActor.run {
+                let alert = UIAlertController(
+                    title: "Error",
+                    message: "Failed to load plant data. Please try again later.",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+            }
+        }
+    }
+
+    private func refreshExploreDataForCurrentSegment() async {
+        if isRefreshingExploreData {
+            print("Skipping refresh; another Explore refresh is in progress")
+            return
+        }
+        isRefreshingExploreData = true
+        defer { isRefreshingExploreData = false }
+
+        await fetchDataFromSupabase()
+        if selectedSegment == 0 {
+            if shouldFetchNewLocation() {
+                await fetchWeatherAndUpdatePlants()
+            } else if let cachedWeather = cachedWeather {
+                await updatePlantsForCurrentWeather(cachedWeather)
+            }
+        }
+
+        await MainActor.run {
+            self.collectionView.reloadData()
+            self.updateNoPlantsLabelVisibility()
+            self.hideStartupSkeletonIfNeeded()
         }
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupNavigationBarAppearance()
         setupStartupSkeletonView()
         showStartupSkeleton()
        
@@ -268,40 +296,10 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         configureSearchController()
         plantCarAI.addGestureRecognizer(tapGesture)
         collectionView.backgroundColor = UIColor(named: "#EBF4EB")
-        updateSegmentedControlTitles(firstTitle: "Discover", secondTitle: "For My Plants")
+        configureSegmentedControlContent()
         setupSegmentedControl()
         setUpcollectionView()
         setupComingSoonLabel()
-        
-        // Request location authorization first
-        Task {
-            let authStatus = locationManager.getAuthorizationStatus()
-            if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
-                // Only fetch weather if we're in Discover segment and need new data
-                if selectedSegment == 0 && shouldFetchNewLocation() {
-                    await fetchWeatherAndUpdatePlants()
-                }
-            } else {
-                print("⚠️ Location access not granted. Authorization status: \(authStatus)")
-                await MainActor.run {
-                    let alert = UIAlertController(
-                        title: "Location Access Required",
-                        message: "Please enable location access in Settings to see weather-appropriate plants for your area.",
-                        preferredStyle: .alert
-                    )
-                    
-                    alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
-                        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(settingsURL)
-                        }
-                    })
-                    
-                    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-                    
-                    self.present(alert, animated: true)
-                }
-            }
-        }
         
         // Add prefetching delegate
         collectionView.prefetchDataSource = self
@@ -309,23 +307,21 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        setupNavigationBarAppearance()
         print("📱 View will appear")
         
         // Only refresh data if needed
         Task {
-            await fetchDataFromSupabase()
-            if selectedSegment == 0 && shouldFetchNewLocation() {
-                await fetchWeatherAndUpdatePlants()
-            } else if selectedSegment == 0, let cachedWeather = cachedWeather {
-                // Use cached weather data if available
-                await updatePlantsForCurrentWeather(cachedWeather)
-            }
-            await MainActor.run {
-                self.collectionView.reloadData()
-                self.updateNoPlantsLabelVisibility()
-                self.hideStartupSkeletonIfNeeded()
-            }
+            await refreshExploreDataForCurrentSegment()
         }
+    }
+
+    private func configureSegmentedControlContent() {
+        // Rebuild segments to avoid stale storyboard state overriding title rendering.
+        segmentControlOnExplore.removeAllSegments()
+        segmentControlOnExplore.insertSegment(withTitle: "Discover", at: 0, animated: false)
+        segmentControlOnExplore.insertSegment(withTitle: "My Plants", at: 1, animated: false)
+        segmentControlOnExplore.selectedSegmentIndex = selectedSegment
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -391,6 +387,23 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
     }
     func setupSegmentedControl() {
         // Optionally customize the segmented control
+        segmentControlOnExplore.selectedSegmentTintColor = .white
+        segmentControlOnExplore.setTitleTextAttributes([
+            .foregroundColor: UIColor(hex: "284329"),
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+        ], for: .selected)
+        segmentControlOnExplore.setTitleTextAttributes([
+            .foregroundColor: UIColor(hex: "284329"),
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+        ], for: [.selected, .highlighted])
+        segmentControlOnExplore.setTitleTextAttributes([
+            .foregroundColor: UIColor.darkGray,
+            .font: UIFont.systemFont(ofSize: 15, weight: .medium)
+        ], for: .normal)
+        segmentControlOnExplore.setTitleTextAttributes([
+            .foregroundColor: UIColor.darkGray,
+            .font: UIFont.systemFont(ofSize: 15, weight: .medium)
+        ], for: [.normal, .highlighted])
         segmentControlOnExplore.addTarget(self, action: #selector(segmentChanged(_:)), for: .valueChanged)
     }
     func updateSegmentedControlTitles(firstTitle: String, secondTitle: String) {
@@ -570,14 +583,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         // Always trigger a full data refresh for the selected segment
         Task {
             print("🚀 Starting async data fetch for segment: \(selectedSegment)");
-            await fetchDataFromSupabase();
-            if selectedSegment == 0 {
-                await fetchWeatherAndUpdatePlants();
-            }
-            await MainActor.run {
-                self.collectionView.reloadData();
-                self.updateNoPlantsLabelVisibility();
-            }
+            await refreshExploreDataForCurrentSegment()
         }
     }
     
@@ -1229,6 +1235,31 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         
         // Hide collection view when showing Coming Soon
         collectionView.isHidden = selectedSegment == 1
+    }
+
+    private func setupNavigationBarAppearance() {
+        title = "Explore"
+        navigationItem.title = "Explore"
+        navigationItem.largeTitleDisplayMode = .always
+
+        if let existingProfileItem = navigationItem.rightBarButtonItems?.first {
+            existingProfileItem.image = UIImage(
+                systemName: "person.circle.fill",
+                withConfiguration: UIImage.SymbolConfiguration(pointSize: 22, weight: .regular)
+            )
+            existingProfileItem.tintColor = .systemGray
+            // Keep only profile icon item to avoid stretched pill layout.
+            navigationItem.rightBarButtonItems = [existingProfileItem]
+        }
+
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationController?.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor(hex: "284329")
+        ]
+        navigationController?.navigationBar.largeTitleTextAttributes = [
+            .foregroundColor: UIColor(hex: "284329"),
+            .font: UIFont.systemFont(ofSize: 34, weight: .bold)
+        ]
     }
 
     private func setupStartupSkeletonView() {

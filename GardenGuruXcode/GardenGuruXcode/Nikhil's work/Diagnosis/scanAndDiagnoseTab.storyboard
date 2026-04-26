@@ -153,7 +153,7 @@
         <scene sceneID="7vN-bs-SCv">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Lz3-IH-grc" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Scan And Diagnose" image="camera" catalog="system" id="p5P-M2-05W"/>
+                    <tabBarItem key="tabBarItem" title="Scan" image="camera" catalog="system" id="p5P-M2-05W"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" largeTitles="YES" id="r1J-RO-xAT">
                         <rect key="frame" x="0.0" y="59" width="393" height="96"/>
