@@ -348,23 +348,20 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         header.addSubview(titleLabel)
         
-        // Chevron (only for non-symptoms sections)
-        var chevron: UIImageView?
-        if section != 0 { // Don't show chevron for Symptoms
-            chevron = UIImageView(image: UIImage(systemName: expandedSection == section ? "chevron.down" : "chevron.right"))
-            chevron?.tintColor = .systemGray
-            chevron?.translatesAutoresizingMaskIntoConstraints = false
-            header.addSubview(chevron!)
-        }
+        // Chevron for all sections (including Symptoms)
+        let chevron = UIImageView(image: UIImage(systemName: expandedSection == section ? "chevron.down" : "chevron.right"))
+        chevron.tintColor = .systemGray
+        chevron.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(chevron)
         
         container.addSubview(header)
         header.translatesAutoresizingMaskIntoConstraints = false
         
         var constraints = [
-            header.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            header.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            header.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
-            header.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
+            header.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
+            header.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
+            header.topAnchor.constraint(equalTo: container.topAnchor, constant: 6),
+            header.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -6),
             
             iconBackgroundView.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 16),
             iconBackgroundView.centerYAnchor.constraint(equalTo: header.centerYAnchor),
@@ -380,31 +377,24 @@ extension DiseaseDetailViewController: UITableViewDelegate, UITableViewDataSourc
             titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor)
         ]
         
-        if let chevron = chevron {
-            constraints.append(contentsOf: [
-                chevron.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-                chevron.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
-                chevron.widthAnchor.constraint(equalToConstant: 20),
-                chevron.heightAnchor.constraint(equalToConstant: 20),
-                titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -8)
-            ])
-        } else {
-            constraints.append(titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: header.trailingAnchor, constant: -16))
-        }
+        constraints.append(contentsOf: [
+            chevron.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            chevron.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
+            chevron.widthAnchor.constraint(equalToConstant: 20),
+            chevron.heightAnchor.constraint(equalToConstant: 20),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -8)
+        ])
         
         NSLayoutConstraint.activate(constraints)
         return container
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 60
+        return 64
     }
 
     @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
         guard let section = gesture.view?.tag else { return }
-        // Don't allow collapsing Symptoms section (section 0)
-        if section == 0 { return }
-        
         if expandedSection == section {
             expandedSection = nil // Collapse if already open
         } else {

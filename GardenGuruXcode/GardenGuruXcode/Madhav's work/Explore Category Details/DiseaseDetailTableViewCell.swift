@@ -73,8 +73,8 @@ class DiseaseDetailTableViewCell: UITableViewCell {
         NSLayoutConstraint.activate([
             // Background Card View constraints
             backgroundCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
-            backgroundCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            backgroundCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            backgroundCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            backgroundCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
             backgroundCardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
             // Stack View constraints (pinned inside backgroundCardView)
