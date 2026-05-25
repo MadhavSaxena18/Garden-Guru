@@ -103,6 +103,35 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
     }
     
+    // Restore session from UserDefaults
+    func restoreSession() async throws {
+        print("\n=== Restoring User Session ===")
+        
+        guard let sessionData = UserDefaults.standard.data(forKey: "userSession") else {
+            print("⚠️ No saved session found")
+            return
+        }
+        
+        do {
+            let session = try JSONDecoder().decode(Session.self, from: sessionData)
+            print("📦 Session decoded from UserDefaults")
+            
+            // Restore the session to Supabase client
+            try await supabase.auth.setSession(accessToken: session.accessToken, refreshToken: session.refreshToken)
+            print("✅ Session restored to Supabase client")
+            
+            // Refresh session if needed (Supabase handles expiry automatically)
+            let currentSession = try await supabase.auth.session
+            saveSession(currentSession)
+            print("✅ Session refreshed and saved")
+        } catch {
+            print("❌ Failed to restore session: \(error)")
+            // Clear invalid session
+            UserDefaults.standard.removeObject(forKey: "userSession")
+            throw error
+        }
+    }
+    
     // MARK: - User Functions
     
     func getUser() async throws -> userInfo? {

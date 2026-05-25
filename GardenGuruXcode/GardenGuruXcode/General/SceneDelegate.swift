@@ -41,6 +41,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             print("✅ User is logged in")
             
             do {
+                // CRITICAL: Restore Supabase session first
+                try await dataController.restoreSession()
+                print("✅ Supabase session restored")
+                
                 // Verify the user exists in our database
                 if let user = try await dataController.initializeUser(email: email) {
                     print("✅ User exists in database: \(user.userName)")
@@ -58,7 +62,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                     handleInvalidSession()
                 }
             } catch {
-                print("❌ Error checking user: \(error)")
+                print("❌ Error restoring session or checking user: \(error)")
                 handleInvalidSession()
             }
         } else {
@@ -71,6 +75,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Clear any stored session data
         UserDefaults.standard.set(false, forKey: "isLoggedIn")
         UserDefaults.standard.removeObject(forKey: "userEmail")
+        UserDefaults.standard.removeObject(forKey: "userSession")
         
         DispatchQueue.main.async {
             if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
