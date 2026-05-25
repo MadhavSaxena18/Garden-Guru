@@ -106,7 +106,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - User Functions
     
     func getUser() async throws -> userInfo? {
-        print("🔍 Fetching user data from UserTable")
         
         // Try to get the email from UserDefaults
         guard let email = UserDefaults.standard.string(forKey: "userEmail") else {
@@ -142,7 +141,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Plant Functions
     
     func getPlant(by plantID: UUID) async throws -> Plant? {
-        print("🔍 Fetching plant with ID: \(plantID)")
         let response = try await supabase
             .database
             .from("Plant")
@@ -150,11 +148,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("plantID", value: plantID.uuidString)
             .execute()
         
-        print("📡 Raw plant response data: \(String(describing: response.data))")
-        
         if let jsonData = response.data as? Data {
             let plants = try JSONDecoder().decode([Plant].self, from: jsonData)
-            print("✅ Decoded plants count: \(plants.count)")
             return plants.first
         }
         print("❌ Failed to decode plant data")
@@ -162,8 +157,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     }
     
     func getUserPlants(for userEmail: String) async throws -> [UserPlant] {
-        print("🔍 Fetching user plants for email: \(userEmail)")
-        
         // First get the user's ID from UserTable
         let userResponse = try await supabase
             .database
@@ -171,8 +164,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .select()
             .eq("user_email", value: userEmail)
             .execute()
-        
-        print("📡 Raw user response: \(String(describing: userResponse.data))")
         
         // Try to decode the user data
         var userIdString: String?
@@ -182,7 +173,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let users = try JSONDecoder().decode([userInfo].self, from: data)
                 if let firstUser = users.first {
                     userIdString = firstUser.id
-                    print("✅ Found user ID: \(firstUser.id)")
                 }
             } catch {
                 print("❌ Error decoding user data: \(error)")
@@ -193,14 +183,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                    let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
                    let user = users.first {
                     userIdString = user.id
-                    print("✅ Found user ID from JSON string: \(user.id)")
                 }
             }
         } else if let jsonArray = userResponse.data as? [[String: Any]],
                   let firstUser = jsonArray.first,
                   let id = firstUser["id"] as? String {
             userIdString = id
-            print("✅ Found user ID from JSON array: \(id)")
         }
         
         guard let userId = userIdString else {
@@ -209,7 +197,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         }
         
         // Now get the user's plants using the correct ID
-        print("🔍 Fetching plants for user ID: \(userId)")
         let response = try await supabase
             .database
             .from("UserPlant")
@@ -217,12 +204,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("userId", value: userId)
             .execute()
         
-        print("📡 Raw user plants response: \(String(describing: response.data))")
-        
         if let data = response.data as? Data {
             do {
                 var userPlants = try JSONDecoder().decode([UserPlant].self, from: data)
-                print("✅ Successfully decoded \(userPlants.count) user plants")
                 
                 // Fetch associated diseases for each plant
                 for i in 0..<userPlants.count {
@@ -239,7 +223,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 if let jsonString = String(data: data, encoding: .utf8),
                    let jsonData = jsonString.data(using: .utf8),
                    var userPlants = try? JSONDecoder().decode([UserPlant].self, from: jsonData) {
-                    print("✅ Successfully decoded \(userPlants.count) user plants from JSON string")
                     
                     // Fetch associated diseases for each plant
                     for i in 0..<userPlants.count {
@@ -255,7 +238,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             do {
                 let jsonData = try JSONSerialization.data(withJSONObject: jsonArray)
                 var userPlants = try JSONDecoder().decode([UserPlant].self, from: jsonData)
-                print("✅ Successfully decoded \(userPlants.count) user plants from JSON array")
                 
                 // Fetch associated diseases for each plant
                 for i in 0..<userPlants.count {
@@ -277,11 +259,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Care Reminder Functions
     
     func getCareReminders(for userPlantID: UUID) async throws -> CareReminder_? {
-        print("\n=== Fetching Care Reminder ===")
-        print("🔍 Looking for reminder with userPlantID: \(userPlantID)")
-        
         // First get the care reminder link
-        print("📡 Querying CareReminderOfUserPlant table...")
         let linkResponse = try await supabase
             .database
             .from("CareReminderOfUserPlant")
@@ -289,30 +267,21 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("userPlantRelationID", value: userPlantID.uuidString)
             .execute()
         
-        print("📡 Raw link response type: \(type(of: linkResponse.data))")
-        
         // Handle Data response
         guard let data = linkResponse.data as? Data,
               let jsonString = String(data: data, encoding: .utf8) else {
-            print("❌ Could not get data from response")
             return nil
         }
-        
-        print("📡 Response as string: \(jsonString)")
         
         // Parse the JSON string
         guard let jsonData = jsonString.data(using: .utf8),
               let jsonArray = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]],
               let firstLink = jsonArray.first,
               let careReminderId = firstLink["careReminderId"] as? String else {
-            print("❌ No care reminder link found")
             return nil
         }
         
-        print("✅ Found careReminderId: \(careReminderId)")
-        
         // Then get the actual care reminder
-        print("\n📡 Querying CareReminder_ table for ID: \(careReminderId)")
         let reminderResponse = try await supabase
             .database
             .from("CareReminder_")
@@ -320,29 +289,22 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("careReminderID", value: careReminderId)
             .execute()
         
-        print("📡 Raw reminder response type: \(type(of: reminderResponse.data))")
-        
         // Handle reminder Data response
         guard let reminderData = reminderResponse.data as? Data,
               let reminderString = String(data: reminderData, encoding: .utf8) else {
-            print("❌ Could not get reminder data")
             return nil
         }
-        
-        print("📡 Reminder response as string: \(reminderString)")
         
         // Parse the reminder JSON
         if let reminderJsonData = reminderString.data(using: .utf8) {
             do {
                 let reminders = try JSONDecoder().decode([CareReminder_].self, from: reminderJsonData)
-                print("✅ Successfully decoded \(reminders.count) reminders")
                 return reminders.first
             } catch {
                 print("❌ Failed to decode reminder: \(error)")
             }
         }
         
-        print("❌ No care reminder found")
         return nil
     }
     
@@ -460,15 +422,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Plant Functions
     
     func getPlants() async throws -> [Plant] {
-        print("🔍 Fetching all plants from Supabase...")
         let response = try await supabase
             .database
             .from("Plant")
             .select()
             .execute()
-        
-        print("📡 Raw plants response: \(String(describing: response.data))")
-        print("📡 Response type: \(type(of: response.data))")
         
         if let data = response.data as? Data {
             print("✅ Successfully got Data response")
@@ -476,7 +434,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let plants = try decoder.decode([Plant].self, from: data)
-                print("✅ Successfully decoded \(plants.count) plants")
                 return plants
             } catch {
                 print("❌ Decoding error: \(error)")
@@ -541,8 +498,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Disease Functions
     
     func getDiseases(for plantID: UUID) async throws -> [Diseases] {
-        print("🔍 Fetching diseases for plant ID: \(plantID)")
-        
         // First get the plant-disease relationships
         let plantDiseasesResponse = try await supabase
             .database
@@ -551,12 +506,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("plantID", value: plantID.uuidString)
             .execute()
         
-        print("📡 Raw plant diseases response: \(String(describing: plantDiseasesResponse.data))")
-        
         var diseases: [Diseases] = []
         
         if let jsonObject = plantDiseasesResponse.data as? [[String: Any]] {
-            print("✅ Found \(jsonObject.count) plant-disease relationships")
             
             for plantDisease in jsonObject {
                 guard let diseaseIDString = plantDisease["diseaseID"] as? String,
@@ -628,21 +580,16 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Common Issues Functions
     
     func getCommonIssues() async throws -> [Diseases] {
-        print("🔍 Fetching common issues from Supabase...")
         let response = try await supabase
             .database
             .from("Diseases")
             .select()
             .execute()
         
-        print("📡 Raw diseases response: \(String(describing: response.data))")
-        print("📡 Response type: \(type(of: response.data))")
-        
         if let jsonData = response.data as? Data {
             print("✅ Successfully got Data response")
             do {
                 let diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
-                print("✅ Successfully decoded \(diseases.count) diseases")
                 return diseases
             } catch {
                 print("❌ Decoding error: \(error)")
@@ -668,7 +615,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             do {
                 let jsonData = try JSONSerialization.data(withJSONObject: jsonObject)
                 let diseases = try JSONDecoder().decode([Diseases].self, from: jsonData)
-                print("✅ Successfully decoded \(diseases.count) diseases")
                 return diseases
             } catch {
                 print("❌ JSON serialization/decoding error: \(error)")
@@ -708,15 +654,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Fertilizer Functions
     
     func getCommonFertilizers() async throws -> [Fertilizer] {
-        print("🔍 Fetching common fertilizers from Supabase...")
         let response = try await supabase
             .database
             .from("Fertilizer")
             .select()
             .execute()
-        
-        print("📡 Raw fertilizers response: \(String(describing: response.data))")
-        print("📡 Response type: \(type(of: response.data))")
         
         // First try to decode as Data
         if let data = response.data as? Data {
@@ -725,7 +667,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let fertilizers = try decoder.decode([Fertilizer].self, from: data)
-                print("✅ Successfully decoded \(fertilizers.count) fertilizers from Data")
                 return fertilizers
             } catch {
                 print("❌ Failed to decode Data response: \(error)")
@@ -740,7 +681,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let fertilizers = try decoder.decode([Fertilizer].self, from: jsonData)
-                print("✅ Successfully decoded \(fertilizers.count) fertilizers from JSON array")
                 return fertilizers
             } catch {
                 print("❌ Failed to decode JSON array: \(error)")
@@ -916,120 +856,75 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Complex Data Fetching
     
     func getUserPlantsWithDetails(for userId: String) async throws -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
-        print("\n=== Getting User Plants With Details ===")
-        print("🔍 Fetching details for user ID: \(userId)")
-        
         let userPlants = try await getUserPlants(for: userId)
-        print("✅ Found \(userPlants.count) user plants")
-        
         var result: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
         
         for userPlant in userPlants {
-            print("\n🌿 Processing plant with relation ID: \(userPlant.userPlantRelationID)")
-            
             if let plantId = userPlant.userplantID {
-                print("🔍 Looking up plant with ID: \(plantId)")
                 if let plant = try await getPlant(by: plantId) {
-                    print("✅ Found plant: \(plant.plantName)")
-                    
-                    print("🔍 Looking up care reminder...")
                     if let reminder = try await getCareReminders(for: userPlant.userPlantRelationID) {
-                        print("✅ Found existing reminder")
                         result.append((userPlant: userPlant, plant: plant, reminder: reminder))
-                    } else {
-                        print("ℹ️ No reminder found for this plant")
                     }
                 } else {
                     print("❌ Plant not found for ID: \(plantId)")
                 }
-            } else {
-                print("❌ User plant has no plant ID")
             }
         }
-        
-        print("\n📊 Final Results:")
-        print("Total user plants: \(userPlants.count)")
-        print("Successfully processed with reminders: \(result.count)")
         
         return result
     }
     
     // Synchronous wrapper for getUserPlantsWithDetails
     func getUserPlantsWithDetailsSync(for userId: String) -> [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] {
+        
         var result: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
                 result = try await getUserPlantsWithDetails(for: userId)
+                print("✅ Async call completed with \(result.count) results")
             } catch {
-                print("Error getting user plants with details: \(error)")
+                print("❌ Error getting user plants with details: \(error)")
             }
             semaphore.signal()
         }
         
-        _ = semaphore.wait(timeout: .now() + 5)
+        let timeoutResult = semaphore.wait(timeout: .now() + 10)  // Increased timeout to 10 seconds
+        if timeoutResult == .timedOut {
+            print("⏱️ WARNING: Semaphore timed out after 10 seconds!")
+        } else {
+            print("✅ Semaphore signaled successfully")
+        }
+        
+        print("📊 Returning \(result.count) results")
         return result
     }
     
     // Function to get user plants with basic details
     func getUserPlantsWithBasicDetails(for userEmail: String) async throws -> [(userPlant: UserPlant, plant: Plant)] {
-        print("\n=== Getting User Plants with Basic Details ===")
-        print("🔍 Fetching for user email: \(userEmail)")
-        
         let userPlants = try await getUserPlants(for: userEmail)
-        print("📱 Found \(userPlants.count) user plants")
-        
-        if userPlants.isEmpty {
-            print("⚠️ No user plants found for email: \(userEmail)")
-            print("🔍 Checking if user exists in UserTable...")
-            if let user = try await getUser() {
-                print("✅ User exists: \(user.userEmail)")
-            } else {
-                print("❌ User not found in UserTable")
-            }
-        }
-        
         var result: [(userPlant: UserPlant, plant: Plant)] = []
         
         for userPlant in userPlants {
-            print("\n🌿 Processing user plant:")
-            print("- Relation ID: \(userPlant.userPlantRelationID)")
-            print("- Plant ID: \(userPlant.userplantID?.uuidString ?? "nil")")
-            print("- Nickname: \(userPlant.userPlantNickName ?? "nil")")
-            
             if let plantID = userPlant.userplantID {
-                print("🔍 Looking up plant with ID: \(plantID)")
                 if let plant = try await getPlant(by: plantID) {
-                    print("✅ Found plant: \(plant.plantName)")
                     result.append((userPlant: userPlant, plant: plant))
-                } else {
-                    print("❌ No plant found for ID: \(plantID)")
                 }
-            } else {
-                print("⚠️ User plant has no plant ID")
             }
         }
-        
-        print("\n📊 Final Results:")
-        print("Total user plants processed: \(userPlants.count)")
-        print("Successfully matched plants: \(result.count)")
         
         return result
     }
     
     // Synchronous wrapper for getUserPlantsWithBasicDetails
     func getUserPlantsWithBasicDetailsSync(for userEmail: String) -> [(userPlant: UserPlant, plant: Plant)]? {
-        print("\n=== Getting User Plants with Basic Details (Sync) ===")
-        print("📧 User email: \(userEmail)")
-        
         var result: [(userPlant: UserPlant, plant: Plant)]?
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
                 result = try await getUserPlantsWithBasicDetails(for: userEmail)
-                print("✅ Successfully fetched \(result?.count ?? 0) plants")
             } catch {
                 print("❌ Error getting user plants: \(error)")
             }
@@ -1099,13 +994,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 if let fertilizerFreq = userPlant.plant.fertilizerFrequency {
                     let nextDate = Calendar.current.date(byAdding: .day, value: Int(fertilizerFreq), to: currentDate)
                     update.upcomingReminderForFertilizers = dateFormatter.string(from: nextDate ?? currentDate)
-                    print("🌱 Next fertilizer date set to: \(update.upcomingReminderForFertilizers ?? "nil")")
                 }
             } else {
                 // Reset upcoming date to last completion date
                 if let lastFertDate = currentReminder.last_fertilizer_completed_date {
                     update.upcomingReminderForFertilizers = dateFormatter.string(from: lastFertDate)
-                    print("🌱 Reset fertilizer date to last completion: \(update.upcomingReminderForFertilizers ?? "nil")")
                 }
             }
             
@@ -1119,13 +1012,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 if let repottingFreq = userPlant.plant.repottingFrequency {
                     let nextDate = Calendar.current.date(byAdding: .day, value: Int(repottingFreq), to: currentDate)
                     update.upcomingReminderForRepotted = dateFormatter.string(from: nextDate ?? currentDate)
-                    print("🪴 Next repotting date set to: \(update.upcomingReminderForRepotted ?? "nil")")
                 }
             } else {
                 // Reset upcoming date to last completion date
                 if let lastRepotDate = currentReminder.last_repot_completed_date {
                     update.upcomingReminderForRepotted = dateFormatter.string(from: lastRepotDate)
-                    print("🪴 Reset repotting date to last completion: \(update.upcomingReminderForRepotted ?? "nil")")
                 }
             }
             
@@ -1133,8 +1024,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             print("❌ Invalid reminder type: \(type)")
             throw APIError(message: "Invalid reminder type")
         }
-        
-        print("\n📡 Sending update to database...")
         print("📝 Update details:")
         if let waterDate = update.upcomingReminderForWater { print("💧 Water date: \(waterDate)") }
         if let fertilizerDate = update.upcomingReminderForFertilizers { print("🌱 Fertilizer date: \(fertilizerDate)") }
@@ -1147,8 +1036,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .update(update)
             .eq("careReminderID", value: currentReminder.careReminderID.uuidString)
             .execute()
-        
-        print("✅ Successfully updated reminder")
         
         // Schedule notifications for the updated reminder
         // First, get the updated reminder
@@ -1166,6 +1053,70 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 try await updateCareReminderWithDetails(userPlantID: userPlantID, type: type, isCompleted: isCompleted)
             } catch {
                 print("Error updating care reminder with details: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5)
+    }
+    
+    // Function to update overdue reminders - sets upcoming date to today
+    func updateOverdueReminder(userPlantID: UUID, type: String) async throws {
+        // Get the current reminder
+        guard let currentReminder = try await getCareReminders(for: userPlantID) else {
+            print("❌ No reminder found")
+            throw APIError(message: "No reminder found")
+        }
+        
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let today = Date()
+        let todayString = dateFormatter.string(from: today)
+        
+        var update = CareReminderUpdate()
+        
+        switch type.lowercased() {
+        case "water":
+            // Only update if not completed
+            if !(currentReminder.isWateringCompleted ?? false) {
+                update.upcomingReminderForWater = todayString
+                print("💧 Updated water reminder to today: \(todayString)")
+            }
+        case "fertilizer":
+            if !(currentReminder.isFertilizingCompleted ?? false) {
+                update.upcomingReminderForFertilizers = todayString
+                print("🌱 Updated fertilizer reminder to today: \(todayString)")
+            }
+        case "repot":
+            if !(currentReminder.isRepottingCompleted ?? false) {
+                update.upcomingReminderForRepotted = todayString
+                print("🪴 Updated repotting reminder to today: \(todayString)")
+            }
+        default:
+            print("❌ Invalid type: \(type)")
+            return
+        }
+        
+        // Update the database
+        try await supabase
+            .database
+            .from("CareReminder_")
+            .update(update)
+            .eq("careReminderID", value: currentReminder.careReminderID.uuidString)
+            .execute()
+        
+        print("✅ Overdue reminder updated in database")
+    }
+    
+    // Synchronous wrapper for updateOverdueReminder
+    func updateOverdueReminderSync(userPlantID: UUID, type: String) {
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                try await updateOverdueReminder(userPlantID: userPlantID, type: type)
+            } catch {
+                print("❌ Error updating overdue reminder: \(error)")
             }
             semaphore.signal()
         }
@@ -1306,26 +1257,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 print("🆔 Care Reminder ID: \(careReminder.careReminderID)")
                 print("💧 Water Next Date: \(careReminder.upcomingReminderForWater ?? "nil")")
                 print("🌱 Fertilizer Next Date: \(String(describing: careReminder.upcomingReminderForFertilizers))")
-                print("🪴 Repotting Next Date: \(String(describing: careReminder.upcomingReminderForRepotted))")
-                print("✅ Water Completed: \(careReminder.isWateringCompleted)")
-                print("✅ Fertilizer Completed: \(careReminder.isFertilizingCompleted)")
-                print("✅ Repotting Completed: \(careReminder.isRepottingCompleted)")
-                print("📅 Last Water Date: \(String(describing: careReminder.last_water_completed_date))")
-                print("📅 Last Fertilizer Date: \(String(describing: careReminder.last_fertilizer_completed_date))")
-                print("📅 Last Repot Date: \(String(describing: careReminder.last_repot_completed_date))")
-                print("🔔 Watering Enabled: \(careReminder.wateringEnabled)")
-                print("🔔 Fertilizer Enabled: \(careReminder.fertilizerEnabled)")
-                print("🔔 Repotting Enabled: \(careReminder.repottingEnabled)")
-                
                 // Insert the care reminder with all fields
-                print("\n📡 Inserting care reminder into database...")
                 let reminderResponse = try await supabase
                     .database
                     .from("CareReminder_")
                     .insert(careReminder)
                     .execute()
-                
-                print("📡 Care reminder response: \(String(describing: reminderResponse.data))")
                 
                 // Create the linking record in CareReminderOfUserPlant
                 let linkingRecord = CareReminderLinkInsert(
@@ -1334,20 +1271,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     careReminderId: userPlantID.uuidString
                 )
                 
-                print("\n📝 Creating linking record:")
-                print("🔗 Link ID: \(linkingRecord.careReminderOfUserPlantID)")
-                print("🌿 Plant ID: \(linkingRecord.userPlantRelationID)")
-                print("⏰ Reminder ID: \(linkingRecord.careReminderId)")
-                
-                print("\n📡 Inserting linking record into database...")
                 let linkResponse = try await supabase
                     .database
                     .from("CareReminderOfUserPlant")
                     .insert(linkingRecord)
                     .execute()
-                
-                print("📡 Link response: \(String(describing: linkResponse.data))")
-                print("✅ Successfully added care reminder and link")
                 
             } catch let error as PostgrestError {
                 print("\n❌ Postgrest Error adding care reminder:")
@@ -1374,11 +1302,8 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - User Management
     
     func initializeUser(email: String) async throws -> userInfo? {
-        print("\n=== Checking User Data ===")
-        
         // Check UserTable for existing user data
         do {
-            print("🔍 Checking UserTable for email: \(email)")
             let response = try await supabase
                 .database
                 .from("UserTable")
@@ -1386,14 +1311,11 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 .eq("user_email", value: email)
                 .execute()
             
-            print("📡 Raw response type: \(type(of: response.data))")
-            
             // Try to decode the response data
             if let data = response.data as? Data {
                 do {
                     let users = try JSONDecoder().decode([userInfo].self, from: data)
                     if let user = users.first {
-                        print("✅ Successfully decoded user: \(user.userName)")
                         return user
                     }
                 } catch {
@@ -1404,18 +1326,14 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                        let jsonData = jsonString.data(using: .utf8),
                        let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
                        let user = users.first {
-                        print("✅ Successfully decoded user from JSON string: \(user.userName)")
                         return user
                     }
                 }
             } else if let jsonArray = response.data as? [[String: Any]] {
-                print("📡 JSON Array: \(jsonArray)")
-                
                 if !jsonArray.isEmpty {
                     do {
                         let jsonData = try JSONSerialization.data(withJSONObject: jsonArray[0])
                         let user = try JSONDecoder().decode(userInfo.self, from: jsonData)
-                        print("✅ Successfully decoded user: \(user.userName)")
                         return user
                     } catch {
                         print("❌ Error decoding user data: \(error)")
@@ -1434,14 +1352,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // Synchronous wrapper for getting user
     func getUserSync() -> userInfo? {
-        print("\n=== Getting User Synchronously ===")
         var user: userInfo?
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
                 if let storedEmail = UserDefaults.standard.string(forKey: "userEmail") {
-                    print("📧 Using stored email: \(storedEmail)")
                     user = try await initializeUser(email: storedEmail)
                     if user == nil {
                         print("⚠️ No user data found in UserTable for stored email")
@@ -1636,7 +1552,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         UserDefaults.standard.set(email, forKey: "userEmail")
         
         // After successful authentication, fetch or create user data in UserTable
-        print("🔍 Fetching user data from UserTable")
         let (exists, userData) = try await checkUserExists(email: email)
         
         if let userData = userData {
@@ -1799,12 +1714,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 .select("id, user_email, userName, location, reminderAllowed")
                 .execute()
             
-            print("📡 Response type: \(type(of: response.data))")
-            
             // Convert Data to JSON
             if let data = response.data as? Data,
                let jsonString = String(data: data, encoding: .utf8) {
-                print("📡 JSON String: \(jsonString)")
                 
                 if let jsonData = jsonString.data(using: .utf8),
                    let jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] {
@@ -1822,7 +1734,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 }
             } else {
                 print("❌ Invalid data format")
-                print("📡 Response data: \(String(describing: response.data))")
             }
         } catch {
             print("❌ Error fetching users: \(error)")
@@ -1831,19 +1742,14 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     
     // Function to get disease by name with better error handling
     func getDiseaseByName(name: String) async throws -> Diseases? {
-        print("🔍 Fetching disease with name: \(name)")
-        
         // Clean up the disease name
         let cleanedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        print("🔍 Cleaned disease name: \(cleanedName)")
         
         let response = try await supabase
             .database
             .from("Diseases")
             .select()
             .execute()
-        
-        print("📡 Response data type: \(type(of: response.data))")
         
         if let data = response.data as? Data {
             print("📡 Attempting to decode Data response")
@@ -1861,7 +1767,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                             // Convert back to JSON data for decoding
                             let itemData = try JSONSerialization.data(withJSONObject: item)
                             let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
-                            print("✅ Successfully decoded disease")
                             return disease
                         }
                     }
@@ -1881,7 +1786,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     do {
                         let itemData = try JSONSerialization.data(withJSONObject: item)
                         let disease = try JSONDecoder().decode(Diseases.self, from: itemData)
-                        print("✅ Successfully decoded disease")
                         return disease
                     } catch {
                         print("❌ Error decoding disease: \(error)")
@@ -2008,7 +1912,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let plantDiseases = try decoder.decode([PlantDisease].self, from: data)
-                print("✅ Successfully decoded \(plantDiseases.count) plant diseases from Data")
                 return plantDiseases
             } catch {
                 print("❌ Failed to decode Data response: \(error)")
@@ -2017,7 +1920,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                    let jsonData = jsonString.data(using: .utf8) {
                     do {
                         let plantDiseases = try JSONDecoder().decode([PlantDisease].self, from: jsonData)
-                        print("✅ Successfully decoded \(plantDiseases.count) plant diseases from JSON string")
                         return plantDiseases
                     } catch {
                         print("❌ Failed to decode JSON string: \(error)")
@@ -2034,7 +1936,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let plantDiseases = try decoder.decode([PlantDisease].self, from: jsonData)
-                print("✅ Successfully decoded \(plantDiseases.count) plant diseases from JSON array")
                 return plantDiseases
             } catch {
                 print("❌ Failed to decode JSON array: \(error)")
@@ -2082,8 +1983,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - Disease Management
     
     func getAssociatedDiseases(for userPlantID: UUID) async throws -> [Diseases] {
-        print("🔍 Fetching diseases for user plant: \(userPlantID)")
-        
         // First get the disease IDs from UsersPlantDisease table
         let response = try await supabase
             .database
@@ -2103,11 +2002,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 }
             }
             
-            print("✅ Found \(diseases.count) diseases for user plant")
             return diseases
         }
         
-        print("❌ No diseases found for user plant")
         return []
     }
     
@@ -3158,7 +3055,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             decoder.dateDecodingStrategy = .formatted(formatter)
             
             let tips = try decoder.decode([PreventionTip].self, from: jsonData)
-            print("✅ Successfully decoded \(tips.count) prevention tips")
             return tips
         } catch {
             print("❌ Decoding error for prevention tips: \(error)")
@@ -3229,7 +3125,6 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         do {
             let decoder = JSONDecoder()
             var posts = try decoder.decode([CommunityPost].self, from: jsonData)
-            print("✅ Successfully decoded \(posts.count) community posts")
             
             // Fetch user info for each post
             for i in 0..<posts.count {

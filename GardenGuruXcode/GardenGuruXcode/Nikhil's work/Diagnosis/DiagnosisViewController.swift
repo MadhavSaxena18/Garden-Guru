@@ -173,18 +173,8 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             return
         }
         
-        print("\n=== Initializing Plant Check ===")
-        print("📝 Selected plant name: \(plantName)")
-        
         // First get the plant from database
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
-            print("✅ Found plant in database")
-            print("📝 Plant details:")
-            print("   - Name: \(plant.plantName)")
-            print("   - Botanical Name: \(plant.plantBotanicalName ?? "Not specified")")
-            print("   - Category: \(plant.category_new?.rawValue ?? "Not specified")")
-            print("   - Season: \(plant.favourableSeason?.rawValue ?? "Not specified")")
-            
             // Update UI with plant details
             updatePlantUI(plant: plant)
             
@@ -212,7 +202,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         // Update the UI
         plantDetailsLabel.text = details
         plantDetailsLabel.isHidden = false
-        print("✅ Updated plant details label")
     }
 
     private func showPlantNotFoundAlert() {
@@ -238,8 +227,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
 
     private func checkIfPlantExists(plantName: String) {
-        print("\n=== Checking if plant exists ===")
-        
         guard let firstUser = dataController.getUserSync() else {
             print("❌ No user found")
             startCaringButton.isHidden = false
@@ -248,7 +235,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         }
         
         let userPlants = dataController.getUserPlantsSync(for: firstUser.userEmail!)
-        print("📝 Found \(userPlants.count) user plants")
         
         isExistingPlant = userPlants.contains { userPlant in
             if let plantID = userPlant.userplantID,
@@ -259,14 +245,12 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         }
         
         if isExistingPlant {
-            print("✅ Plant already exists in user's garden")
             hasUserResponded = false
             startCaringButton.isHidden = true
             DispatchQueue.main.async {
                 self.showExistingPlantAlert()
             }
         } else {
-            print("📝 New plant - showing add button")
             hasUserResponded = true
             isExistingPlant = false
             startCaringButton.isHidden = false
@@ -471,14 +455,11 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         if let plant = dataController.getPlantbyNameSync(name: plantName) {
             // Use the first image (whole plant view) from captured images
             if let wholePlantImage = scanAndDiagnoseViewController.capturedImages.first {
-                print("✅ Adding whole plant image to storage")
                 if let imageURL = dataController.uploadUserPlantImageSync(userPlantID: plant.plantID, image: wholePlantImage) {
-                    print("✅ Successfully uploaded image: \(imageURL)")
+                    print("✅ Image uploaded: \(imageURL)")
                 } else {
                     print("❌ Failed to upload image")
                 }
-            } else {
-                print("❌ No whole plant image available")
             }
             reminderVC.selectedPlant = plant
         }
@@ -546,9 +527,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     
     // New method to setup symptom-based UI
     private func setupSymptomsUI(with disease: Diseases) {
-        print("🔍 Setting up symptoms UI for disease: \(disease.diseaseName)")
-        print("📝 Symptoms: \(disease.diseaseSymptoms ?? "No symptoms")")
-        
         // Remove existing symptom views if any
         symptomsContainerView.removeFromSuperview()
         
@@ -581,7 +559,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             let symptomList = symptoms.components(separatedBy: "; ")
             let confidenceLevels = generateConfidenceLevels(count: symptomList.count)
             
-            print("✅ Adding \(symptomList.count) symptoms to UI")
             for (index, symptom) in symptomList.enumerated() {
                 let symptomView = createSymptomView(
                     symptom: symptom,
@@ -623,8 +600,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         // Set as table header view - this makes it scroll with the table!
         tableView.tableHeaderView = headerView
-        
-        print("✅ Symptoms UI setup complete as table header")
     }
     
     // Generate realistic confidence levels
@@ -700,9 +675,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
 
     // Update fetchAndUpdateDiseaseDetails to use the new format
     func fetchAndUpdateDiseaseDetails(diseaseName: String) {
-        print("\n=== Fetching Disease Details ===")
-        print("🔍 Looking for disease: \(diseaseName)")
-        
         // Clean up disease name - remove extra spaces and handle variations
         let cleanName = diseaseName
             .replacingOccurrences(of: "_", with: " ")
@@ -710,13 +682,10 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "  ", with: " ") // Remove double spaces
         
-        print("🔍 Cleaned disease name: \(cleanName)")
-        
         // Handle healthy plant cases
         if cleanName.lowercased().contains("healthy") || 
            cleanName == "No disease detected" || 
            cleanName.lowercased() == "healthy" {
-            print("✅ Plant is healthy")
             // Hide table view for healthy plants
             tableView.isHidden = true
             symptomsContainerView.isHidden = true
@@ -766,7 +735,6 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         }
         
         if let foundDisease = disease {
-            print("✅ Found disease in database: \(foundDisease.diseaseName)")
             updateDiseaseDetails(with: foundDisease)
         } else {
             print("⚠️ Disease not found in database after trying all variations: \(cleanName)")

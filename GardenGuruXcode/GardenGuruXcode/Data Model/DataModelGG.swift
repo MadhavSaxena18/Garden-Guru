@@ -134,73 +134,26 @@ struct Diseases: Codable, Hashable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Handle UUID decoding with better error handling
+        // Handle UUID decoding
         if let uuidString = try? container.decode(String.self, forKey: .diseaseID) {
-            print("📝 Decoded diseaseID: \(uuidString)")
             diseaseID = UUID(uuidString: uuidString) ?? UUID()
         } else {
-            print("⚠️ Failed to decode diseaseID, using new UUID")
             diseaseID = UUID()
         }
         
-        // Decode required fields with error handling
-        do {
-            diseaseName = try container.decode(String.self, forKey: .diseaseName)
-            print("📝 Decoded diseaseName: \(diseaseName)")
-        } catch {
-            print("❌ Error decoding diseaseName: \(error)")
-            throw error
-        }
+        // Decode required fields
+        diseaseName = try container.decode(String.self, forKey: .diseaseName)
         
-        // Decode optional fields with better error handling
-        do {
-            if let symptoms = try container.decodeIfPresent(String.self, forKey: .diseaseSymptoms) {
-                print("📝 Decoded symptoms: \(symptoms)")
-                diseaseSymptoms = symptoms
-            }
-            
-            if let image = try container.decodeIfPresent(String.self, forKey: .diseaseImage) {
-                print("📝 Decoded image URL: \(image)")
-                diseaseImage = image
-            }
-            
-            if let cure = try container.decodeIfPresent(String.self, forKey: .diseaseCure) {
-                print("📝 Decoded cure: \(cure)")
-                diseaseCure = cure
-            }
-            
-            if let fertilizers = try container.decodeIfPresent(String.self, forKey: .diseaseFertilizers) {
-                print("📝 Decoded fertilizers: \(fertilizers)")
-                diseaseFertilizers = fertilizers
-            }
-            
-            if let duration = try container.decodeIfPresent(Int64.self, forKey: .cureDuration) {
-                print("📝 Decoded duration: \(duration)")
-                cureDuration = duration
-            }
-            
-            if let season = try container.decodeIfPresent(Season.self, forKey: .diseaseSeason) {
-                print("📝 Decoded season: \(season)")
-                diseaseSeason = season
-            }
-            
-            if let vitamins = try container.decodeIfPresent(String.self, forKey: .diseaseVitaminsRequired) {
-                diseaseVitaminsRequired = vitamins
-            }
-            
-            if let preventiveMeasures = try container.decodeIfPresent(String.self, forKey: .diseasePreventiveMeasures) {
-                print("📝 Decoded preventive measures: \(preventiveMeasures)")
-                diseasePreventiveMeasures = preventiveMeasures
-            }
-            
-            if let videoSolution = try container.decodeIfPresent(String.self, forKey: .diseaseVideoSolution) {
-                print("📝 Decoded video solution: \(videoSolution)")
-                diseaseVideoSolution = videoSolution
-            }
-        } catch {
-            print("⚠️ Error decoding optional fields: \(error)")
-            // Don't throw here, just continue with nil values
-        }
+        // Decode optional fields
+        diseaseSymptoms = try container.decodeIfPresent(String.self, forKey: .diseaseSymptoms)
+        diseaseImage = try container.decodeIfPresent(String.self, forKey: .diseaseImage)
+        diseaseCure = try container.decodeIfPresent(String.self, forKey: .diseaseCure)
+        diseaseFertilizers = try container.decodeIfPresent(String.self, forKey: .diseaseFertilizers)
+        cureDuration = try container.decodeIfPresent(Int64.self, forKey: .cureDuration)
+        diseaseSeason = try container.decodeIfPresent(Season.self, forKey: .diseaseSeason)
+        diseaseVitaminsRequired = try container.decodeIfPresent(String.self, forKey: .diseaseVitaminsRequired)
+        diseasePreventiveMeasures = try container.decodeIfPresent(String.self, forKey: .diseasePreventiveMeasures)
+        diseaseVideoSolution = try container.decodeIfPresent(String.self, forKey: .diseaseVideoSolution)
     }
 }
 
@@ -407,15 +360,6 @@ struct CareReminder_: Codable, Hashable {
         wateringEnabled = try container.decodeIfPresent(Bool.self, forKey: .wateringEnabled) ?? false
         fertilizerEnabled = try container.decodeIfPresent(Bool.self, forKey: .fertilizerEnabled) ?? false
         repottingEnabled = try container.decodeIfPresent(Bool.self, forKey: .repottingEnabled) ?? false
-        
-        // Print decoded dates for debugging
-        print("📅 Decoded Water Date: \(upcomingReminderForWater?.description ?? "nil")")
-        print("📅 Decoded Fertilizer Date: \(upcomingReminderForFertilizers?.description ?? "nil")")
-        print("📅 Decoded Repot Date: \(upcomingReminderForRepotted?.description ?? "nil")")
-        print("🔔 Enabled States:")
-        print("- Water: \(wateringEnabled)")
-        print("- Fertilizer: \(fertilizerEnabled)")
-        print("- Repotting: \(repottingEnabled)")
     }
 }
 

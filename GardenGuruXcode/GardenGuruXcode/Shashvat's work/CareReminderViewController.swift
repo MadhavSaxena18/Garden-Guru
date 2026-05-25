@@ -14,10 +14,8 @@ class CareReminderViewController: UIViewController {
     private var todayReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
     private var upcomingReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
     
-    // Add caching properties
-    private var cachedReminders: [(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)] = []
-    private var isDataLoaded = false
-    private var isLoading = false
+    // Prevent multiple simultaneous checkbox toggles
+    private var isProcessingToggle = false
     
     private lazy var noRemindersView: UIView = {
         let view = UIView()
@@ -63,16 +61,12 @@ class CareReminderViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        // Only reload data if not already loaded or if cache is empty
-        if !isDataLoaded || cachedReminders.isEmpty {
-            loadDataAsync()
-        } else {
-            // Use cached data and just sort reminders - this should be instant
-            reminders = cachedReminders
+        // Don't reload if we already have data - just refresh the display
+        if !reminders.isEmpty {
             sortReminders()
             careReminderCollectionView.reloadData()
             
-            // Update UI visibility immediately
+            // Update UI visibility
             let hasReminders = careReminderSegmentedControl.selectedSegmentIndex == 0 ?
                 !todayReminders.allSatisfy({ $0.isEmpty }) :
                 !upcomingReminders.allSatisfy({ $0.isEmpty })
@@ -80,7 +74,6 @@ class CareReminderViewController: UIViewController {
             noRemindersView.isHidden = hasReminders
             careReminderCollectionView.isHidden = !hasReminders
         }
-        refreshAfterPlantDeletion(Notification(name: NSNotification.Name("PlantDeleted")))
     }
     
     // MARK: - Setup Methods
@@ -144,15 +137,37 @@ class CareReminderViewController: UIViewController {
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
         
-        guard let firstUser = dataController.getUserSync() else {
-            print("❌ No user found")
+        // Get email directly from UserDefaults
+        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+            print("❌ No user email found in UserDefaults")
             return
         }
-        print("✅ Found user: \(firstUser.userEmail)")
+        print("✅ Using email: \(userEmail)")
         
-        // Load reminders only once using the sync wrapper
-        reminders = dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
+        // Load reminders using the sync wrapper
+        print("📞 Calling getUserPlantsWithDetailsSync...")
+        reminders = dataController.getUserPlantsWithDetailsSync(for: userEmail)
         print("📱 Loaded \(reminders.count) reminders")
+        
+        if reminders.isEmpty {
+            print("⚠️ WARNING: No reminders loaded!")
+            print("🔍 Checking if user has plants...")
+            
+            // Debug: Try to get basic plant info
+            if let plants = dataController.getUserPlantsWithBasicDetailsSync(for: userEmail) {
+                print("📊 User has \(plants.count) plants")
+                for (index, plantData) in plants.enumerated() {
+                    print("  Plant \(index + 1): \(plantData.plant.plantName) - \(plantData.userPlant.userPlantNickName ?? "No nickname")")
+                }
+            } else {
+                print("❌ Could not load basic plant details")
+            }
+        } else {
+            print("✅ Successfully loaded reminders:")
+            for (index, reminder) in reminders.enumerated() {
+                print("  \(index + 1). \(reminder.plant.plantName) - Water: \(reminder.reminder.wateringEnabled), Fert: \(reminder.reminder.fertilizerEnabled), Repot: \(reminder.reminder.repottingEnabled)")
+            }
+        }
         
         sortReminders()
         careReminderCollectionView.reloadData()
@@ -162,72 +177,68 @@ class CareReminderViewController: UIViewController {
         let calendar = Calendar.current
         let currentDate = Date()
         
-        print("\n=== Sorting Reminders ===")
-        print("Current Date: \(currentDate)")
-        print("Total reminders to sort: \(reminders.count)")
+        print("\n🔍 Sorting \(reminders.count) reminders (Current date: \(currentDate))")
         
         // Clear existing arrays
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
         
         for reminder in reminders {
-            print("\nProcessing reminder for plant: \(reminder.plant.plantName)")
-            
             // Watering reminders - only if enabled
             if reminder.reminder.wateringEnabled {
-                // BUG FIX #4: Use current date as default instead of Date.distantPast
-                // This prevents newly added plants from showing as "due today" immediately
-                let lastCompletedDate = reminder.reminder.last_water_completed_date ?? currentDate
-                
-                // BUG FIX #3: Validate frequency and use default of 7 days if invalid
+                // Use the last completed date, or default to a very old date if nil
+                let lastCompletedDate = reminder.reminder.last_water_completed_date ?? calendar.date(byAdding: .year, value: -1, to: currentDate)!
                 let waterFreq = max(reminder.plant.waterFrequency ?? 7, 1)
+                let completionFlag = reminder.reminder.isWateringCompleted ?? false
                 
                 // Calculate the next due date based on last completed date
                 if let nextDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
-                    print("Last completed: \(lastCompletedDate)")
-                    print("Next due date: \(nextDueDate)")
-                    print("Frequency: \(waterFreq) days")
-                    
-                    // BUG FIX #1: Removed duplicate check for "completed today"
-                    // BUG FIX #2: Use start of day comparison to properly handle overdue tasks
                     let startOfToday = calendar.startOfDay(for: currentDate)
                     let startOfDueDate = calendar.startOfDay(for: nextDueDate)
                     
-                    // If the next due date is today or in the past, it belongs in today's reminders
+                    // A task is only "completed" if the next due date is in the future
+                    // If the next due date has passed, the task is overdue (new cycle started)
+                    let isCompletedForCurrentCycle = completionFlag && (startOfDueDate > startOfToday)
+                    
+                    // Debug: Print calculation details for all watering tasks
+                    let daysUntilDue = calendar.dateComponents([.day], from: startOfToday, to: startOfDueDate).day ?? 0
+                    print("💧 \(reminder.plant.plantName): lastCompleted=\(lastCompletedDate), freq=\(waterFreq)d, nextDue=\(nextDueDate), daysUntil=\(daysUntilDue), flag=\(completionFlag), actuallyCompleted=\(isCompletedForCurrentCycle)")
+                    
+                    // If due date is today or in the past (overdue), show in today's reminders
+                    // BUT: Don't show completed tasks in today's list (they disappear after completion)
                     if startOfDueDate <= startOfToday {
-                        print("- Water reminder is due (today or overdue)")
-                        todayReminders[0].append(reminder)
+                        if !isCompletedForCurrentCycle {
+                            todayReminders[0].append(reminder)
+                            print("  ✅ Added to TODAY (overdue by \(-daysUntilDue) days)")
+                        } else {
+                            print("  ⏭ Skipped (completed for current cycle)")
+                        }
                     } else {
-                        print("- Water reminder is upcoming")
                         upcomingReminders[0].append(reminder)
+                        print("  📅 Added to UPCOMING (in \(daysUntilDue) days)")
                     }
                 }
             }
             
             // Fertilizing reminders - only if enabled
             if reminder.reminder.fertilizerEnabled {
-                // BUG FIX #4: Use current date as default instead of Date.distantPast
-                let lastCompletedDate = reminder.reminder.last_fertilizer_completed_date ?? currentDate
-                
-                // BUG FIX #3: Validate frequency and use default of 30 days if invalid
+                let lastCompletedDate = reminder.reminder.last_fertilizer_completed_date ?? calendar.date(byAdding: .year, value: -1, to: currentDate)!
                 let fertFreq = max(reminder.plant.fertilizerFrequency ?? 30, 1)
+                let completionFlag = reminder.reminder.isFertilizingCompleted ?? false
                 
                 // Calculate the next due date based on last completed date
                 if let nextDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
-                    print("Last completed: \(lastCompletedDate)")
-                    print("Next due date: \(nextDueDate)")
-                    print("Frequency: \(fertFreq) days")
-                    
-                    // BUG FIX #1: Removed duplicate check for "completed today"
-                    // BUG FIX #2: Use start of day comparison to properly handle overdue tasks
                     let startOfToday = calendar.startOfDay(for: currentDate)
                     let startOfDueDate = calendar.startOfDay(for: nextDueDate)
                     
+                    // A task is only "completed" if the next due date is in the future
+                    let isCompletedForCurrentCycle = completionFlag && (startOfDueDate > startOfToday)
+                    
                     if startOfDueDate <= startOfToday {
-                        print("- Fertilizer reminder is due (today or overdue)")
-                        todayReminders[1].append(reminder)
+                        if !isCompletedForCurrentCycle {
+                            todayReminders[1].append(reminder)
+                        }
                     } else {
-                        print("- Fertilizer reminder is upcoming")
                         upcomingReminders[1].append(reminder)
                     }
                 }
@@ -235,28 +246,23 @@ class CareReminderViewController: UIViewController {
             
             // Repotting reminders - only if enabled
             if reminder.reminder.repottingEnabled {
-                // BUG FIX #4: Use current date as default instead of Date.distantPast
-                let lastCompletedDate = reminder.reminder.last_repot_completed_date ?? currentDate
-                
-                // BUG FIX #3: Validate frequency and use default of 365 days if invalid
+                let lastCompletedDate = reminder.reminder.last_repot_completed_date ?? calendar.date(byAdding: .year, value: -1, to: currentDate)!
                 let repotFreq = max(reminder.plant.repottingFrequency ?? 365, 1)
+                let completionFlag = reminder.reminder.isRepottingCompleted ?? false
                 
                 // Calculate the next due date based on last completed date
                 if let nextDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
-                    print("Last completed: \(lastCompletedDate)")
-                    print("Next due date: \(nextDueDate)")
-                    print("Frequency: \(repotFreq) days")
-                    
-                    // BUG FIX #1: Removed duplicate check for "completed today"
-                    // BUG FIX #2: Use start of day comparison to properly handle overdue tasks
                     let startOfToday = calendar.startOfDay(for: currentDate)
                     let startOfDueDate = calendar.startOfDay(for: nextDueDate)
                     
+                    // A task is only "completed" if the next due date is in the future
+                    let isCompletedForCurrentCycle = completionFlag && (startOfDueDate > startOfToday)
+                    
                     if startOfDueDate <= startOfToday {
-                        print("- Repotting reminder is due (today or overdue)")
-                        todayReminders[2].append(reminder)
+                        if !isCompletedForCurrentCycle {
+                            todayReminders[2].append(reminder)
+                        }
                     } else {
-                        print("- Repotting reminder is upcoming")
                         upcomingReminders[2].append(reminder)
                     }
                 }
@@ -265,53 +271,60 @@ class CareReminderViewController: UIViewController {
         
         // Sort reminders by date within each section
         for i in 0..<3 {
-            // Sort today's reminders by completion status (uncompleted first)
+            // Sort today's reminders by how overdue (oldest due date first)
             todayReminders[i].sort { first, second in
-                let isFirstCompleted: Bool
-                let isSecondCompleted: Bool
-                
-                switch i {
-                case 0:
-                    isFirstCompleted = first.reminder.isWateringCompleted ?? false
-                    isSecondCompleted = second.reminder.isWateringCompleted ?? false
-                case 1:
-                    isFirstCompleted = first.reminder.isFertilizingCompleted ?? false
-                    isSecondCompleted = second.reminder.isFertilizingCompleted ?? false
-                case 2:
-                    isFirstCompleted = first.reminder.isRepottingCompleted ?? false
-                    isSecondCompleted = second.reminder.isRepottingCompleted ?? false
-                default:
-                    return false
-                }
-                
-                // Uncompleted reminders come first
-                if isFirstCompleted != isSecondCompleted {
-                    return !isFirstCompleted
-                }
-                
-                // If completion status is the same, sort by last completed date
                 let date1: Date?
                 let date2: Date?
                 
                 switch i {
                 case 0:
-                    date1 = first.reminder.last_water_completed_date
-                    date2 = second.reminder.last_water_completed_date
+                    if let lastCompleted1 = first.reminder.last_water_completed_date,
+                       let freq1 = first.plant.waterFrequency {
+                        date1 = calendar.date(byAdding: .day, value: Int(freq1), to: lastCompleted1)
+                    } else {
+                        date1 = nil
+                    }
+                    if let lastCompleted2 = second.reminder.last_water_completed_date,
+                       let freq2 = second.plant.waterFrequency {
+                        date2 = calendar.date(byAdding: .day, value: Int(freq2), to: lastCompleted2)
+                    } else {
+                        date2 = nil
+                    }
                 case 1:
-                    date1 = first.reminder.last_fertilizer_completed_date
-                    date2 = second.reminder.last_fertilizer_completed_date
+                    if let lastCompleted1 = first.reminder.last_fertilizer_completed_date,
+                       let freq1 = first.plant.fertilizerFrequency {
+                        date1 = calendar.date(byAdding: .day, value: Int(freq1), to: lastCompleted1)
+                    } else {
+                        date1 = nil
+                    }
+                    if let lastCompleted2 = second.reminder.last_fertilizer_completed_date,
+                       let freq2 = second.plant.fertilizerFrequency {
+                        date2 = calendar.date(byAdding: .day, value: Int(freq2), to: lastCompleted2)
+                    } else {
+                        date2 = nil
+                    }
                 case 2:
-                    date1 = first.reminder.last_repot_completed_date
-                    date2 = second.reminder.last_repot_completed_date
+                    if let lastCompleted1 = first.reminder.last_repot_completed_date,
+                       let freq1 = first.plant.repottingFrequency {
+                        date1 = calendar.date(byAdding: .day, value: Int(freq1), to: lastCompleted1)
+                    } else {
+                        date1 = nil
+                    }
+                    if let lastCompleted2 = second.reminder.last_repot_completed_date,
+                       let freq2 = second.plant.repottingFrequency {
+                        date2 = calendar.date(byAdding: .day, value: Int(freq2), to: lastCompleted2)
+                    } else {
+                        date2 = nil
+                    }
                 default:
                     return false
                 }
                 
                 guard let d1 = date1, let d2 = date2 else { return false }
-                return d1 < d2
+                return d1 < d2  // Oldest (most overdue) first
             }
             
-            // Sort upcoming reminders by next due date
+            // Sort upcoming reminders by next due date (soonest first)
             upcomingReminders[i].sort { first, second in
                 let date1: Date?
                 let date2: Date?
@@ -361,7 +374,7 @@ class CareReminderViewController: UIViewController {
                 }
                 
                 guard let d1 = date1, let d2 = date2 else { return false }
-                return d1 < d2
+                return d1 < d2  // Soonest first
             }
         }
         
@@ -431,17 +444,12 @@ class CareReminderViewController: UIViewController {
     }
     
     @objc private func refreshAfterPlantDeletion(_ notification: Notification) {
-        // Only clear cache if we have data loaded (meaning a plant was actually deleted)
-        if isDataLoaded {
-            isDataLoaded = false
-            cachedReminders.removeAll()
-        }
-        
+        // Reload data when a plant is deleted
         reminders = []
         todayReminders = [[],[],[]]
         upcomingReminders = [[],[],[]]
         
-        loadDataAsync()
+        loadData()
     }
     
     @objc private func refreshAfterStatusUpdate(_ notification: Notification) {
@@ -501,7 +509,7 @@ class CareReminderViewController: UIViewController {
         group.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 10, trailing: 0)
         group.interItemSpacing = .fixed(50)
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 5
+        section.interGroupSpacing = 12  // Premium whitespace
         return section
     }
     private func updateEditButtonVisibility() {
@@ -563,67 +571,6 @@ class CareReminderViewController: UIViewController {
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-    
-    // Add async data loading method
-    private func loadDataAsync() {
-        guard !isLoading else { return }
-        isLoading = true
-        
-        // Show loading state immediately
-        DispatchQueue.main.async { [weak self] in
-            self?.careReminderCollectionView.isHidden = true
-            self?.noRemindersView.isHidden = false
-            if let label = self?.noRemindersView.viewWithTag(100) as? UILabel {
-                label.text = "Loading reminders..."
-            }
-        }
-        
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            
-            print("\n=== Loading Care Reminder Data Async ===")
-            
-            guard let firstUser = self.dataController.getUserSync() else {
-                print("❌ No user found")
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    self.careReminderCollectionView.isHidden = false
-                    self.noRemindersView.isHidden = true
-                }
-                return
-            }
-            print("✅ Found user: \(firstUser.userEmail)")
-            
-            // Load reminders using the sync wrapper
-            let loadedReminders = self.dataController.getUserPlantsWithDetailsSync(for: firstUser.userEmail!)
-            print("📱 Loaded \(loadedReminders.count) reminders")
-            
-            // Cache the data
-            self.cachedReminders = loadedReminders
-            self.isDataLoaded = true
-            
-            // Update UI on main thread
-            DispatchQueue.main.async {
-                self.reminders = loadedReminders
-                self.sortReminders()
-                self.careReminderCollectionView.reloadData()
-                self.isLoading = false
-                
-                // Update UI visibility
-                let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
-                    !self.todayReminders.allSatisfy({ $0.isEmpty }) :
-                    !self.upcomingReminders.allSatisfy({ $0.isEmpty })
-                
-                self.noRemindersView.isHidden = hasReminders
-                self.careReminderCollectionView.isHidden = !hasReminders
-                
-                // Update no reminders message
-                if let label = self.noRemindersView.viewWithTag(100) as? UILabel {
-                    label.text = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ? "Relax!! No work today" : "No upcoming reminders"
-                }
-            }
-        }
-    }
 }
 // MARK: - UICollectionView DataSource & Delegate
 extension CareReminderViewController: UICollectionViewDataSource, UICollectionViewDelegate {
@@ -662,16 +609,18 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             let lastCompletedDate = reminder.reminder.last_water_completed_date ?? currentDate
             let waterFreq = max(reminder.plant.waterFrequency ?? 7, 1)
             
-            if let nextDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
+            // Calculate the ACTUAL due date from last completed + frequency
+            if let actualDueDate = calendar.date(byAdding: .day, value: Int(waterFreq), to: lastCompletedDate) {
                 let startOfToday = calendar.startOfDay(for: currentDate)
-                let startOfDueDate = calendar.startOfDay(for: nextDueDate)
+                let startOfDueDate = calendar.startOfDay(for: actualDueDate)
                 
                 // Only show as completed if the flag is true AND we haven't reached the next due date yet
                 isCompleted = flagCompleted && startOfDueDate > startOfToday
+                dueDate = actualDueDate  // Use the calculated due date, not the stored one
             } else {
                 isCompleted = false
+                dueDate = reminder.reminder.upcomingReminderForWater
             }
-            dueDate = reminder.reminder.upcomingReminderForWater
             
         case 1:
             // Calculate if task is completed for the CURRENT cycle
@@ -679,16 +628,18 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             let lastCompletedDate = reminder.reminder.last_fertilizer_completed_date ?? currentDate
             let fertFreq = max(reminder.plant.fertilizerFrequency ?? 30, 1)
             
-            if let nextDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
+            // Calculate the ACTUAL due date from last completed + frequency
+            if let actualDueDate = calendar.date(byAdding: .day, value: Int(fertFreq), to: lastCompletedDate) {
                 let startOfToday = calendar.startOfDay(for: currentDate)
-                let startOfDueDate = calendar.startOfDay(for: nextDueDate)
+                let startOfDueDate = calendar.startOfDay(for: actualDueDate)
                 
                 // Only show as completed if the flag is true AND we haven't reached the next due date yet
                 isCompleted = flagCompleted && startOfDueDate > startOfToday
+                dueDate = actualDueDate  // Use the calculated due date, not the stored one
             } else {
                 isCompleted = false
+                dueDate = reminder.reminder.upcomingReminderForFertilizers
             }
-            dueDate = reminder.reminder.upcomingReminderForFertilizers
             
         case 2:
             // Calculate if task is completed for the CURRENT cycle
@@ -696,16 +647,18 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             let lastCompletedDate = reminder.reminder.last_repot_completed_date ?? currentDate
             let repotFreq = max(reminder.plant.repottingFrequency ?? 365, 1)
             
-            if let nextDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
+            // Calculate the ACTUAL due date from last completed + frequency
+            if let actualDueDate = calendar.date(byAdding: .day, value: Int(repotFreq), to: lastCompletedDate) {
                 let startOfToday = calendar.startOfDay(for: currentDate)
-                let startOfDueDate = calendar.startOfDay(for: nextDueDate)
+                let startOfDueDate = calendar.startOfDay(for: actualDueDate)
                 
                 // Only show as completed if the flag is true AND we haven't reached the next due date yet
                 isCompleted = flagCompleted && startOfDueDate > startOfToday
+                dueDate = actualDueDate  // Use the calculated due date, not the stored one
             } else {
                 isCompleted = false
+                dueDate = reminder.reminder.upcomingReminderForRepotted
             }
-            dueDate = reminder.reminder.upcomingReminderForRepotted
             
         default:
             isCompleted = false
@@ -730,11 +683,19 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         
         cell.onCheckboxToggle = { [weak self] in
             if shouldEnableCheckbox {
-                self?.handleCheckboxToggle(for: reminder, type: sectionType)
+                self?.handleCheckboxToggle(for: reminder, type: sectionType, at: indexPath)
             }
         }
         
+        // Premium depth and polish
         cell.layer.cornerRadius = 18
+        cell.layer.cornerCurve = .continuous  // iOS premium curve
+        cell.layer.shadowColor = UIColor.black.cgColor
+        cell.layer.shadowOpacity = 0.06
+        cell.layer.shadowRadius = 18
+        cell.layer.shadowOffset = CGSize(width: 0, height: 10)
+        cell.layer.masksToBounds = false
+        
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -754,107 +715,257 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         }
         return UICollectionReusableView()
     }
-    private func handleCheckboxToggle(for reminder: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), type: Int) {
-        print("\n=== Handling Checkbox Toggle ===")
+    private func handleCheckboxToggle(for reminder: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_), type: Int, at indexPath: IndexPath) {
+        print("\n🎯 === Checkbox Toggle Started ===")
         print("Plant: \(reminder.plant.plantName)")
-        print("Type: \(type)")
         
-        // BUG FIX #6: Disable user interaction on collection view to prevent race conditions
-        careReminderCollectionView.isUserInteractionEnabled = false
+        // Prevent multiple simultaneous toggles
+        guard !isProcessingToggle else {
+            print("⚠️ Already processing, ignoring tap")
+            return
+        }
+        
+        isProcessingToggle = true
+        
+        // Haptic feedback for tactile response
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
         
         let isCompleted: Bool
         let reminderType: String
-        let reminderDate: Date?
         
         switch type {
         case 0:
             isCompleted = reminder.reminder.isWateringCompleted ?? false
             reminderType = "water"
-            reminderDate = reminder.reminder.upcomingReminderForWater
-            print("Water reminder - Current state: \(isCompleted)")
+            print("💧 Watering task - Currently: \(isCompleted ? "completed" : "incomplete")")
         case 1:
             isCompleted = reminder.reminder.isFertilizingCompleted ?? false
             reminderType = "fertilizer"
-            reminderDate = reminder.reminder.upcomingReminderForFertilizers
-            print("Fertilizer reminder - Current state: \(isCompleted)")
+            print("🌱 Fertilizer task - Currently: \(isCompleted ? "completed" : "incomplete")")
         case 2:
             isCompleted = reminder.reminder.isRepottingCompleted ?? false
             reminderType = "repot"
-            reminderDate = reminder.reminder.upcomingReminderForRepotted
-            print("Repot reminder - Current state: \(isCompleted)")
+            print("🪴 Repotting task - Currently: \(isCompleted ? "completed" : "incomplete")")
         default:
-            print("❌ Invalid reminder type: \(type)")
-            careReminderCollectionView.isUserInteractionEnabled = true
+            isProcessingToggle = false
             return
         }
         
-        // Check if this is a today's reminder
-        let isTodayReminder = reminderDate.map { Calendar.current.isDateInToday($0) } ?? false
-        print("Is today's reminder: \(isTodayReminder)")
-        
-        print("Toggling state from \(isCompleted) to \(!isCompleted)")
-        
-        // Update the database
-        print("📝 Updating database...")
-        dataController.updateCareReminderWithDetailsSync(
-            userPlantID: reminder.userPlant.userPlantRelationID,
-            type: reminderType,
-            isCompleted: !isCompleted
-        )
-        print("✅ Database updated")
-        
-        // Post notification to trigger UI update
-        print("📢 Posting notification...")
-        NotificationCenter.default.post(
-            name: NSNotification.Name("ReminderStatusUpdated"),
-            object: nil,
-            userInfo: [
-                "reminderId": reminder.reminder.careReminderID,
-                "reminderType": reminderType.capitalized,
-                "isCompleted": !isCompleted,
-                "isTodayReminder": isTodayReminder
-            ]
-        )
-        print("✅ Notification posted")
-        
-        // If it's a today's reminder, update the UI without reloading data
-        if isTodayReminder {
-            print("📅 Today's reminder - updating UI without reloading data...")
-            // Update the reminder in the main array
-            for (index, r) in reminders.enumerated() {
-                if r.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID {
-                    switch type {
-                    case 0:
-                        reminders[index].reminder.isWateringCompleted = !isCompleted
-                    case 1:
-                        reminders[index].reminder.isFertilizingCompleted = !isCompleted
-                    case 2:
-                        reminders[index].reminder.isRepottingCompleted = !isCompleted
-                    default:
-                        break
-                    }
-                }
-            }
+        // Update database in background
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             
-            // Update the UI without reloading data
-            DispatchQueue.main.async { [weak self] in
-                self?.careReminderCollectionView.reloadData()
-                // BUG FIX #6: Re-enable user interaction after UI update
-                self?.careReminderCollectionView.isUserInteractionEnabled = true
-            }
-        } else {
-            print("📅 Not today's reminder - updating cache and reloading...")
-            // Update cache and reload data asynchronously
-            isDataLoaded = false
-            cachedReminders.removeAll()
-            loadDataAsync()
-            // BUG FIX #6: Re-enable user interaction after starting async load
-            DispatchQueue.main.async { [weak self] in
-                self?.careReminderCollectionView.isUserInteractionEnabled = true
+            print("📝 Updating database...")
+            self.dataController.updateCareReminderWithDetailsSync(
+                userPlantID: reminder.userPlant.userPlantRelationID,
+                type: reminderType,
+                isCompleted: !isCompleted
+            )
+            print("✅ Database updated")
+            
+            // Success haptic feedback
+            DispatchQueue.main.async {
+                let notificationFeedback = UINotificationFeedbackGenerator()
+                notificationFeedback.notificationOccurred(.success)
             }
         }
         
-        print("=== Checkbox Toggle Handling Complete ===\n")
+        // PREMIUM: Animate cell AND delete simultaneously
+        if let cell = careReminderCollectionView.cellForItem(at: indexPath) {
+            print("✅ Cell found, starting premium animation")
+            
+            // Start custom animation on cell content
+            animateCheckboxToggle(cell: cell, isCompleting: !isCompleted)
+            
+            // Ensure layout is stable before batch updates
+            UIView.performWithoutAnimation {
+                self.careReminderCollectionView.layoutIfNeeded()
+            }
+            
+            // Get section count before deletion
+            let sectionCountBefore = self.numberOfSections(in: self.careReminderCollectionView)
+            
+            // CRITICAL: Delete item DURING animation (not after)
+            // UICollectionView handles layout animation automatically
+            self.careReminderCollectionView.performBatchUpdates({
+                // Remove from data source FIRST
+                let currentReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ? self.todayReminders : self.upcomingReminders
+                let nonEmptySections = currentReminders.enumerated().filter { !$0.element.isEmpty }
+                let sectionType = nonEmptySections[indexPath.section].offset
+                
+                if self.careReminderSegmentedControl.selectedSegmentIndex == 0 {
+                    self.todayReminders[sectionType].removeAll {
+                        $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
+                    }
+                } else {
+                    self.upcomingReminders[sectionType].removeAll {
+                        $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
+                    }
+                }
+                
+                // Check if section became empty
+                let currentArray = self.careReminderSegmentedControl.selectedSegmentIndex == 0
+                    ? self.todayReminders[sectionType]
+                    : self.upcomingReminders[sectionType]
+                
+                let sectionCountAfter = self.numberOfSections(in: self.careReminderCollectionView)
+                
+                // CRITICAL: Delete section if empty, otherwise delete item
+                if currentArray.isEmpty && sectionCountAfter < sectionCountBefore {
+                    // Section became empty - delete entire section
+                    self.careReminderCollectionView.deleteSections(IndexSet(integer: indexPath.section))
+                    print("🗑️ Deleted entire section \(indexPath.section)")
+                } else {
+                    // Section still has items - delete only this item
+                    self.careReminderCollectionView.deleteItems(at: [indexPath])
+                    print("🗑️ Deleted item at \(indexPath)")
+                }
+                
+            }, completion: { finished in
+                print("✅ Premium animation completed: \(finished)")
+                
+                // Update UI visibility
+                let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
+                    !self.todayReminders.allSatisfy({ $0.isEmpty }) :
+                    !self.upcomingReminders.allSatisfy({ $0.isEmpty })
+                
+                self.noRemindersView.isHidden = hasReminders
+                self.careReminderCollectionView.isHidden = !hasReminders
+                
+                self.isProcessingToggle = false
+            })
+        } else {
+            print("⚠️ Cell not visible")
+            isProcessingToggle = false
+        }
+    }
+    
+    private func animateCheckboxToggle(cell: UICollectionViewCell, isCompleting: Bool) {
+        guard let reminderCell = cell as? CareReminderCollectionViewCell else { return }
+        
+        if isCompleting {
+            // Premium completion animation
+            print("🎬 Starting premium completion animation")
+            
+            // Step 0: Touch compression (makes tap feel physical)
+            UIView.animate(withDuration: 0.08, delay: 0, options: .curveEaseOut, animations: {
+                cell.contentView.transform = CGAffineTransform(scaleX: 0.98, y: 0.98)
+            })
+            
+            // Step 1: Checkbox pop with spring (delightful bounce)
+            if let checkbox = reminderCell.checkbox {
+                UIView.animate(
+                    withDuration: 0.28,
+                    delay: 0.08,
+                    usingSpringWithDamping: 0.45,
+                    initialSpringVelocity: 3,
+                    options: .curveEaseOut,
+                    animations: {
+                        checkbox.transform = CGAffineTransform(scaleX: 1.15, y: 1.15)
+                    }) { _ in
+                        UIView.animate(withDuration: 0.15) {
+                            checkbox.transform = .identity
+                        }
+                    }
+            }
+            
+            // Step 2: Create premium "Completed" pill with blur background
+            let blurEffect = UIBlurEffect(style: .systemThinMaterial)
+            let blurView = UIVisualEffectView(effect: blurEffect)
+            blurView.layer.cornerRadius = 14
+            blurView.layer.cornerCurve = .continuous
+            blurView.clipsToBounds = true
+            blurView.alpha = 0
+            blurView.tag = 9999
+            
+            // Create checkmark icon
+            let checkmark = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
+            checkmark.tintColor = UIColor(hex: "004E05")
+            checkmark.translatesAutoresizingMaskIntoConstraints = false
+            
+            // Create label inside blur
+            let completedLabel = UILabel()
+            completedLabel.text = "Completed"
+            completedLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+            completedLabel.textColor = UIColor(hex: "004E05")
+            completedLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+            // Add to blur view
+            blurView.contentView.addSubview(checkmark)
+            blurView.contentView.addSubview(completedLabel)
+            
+            // Position blur view
+            blurView.frame = CGRect(
+                x: cell.contentView.bounds.width - 130,
+                y: cell.contentView.bounds.height / 2 - 16,
+                width: 110,
+                height: 32
+            )
+            
+            // Layout constraints
+            NSLayoutConstraint.activate([
+                checkmark.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 8),
+                checkmark.centerYAnchor.constraint(equalTo: blurView.contentView.centerYAnchor),
+                checkmark.widthAnchor.constraint(equalToConstant: 16),
+                checkmark.heightAnchor.constraint(equalToConstant: 16),
+                
+                completedLabel.leadingAnchor.constraint(equalTo: checkmark.trailingAnchor, constant: 4),
+                completedLabel.centerYAnchor.constraint(equalTo: blurView.contentView.centerYAnchor),
+                completedLabel.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -8)
+            ])
+            
+            cell.contentView.addSubview(blurView)
+            
+            // Fade in the completed pill (with micro delay for anticipation)
+            UIView.animate(withDuration: 0.3, delay: 0.15, options: .curveEaseIn, animations: {
+                blurView.alpha = 1.0
+            })
+            
+            // Step 3: Premium exit animation - animate contentView ONLY (not whole cell)
+            // This allows UICollectionView to handle cell frame while we control content
+            UIView.animate(
+                withDuration: 1.2,  // Slower, more elegant exit (was 0.55)
+                delay: 0.3,  // Longer anticipation (was 0.18)
+                usingSpringWithDamping: 0.82,  // Softer spring
+                initialSpringVelocity: 0.6,
+                options: [.curveEaseInOut, .allowUserInteraction],
+                animations: {
+                    // Soft glide left with tiny upward lift and subtle rotation
+                    cell.contentView.transform = CGAffineTransform(translationX: -80, y: -4)
+                        .rotated(by: -.pi / 80)
+                        .scaledBy(x: 0.97, y: 0.97)
+                    
+                    // Don't fully fade (premium apps rarely do)
+                    cell.contentView.alpha = 0.25
+                    
+                    // Lift shadow during exit (depth effect)
+                    cell.layer.shadowOpacity = 0.18
+                    cell.layer.shadowRadius = 24
+                    
+                    // Fade the pill
+                    blurView.alpha = 0
+                },
+                completion: { finished in
+                    print("✅ Premium animation completed: \(finished)")
+                    blurView.removeFromSuperview()
+                }
+            )
+            
+        } else {
+            // Uncompleting: Quick fade back in
+            print("🔄 Starting uncompletion animation")
+            UIView.animate(
+                withDuration: 0.35,
+                delay: 0,
+                usingSpringWithDamping: 0.82,
+                initialSpringVelocity: 0.5,
+                options: [.curveEaseOut],
+                animations: {
+                    cell.contentView.transform = .identity
+                    cell.contentView.alpha = 1.0
+                }
+            )
+        }
     }
 }
-

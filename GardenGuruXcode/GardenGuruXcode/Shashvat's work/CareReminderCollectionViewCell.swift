@@ -16,24 +16,22 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var dueDateCareReminder: UILabel!
     
     private var checkBoxButton: UIButton!
-    private var debugView: UIView? // For debugging touch area
     var onCheckboxToggle: (() -> Void)?
     private var isCheckboxEnabled = false
     
+    // Expose checkbox for animation purposes
+    var checkbox: UIButton? {
+        return checkBoxButton
+    }
+    
     override func awakeFromNib() {
         super.awakeFromNib()
-        print("\n=== Setting up Care Reminder Cell ===")
         setupCheckboxButton()
-        
-        // Debug: Add tap gesture to cell
-        let cellTap = UITapGestureRecognizer(target: self, action: #selector(cellTapped))
-        self.addGestureRecognizer(cellTap)
     }
     
     private func setupCheckboxButton() {
         // Remove existing button if any
         checkBoxButton?.removeFromSuperview()
-        debugView?.removeFromSuperview()
         
         // Create button
         checkBoxButton = UIButton(type: .custom)
@@ -44,13 +42,10 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         checkBoxButton.backgroundColor = .clear
         checkBoxButton.tintColor = .systemGreen
         checkBoxButton.contentMode = .center
-        
-        // Make sure the button is above other views
         checkBoxButton.layer.zPosition = 999
         
         // Add constraints for button
         NSLayoutConstraint.activate([
-            // Button constraints
             checkBoxButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             checkBoxButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             checkBoxButton.widthAnchor.constraint(equalToConstant: 30),
@@ -61,22 +56,6 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         checkBoxButton.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
         checkBoxButton.addTarget(self, action: #selector(buttonTouchUpInside(_:)), for: .touchUpInside)
         checkBoxButton.addTarget(self, action: #selector(buttonTouchUpOutside(_:)), for: .touchUpOutside)
-        
-        print("✅ Checkbox button setup complete")
-    }
-    
-    @objc private func cellTapped(_ gesture: UITapGestureRecognizer) {
-        let location = gesture.location(in: self)
-        print("📱 Cell tapped at: \(location)")
-        
-        if let buttonFrame = checkBoxButton?.frame {
-            print("🔲 Button frame: \(buttonFrame)")
-            if buttonFrame.contains(location) {
-                print("✅ Tap was within button bounds")
-            } else {
-                print("❌ Tap was outside button bounds")
-            }
-        }
     }
     
     func configure(with reminderData: (userPlant: UserPlant, plant: Plant, reminder: CareReminder_),
@@ -86,10 +65,9 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
                 isTomorrow: Bool,
                 shouldEnableCheckbox: Bool) {
         
-        print("\n=== Configuring Care Reminder Cell ===")
-        print("Plant: \(reminderData.plant.plantName)")
-        print("Is Completed: \(isCompleted)")
-        print("Should Enable Checkbox: \(shouldEnableCheckbox)")
+        // Reset cell state (animation will handle the transition)
+        self.alpha = 1.0
+        self.transform = .identity
         
         // Prefer userPlantImage if available, else fallback to plantImage
         if let userImageUrlString = reminderData.userPlant.userPlantImage, !userImageUrlString.isEmpty,
@@ -123,56 +101,41 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
                 UIImage(systemName: "square", withConfiguration: config)?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
             
             checkBoxButton.setImage(checkBoxImage, for: .normal)
-            
-            // Ensure the button is properly configured for touch
             checkBoxButton.isExclusiveTouch = true
-            
-            print("Checkbox state:")
-            print("- Enabled: \(checkBoxButton.isEnabled)")
-            print("- User Interaction: \(checkBoxButton.isUserInteractionEnabled)")
-            print("- Alpha: \(checkBoxButton.alpha)")
-            print("- Image: \(isCompleted ? "checkmark.square.fill" : "square")")
-            print("- Frame: \(checkBoxButton.frame)")
         }
         
         // Configure due date label with appropriate color and text
         configureDueDate(dueDate: dueDate, isCompleted: isCompleted, isUpcoming: isUpcoming, isTomorrow: isTomorrow)
-        
-        print("=== Cell Configuration Complete ===\n")
     }
     
     @objc private func buttonTouchDown(_ sender: UIButton) {
-        print("👆 Button touch down")
-        guard isCheckboxEnabled else { 
-            print("❌ Button is disabled")
-            return 
-        }
+        guard isCheckboxEnabled else { return }
         
-        UIView.animate(withDuration: 0.1) {
-            sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        }
+        // Bounce animation on touch
+        UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseOut, animations: {
+            sender.transform = CGAffineTransform(scaleX: 0.85, y: 0.85)
+        })
     }
     
     @objc private func buttonTouchUpInside(_ sender: UIButton) {
-        print("✅ Button touch up inside")
-        guard isCheckboxEnabled else { 
-            print("❌ Button is disabled")
-            return 
-        }
+        guard isCheckboxEnabled else { return }
         
-        UIView.animate(withDuration: 0.1) {
+        // Spring back with bounce
+        UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.8, options: .curveEaseInOut, animations: {
             sender.transform = .identity
-        }
+        })
+        
+        // Trigger the callback
         onCheckboxToggle?()
     }
     
     @objc private func buttonTouchUpOutside(_ sender: UIButton) {
-        print("❌ Button touch up outside")
         guard isCheckboxEnabled else { return }
         
-        UIView.animate(withDuration: 0.1) {
+        // Return to normal if touch moved outside
+        UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut, animations: {
             sender.transform = .identity
-        }
+        })
     }
     
     private func configureDueDate(dueDate: Date?, isCompleted: Bool, isUpcoming: Bool, isTomorrow: Bool) {
@@ -184,22 +147,42 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
         
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let dueDateStart = calendar.startOfDay(for: dueDate)
         
         if isUpcoming {
             if isTomorrow {
                 dueDateCareReminder.text = "Due Tomorrow"
                 dueDateCareReminder.textColor = .systemOrange
             } else {
-                dueDateCareReminder.text = "Due: \(formatter.string(from: dueDate))"
-                dueDateCareReminder.textColor = .systemBlue
+                let daysUntil = calendar.dateComponents([.day], from: today, to: dueDateStart).day ?? 0
+                if daysUntil <= 7 {
+                    dueDateCareReminder.text = "Due in \(daysUntil) day\(daysUntil == 1 ? "" : "s")"
+                    dueDateCareReminder.textColor = .systemOrange
+                } else {
+                    dueDateCareReminder.text = "Due: \(formatter.string(from: dueDate))"
+                    dueDateCareReminder.textColor = .systemBlue
+                }
             }
         } else {
             if isCompleted {
-                dueDateCareReminder.text = "Completed"
+                dueDateCareReminder.text = "Completed Today"
                 dueDateCareReminder.textColor = UIColor(hex: "004E05") // Dark green color
             } else {
-                dueDateCareReminder.text = "Due Today"
-                dueDateCareReminder.textColor = .systemRed
+                // Calculate how many days overdue
+                let daysOverdue = calendar.dateComponents([.day], from: dueDateStart, to: today).day ?? 0
+                
+                if daysOverdue == 0 {
+                    dueDateCareReminder.text = "Due Today"
+                    dueDateCareReminder.textColor = .systemOrange
+                } else if daysOverdue == 1 {
+                    dueDateCareReminder.text = "Due Yesterday"
+                    dueDateCareReminder.textColor = .systemRed
+                } else {
+                    dueDateCareReminder.text = "Due \(daysOverdue) days ago"
+                    dueDateCareReminder.textColor = .systemRed
+                }
             }
         }
     }
@@ -207,13 +190,22 @@ class CareReminderCollectionViewCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         checkBoxButton.transform = .identity
+        
+        // Reset alpha and transform for cell reuse
+        self.alpha = 1.0
+        self.transform = .identity
+        
+        // Remove any lingering whisper labels
+        for subview in self.subviews {
+            if subview is UILabel && subview != plantNameCareReminderLabel && subview != nickNameCareReminderLabel && subview != dueDateCareReminder {
+                subview.removeFromSuperview()
+            }
+        }
     }
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        print("🎯 Hit test at point: \(point)")
         if let buttonFrame = checkBoxButton?.frame,
            buttonFrame.contains(point) {
-            print("✅ Hit test found button")
             return checkBoxButton
         }
         return super.hitTest(point, with: event)
