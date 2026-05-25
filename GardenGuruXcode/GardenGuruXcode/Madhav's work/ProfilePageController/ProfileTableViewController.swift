@@ -31,6 +31,10 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        // Always reload user data when view appears (handles user switching)
+        loadUserData()
+        
         tableView.reloadData()
         
         // Load saved profile image if exists
@@ -44,7 +48,7 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         // Configure profile image view
         profileImageView.layer.cornerRadius = profileImageView.frame.width / 2
         profileImageView.clipsToBounds = true
-        profileImageView.isUserInteractionEnabled = false
+        profileImageView.isUserInteractionEnabled = true
         
         // Add tap gesture to profile image
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(profileImageTapped))
@@ -56,12 +60,34 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
     
     private func loadUserData() {
         print("[DEBUG] loadUserData called")
+        
+        // Clear previous data first
+        userNameLabel.text = "Loading..."
+        emailLabel.text = ""
+        userLocationLabel.text = ""
+        
+        // Fetch fresh user data from database
         if let user = DataControllerGG.shared.getUserSync() {
             userData = user
-            userNameLabel.text = user.userName
+            // Show userName, or default to "User" if empty
+            userNameLabel.text = user.userName.isEmpty ? "User" : user.userName
+            print("[DEBUG] Loaded user: \(user.userName)")
+        } else {
+            print("[DEBUG] No user data found")
+            userNameLabel.text = "User"
         }
+        
+        // Handle email display - check for Apple private relay emails
         if let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
-            emailLabel.text = userEmail
+            print("[DEBUG] User email: \(userEmail)")
+            if isApplePrivateRelayEmail(userEmail) {
+                // Show friendly placeholder for Apple private relay emails
+                emailLabel.text = "Apple ID (Private)"
+                emailLabel.textColor = .systemGray
+            } else {
+                emailLabel.text = userEmail
+                emailLabel.textColor = .label
+            }
         }
 
         func fetchLocationAndWeatherWithRetry(retryCount: Int = 0) {
@@ -86,8 +112,10 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
                             fetchLocationAndWeatherWithRetry(retryCount: retryCount + 1)
                         }
                     } else if let user = userData {
-                        print("Fallback to user location: \(user.location)")
-                        userLocationLabel.text = user.location
+                        print("Fallback to user location: \(String(describing: user.location))")
+                        await MainActor.run {
+                            userLocationLabel.text = user.location ?? "Unknown"
+                        }
                     }
                 }
             }
@@ -96,42 +124,48 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         fetchLocationAndWeatherWithRetry()
     }
     
+    // Helper function to detect Apple private relay emails
+    private func isApplePrivateRelayEmail(_ email: String) -> Bool {
+        return email.contains("@privaterelay.appleid.com") || 
+               email.contains("@icloud.com") && email.count > 30 // Long random iCloud emails
+    }
+    
     @objc private func editButtonTapped() {
-        isEditingProfile.toggle()
+        // Show alert to edit name
+        let alert = UIAlertController(
+            title: "Edit Name",
+            message: "Enter your display name",
+            preferredStyle: .alert
+        )
         
-        if isEditingProfile {
-            navigationItem.rightBarButtonItem?.title = "Done"
-            profileImageView.isUserInteractionEnabled = true
-            
-            // Make username editable
-            let textField = UITextField(frame: userNameLabel.frame)
-            textField.text = userNameLabel.text
-            textField.tag = 100
-            textField.borderStyle = .roundedRect
-            textField.delegate = self
-            userNameLabel.superview?.addSubview(textField)
-            userNameLabel.isHidden = true
-        } else {
-            navigationItem.rightBarButtonItem?.title = "Edit"
-            profileImageView.isUserInteractionEnabled = false
-            
-            // Save changes
-            if let textField = view.viewWithTag(100) as? UITextField {
-                userNameLabel.text = textField.text
-                textField.removeFromSuperview()
-                userNameLabel.isHidden = false
-                
-                // Update user data
-                if let newUsername = textField.text {
-                    updateUserName(newUsername)
-                }
-            }
+        alert.addTextField { textField in
+            textField.text = self.userNameLabel.text == "User" ? "" : self.userNameLabel.text
+            textField.placeholder = "Your name"
+            textField.autocapitalizationType = .words
+            textField.returnKeyType = .done
         }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let textField = alert.textFields?.first,
+                  let newName = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !newName.isEmpty else {
+                return
+            }
+            
+            // Update UI immediately
+            self.userNameLabel.text = newName
+            
+            // Update in database
+            self.updateUserName(newName)
+        })
+        
+        present(alert, animated: true)
     }
     
     @objc private func profileImageTapped() {
-        guard isEditingProfile else { return }
-        
         let alertController = UIAlertController(title: "Change Profile Picture", message: nil, preferredStyle: .actionSheet)
         
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
@@ -210,9 +244,9 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         if let email = UserDefaults.standard.string(forKey: "userEmail") {
             Task {
                 do {
-                    // Update the username in UserTable
+                    // Update the userName in UserTable
                     try await dataController.updateUsername(email: email, newUsername: newUsername)
-                    print("✅ Successfully updated username in Supabase")
+                    print("✅ Successfully updated userName in Supabase")
                     
                     // Refresh local user data
                     if let updatedUser = try await dataController.initializeUser(email: email) {
@@ -220,12 +254,12 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
                         print("✅ Successfully refreshed user data: \(updatedUser.userName)")
                     }
                 } catch {
-                    print("❌ Error updating username in Supabase: \(error)")
+                    print("❌ Error updating userName in Supabase: \(error)")
                     // Show error alert to user
                     DispatchQueue.main.async { [weak self] in
                         let alert = UIAlertController(
                             title: "Update Failed",
-                            message: "Failed to update username. Please try again.",
+                            message: "Failed to update name. Please try again.",
                             preferredStyle: .alert
                         )
                         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -243,8 +277,18 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
+            // Clear all user data
             UserDefaults.standard.set(false, forKey: "isLoggedIn")
             UserDefaults.standard.removeObject(forKey: "userEmail")
+            UserDefaults.standard.removeObject(forKey: "userName")
+            UserDefaults.standard.removeObject(forKey: "displayName")
+            UserDefaults.standard.removeObject(forKey: "profileImage")
+            
+            // Clear UI
+            self?.userNameLabel.text = "User"
+            self?.emailLabel.text = ""
+            self?.userLocationLabel.text = ""
+            self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
             
             if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
                 let loginVC = LoginViewController()

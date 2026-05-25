@@ -1889,7 +1889,18 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
             .eq("user_email", value: email)
             .execute()
         print("✅ Username updated successfully in Supabase")
-        
+    }
+    
+    // Add method to update display name
+    func updateDisplayName(email: String, newDisplayName: String) async throws {
+        print("🔄 Updating display name for email: \(email)")
+        try await supabase
+            .database
+            .from("UserTable")
+            .update(["Display name": newDisplayName])
+            .eq("user_email", value: email)
+            .execute()
+        print("✅ Display name updated successfully in Supabase")
     }
     
     
