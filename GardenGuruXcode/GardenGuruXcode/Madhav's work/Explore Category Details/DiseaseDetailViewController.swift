@@ -63,9 +63,10 @@ class DiseaseDetailViewController: UIViewController {
     
     @objc private func toggleHeartTapped() {
         print("❤️ Heart button tapped")
-
+        
         guard let userId = DataControllerGG.shared.getCurrentUserIdSync() else {
             print("❌ User ID not found")
+            showAlert(title: "Error", message: "Please log in to save items")
             return
         }
         print("✅ User ID: \(userId)")
@@ -87,21 +88,34 @@ class DiseaseDetailViewController: UIViewController {
 
         guard let id = itemId, let type = itemType else {
             print("❌ Missing item ID or type — itemId: \(String(describing: itemId)), type: \(String(describing: itemType))")
+            showAlert(title: "Error", message: "Unable to identify item")
             return
         }
+
+        // Optimistic UI update
+        isSaved.toggle()
+        updateHeartButton()
+        
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
 
         Task {
             do {
                 if isSaved {
-                    print("🔄 Trying to unsave \(type) with ID \(id)")
-                    try await DataControllerGG.shared.unsaveUserItem(userId: userId, itemId: id, itemType: type)
-                    isSaved = false
-                    print("✅ Item unsaved")
-                } else {
                     print("💾 Trying to save \(type) with ID \(id)")
                     try await DataControllerGG.shared.saveUserItem(userId: userId, itemId: id, itemType: type)
-                    isSaved = true
-                    print("✅ Item saved")
+                    print("✅ Item saved successfully")
+                    
+                    // Success feedback
+                    DispatchQueue.main.async {
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
+                    }
+                } else {
+                    print("🔄 Trying to unsave \(type) with ID \(id)")
+                    try await DataControllerGG.shared.unsaveUserItem(userId: userId, itemId: id, itemType: type)
+                    print("✅ Item unsaved successfully")
                 }
 
                 DispatchQueue.main.async {
@@ -110,8 +124,21 @@ class DiseaseDetailViewController: UIViewController {
                 }
             } catch {
                 print("❌ Error during save/unsave: \(error)")
+                
+                // Revert optimistic update on error
+                DispatchQueue.main.async {
+                    self.isSaved.toggle()
+                    self.updateHeartButton()
+                    self.showAlert(title: "Error", message: "Failed to save item. Please try again.")
+                }
             }
         }
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
 

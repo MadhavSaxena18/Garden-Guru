@@ -57,6 +57,7 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
     @objc private func toggleHeartTapped() {
         guard let userId = DataControllerGG.shared.getCurrentUserIdSync() else {
             print("❌ User ID not found")
+            showAlert(title: "Error", message: "Please log in to save items")
             return
         }
 
@@ -71,17 +72,33 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
             itemType = "disease"
         }
 
-        guard let id = itemId, let type = itemType else { return }
+        guard let id = itemId, let type = itemType else {
+            showAlert(title: "Error", message: "Unable to identify item")
+            return
+        }
+
+        // Optimistic UI update
+        isSaved.toggle()
+        updateHeartButton()
+        
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
 
         Task {
             do {
                 if isSaved {
-                    try await DataControllerGG.shared.unsaveUserItem(userId: userId, itemId: id, itemType: type)
-                    isSaved = false
-                } else {
                     try await DataControllerGG.shared.saveUserItem(userId: userId, itemId: id, itemType: type)
-                    print("Plant saved")
-                    isSaved = true
+                    print("✅ Item saved successfully")
+                    
+                    // Success feedback
+                    DispatchQueue.main.async {
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
+                    }
+                } else {
+                    try await DataControllerGG.shared.unsaveUserItem(userId: userId, itemId: id, itemType: type)
+                    print("✅ Item unsaved successfully")
                 }
 
                 DispatchQueue.main.async {
@@ -89,8 +106,21 @@ class CardsDetailViewController: UIViewController, UICollectionViewDelegate ,UIC
                 }
             } catch {
                 print("❌ Error saving/unsaving item: \(error)")
+                
+                // Revert optimistic update on error
+                DispatchQueue.main.async {
+                    self.isSaved.toggle()
+                    self.updateHeartButton()
+                    self.showAlert(title: "Error", message: "Failed to save item. Please try again.")
+                }
             }
         }
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     
