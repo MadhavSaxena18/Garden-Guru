@@ -30,21 +30,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     private func checkAndHandleSession() async {
         print("\n=== Checking Session State ===")
         
-        // Check if we have stored session data
-        if let sessionData = UserDefaults.standard.data(forKey: "userSession"),
-           let userEmail = UserDefaults.standard.string(forKey: "userEmail") {
-            print("✅ Found stored session data")
-            print("📧 User email: \(userEmail)")
+        // Check if user is logged in
+        let isLoggedIn = UserDefaults.standard.bool(forKey: "isLoggedIn")
+        let userEmail = UserDefaults.standard.string(forKey: "userEmail")
+        
+        print("📊 Login state: \(isLoggedIn)")
+        print("📧 User email: \(userEmail ?? "none")")
+        
+        if isLoggedIn, let email = userEmail, !email.isEmpty {
+            print("✅ User is logged in")
             
             do {
-                // Try to validate the session
-                let isValid = try await dataController.checkSessionValid()
-                
                 // Verify the user exists in our database
-                if isValid, let user = try await dataController.initializeUser(email: userEmail) {
-                    print("✅ Session is valid and user exists")
+                if let user = try await dataController.initializeUser(email: email) {
+                    print("✅ User exists in database: \(user.userName)")
                     
-                    // Session is valid, show main interface
+                    // User is valid, show main interface
                     DispatchQueue.main.async {
                         if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
                             self.showOnboarding()
@@ -57,18 +58,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                     handleInvalidSession()
                 }
             } catch {
-                print("❌ Session validation failed: \(error)")
+                print("❌ Error checking user: \(error)")
                 handleInvalidSession()
             }
         } else {
-            print("⚠️ No stored session found")
+            print("⚠️ User not logged in")
             handleInvalidSession()
         }
     }
     
     private func handleInvalidSession() {
         // Clear any stored session data
-        UserDefaults.standard.removeObject(forKey: "userSession")
+        UserDefaults.standard.set(false, forKey: "isLoggedIn")
+        UserDefaults.standard.removeObject(forKey: "userEmail")
         
         DispatchQueue.main.async {
             if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {

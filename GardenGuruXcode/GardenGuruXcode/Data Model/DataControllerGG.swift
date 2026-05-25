@@ -801,20 +801,31 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         UserDefaults.standard.removeObject(forKey: "tempPlantID")
     }
     
-    // Synchronous wrapper for addUserPlant
-    func addUserPlantSync(userPlant: UserPlant) {
+    // Synchronous wrapper for addUserPlant with result
+    func addUserPlantSync(userPlant: UserPlant) -> Result<Void, Error> {
+        var result: Result<Void, Error> = .failure(NSError(domain: "Timeout", code: -1, userInfo: nil))
         let semaphore = DispatchSemaphore(value: 0)
         
         Task {
             do {
                 try await addUserPlant(userPlant: userPlant)
+                result = .success(())
+                print("✅ Successfully added user plant")
             } catch {
-                print("Error adding user plant: \(error)")
+                print("❌ Error adding user plant: \(error)")
+                print("❌ Error details: \(error.localizedDescription)")
+                result = .failure(error)
             }
             semaphore.signal()
         }
         
-        _ = semaphore.wait(timeout: .now() + 5)
+        let timeoutResult = semaphore.wait(timeout: .now() + 10) // Increased timeout to 10 seconds
+        if timeoutResult == .timedOut {
+            print("❌ Timeout waiting for plant to be added")
+            return .failure(NSError(domain: "AddPlant", code: -1, userInfo: [NSLocalizedDescriptionKey: "Request timed out. Please check your internet connection."]))
+        }
+        
+        return result
     }
     
     // Synchronous wrapper for getPlantbyName

@@ -301,8 +301,23 @@ class SetReminderViewController: UIViewController, UITableViewDelegate, UITableV
         
         print("\n📝 Adding plant to database...")
         // Add UserPlant to database
-        dataController.addUserPlantSync(userPlant: newUserPlant)
-        print("✅ Added plant to DataController")
+        let addPlantResult = dataController.addUserPlantSync(userPlant: newUserPlant)
+        
+        switch addPlantResult {
+        case .success:
+            print("✅ Added plant to DataController")
+        case .failure(let error):
+            print("❌ Failed to add plant: \(error.localizedDescription)")
+            // Show error alert
+            let errorAlert = UIAlertController(
+                title: "Error",
+                message: "Failed to add plant: \(error.localizedDescription)\n\nPlease check your internet connection and try again.",
+                preferredStyle: .alert
+            )
+            errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(errorAlert, animated: true)
+            return
+        }
         
         print("\n📝 Adding care reminder to database...")
         // Add CareReminder to database with correct toggle states
