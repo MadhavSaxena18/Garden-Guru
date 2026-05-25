@@ -246,9 +246,10 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         print("\nAll YOLO results: \(yoloResults)")
         
-        // IMPROVED VALIDATION: Check if majority of YOLO results are actually plants
+        // IMPROVED VALIDATION: YOLO is now advisory, not blocking
+        // We'll use it to warn about non-plants but not reject scans
         let plantDetections = yoloResults.filter {
-            $0.contains("pottedplant") || $0.contains("plant")  // Accept plant detections
+            $0.contains("pottedplant") || $0.contains("plant")
         }.count
         
         let nonPlantDetections = yoloResults.filter {
@@ -262,9 +263,9 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         print("📊 Plant detections: \(plantDetections), Non-plant detections: \(nonPlantDetections)")
         
-        // If we detected non-plant objects, reject immediately
-        if nonPlantDetections > 0 {
-            print("❌ Non-plant objects detected - rejecting scan")
+        // Only reject if we have STRONG evidence of non-plant objects (2+ detections)
+        if nonPlantDetections >= 2 {
+            print("❌ Multiple non-plant objects detected - rejecting scan")
             DispatchQueue.main.async {
                 DiagnosisViewController.plantNameLabel.text = "Not a Plant"
                 DiagnosisViewController.diagnosisLabel.text = "Object detected"
@@ -274,19 +275,12 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             return
         }
         
-        // Require at least 1 out of 3 images to detect plants (lowered threshold)
-        if plantDetections < 1 {
-            print("❌ Insufficient plant detections - rejecting scan")
-            DispatchQueue.main.async {
-                DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
-                DiagnosisViewController.diagnosisLabel.text = "No plant detected"
-                self.stopScanningAnimation()
-                self.showPlantNotIdentifiedAlert()
-            }
-            return
+        // YOLO is now advisory - we'll proceed to plant classifier even if YOLO doesn't detect plants
+        if plantDetections == 0 && nonPlantDetections == 0 {
+            print("⚠️ YOLO didn't detect anything clear - proceeding to plant classifier anyway")
         }
         
-        print("✅ Plant validation passed - proceeding with classification")
+        print("✅ YOLO validation passed - proceeding with classification")
         
         // Step 2: Run plant classifier on first image only
         if let firstImage = scanAndDiagnoseViewController.capturedImages.first,
@@ -307,19 +301,29 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             // Check if plant exists in database before proceeding
             let foundPlant = findPlantCaseInsensitive(name: plantType)
             if foundPlant == nil {
-                print("❌ Plant '\(plantType)' not found in database")
-                DispatchQueue.main.async {
-                    DiagnosisViewController.plantNameLabel.text = plantType
-                    DiagnosisViewController.diagnosisLabel.text = "No disease detected"
-                    self.stopScanningAnimation()
-                    self.showPlantNotFoundAlert()
+                print("⚠️ Plant '\(plantType)' not found in database")
+                
+                // Try to find a similar plant name in database
+                if let similarPlant = findSimilarPlant(name: plantType) {
+                    print("✅ Found similar plant: \(similarPlant.plantName)")
+                    DispatchQueue.main.async {
+                        DiagnosisViewController.plantNameLabel.text = similarPlant.plantName
+                    }
+                } else {
+                    print("❌ No similar plant found - showing generic result")
+                    DispatchQueue.main.async {
+                        DiagnosisViewController.plantNameLabel.text = plantType
+                        DiagnosisViewController.diagnosisLabel.text = "Plant identified but not in database"
+                        self.stopScanningAnimation()
+                        self.showPlantNotInDatabaseAlert(plantName: plantType)
+                    }
+                    return
                 }
-                return
-            }
-            
-            print("✅ Plant '\(foundPlant!.plantName)' found in database")
-            DispatchQueue.main.async {
-                DiagnosisViewController.plantNameLabel.text = foundPlant!.plantName
+            } else {
+                print("✅ Plant '\(foundPlant!.plantName)' found in database")
+                DispatchQueue.main.async {
+                    DiagnosisViewController.plantNameLabel.text = foundPlant!.plantName
+                }
             }
             
             // Step 3: Run disease detection on all images (focus on images 2 and 3 - infected areas)
@@ -458,19 +462,25 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             }
             
             if let results = request.results as? [VNClassificationObservation] {
-                // Print top 5 results for debugging
-                print("Top 5 plant classification results:")
-                for (index, result) in results.prefix(5).enumerated() {
+                // Print top 10 results for debugging
+                print("Top 10 plant classification results:")
+                for (index, result) in results.prefix(10).enumerated() {
                     print("  \(index + 1). \(result.identifier) - confidence: \(result.confidence)")
                 }
                 
                 if let topResult = results.first {
-                    // Only accept results with confidence above 0.3
-                    if topResult.confidence > 0.3 {
+                    // LOWERED threshold from 0.3 to 0.15 to accept more results
+                    // Many plant classifiers have lower confidence scores
+                    if topResult.confidence > 0.15 {
                         resultIdentifier = topResult.identifier
                         print("✅ Selected plant: \(topResult.identifier) with confidence: \(topResult.confidence)")
                     } else {
                         print("⚠️ Plant classification confidence too low: \(topResult.confidence)")
+                        // Still return the top result if it's above 0.05 (very permissive)
+                        if topResult.confidence > 0.05 {
+                            resultIdentifier = topResult.identifier
+                            print("⚠️ Accepting low-confidence result: \(topResult.identifier)")
+                        }
                     }
                 }
             }
@@ -863,6 +873,86 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         }
         
         return nil
+    }
+    
+    // NEW: Helper function to find similar plant names
+    private func findSimilarPlant(name: String) -> Plant? {
+        // Common plant name variations and mappings
+        let nameVariations: [String: [String]] = [
+            "rose": ["Rose", "Roses"],
+            "aloe": ["Aloe Vera", "Aloe"],
+            "cactus": ["Cactus"],
+            "fern": ["Fern"],
+            "lily": ["Lily"],
+            "orchid": ["Orchid"],
+            "tulip": ["Tulip"],
+            "sunflower": ["Sunflower"],
+            "daisy": ["Daisy"],
+            "hibiscus": ["Hibiscus"],
+            "jasmine": ["Jasmine"],
+            "lavender": ["Lavender"],
+            "mint": ["Mint"],
+            "basil": ["Basil"],
+            "tomato": ["Tomato"],
+            "pepper": ["Pepper"],
+            "cucumber": ["Cucumber"]
+        }
+        
+        let lowercaseName = name.lowercased()
+        
+        // Check if the name contains any known plant keywords
+        for (keyword, variations) in nameVariations {
+            if lowercaseName.contains(keyword) {
+                // Try each variation
+                for variation in variations {
+                    if let plant = findPlantCaseInsensitive(name: variation) {
+                        print("✅ Found similar plant: \(variation) for input: \(name)")
+                        return plant
+                    }
+                }
+            }
+        }
+        
+        // Try removing common suffixes/prefixes
+        let cleanedName = lowercaseName
+            .replacingOccurrences(of: "plant", with: "")
+            .replacingOccurrences(of: "tree", with: "")
+            .replacingOccurrences(of: "flower", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if !cleanedName.isEmpty && cleanedName != lowercaseName {
+            return findPlantCaseInsensitive(name: cleanedName)
+        }
+        
+        return nil
+    }
+    
+    private func showPlantNotInDatabaseAlert(plantName: String) {
+        let alert = UIAlertController(
+            title: "Plant Identified",
+            message: "We identified this as '\(plantName)', but it's not in our database yet.\n\nWould you like to:\n• Try scanning again\n• Continue anyway (limited features)",
+            preferredStyle: .alert
+        )
+        
+        let retryAction = UIAlertAction(title: "Scan Again", style: .default) { [weak self] _ in
+            self?.resetForNewScan()
+            self?.resetState()
+        }
+        
+        let continueAction = UIAlertAction(title: "Continue Anyway", style: .default) { [weak self] _ in
+            // Allow user to continue with limited functionality
+            self?.stopScanningAnimation()
+            self?.navigateToDiagnosisView(with: "Unknown")
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+            self?.navigationController?.popToRootViewController(animated: true)
+        }
+        
+        alert.addAction(retryAction)
+        alert.addAction(continueAction)
+        alert.addAction(cancelAction)
+        present(alert, animated: true)
     }
     
     private func uploadImageToSupabase(image: UIImage) async {
