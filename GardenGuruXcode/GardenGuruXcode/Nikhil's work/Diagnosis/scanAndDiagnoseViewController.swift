@@ -875,7 +875,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         return nil
     }
     
-    // NEW: Helper function to find similar plant names
+    // Helper function to find similar plant names
     private func findSimilarPlant(name: String) -> Plant? {
         // Common plant name variations and mappings
         let nameVariations: [String: [String]] = [
@@ -896,7 +896,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             "tomato": ["Tomato"],
             "pepper": ["Pepper"],
             "cucumber": ["Cucumber"]
-        }
+        ]
         
         let lowercaseName = name.lowercased()
         

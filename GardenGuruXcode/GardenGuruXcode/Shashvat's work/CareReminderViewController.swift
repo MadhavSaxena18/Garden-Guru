@@ -771,70 +771,79 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             }
         }
         
-        // PREMIUM: Animate cell AND delete simultaneously
+        // PREMIUM: Animate cell
         if let cell = careReminderCollectionView.cellForItem(at: indexPath) {
             print("✅ Cell found, starting premium animation")
             
             // Start custom animation on cell content
             animateCheckboxToggle(cell: cell, isCompleting: !isCompleted)
             
-            // Ensure layout is stable before batch updates
-            UIView.performWithoutAnimation {
-                self.careReminderCollectionView.layoutIfNeeded()
-            }
-            
-            // Get section count before deletion
-            let sectionCountBefore = self.numberOfSections(in: self.careReminderCollectionView)
-            
-            // CRITICAL: Delete item DURING animation (not after)
-            // UICollectionView handles layout animation automatically
-            self.careReminderCollectionView.performBatchUpdates({
-                // Remove from data source FIRST
-                let currentReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ? self.todayReminders : self.upcomingReminders
-                let nonEmptySections = currentReminders.enumerated().filter { !$0.element.isEmpty }
-                let sectionType = nonEmptySections[indexPath.section].offset
+            // CRITICAL: Only delete if COMPLETING, not if UNCOMPLETING
+            if !isCompleted {
+                // COMPLETING: Delete the item with animation
+                print("✅ Completing task - will delete item")
                 
-                if self.careReminderSegmentedControl.selectedSegmentIndex == 0 {
-                    self.todayReminders[sectionType].removeAll {
-                        $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
-                    }
-                } else {
-                    self.upcomingReminders[sectionType].removeAll {
-                        $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
-                    }
+                // Ensure layout is stable before batch updates
+                UIView.performWithoutAnimation {
+                    self.careReminderCollectionView.layoutIfNeeded()
                 }
                 
-                // Check if section became empty
-                let currentArray = self.careReminderSegmentedControl.selectedSegmentIndex == 0
-                    ? self.todayReminders[sectionType]
-                    : self.upcomingReminders[sectionType]
+                // Get section count before deletion
+                let sectionCountBefore = self.numberOfSections(in: self.careReminderCollectionView)
                 
-                let sectionCountAfter = self.numberOfSections(in: self.careReminderCollectionView)
-                
-                // CRITICAL: Delete section if empty, otherwise delete item
-                if currentArray.isEmpty && sectionCountAfter < sectionCountBefore {
-                    // Section became empty - delete entire section
-                    self.careReminderCollectionView.deleteSections(IndexSet(integer: indexPath.section))
-                    print("🗑️ Deleted entire section \(indexPath.section)")
-                } else {
-                    // Section still has items - delete only this item
-                    self.careReminderCollectionView.deleteItems(at: [indexPath])
-                    print("🗑️ Deleted item at \(indexPath)")
-                }
-                
-            }, completion: { finished in
-                print("✅ Premium animation completed: \(finished)")
-                
-                // Update UI visibility
-                let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
-                    !self.todayReminders.allSatisfy({ $0.isEmpty }) :
-                    !self.upcomingReminders.allSatisfy({ $0.isEmpty })
-                
-                self.noRemindersView.isHidden = hasReminders
-                self.careReminderCollectionView.isHidden = !hasReminders
-                
+                // CRITICAL: Delete item DURING animation (not after)
+                self.careReminderCollectionView.performBatchUpdates({
+                    // Remove from data source FIRST
+                    let currentReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ? self.todayReminders : self.upcomingReminders
+                    let nonEmptySections = currentReminders.enumerated().filter { !$0.element.isEmpty }
+                    let sectionType = nonEmptySections[indexPath.section].offset
+                    
+                    if self.careReminderSegmentedControl.selectedSegmentIndex == 0 {
+                        self.todayReminders[sectionType].removeAll {
+                            $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
+                        }
+                    } else {
+                        self.upcomingReminders[sectionType].removeAll {
+                            $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
+                        }
+                    }
+                    
+                    // Check if section became empty
+                    let currentArray = self.careReminderSegmentedControl.selectedSegmentIndex == 0
+                        ? self.todayReminders[sectionType]
+                        : self.upcomingReminders[sectionType]
+                    
+                    let sectionCountAfter = self.numberOfSections(in: self.careReminderCollectionView)
+                    
+                    // CRITICAL: Delete section if empty, otherwise delete item
+                    if currentArray.isEmpty && sectionCountAfter < sectionCountBefore {
+                        // Section became empty - delete entire section
+                        self.careReminderCollectionView.deleteSections(IndexSet(integer: indexPath.section))
+                        print("🗑️ Deleted entire section \(indexPath.section)")
+                    } else {
+                        // Section still has items - delete only this item
+                        self.careReminderCollectionView.deleteItems(at: [indexPath])
+                        print("🗑️ Deleted item at \(indexPath)")
+                    }
+                    
+                }, completion: { finished in
+                    print("✅ Premium animation completed: \(finished)")
+                    
+                    // Update UI visibility
+                    let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
+                        !self.todayReminders.allSatisfy({ $0.isEmpty }) :
+                        !self.upcomingReminders.allSatisfy({ $0.isEmpty })
+                    
+                    self.noRemindersView.isHidden = hasReminders
+                    self.careReminderCollectionView.isHidden = !hasReminders
+                    
+                    self.isProcessingToggle = false
+                })
+            } else {
+                // UNCOMPLETING: Just animate, NO deletion
+                print("✅ Uncompleting task - item stays in place")
                 self.isProcessingToggle = false
-            })
+            }
         } else {
             print("⚠️ Cell not visible")
             isProcessingToggle = false
