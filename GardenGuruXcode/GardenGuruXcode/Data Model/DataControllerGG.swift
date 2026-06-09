@@ -1340,6 +1340,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
     // MARK: - User Management
     
     func initializeUser(email: String) async throws -> userInfo? {
+        print("\n=== Initializing User ===")
+        print("📧 Email: \(email)")
+        
         // Check UserTable for existing user data
         do {
             let response = try await supabase
@@ -1354,6 +1357,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 do {
                     let users = try JSONDecoder().decode([userInfo].self, from: data)
                     if let user = users.first {
+                        print("✅ Found existing user: \(user.userName)")
                         return user
                     }
                 } catch {
@@ -1364,6 +1368,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                        let jsonData = jsonString.data(using: .utf8),
                        let users = try? JSONDecoder().decode([userInfo].self, from: jsonData),
                        let user = users.first {
+                        print("✅ Found existing user (alt): \(user.userName)")
                         return user
                     }
                 }
@@ -1372,6 +1377,7 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     do {
                         let jsonData = try JSONSerialization.data(withJSONObject: jsonArray[0])
                         let user = try JSONDecoder().decode(userInfo.self, from: jsonData)
+                        print("✅ Found existing user (json): \(user.userName)")
                         return user
                     } catch {
                         print("❌ Error decoding user data: \(error)")
@@ -1379,12 +1385,40 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 }
             }
             
-            print("❌ No existing user found")
-            return nil
+            // CRITICAL FIX: User not found - create them automatically!
+            print("⚠️ No existing user found - creating new user in UserTable...")
+            
+            // Extract username from email (before @)
+            let defaultUsername = email.components(separatedBy: "@").first ?? "User"
+            
+            // Create the user
+            let newUser = try await createUser(
+                email: email,
+                userName: defaultUsername,
+                location: "North India"
+            )
+            
+            print("✅ Created new user in UserTable: \(newUser.userName)")
+            return newUser
             
         } catch {
-            print("❌ Error fetching user data: \(error)")
-            return nil
+            print("❌ Error in initializeUser: \(error)")
+            
+            // If there's an error, try to create user anyway (might be first-time setup)
+            do {
+                print("🔄 Attempting to create user after error...")
+                let defaultUsername = email.components(separatedBy: "@").first ?? "User"
+                let newUser = try await createUser(
+                    email: email,
+                    userName: defaultUsername,
+                    location: "North India"
+                )
+                print("✅ Successfully created user after recovery")
+                return newUser
+            } catch let createError {
+                print("❌ Failed to create user: \(createError)")
+                return nil
+            }
         }
     }
     
