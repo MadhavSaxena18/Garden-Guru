@@ -144,6 +144,14 @@ class CareReminderViewController: UIViewController {
         }
         print("✅ Using email: \(userEmail)")
         
+        // Try to load from cache first for instant UI
+        if let cachedReminders = CacheManager.shared.loadCareReminders(for: userEmail), !cachedReminders.isEmpty {
+            print("⚡ Loading from cache instantly")
+            reminders = cachedReminders
+            sortReminders()
+            careReminderCollectionView.reloadData()
+        }
+        
         // Load reminders ASYNCHRONOUSLY using async/await
         print("📞 Calling getUserPlantsWithDetails async...")
         Task { [weak self] in
@@ -151,6 +159,9 @@ class CareReminderViewController: UIViewController {
             
             do {
                 let fetchedReminders = try await self.dataController.getUserPlantsWithDetails(for: userEmail)
+                
+                // Save to cache
+                CacheManager.shared.saveCareReminders(fetchedReminders, for: userEmail)
                 
                 // Update UI on main thread
                 await MainActor.run { [weak self] in
@@ -869,6 +880,9 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
                                 do {
                                     let freshReminders = try await self.dataController.getUserPlantsWithDetails(for: userEmail)
                                     
+                                    // Save to cache
+                                    CacheManager.shared.saveCareReminders(freshReminders, for: userEmail)
+                                    
                                     // Update UI on main thread
                                     await MainActor.run { [weak self] in
                                         guard let self = self else { return }
@@ -927,6 +941,9 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
                                 
                                 do {
                                     let freshReminders = try await self.dataController.getUserPlantsWithDetails(for: userEmail)
+                                    
+                                    // Save to cache
+                                    CacheManager.shared.saveCareReminders(freshReminders, for: userEmail)
                                     
                                     // Update UI on main thread
                                     await MainActor.run { [weak self] in

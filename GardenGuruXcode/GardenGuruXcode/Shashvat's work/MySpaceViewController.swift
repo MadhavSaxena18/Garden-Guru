@@ -75,13 +75,22 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         super.viewWillAppear(animated)
         print("viewWillAppear")
         
-        // Only load data if not already loaded, cache is empty, or we have new plants
-        if !isDataLoaded || cachedPlantsWithDetails.isEmpty || !MySpaceViewController.newlyAddedPlants.isEmpty {
-            loadDataAsync()
-        } else {
-            // Just update the UI with cached data - this should be instant
+        // Get user email
+        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+            print("❌ No user email found")
+            return
+        }
+        
+        // Try to load from cache first for instant UI
+        if let cachedPlants = CacheManager.shared.loadMyPlants(for: userEmail), !cachedPlants.isEmpty {
+            print("⚡ Loading from cache instantly")
+            cachedPlantsWithDetails = cachedPlants
+            isDataLoaded = true
             updateUIWithCachedData()
         }
+        
+        // Always fetch fresh data in background
+        loadDataAsync()
     }
     
     override func viewDidLayoutSubviews() {
@@ -107,12 +116,6 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
         guard !isLoading else { return }
         isLoading = true
         
-        // Show loading state immediately
-        DispatchQueue.main.async { [weak self] in
-            self?.mySpaceCollectionView.isHidden = true
-            // You could add a loading indicator here if needed
-        }
-        
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
@@ -122,7 +125,6 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 print("❌ ERROR: No users found in DataController")
                 DispatchQueue.main.async {
                     self.isLoading = false
-                    self.mySpaceCollectionView.isHidden = false
                 }
                 return
             }
@@ -134,6 +136,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             let plantsWithDetails = self.dataController.getUserPlantsWithBasicDetailsSync(for: user.userEmail!) ?? []
             
             // Cache the data
+            CacheManager.shared.saveMyPlants(plantsWithDetails, for: user.userEmail!)
             self.cachedPlantsWithDetails = plantsWithDetails
             self.isDataLoaded = true
             
