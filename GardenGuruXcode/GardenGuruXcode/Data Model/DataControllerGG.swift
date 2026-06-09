@@ -1017,11 +1017,9 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                     print("💧 Next water date set to: \(update.upcomingReminderForWater ?? "nil")")
                 }
             } else {
-                // Reset upcoming date to last completion date
-                if let lastWaterDate = currentReminder.last_water_completed_date {
-                    update.upcomingReminderForWater = dateFormatter.string(from: lastWaterDate)
-                    print("💧 Reset water date to last completion: \(update.upcomingReminderForWater ?? "nil")")
-                }
+                // UNCOMPLETING: Set upcoming date to today so user can complete it again
+                update.upcomingReminderForWater = dateFormatter.string(from: currentDate)
+                print("💧 Reset water date to TODAY (uncompleted): \(update.upcomingReminderForWater ?? "nil")")
             }
             
         case "fertilizer":
@@ -1034,12 +1032,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 if let fertilizerFreq = userPlant.plant.fertilizerFrequency {
                     let nextDate = Calendar.current.date(byAdding: .day, value: Int(fertilizerFreq), to: currentDate)
                     update.upcomingReminderForFertilizers = dateFormatter.string(from: nextDate ?? currentDate)
+                    print("🌱 Next fertilizer date set to: \(update.upcomingReminderForFertilizers ?? "nil")")
                 }
             } else {
-                // Reset upcoming date to last completion date
-                if let lastFertDate = currentReminder.last_fertilizer_completed_date {
-                    update.upcomingReminderForFertilizers = dateFormatter.string(from: lastFertDate)
-                }
+                // UNCOMPLETING: Set upcoming date to today so user can complete it again
+                update.upcomingReminderForFertilizers = dateFormatter.string(from: currentDate)
+                print("🌱 Reset fertilizer date to TODAY (uncompleted): \(update.upcomingReminderForFertilizers ?? "nil")")
             }
             
         case "repot":
@@ -1052,12 +1050,12 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
                 if let repottingFreq = userPlant.plant.repottingFrequency {
                     let nextDate = Calendar.current.date(byAdding: .day, value: Int(repottingFreq), to: currentDate)
                     update.upcomingReminderForRepotted = dateFormatter.string(from: nextDate ?? currentDate)
+                    print("🪴 Next repot date set to: \(update.upcomingReminderForRepotted ?? "nil")")
                 }
             } else {
-                // Reset upcoming date to last completion date
-                if let lastRepotDate = currentReminder.last_repot_completed_date {
-                    update.upcomingReminderForRepotted = dateFormatter.string(from: lastRepotDate)
-                }
+                // UNCOMPLETING: Set upcoming date to today so user can complete it again
+                update.upcomingReminderForRepotted = dateFormatter.string(from: currentDate)
+                print("🪴 Reset repot date to TODAY (uncompleted): \(update.upcomingReminderForRepotted ?? "nil")")
             }
             
         default:

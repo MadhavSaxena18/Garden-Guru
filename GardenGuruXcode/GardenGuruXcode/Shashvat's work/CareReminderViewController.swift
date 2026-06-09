@@ -14,8 +14,8 @@ class CareReminderViewController: UIViewController {
     private var todayReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
     private var upcomingReminders: [[(userPlant: UserPlant, plant: Plant, reminder: CareReminder_)]] = [[],[],[]]
     
-    // Prevent multiple simultaneous checkbox toggles
-    private var isProcessingToggle = false
+    // Track which specific reminders are being processed to prevent double-taps
+    private var processingReminderIDs: Set<String> = []
     
     private lazy var noRemindersView: UIView = {
         let view = UIView()
@@ -144,33 +144,44 @@ class CareReminderViewController: UIViewController {
         }
         print("✅ Using email: \(userEmail)")
         
-        // Load reminders using the sync wrapper
-        print("📞 Calling getUserPlantsWithDetailsSync...")
-        reminders = dataController.getUserPlantsWithDetailsSync(for: userEmail)
-        print("📱 Loaded \(reminders.count) reminders")
-        
-        if reminders.isEmpty {
-            print("⚠️ WARNING: No reminders loaded!")
-            print("🔍 Checking if user has plants...")
+        // Load reminders ASYNCHRONOUSLY using async/await
+        print("📞 Calling getUserPlantsWithDetails async...")
+        Task { [weak self] in
+            guard let self = self else { return }
             
-            // Debug: Try to get basic plant info
-            if let plants = dataController.getUserPlantsWithBasicDetailsSync(for: userEmail) {
-                print("📊 User has \(plants.count) plants")
-                for (index, plantData) in plants.enumerated() {
-                    print("  Plant \(index + 1): \(plantData.plant.plantName) - \(plantData.userPlant.userPlantNickName ?? "No nickname")")
+            do {
+                let fetchedReminders = try await self.dataController.getUserPlantsWithDetails(for: userEmail)
+                
+                // Update UI on main thread
+                await MainActor.run { [weak self] in
+                    guard let self = self else { return }
+                    
+                    self.reminders = fetchedReminders
+                    print("📱 Loaded \(self.reminders.count) reminders")
+                    
+                    if self.reminders.isEmpty {
+                        print("⚠️ WARNING: No reminders loaded!")
+                    } else {
+                        print("✅ Successfully loaded reminders:")
+                        for (index, reminder) in self.reminders.enumerated() {
+                            print("  \(index + 1). \(reminder.plant.plantName) - Water: \(reminder.reminder.wateringEnabled), Fert: \(reminder.reminder.fertilizerEnabled), Repot: \(reminder.reminder.repottingEnabled)")
+                        }
+                    }
+                    
+                    self.sortReminders()
+                    self.careReminderCollectionView.reloadData()
                 }
-            } else {
-                print("❌ Could not load basic plant details")
-            }
-        } else {
-            print("✅ Successfully loaded reminders:")
-            for (index, reminder) in reminders.enumerated() {
-                print("  \(index + 1). \(reminder.plant.plantName) - Water: \(reminder.reminder.wateringEnabled), Fert: \(reminder.reminder.fertilizerEnabled), Repot: \(reminder.reminder.repottingEnabled)")
+            } catch {
+                print("❌ Error loading reminders: \(error)")
+                
+                await MainActor.run { [weak self] in
+                    guard let self = self else { return }
+                    self.reminders = []
+                    self.sortReminders()
+                    self.careReminderCollectionView.reloadData()
+                }
             }
         }
-        
-        sortReminders()
-        careReminderCollectionView.reloadData()
     }
     
     private func sortReminders() {
@@ -592,6 +603,11 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             fatalError("Unable to dequeue CareReminderCell")
         }
         
+        // CRITICAL: Reset cell state before configuring (fixes reuse issues)
+        cell.contentView.alpha = 1.0
+        cell.contentView.transform = .identity
+        cell.alpha = 1.0
+        
         let currentReminders = careReminderSegmentedControl.selectedSegmentIndex == 0 ? todayReminders : upcomingReminders
         let nonEmptySections = currentReminders.enumerated().filter { !$0.element.isEmpty }
         let sectionType = nonEmptySections[indexPath.section].offset
@@ -719,13 +735,18 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         print("\n🎯 === Checkbox Toggle Started ===")
         print("Plant: \(reminder.plant.plantName)")
         
-        // Prevent multiple simultaneous toggles
-        guard !isProcessingToggle else {
-            print("⚠️ Already processing, ignoring tap")
+        // Create unique identifier for this specific reminder + type combination
+        let reminderID = "\(reminder.userPlant.userPlantRelationID.uuidString)_\(type)"
+        
+        // CRITICAL: Check if THIS SPECIFIC reminder is already being processed
+        guard !processingReminderIDs.contains(reminderID) else {
+            print("⚠️ This specific reminder is already being processed, ignoring tap")
             return
         }
         
-        isProcessingToggle = true
+        // Mark this specific reminder as being processed
+        processingReminderIDs.insert(reminderID)
+        print("🔒 Locked reminder: \(reminderID)")
         
         // Haptic feedback for tactile response
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -748,11 +769,14 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             reminderType = "repot"
             print("🪴 Repotting task - Currently: \(isCompleted ? "completed" : "incomplete")")
         default:
-            isProcessingToggle = false
+            processingReminderIDs.remove(reminderID)
             return
         }
         
-        // Update database in background
+        // CRITICAL: Only delete if COMPLETING, not if UNCOMPLETING
+        let willDelete = !isCompleted
+        
+        // Update database FIRST, then animate
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
@@ -764,89 +788,190 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             )
             print("✅ Database updated")
             
-            // Success haptic feedback
-            DispatchQueue.main.async {
+            // CRITICAL: Now update UI on main thread
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
+                // Success haptic feedback
                 let notificationFeedback = UINotificationFeedbackGenerator()
                 notificationFeedback.notificationOccurred(.success)
-            }
-        }
-        
-        // PREMIUM: Animate cell
-        if let cell = careReminderCollectionView.cellForItem(at: indexPath) {
-            print("✅ Cell found, starting premium animation")
-            
-            // Start custom animation on cell content
-            animateCheckboxToggle(cell: cell, isCompleting: !isCompleted)
-            
-            // CRITICAL: Only delete if COMPLETING, not if UNCOMPLETING
-            if !isCompleted {
-                // COMPLETING: Delete the item with animation
-                print("✅ Completing task - will delete item")
                 
-                // Ensure layout is stable before batch updates
-                UIView.performWithoutAnimation {
-                    self.careReminderCollectionView.layoutIfNeeded()
+                // PREMIUM: Animate cell
+                if let cell = self.careReminderCollectionView.cellForItem(at: indexPath) {
+                    print("✅ Cell found, starting premium animation")
+                    
+                    // Start custom animation on cell content
+                    self.animateCheckboxToggle(cell: cell, isCompleting: willDelete)
+                    
+                    if willDelete {
+                        // COMPLETING: Delete the item with animation
+                        print("✅ Completing task - will delete item")
+                        
+                        // Ensure layout is stable before batch updates
+                        UIView.performWithoutAnimation {
+                            self.careReminderCollectionView.layoutIfNeeded()
+                        }
+                        
+                        // Get section count before deletion
+                        let sectionCountBefore = self.numberOfSections(in: self.careReminderCollectionView)
+                        
+                        // CRITICAL: Delete item DURING animation (not after)
+                        self.careReminderCollectionView.performBatchUpdates({
+                            // Remove from data source FIRST
+                            let currentReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ? self.todayReminders : self.upcomingReminders
+                            let nonEmptySections = currentReminders.enumerated().filter { !$0.element.isEmpty }
+                            let sectionType = nonEmptySections[indexPath.section].offset
+                            
+                            if self.careReminderSegmentedControl.selectedSegmentIndex == 0 {
+                                self.todayReminders[sectionType].removeAll {
+                                    $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
+                                }
+                            } else {
+                                self.upcomingReminders[sectionType].removeAll {
+                                    $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
+                                }
+                            }
+                            
+                            // Check if section became empty
+                            let currentArray = self.careReminderSegmentedControl.selectedSegmentIndex == 0
+                                ? self.todayReminders[sectionType]
+                                : self.upcomingReminders[sectionType]
+                            
+                            let sectionCountAfter = self.numberOfSections(in: self.careReminderCollectionView)
+                            
+                            // CRITICAL: Delete section if empty, otherwise delete item
+                            if currentArray.isEmpty && sectionCountAfter < sectionCountBefore {
+                                // Section became empty - delete entire section
+                                self.careReminderCollectionView.deleteSections(IndexSet(integer: indexPath.section))
+                                print("🗑️ Deleted entire section \(indexPath.section)")
+                            } else {
+                                // Section still has items - delete only this item
+                                self.careReminderCollectionView.deleteItems(at: [indexPath])
+                                print("🗑️ Deleted item at \(indexPath)")
+                            }
+                            
+                        }, completion: { [weak self] finished in
+                            guard let self = self else { return }
+                            print("✅ Premium animation completed: \(finished)")
+                            
+                            // REFRESH FROM DATABASE: Fetch latest data after completion
+                            print("🔄 Fetching fresh data from database...")
+                            guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+                                print("❌ No user email found")
+                                self.processingReminderIDs.remove(reminderID)
+                                return
+                            }
+                            
+                            // Load fresh reminders from database using async/await
+                            Task { [weak self] in
+                                guard let self = self else { return }
+                                
+                                do {
+                                    let freshReminders = try await self.dataController.getUserPlantsWithDetails(for: userEmail)
+                                    
+                                    // Update UI on main thread
+                                    await MainActor.run { [weak self] in
+                                        guard let self = self else { return }
+                                        
+                                        self.reminders = freshReminders
+                                        print("✅ Loaded \(self.reminders.count) fresh reminders from database")
+                                        
+                                        // Re-sort with fresh data
+                                        self.sortReminders()
+                                        
+                                        // Reload collection view
+                                        self.careReminderCollectionView.reloadData()
+                                        
+                                        // Update UI visibility
+                                        let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
+                                            !self.todayReminders.allSatisfy({ $0.isEmpty }) :
+                                            !self.upcomingReminders.allSatisfy({ $0.isEmpty })
+                                        
+                                        self.noRemindersView.isHidden = hasReminders
+                                        self.careReminderCollectionView.isHidden = !hasReminders
+                                        
+                                        // CRITICAL: Unlock this specific reminder
+                                        self.processingReminderIDs.remove(reminderID)
+                                        print("🔓 Unlocked reminder: \(reminderID)")
+                                    }
+                                } catch {
+                                    print("❌ Error fetching fresh reminders: \(error)")
+                                    
+                                    await MainActor.run { [weak self] in
+                                        guard let self = self else { return }
+                                        self.processingReminderIDs.remove(reminderID)
+                                        print("🔓 Unlocked reminder: \(reminderID)")
+                                    }
+                                }
+                            }
+                        })
+                    } else {
+                        // UNCOMPLETING: Just animate, NO deletion
+                        print("✅ Uncompleting task - item stays in place")
+                        
+                        // Reload the data to reflect the updated state
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                            guard let self = self else { return }
+                            print("🔄 Fetching fresh data from database after uncompleting...")
+                            
+                            // REFRESH FROM DATABASE
+                            guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+                                print("❌ No user email found")
+                                self.processingReminderIDs.remove(reminderID)
+                                return
+                            }
+                            
+                            // Load fresh reminders from database using async/await
+                            Task { [weak self] in
+                                guard let self = self else { return }
+                                
+                                do {
+                                    let freshReminders = try await self.dataController.getUserPlantsWithDetails(for: userEmail)
+                                    
+                                    // Update UI on main thread
+                                    await MainActor.run { [weak self] in
+                                        guard let self = self else { return }
+                                        
+                                        self.reminders = freshReminders
+                                        print("✅ Loaded \(self.reminders.count) fresh reminders from database")
+                                        
+                                        // Re-sort with fresh data
+                                        self.sortReminders()
+                                        
+                                        // Reload collection view
+                                        self.careReminderCollectionView.reloadData()
+                                        
+                                        // Update UI visibility
+                                        let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
+                                            !self.todayReminders.allSatisfy({ $0.isEmpty }) :
+                                            !self.upcomingReminders.allSatisfy({ $0.isEmpty })
+                                        
+                                        self.noRemindersView.isHidden = hasReminders
+                                        self.careReminderCollectionView.isHidden = !hasReminders
+                                        
+                                        // CRITICAL: Unlock this specific reminder
+                                        self.processingReminderIDs.remove(reminderID)
+                                        print("🔓 Unlocked reminder: \(reminderID)")
+                                    }
+                                } catch {
+                                    print("❌ Error fetching fresh reminders: \(error)")
+                                    
+                                    await MainActor.run { [weak self] in
+                                        guard let self = self else { return }
+                                        self.processingReminderIDs.remove(reminderID)
+                                        print("🔓 Unlocked reminder: \(reminderID)")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    print("⚠️ Cell not visible")
+                    // CRITICAL: Unlock this specific reminder even if cell is not visible
+                    self.processingReminderIDs.remove(reminderID)
+                    print("🔓 Unlocked reminder: \(reminderID)")
                 }
-                
-                // Get section count before deletion
-                let sectionCountBefore = self.numberOfSections(in: self.careReminderCollectionView)
-                
-                // CRITICAL: Delete item DURING animation (not after)
-                self.careReminderCollectionView.performBatchUpdates({
-                    // Remove from data source FIRST
-                    let currentReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ? self.todayReminders : self.upcomingReminders
-                    let nonEmptySections = currentReminders.enumerated().filter { !$0.element.isEmpty }
-                    let sectionType = nonEmptySections[indexPath.section].offset
-                    
-                    if self.careReminderSegmentedControl.selectedSegmentIndex == 0 {
-                        self.todayReminders[sectionType].removeAll {
-                            $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
-                        }
-                    } else {
-                        self.upcomingReminders[sectionType].removeAll {
-                            $0.userPlant.userPlantRelationID == reminder.userPlant.userPlantRelationID
-                        }
-                    }
-                    
-                    // Check if section became empty
-                    let currentArray = self.careReminderSegmentedControl.selectedSegmentIndex == 0
-                        ? self.todayReminders[sectionType]
-                        : self.upcomingReminders[sectionType]
-                    
-                    let sectionCountAfter = self.numberOfSections(in: self.careReminderCollectionView)
-                    
-                    // CRITICAL: Delete section if empty, otherwise delete item
-                    if currentArray.isEmpty && sectionCountAfter < sectionCountBefore {
-                        // Section became empty - delete entire section
-                        self.careReminderCollectionView.deleteSections(IndexSet(integer: indexPath.section))
-                        print("🗑️ Deleted entire section \(indexPath.section)")
-                    } else {
-                        // Section still has items - delete only this item
-                        self.careReminderCollectionView.deleteItems(at: [indexPath])
-                        print("🗑️ Deleted item at \(indexPath)")
-                    }
-                    
-                }, completion: { finished in
-                    print("✅ Premium animation completed: \(finished)")
-                    
-                    // Update UI visibility
-                    let hasReminders = self.careReminderSegmentedControl.selectedSegmentIndex == 0 ?
-                        !self.todayReminders.allSatisfy({ $0.isEmpty }) :
-                        !self.upcomingReminders.allSatisfy({ $0.isEmpty })
-                    
-                    self.noRemindersView.isHidden = hasReminders
-                    self.careReminderCollectionView.isHidden = !hasReminders
-                    
-                    self.isProcessingToggle = false
-                })
-            } else {
-                // UNCOMPLETING: Just animate, NO deletion
-                print("✅ Uncompleting task - item stays in place")
-                self.isProcessingToggle = false
             }
-        } else {
-            print("⚠️ Cell not visible")
-            isProcessingToggle = false
         }
     }
     
@@ -854,49 +979,53 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
         guard let reminderCell = cell as? CareReminderCollectionViewCell else { return }
         
         if isCompleting {
-            // Premium completion animation
-            print("🎬 Starting premium completion animation")
+            // 🎬 ULTRA-SMOOTH 5-SECOND PREMIUM COMPLETION ANIMATION
+            print("🎬 Starting 5-second premium completion animation")
             
-            // Step 0: Touch compression (makes tap feel physical)
-            UIView.animate(withDuration: 0.08, delay: 0, options: .curveEaseOut, animations: {
-                cell.contentView.transform = CGAffineTransform(scaleX: 0.98, y: 0.98)
+            // PHASE 1: Touch Response (0.0 - 0.15s)
+            // Immediate feedback makes interaction feel responsive
+            UIView.animate(withDuration: 0.12, delay: 0, options: .curveEaseOut, animations: {
+                cell.contentView.transform = CGAffineTransform(scaleX: 0.97, y: 0.97)
             })
             
-            // Step 1: Checkbox pop with spring (delightful bounce)
+            // PHASE 2: Checkbox Celebration (0.15 - 0.6s)
+            // Delightful bounce that draws attention to the action
             if let checkbox = reminderCell.checkbox {
                 UIView.animate(
-                    withDuration: 0.28,
-                    delay: 0.08,
-                    usingSpringWithDamping: 0.45,
-                    initialSpringVelocity: 3,
+                    withDuration: 0.45,
+                    delay: 0.15,
+                    usingSpringWithDamping: 0.4,  // More bounce
+                    initialSpringVelocity: 3.5,
                     options: .curveEaseOut,
                     animations: {
-                        checkbox.transform = CGAffineTransform(scaleX: 1.15, y: 1.15)
+                        checkbox.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
                     }) { _ in
-                        UIView.animate(withDuration: 0.15) {
+                        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut, animations: {
                             checkbox.transform = .identity
-                        }
+                        })
                     }
             }
             
-            // Step 2: Create premium "Completed" pill with blur background
+            // PHASE 3: "Completed" Pill Reveal (0.6 - 1.5s)
+            // Premium blur badge with smooth reveal
             let blurEffect = UIBlurEffect(style: .systemThinMaterial)
             let blurView = UIVisualEffectView(effect: blurEffect)
-            blurView.layer.cornerRadius = 14
+            blurView.layer.cornerRadius = 16
             blurView.layer.cornerCurve = .continuous
             blurView.clipsToBounds = true
             blurView.alpha = 0
+            blurView.transform = CGAffineTransform(scaleX: 0.85, y: 0.85)  // Start small
             blurView.tag = 9999
             
-            // Create checkmark icon
+            // Create checkmark icon with green color
             let checkmark = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
-            checkmark.tintColor = UIColor(hex: "004E05")
+            checkmark.tintColor = UIColor(hex: "00A86B")  // Emerald green
             checkmark.translatesAutoresizingMaskIntoConstraints = false
             
             // Create label inside blur
             let completedLabel = UILabel()
             completedLabel.text = "Completed"
-            completedLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+            completedLabel.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
             completedLabel.textColor = UIColor(hex: "004E05")
             completedLabel.translatesAutoresizingMaskIntoConstraints = false
             
@@ -906,57 +1035,70 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             
             // Position blur view
             blurView.frame = CGRect(
-                x: cell.contentView.bounds.width - 130,
-                y: cell.contentView.bounds.height / 2 - 16,
-                width: 110,
-                height: 32
+                x: cell.contentView.bounds.width - 140,
+                y: cell.contentView.bounds.height / 2 - 18,
+                width: 120,
+                height: 36
             )
             
             // Layout constraints
             NSLayoutConstraint.activate([
-                checkmark.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 8),
+                checkmark.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 10),
                 checkmark.centerYAnchor.constraint(equalTo: blurView.contentView.centerYAnchor),
-                checkmark.widthAnchor.constraint(equalToConstant: 16),
-                checkmark.heightAnchor.constraint(equalToConstant: 16),
+                checkmark.widthAnchor.constraint(equalToConstant: 18),
+                checkmark.heightAnchor.constraint(equalToConstant: 18),
                 
-                completedLabel.leadingAnchor.constraint(equalTo: checkmark.trailingAnchor, constant: 4),
+                completedLabel.leadingAnchor.constraint(equalTo: checkmark.trailingAnchor, constant: 6),
                 completedLabel.centerYAnchor.constraint(equalTo: blurView.contentView.centerYAnchor),
-                completedLabel.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -8)
+                completedLabel.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -10)
             ])
             
             cell.contentView.addSubview(blurView)
             
-            // Fade in the completed pill (with micro delay for anticipation)
-            UIView.animate(withDuration: 0.3, delay: 0.15, options: .curveEaseIn, animations: {
-                blurView.alpha = 1.0
-            })
-            
-            // Step 3: Premium exit animation - animate contentView ONLY (not whole cell)
-            // This allows UICollectionView to handle cell frame while we control content
+            // Animate pill reveal with spring (0.6s delay = after checkbox bounce)
             UIView.animate(
-                withDuration: 1.2,  // Slower, more elegant exit (was 0.55)
-                delay: 0.3,  // Longer anticipation (was 0.18)
-                usingSpringWithDamping: 0.82,  // Softer spring
-                initialSpringVelocity: 0.6,
+                withDuration: 0.6,
+                delay: 0.6,
+                usingSpringWithDamping: 0.65,
+                initialSpringVelocity: 0.5,
+                options: .curveEaseOut,
+                animations: {
+                    blurView.alpha = 1.0
+                    blurView.transform = .identity  // Scale to normal
+                })
+            
+            // PHASE 4: Hold State (1.5 - 2.5s)
+            // Let user see the "Completed" state for 1 full second
+            // This pause makes the animation feel intentional, not rushed
+            
+            // PHASE 5: Gentle Slide Out (2.5 - 5.0s)
+            // Ultra-smooth 2.5-second exit with depth and elegance
+            UIView.animate(
+                withDuration: 2.5,  // EXTENDED: Silky smooth 2.5 second exit
+                delay: 2.5,  // Start after 2.5s (0.15 + 0.45 + 0.6 + 1.0 hold + 0.3 buffer)
+                usingSpringWithDamping: 0.88,  // Very soft spring (high damping = less bounce)
+                initialSpringVelocity: 0.3,  // Gentle initial velocity
                 options: [.curveEaseInOut, .allowUserInteraction],
                 animations: {
-                    // Soft glide left with tiny upward lift and subtle rotation
-                    cell.contentView.transform = CGAffineTransform(translationX: -80, y: -4)
-                        .rotated(by: -.pi / 80)
-                        .scaledBy(x: 0.97, y: 0.97)
+                    // Buttery smooth slide left with natural physics
+                    // Subtle Y movement creates organic, not-robotic feel
+                    cell.contentView.transform = CGAffineTransform(translationX: -120, y: -6)
+                        .rotated(by: -.pi / 90)  // Micro rotation
+                        .scaledBy(x: 0.95, y: 0.95)
                     
-                    // Don't fully fade (premium apps rarely do)
-                    cell.contentView.alpha = 0.25
+                    // Fade to near-transparent (premium apps show trace, not full disappear)
+                    cell.contentView.alpha = 0.15
                     
-                    // Lift shadow during exit (depth effect)
-                    cell.layer.shadowOpacity = 0.18
-                    cell.layer.shadowRadius = 24
+                    // Shadow grows as card "lifts" away (depth illusion)
+                    cell.layer.shadowOpacity = 0.22
+                    cell.layer.shadowRadius = 28
+                    cell.layer.shadowOffset = CGSize(width: 0, height: 14)
                     
-                    // Fade the pill
+                    // Pill fades along with card
                     blurView.alpha = 0
                 },
                 completion: { finished in
-                    print("✅ Premium animation completed: \(finished)")
+                    print("✅ Premium 5-second animation completed: \(finished)")
                     blurView.removeFromSuperview()
                 }
             )
