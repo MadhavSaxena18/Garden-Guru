@@ -32,6 +32,12 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     // Property to track the uploaded image URL
     private var uploadedImageURL: String? = nil
     
+    // Flag to prevent duplicate error alerts
+    private var hasShownErrorAlert = false
+    
+    // Work item for the 5-second processing timer (to allow cancellation)
+    private var processingWorkItem: DispatchWorkItem?
+    
     private let dataController = DataControllerGG.shared
     
     private var fullScreenScanningView: UIView!
@@ -93,6 +99,9 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         snapImage1.image = nil
         snapImage2.image = nil
         snapImage3.image = nil
+        
+        // Reset error alert flag
+        hasShownErrorAlert = false
         
         // Remove any existing preview image views
         for subview in cameraView.subviews {
@@ -194,10 +203,12 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                     self.cameraView.addSubview(imageView)
                     scanAndDiagnoseViewController.capturedImages.append(capturedImage)
                     print("\(scanAndDiagnoseViewController.capturedImages.count)")
-//                    self.processImages()
-                    self.processImages()
+                    
+                    // Start scanning animation first
                     self.setupFullScreenScanning()
                     
+                    // Process images (will handle errors internally)
+                    self.processImages()
                 }
                 
 //                print("Capture")
@@ -211,19 +222,8 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         print("Starting image processing...")
         print("Number of captured images: \(scanAndDiagnoseViewController.capturedImages.count)")
         
-        // Upload the first (full plant) image to Supabase and wait for completion
-        if let firstImage = scanAndDiagnoseViewController.capturedImages.first {
-            Task {
-                await uploadImageToSupabase(image: firstImage)
-                // Continue processing after upload completes
-                await MainActor.run {
-                    self.continueImageProcessing()
-                }
-            }
-        } else {
-            // If no image, continue anyway
-            continueImageProcessing()
-        }
+        // Start processing immediately (upload will happen after plant is identified)
+        continueImageProcessing()
     }
     
     private func continueImageProcessing() {
@@ -266,10 +266,11 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         // Only reject if we have STRONG evidence of non-plant objects (2+ detections)
         if nonPlantDetections >= 2 {
             print("❌ Multiple non-plant objects detected - rejecting scan")
+            hasShownErrorAlert = true  // Set flag to prevent duplicate
             DispatchQueue.main.async {
                 DiagnosisViewController.plantNameLabel.text = "Not a Plant"
                 DiagnosisViewController.diagnosisLabel.text = "Object detected"
-                self.stopScanningAnimation()
+                self.stopScanningAnimation()  // Stop animation immediately
                 self.showNonPlantObjectAlert()
             }
             return
@@ -290,9 +291,11 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             // IMPROVED: Check if it's a non-plant object with better detection
             if isNonPlantObject(plantType) || isCommonNonPlantResult(plantType) {
                 print("❌ Non-plant object detected by classifier: \(plantType)")
+                hasShownErrorAlert = true  // Set flag to prevent duplicate
                 DispatchQueue.main.async {
                     DiagnosisViewController.plantNameLabel.text = "Not a Plant"
                     DiagnosisViewController.diagnosisLabel.text = "Object detected"
+                    self.stopScanningAnimation()  // Stop animation immediately
                     self.showNonPlantObjectAlert()
                 }
                 return
@@ -309,8 +312,16 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                     DispatchQueue.main.async {
                         DiagnosisViewController.plantNameLabel.text = similarPlant.plantName
                     }
+                    
+                    // Upload image to Supabase now that plant is confirmed
+                    if let firstImage = scanAndDiagnoseViewController.capturedImages.first {
+                        Task {
+                            await uploadImageToSupabase(image: firstImage)
+                        }
+                    }
                 } else {
                     print("❌ No similar plant found - showing generic result")
+                    hasShownErrorAlert = true  // Set flag to prevent duplicate
                     DispatchQueue.main.async {
                         DiagnosisViewController.plantNameLabel.text = plantType
                         DiagnosisViewController.diagnosisLabel.text = "Plant identified but not in database"
@@ -324,10 +335,17 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 DispatchQueue.main.async {
                     DiagnosisViewController.plantNameLabel.text = foundPlant!.plantName
                 }
+                
+                // Upload image to Supabase now that plant is confirmed
+                if let firstImage = scanAndDiagnoseViewController.capturedImages.first {
+                    Task {
+                        await uploadImageToSupabase(image: firstImage)
+                    }
+                }
             }
             
             // Step 3: Run disease detection on all images (focus on images 2 and 3 - infected areas)
-            var diseaseResults: [String] = []
+            var diseaseResults: [(disease: String, confidence: Float)] = []
             
             // Prioritize the last two images (infected area close-ups)
             let imagesToCheck = scanAndDiagnoseViewController.capturedImages.count >= 2 ? 
@@ -338,12 +356,12 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 print("\n--- Running disease detection on image \(index + 1) ---")
                 if let diseaseResult = runDiseaseDetection(image) {
                     // Trim whitespace from disease name
-                    let cleanedResult = diseaseResult.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let cleanedResult = diseaseResult.disease.trimmingCharacters(in: .whitespacesAndNewlines)
                     
                     // Only add non-empty results
                     if !cleanedResult.isEmpty {
-                        print("✅ Disease Detection Result for image \(index + 1): \(cleanedResult)")
-                        diseaseResults.append(cleanedResult)
+                        print("✅ Disease Detection Result for image \(index + 1): \(cleanedResult) (confidence: \(diseaseResult.confidence))")
+                        diseaseResults.append((disease: cleanedResult, confidence: diseaseResult.confidence))
                     } else {
                         print("⚠️ Empty disease result after trimming for image \(index + 1)")
                     }
@@ -352,13 +370,13 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
                 }
             }
             
-            // Get most frequent disease result
+            // Get disease with highest average confidence
             if !diseaseResults.isEmpty {
-                let mostFrequentDisease = mostFrequentResult(diseaseResults)
-                print("✅ Final disease diagnosis: \(mostFrequentDisease)")
+                let finalDisease = bestDiseaseByConfidence(diseaseResults)
+                print("✅ Final disease diagnosis: \(finalDisease.disease) (avg confidence: \(finalDisease.confidence))")
                 
                 DispatchQueue.main.async {
-                    DiagnosisViewController.diagnosisLabel.text = mostFrequentDisease
+                    DiagnosisViewController.diagnosisLabel.text = finalDisease.disease
                 }
             } else {
                 print("ℹ️ No diseases detected - plant appears healthy")
@@ -368,9 +386,11 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             }
         } else {
             print("❌ Plant classifier returned no result")
+            hasShownErrorAlert = true  // Set flag to prevent duplicate
             DispatchQueue.main.async {
                 DiagnosisViewController.plantNameLabel.text = "Unknown Plant"
                 DiagnosisViewController.diagnosisLabel.text = "No plant detected"
+                self.stopScanningAnimation()  // Stop animation immediately
                 self.showPlantNotIdentifiedAlert()
             }
         }
@@ -499,7 +519,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         return resultIdentifier
     }
     
-    private func runDiseaseDetection(_ image: UIImage) -> String? {
+    private func runDiseaseDetection(_ image: UIImage) -> (disease: String, confidence: Float)? {
         guard let model = try? VNCoreMLModel(for: GG_Diseases_1().model),
               let cgImage = image.cgImage else {
             print("❌ Failed to initialize disease detection model")
@@ -548,10 +568,83 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         semaphore.wait()
         
-        // If confidence is too low, return nil instead of a potentially incorrect result
-        return resultConfidence > 0.5 ? resultIdentifier : nil
+        // Return tuple with disease name and confidence, or nil if confidence too low
+        if resultConfidence > 0.5, let disease = resultIdentifier {
+            return (disease: disease, confidence: resultConfidence)
+        }
+        return nil
     }
     
+    private func bestDiseaseByConfidence(_ results: [(disease: String, confidence: Float)]) -> (disease: String, confidence: Float) {
+        // If no results, return healthy with 1.0 confidence
+        if results.isEmpty {
+            return (disease: "Healthy", confidence: 1.0)
+        }
+        
+        // If only one result, return it
+        if results.count == 1 {
+            return results[0]
+        }
+        
+        print("\n📊 Calculating best disease by confidence:")
+        print("   Input results: \(results)")
+        
+        // Group results by disease name and calculate average confidence
+        var diseaseConfidences: [String: [Float]] = [:]
+        
+        for result in results {
+            if diseaseConfidences[result.disease] == nil {
+                diseaseConfidences[result.disease] = []
+            }
+            diseaseConfidences[result.disease]?.append(result.confidence)
+        }
+        
+        // Calculate average confidence for each disease
+        var averageConfidences: [(disease: String, avgConfidence: Float, count: Int)] = []
+        
+        for (disease, confidences) in diseaseConfidences {
+            let average = confidences.reduce(0, +) / Float(confidences.count)
+            averageConfidences.append((disease: disease, avgConfidence: average, count: confidences.count))
+            print("   - \(disease): avg confidence = \(average) (detected \(confidences.count) time(s))")
+        }
+        
+        // Separate healthy and disease results
+        let healthyResults = averageConfidences.filter { $0.disease.lowercased().contains("healthy") }
+        let diseaseResults = averageConfidences.filter { !$0.disease.lowercased().contains("healthy") }
+        
+        // If we have disease detections, prefer them over healthy
+        if !diseaseResults.isEmpty {
+            // Sort by average confidence (highest first)
+            let sortedDiseases = diseaseResults.sorted { first, second in
+                // Primary sort: Higher average confidence wins
+                if abs(first.avgConfidence - second.avgConfidence) > 0.01 {
+                    return first.avgConfidence > second.avgConfidence
+                }
+                // Secondary sort: More detections wins (tie-breaker)
+                if first.count != second.count {
+                    return first.count > second.count
+                }
+                // Tertiary sort: Alphabetical (final tie-breaker)
+                return first.disease < second.disease
+            }
+            
+            if let best = sortedDiseases.first {
+                print("✅ Selected disease: \(best.disease) (avg confidence: \(best.avgConfidence), count: \(best.count))")
+                return (disease: best.disease, confidence: best.avgConfidence)
+            }
+        }
+        
+        // If only healthy results, return the one with highest confidence
+        if let bestHealthy = healthyResults.max(by: { $0.avgConfidence < $1.avgConfidence }) {
+            print("✅ Selected result: \(bestHealthy.disease) (avg confidence: \(bestHealthy.avgConfidence))")
+            return (disease: bestHealthy.disease, confidence: bestHealthy.avgConfidence)
+        }
+        
+        // Fallback (should never reach here)
+        return (disease: "Healthy", confidence: 1.0)
+    }
+    
+    // DEPRECATED: Old frequency-based function (keeping for reference, not used)
     private func mostFrequentResult(_ results: [String]) -> String {
         // Filter out nil and empty results
         let validResults = results.filter { !$0.isEmpty }
@@ -627,6 +720,21 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         return nonPlantKeywords.contains { lowercaseResult.contains($0) }
     }
     
+    // Helper function to cancel timer and navigate home
+    private func cancelAndGoHome() {
+        // Cancel any pending processing timer
+        processingWorkItem?.cancel()
+        
+        // Clean up camera and UI state
+        resetForNewScan()
+        
+        // Navigate to home (Explore tab - index 0)
+        tabBarController?.selectedIndex = 0
+        
+        // Also pop to root in case we're in a navigation stack
+        navigationController?.popToRootViewController(animated: false)
+    }
+    
     private func showNonPlantObjectAlert() {
         let alert = UIAlertController(
             title: "Not a Plant Detected",
@@ -640,7 +748,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-            self?.navigationController?.popToRootViewController(animated: true)
+            self?.cancelAndGoHome()
         }
         
         alert.addAction(retryAction)
@@ -663,7 +771,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-            self?.navigationController?.popToRootViewController(animated: true)
+            self?.cancelAndGoHome()
         }
         
         alert.addAction(retryAction)
@@ -684,7 +792,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-            self?.navigationController?.popToRootViewController(animated: true)
+            self?.cancelAndGoHome()
         }
         
         alert.addAction(retryAction)
@@ -722,8 +830,18 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         
         animateScanningLine()
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+        // Cancel any existing processing work item
+        processingWorkItem?.cancel()
+        
+        // Create a new cancellable work item for the 5-second processing check
+        let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
+            
+            // Don't show duplicate alerts if one was already shown during processing
+            if self.hasShownErrorAlert {
+                print("⚠️ Skipping duplicate error alert check")
+                return
+            }
             
             let plantName = DiagnosisViewController.plantNameLabel.text ?? "Unknown Plant"
             let diagnosis = DiagnosisViewController.diagnosisLabel.text ?? "No disease detected"
@@ -760,6 +878,12 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             self.stopScanningAnimation()
             self.navigateToDiagnosisView(with: diagnosis)
         }
+        
+        // Store the work item so it can be cancelled
+        processingWorkItem = workItem
+        
+        // Schedule the work item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0, execute: workItem)
     }
     
     private func animateScanningLine() {
@@ -791,6 +915,9 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         snapImage1.image = nil
         snapImage2.image = nil
         snapImage3.image = nil
+        
+        // Reset error alert flag for new scan
+        hasShownErrorAlert = false
         
         // Remove any existing preview images and animations
         for subview in cameraView.subviews {
@@ -946,7 +1073,7 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-            self?.navigationController?.popToRootViewController(animated: true)
+            self?.cancelAndGoHome()
         }
         
         alert.addAction(retryAction)
