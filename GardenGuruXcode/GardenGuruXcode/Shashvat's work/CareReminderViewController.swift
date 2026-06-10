@@ -26,7 +26,7 @@ class CareReminderViewController: UIViewController {
         label.text = "Relax!! No work today"  // This will be updated dynamically
         label.textAlignment = .center
         label.font = .systemFont(ofSize: 20, weight: .medium)
-        label.textColor = UIColor(hex: "284329")
+        label.textColor = ThemeManager.Colors.primary
         label.tag = 100  // Add tag to reference the label later
         
         view.addSubview(label)
@@ -78,7 +78,7 @@ class CareReminderViewController: UIViewController {
     
     // MARK: - Setup Methods
     private func setupUI() {
-        navigationController?.navigationBar.tintColor = UIColor(hex: "004E05")
+        navigationController?.navigationBar.tintColor = ThemeManager.Colors.primary
         
         view.addSubview(noRemindersView)
         // Set initial text based on selected segment
@@ -737,7 +737,7 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             let sectionType = nonEmptySections[indexPath.section].offset
             header.headerLabel.text = reminderTypes[sectionType]
             header.headerLabel.font = UIFont.systemFont(ofSize: 25, weight: .bold)
-            header.headerLabel.textColor = UIColor(hex: "284329")
+            header.headerLabel.textColor = ThemeManager.Colors.primary
             return header
         }
         return UICollectionReusableView()
@@ -1036,14 +1036,14 @@ extension CareReminderViewController: UICollectionViewDataSource, UICollectionVi
             
             // Create checkmark icon with green color
             let checkmark = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
-            checkmark.tintColor = UIColor(hex: "00A86B")  // Emerald green
+            checkmark.tintColor = ThemeManager.Colors.primary
             checkmark.translatesAutoresizingMaskIntoConstraints = false
             
             // Create label inside blur
             let completedLabel = UILabel()
             completedLabel.text = "Completed"
             completedLabel.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
-            completedLabel.textColor = UIColor(hex: "004E05")
+            completedLabel.textColor = ThemeManager.Colors.primary
             completedLabel.translatesAutoresizingMaskIntoConstraints = false
             
             // Add to blur view

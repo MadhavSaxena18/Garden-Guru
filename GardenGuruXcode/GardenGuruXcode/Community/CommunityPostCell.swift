@@ -31,7 +31,7 @@ class CommunityPostCell: UICollectionViewCell {
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 20
-        imageView.backgroundColor = UIColor(hex: "284329")
+        imageView.backgroundColor = ThemeManager.Colors.primary
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -39,7 +39,7 @@ class CommunityPostCell: UICollectionViewCell {
     private let userNameLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 15, weight: .semibold)
-        label.textColor = UIColor(hex: "284329")
+        label.textColor = ThemeManager.Colors.primary
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -65,7 +65,7 @@ class CommunityPostCell: UICollectionViewCell {
     private let plantNameLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18, weight: .bold)
-        label.textColor = UIColor(hex: "284329")
+        label.textColor = ThemeManager.Colors.primary
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -186,7 +186,7 @@ class CommunityPostCell: UICollectionViewCell {
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
         
         // Draw background
-        UIColor(hex: "284329").setFill()
+        ThemeManager.Colors.primary.setFill()
         UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
         
         // Draw initials

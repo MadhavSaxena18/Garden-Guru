@@ -34,7 +34,7 @@ class CreatePostViewController: UIViewController {
         view.backgroundColor = UIColor(hex: "F5F9F5")
         view.layer.cornerRadius = 12
         view.layer.borderWidth = 2
-        view.layer.borderColor = UIColor(hex: "284329").withAlphaComponent(0.2).cgColor
+        view.layer.borderColor = ThemeManager.Colors.primary.withAlphaComponent(0.2).cgColor
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -54,7 +54,7 @@ class CreatePostViewController: UIViewController {
         button.setTitle("Select Plant Photo", for: .normal)
         button.setImage(UIImage(systemName: "photo.on.rectangle.angled"), for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        button.tintColor = UIColor(hex: "284329")
+        button.tintColor = ThemeManager.Colors.primary
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -160,12 +160,12 @@ class CreatePostViewController: UIViewController {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .white
-        appearance.titleTextAttributes = [.foregroundColor: UIColor(hex: "284329")]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(hex: "284329")]
+        appearance.titleTextAttributes = [.foregroundColor: ThemeManager.Colors.primary]
+        appearance.largeTitleTextAttributes = [.foregroundColor: ThemeManager.Colors.primary]
         
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = UIColor(hex: "284329")
+        navigationController?.navigationBar.tintColor = ThemeManager.Colors.primary
         
         // Navigation bar buttons
         navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -174,7 +174,7 @@ class CreatePostViewController: UIViewController {
             target: self,
             action: #selector(cancelButtonTapped)
         )
-        navigationItem.leftBarButtonItem?.tintColor = UIColor(hex: "284329")
+        navigationItem.leftBarButtonItem?.tintColor = ThemeManager.Colors.primary
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             title: "Post",
@@ -182,7 +182,7 @@ class CreatePostViewController: UIViewController {
             target: self,
             action: #selector(postButtonTapped)
         )
-        navigationItem.rightBarButtonItem?.tintColor = UIColor(hex: "284329")
+        navigationItem.rightBarButtonItem?.tintColor = ThemeManager.Colors.primary
         navigationItem.rightBarButtonItem?.isEnabled = false
         
         // Add subviews

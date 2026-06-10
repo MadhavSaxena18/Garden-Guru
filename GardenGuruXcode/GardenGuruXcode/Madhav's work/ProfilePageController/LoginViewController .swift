@@ -29,7 +29,7 @@ class LoginViewController: UIViewController {
     
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
+        view.backgroundColor = ThemeManager.Colors.background
         view.layer.cornerRadius = 16
         view.layer.shadowColor = UIColor.black.cgColor
         view.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -43,7 +43,7 @@ class LoginViewController: UIViewController {
         let label = UILabel()
         label.text = "Garden Guru"
         label.font = .systemFont(ofSize: 34, weight: .bold)
-        label.textColor = UIColor(hex: "284329")
+        label.textColor = ThemeManager.Colors.primary
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -98,7 +98,7 @@ class LoginViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("Forgot Password?", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 15)
-        button.setTitleColor(UIColor(hex: "284329"), for: .normal)
+        button.setTitleColor(ThemeManager.Colors.primary, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -107,7 +107,7 @@ class LoginViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("Sign In", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        button.backgroundColor = UIColor(hex: "284329")
+        button.backgroundColor = ThemeManager.Colors.primary
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 14
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -150,7 +150,7 @@ class LoginViewController: UIViewController {
     
     private let signInWithGoogleButton: UIButton = {
         let button = UIButton(type: .system)
-        button.backgroundColor = .white
+        button.backgroundColor = ThemeManager.Colors.background
         button.setTitle("Sign in with Google", for: .normal)
         button.setImage(UIImage(named: "google2"), for: .normal)
         button.tintColor = .black
@@ -184,7 +184,7 @@ class LoginViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("Sign Up", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
-        button.setTitleColor(UIColor(hex: "284329"), for: .normal)
+        button.setTitleColor(ThemeManager.Colors.primary, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.isUserInteractionEnabled = true
         button.isEnabled = true
@@ -545,7 +545,7 @@ extension LoginViewController: UITextFieldDelegate {
         UIView.animate(withDuration: 0.3) {
             textField.transform = CGAffineTransform(scaleX: 1.02, y: 1.02)
             textField.layer.borderWidth = 1
-            textField.layer.borderColor = UIColor(hex: "284329").cgColor
+            textField.layer.borderColor = ThemeManager.Colors.primary.cgColor
         }
     }
     

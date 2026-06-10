@@ -62,7 +62,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         let label = UILabel()
         label.text = "First add your plant to your My Space"
         label.textAlignment = .center
-        label.textColor = UIColor(hex: "284329")
+        label.textColor = ThemeManager.Colors.primary
         label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
         label.numberOfLines = 0
         label.isHidden = true
@@ -277,6 +277,20 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Set title FIRST
+        title = "Explore"
+        
+        // Ensure navigation bar is visible
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationController?.navigationBar.prefersLargeTitles = true
+        
+        // Debug: Print navigation controller state
+        print("🔍 Navigation Debug:")
+        print("   - Has navigation controller: \(navigationController != nil)")
+        print("   - Navigation bar hidden: \(navigationController?.isNavigationBarHidden ?? true)")
+        print("   - Title: \(title ?? "nil")")
+        
         setupNavigationBarAppearance()
         setupStartupSkeletonView()
         showStartupSkeleton()
@@ -307,6 +321,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
         setupNavigationBarAppearance()
         print("📱 View will appear")
         
@@ -389,11 +404,11 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         // Optionally customize the segmented control
         segmentControlOnExplore.selectedSegmentTintColor = .white
         segmentControlOnExplore.setTitleTextAttributes([
-            .foregroundColor: UIColor(hex: "284329"),
+            .foregroundColor: ThemeManager.Colors.primary,
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
         ], for: .selected)
         segmentControlOnExplore.setTitleTextAttributes([
-            .foregroundColor: UIColor(hex: "284329"),
+            .foregroundColor: ThemeManager.Colors.primary,
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
         ], for: [.selected, .highlighted])
         segmentControlOnExplore.setTitleTextAttributes([
@@ -1016,7 +1031,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             
             headerView.headerTitle.text = sectionTitle
             headerView.headerTitle.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-            headerView.headerTitle.textColor = UIColor(hex: "284329")
+            headerView.headerTitle.textColor = ThemeManager.Colors.primary
             
             if sectionTitle == "Care Tip of the Day" {
                 headerView.button.isHidden = true
@@ -1024,7 +1039,7 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
             } else {
                 headerView.button.isHidden = false
                 headerView.button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
-                headerView.button.tintColor = UIColor(hex: "284329")
+                headerView.button.tintColor = ThemeManager.Colors.primary
                 headerView.button.tag = indexPath.section
                 headerView.button.imageEdgeInsets = UIEdgeInsets(top: 9, left: 0, bottom: 0, right: 0)
                 headerView.button.addTarget(self, action: #selector(sectionButtonTapped(_:)), for: .touchUpInside)
@@ -1253,13 +1268,24 @@ class ExploreViewController: UIViewController ,UICollectionViewDataSource, UICol
         }
 
         navigationController?.navigationBar.prefersLargeTitles = true
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor(hex: "284329")
+        
+        // Create a visible appearance
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = ThemeManager.Colors.background
+        appearance.titleTextAttributes = [
+            .foregroundColor: ThemeManager.Colors.primary
         ]
-        navigationController?.navigationBar.largeTitleTextAttributes = [
-            .foregroundColor: UIColor(hex: "284329"),
+        appearance.largeTitleTextAttributes = [
+            .foregroundColor: ThemeManager.Colors.primary,
             .font: UIFont.systemFont(ofSize: 34, weight: .bold)
         ]
+        
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
+        
+        print("✅ Navigation bar appearance configured")
     }
 
     private func setupStartupSkeletonView() {

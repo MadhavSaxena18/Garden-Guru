@@ -364,7 +364,7 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
                 // Show name with count in brackets
                 header.headerLabel.text = "\(plantName) (\(plantsInSection.count))"
                 header.headerLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-                header.headerLabel.textColor = UIColor(hex: "284329")
+                header.headerLabel.textColor = ThemeManager.Colors.primary
                 // Hide the totalPlantLabel
                 header.totalPlantLabel.isHidden = true
             }

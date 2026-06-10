@@ -58,13 +58,13 @@ class CommunityViewController: UIViewController {
     private lazy var refreshControl: UIRefreshControl = {
         let refresh = UIRefreshControl()
         refresh.addTarget(self, action: #selector(refreshPosts), for: .valueChanged)
-        refresh.tintColor = UIColor(hex: "284329")
+        refresh.tintColor = ThemeManager.Colors.primary
         return refresh
     }()
     
     private lazy var fabButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.backgroundColor = UIColor(hex: "284329")
+        button.backgroundColor = ThemeManager.Colors.primary
         button.setImage(UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: 24, weight: .semibold)), for: .normal)
         button.tintColor = .white
         button.layer.cornerRadius = 28
@@ -79,7 +79,7 @@ class CommunityViewController: UIViewController {
     
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .large)
-        indicator.color = UIColor(hex: "284329")
+        indicator.color = ThemeManager.Colors.primary
         indicator.hidesWhenStopped = true
         indicator.translatesAutoresizingMaskIntoConstraints = false
         return indicator
@@ -95,7 +95,7 @@ class CommunityViewController: UIViewController {
     private let emptyStateImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "leaf.fill")
-        imageView.tintColor = UIColor(hex: "284329").withAlphaComponent(0.3)
+        imageView.tintColor = ThemeManager.Colors.primary.withAlphaComponent(0.3)
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -105,7 +105,7 @@ class CommunityViewController: UIViewController {
         let label = UILabel()
         label.text = "No posts yet.\nBe the first to share!"
         label.font = .systemFont(ofSize: 20, weight: .semibold)
-        label.textColor = UIColor(hex: "284329").withAlphaComponent(0.6)
+        label.textColor = ThemeManager.Colors.primary.withAlphaComponent(0.6)
         label.textAlignment = .center
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -118,7 +118,7 @@ class CommunityViewController: UIViewController {
         search.delegate = self
         search.obscuresBackgroundDuringPresentation = false
         search.searchBar.placeholder = "Search posts..."
-        search.searchBar.tintColor = UIColor(hex: "284329")
+        search.searchBar.tintColor = ThemeManager.Colors.primary
         search.searchBar.searchTextField.backgroundColor = UIColor(hex: "F5F9F5")
         return search
     }()
@@ -149,13 +149,13 @@ class CommunityViewController: UIViewController {
         // Configure navigation bar appearance
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        appearance.titleTextAttributes = [.foregroundColor: UIColor(hex: "284329")]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(hex: "284329")]
+        appearance.backgroundColor = ThemeManager.Colors.background
+        appearance.titleTextAttributes = [.foregroundColor: ThemeManager.Colors.primary]
+        appearance.largeTitleTextAttributes = [.foregroundColor: ThemeManager.Colors.primary]
         
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = UIColor(hex: "284329")
+        navigationController?.navigationBar.tintColor = ThemeManager.Colors.primary
         navigationController?.navigationBar.prefersLargeTitles = false
         
         // Add search button to navigation bar (search bar will appear on scroll up)
@@ -164,7 +164,7 @@ class CommunityViewController: UIViewController {
             target: self,
             action: #selector(searchButtonTapped)
         )
-        searchButton.tintColor = UIColor(hex: "284329")
+        searchButton.tintColor = ThemeManager.Colors.primary
         
         // Add filter button
         let filterButton = UIBarButtonItem(
@@ -173,7 +173,7 @@ class CommunityViewController: UIViewController {
             target: self,
             action: #selector(filterButtonTapped)
         )
-        filterButton.tintColor = UIColor(hex: "284329")
+        filterButton.tintColor = ThemeManager.Colors.primary
         
         navigationItem.rightBarButtonItems = [searchButton, filterButton]
         

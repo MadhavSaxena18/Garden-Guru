@@ -49,7 +49,7 @@ class ChatViewController: UIViewController {
         let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .medium)
         let image = UIImage(systemName: "arrow.up.circle.fill", withConfiguration: config)
         button.setImage(image, for: .normal)
-        button.tintColor = UIColor(hex: "284329")
+        button.tintColor = ThemeManager.Colors.primary
         return button
     }()
     private let quickRepliesButton: UIButton = {
@@ -59,7 +59,7 @@ class ChatViewController: UIViewController {
         let config = UIImage.SymbolConfiguration(pointSize: 22, weight: .medium)
         let image = UIImage(systemName: "list.bullet.circle.fill", withConfiguration: config)
         button.setImage(image, for: .normal)
-        button.tintColor = UIColor(hex: "284329")
+        button.tintColor = ThemeManager.Colors.primary
         return button
     }()
     
@@ -146,7 +146,7 @@ class ChatViewController: UIViewController {
             
             // Optional: Customize navigation bar appearance
             if let navigationBar = navigationController?.navigationBar {
-                navigationBar.tintColor = UIColor(hex: "284329")
+                navigationBar.tintColor = ThemeManager.Colors.primary
                 navigationBar.largeTitleTextAttributes = [
                     .foregroundColor: UIColor.label,
                     .font: UIFont.systemFont(ofSize: 34, weight: .bold)
