@@ -7,6 +7,7 @@
 
 import UIKit
 import UserNotifications
+import GoogleSignIn
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -105,6 +106,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         return .portrait
     }
+    
+    // MARK: - Google Sign In URL Handling
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        return GIDSignIn.sharedInstance.handle(url)
+    }
 
 }
 
@@ -152,8 +158,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         
         completionHandler()
     }
+    
 }
-
 // MARK: - Remote Notifications
 extension AppDelegate {
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {

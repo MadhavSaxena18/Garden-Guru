@@ -3179,6 +3179,113 @@ class DataControllerGG: NSObject, CLLocationManagerDelegate {
         return (session, userData)
     }
     
+    func signInWithGoogle(idToken: String, nonce: String) async throws -> (Session, userInfo?) {
+        print("\n=== Signing In with Google ===")
+        print("📱 ID Token received: \(idToken.prefix(20))...")
+        print("🔐 Nonce: \(nonce)")
+        
+        do {
+            // Sign in with Supabase using Google token with nonce
+            print("🔐 Authenticating with Supabase...")
+            let session = try await supabase.auth.signInWithIdToken(
+                credentials: .init(
+                    provider: .google,
+                    idToken: idToken,
+                    nonce: nonce
+                )
+            )
+            
+            print("✅ Google authentication successful")
+            print("   User ID: \(session.user.id)")
+            print("   Email: \(session.user.email ?? "N/A")")
+            
+            // Save the session
+            saveSession(session)
+            
+            // Get the user's email from the session
+            guard let email = session.user.email else {
+                print("❌ No email found in session")
+                throw AuthError.noAuthenticatedUser
+            }
+            
+            // Store the email for future use
+            UserDefaults.standard.set(email, forKey: "userEmail")
+            
+            // After successful authentication, fetch user data
+            print("🔍 Fetching user data from UserTable")
+            let userData = try await initializeUser(email: email)
+            
+            // Post notification that user signed in
+            NotificationCenter.default.post(name: Notification.Name("UserSignedIn"), object: nil)
+            
+            print("✅ Google Sign In Complete")
+            return (session, userData)
+            
+        } catch {
+            print("❌ Google Sign In Failed")
+            print("   Error: \(error)")
+            print("   Description: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("   Domain: \(nsError.domain)")
+                print("   Code: \(nsError.code)")
+            }
+            throw error
+        }
+    }
+    
+    // Simplified version without nonce - let Supabase handle it
+    func signInWithGoogleToken(idToken: String) async throws -> (Session, userInfo?) {
+        print("\n=== Signing In with Google (Token Only) ===")
+        print("📱 ID Token received: \(idToken.prefix(20))...")
+        
+        do {
+            // Sign in with Supabase using Google token - no nonce
+            print("🔐 Authenticating with Supabase...")
+            let session = try await supabase.auth.signInWithIdToken(
+                credentials: .init(
+                    provider: .google,
+                    idToken: idToken
+                )
+            )
+            
+            print("✅ Google authentication successful")
+            print("   User ID: \(session.user.id)")
+            print("   Email: \(session.user.email ?? "N/A")")
+            
+            // Save the session
+            saveSession(session)
+            
+            // Get the user's email from the session
+            guard let email = session.user.email else {
+                print("❌ No email found in session")
+                throw AuthError.noAuthenticatedUser
+            }
+            
+            // Store the email for future use
+            UserDefaults.standard.set(email, forKey: "userEmail")
+            
+            // After successful authentication, fetch user data
+            print("🔍 Fetching user data from UserTable")
+            let userData = try await initializeUser(email: email)
+            
+            // Post notification that user signed in
+            NotificationCenter.default.post(name: Notification.Name("UserSignedIn"), object: nil)
+            
+            print("✅ Google Sign In Complete")
+            return (session, userData)
+            
+        } catch {
+            print("❌ Google Sign In Failed")
+            print("   Error: \(error)")
+            print("   Description: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("   Domain: \(nsError.domain)")
+                print("   Code: \(nsError.code)")
+            }
+            throw error
+        }
+    }
+    
     // MARK: - Community Functions
     
     /// Fetches community posts from Supabase with pagination support

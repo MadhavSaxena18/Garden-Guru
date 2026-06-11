@@ -1,5 +1,6 @@
 import UIKit
 import AuthenticationServices
+import GoogleSignIn
 
 class LoginViewController: UIViewController {
     
@@ -534,7 +535,122 @@ class LoginViewController: UIViewController {
     }
 
     @objc private func googleSignInTapped() {
-        showAlert(message: "Google Sign In will be available soon!")
+        // Check if Google Sign In is configured
+        guard let clientID = Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String,
+              !clientID.contains("YOUR_GOOGLE_CLIENT_ID") else {
+            let alert = UIAlertController(
+                title: "Setup Required",
+                message: "Google Sign In needs to be configured.\n\nPlease replace 'YOUR_GOOGLE_CLIENT_ID' in Info.plist with your actual Google Client ID.\n\nFor now, please use:\n• Email & Password\n• Sign in with Apple",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        // Generate a random nonce for security
+        let nonce = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+        print("🔐 Generated nonce: \(nonce)")
+        
+        let config = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = config
+        
+        // Sign in with nonce parameter
+        GIDSignIn.sharedInstance.signIn(withPresenting: self, hint: nil, additionalScopes: nil) { [weak self, nonce] result, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                self.handleGoogleSignInError(error)
+                return
+            }
+            
+            guard let user = result?.user,
+                  let idToken = user.idToken?.tokenString else {
+                self.showAlert(message: "Failed to get user information from Google")
+                return
+            }
+            
+            print("✅ Google Sign In successful")
+            
+            // Sign in with Supabase - DON'T pass nonce, let Supabase handle validation
+            Task {
+                do {
+                    self.loadingIndicator.startAnimating()
+                    print("🔐 Attempting Supabase authentication with Google token")
+                    
+                    // Try without nonce first - Supabase will extract it from the ID token
+                    let (session, userData) = try await self.dataController.signInWithGoogleToken(idToken: idToken)
+                    
+                    if session.accessToken != nil {
+                        UserDefaults.standard.set(true, forKey: "isLoggedIn")
+                        UserDefaults.standard.set(user.profile?.email, forKey: "userEmail")
+                        
+                        if userData == nil {
+                            print("⚠️ Warning: User authenticated but no profile data found")
+                        }
+                        
+                        await MainActor.run {
+                            self.hideLoadingIndicator()
+                            self.showSuccessAndNavigate()
+                        }
+                    } else {
+                        throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "Invalid session"])
+                    }
+                } catch {
+                    print("❌ Google Sign In Error: \(error)")
+                    print("   Error Description: \(error.localizedDescription)")
+                    if let nsError = error as NSError? {
+                        print("   Domain: \(nsError.domain)")
+                        print("   Code: \(nsError.code)")
+                        print("   User Info: \(nsError.userInfo)")
+                    }
+                    
+                    await MainActor.run {
+                        self.hideLoadingIndicator()
+                        
+                        // Show more specific error message
+                        var errorMessage = "Failed to sign in with Google. Please try again."
+                        
+                        if error.localizedDescription.contains("already registered") {
+                            errorMessage = "This Google account is already registered. Please use Apple Sign In or Email/Password."
+                        } else if error.localizedDescription.contains("network") || error.localizedDescription.contains("connection") {
+                            errorMessage = "Network error. Please check your connection and try again."
+                        } else if error.localizedDescription.contains("Google provider") || error.localizedDescription.contains("provider") {
+                            errorMessage = "Google Sign In is temporarily unavailable. Please try:\n• Email & Password\n• Sign in with Apple"
+                        }
+                        
+                        self.showAlert(message: errorMessage)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func handleGoogleSignInError(_ error: Error) {
+        let nsError = error as NSError
+        var errorMessage = "Failed to sign in with Google. Please try again."
+        
+        // Check for specific Google Sign In errors
+        if nsError.domain == "com.google.GIDSignIn" {
+            switch nsError.code {
+            case -1: // Cancelled
+                return // User cancelled - don't show error
+            case -2: // No keychain
+                errorMessage = "Keychain error. Please check your device settings."
+            case -4: // No internet
+                errorMessage = "No internet connection. Please check your network."
+            case -5: // Sign in failed
+                errorMessage = "Sign in failed. Please try again."
+            default:
+                errorMessage = "Failed to sign in with Google. Please try again."
+            }
+        }
+        
+        print("❌ Google Sign In Error: \(error.localizedDescription)")
+        print("   Domain: \(nsError.domain)")
+        print("   Code: \(nsError.code)")
+        
+        showAlert(message: errorMessage)
     }
 }
 
@@ -614,7 +730,42 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
     }
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        showAlert(message: error.localizedDescription)
+        // Convert error to NSError to check error codes
+        let nsError = error as NSError
+        
+        // Provide user-friendly error messages
+        var errorMessage = "Failed to sign in with Apple. Please try again."
+        
+        // Check for specific Apple Sign In errors
+        if let asError = error as? ASAuthorizationError {
+            switch asError.code {
+            case .canceled:
+                // User cancelled - don't show error
+                return
+            case .unknown:
+                errorMessage = "An unknown error occurred. Please try again."
+            case .invalidResponse:
+                errorMessage = "Invalid response from Apple. Please try again."
+            case .notHandled:
+                errorMessage = "Sign in could not be handled. Please try again."
+            case .failed:
+                errorMessage = "Sign in failed. Please try again."
+            case .notInteractive:
+                errorMessage = "This feature is not available. Please use email login."
+            @unknown default:
+                errorMessage = "Failed to sign in with Apple. Please try again."
+            }
+        }
+        // Check for authorization error 1001
+        else if nsError.domain == "com.apple.AuthenticationServices.AuthorizationError" && nsError.code == 1001 {
+            errorMessage = "Apple Sign In is temporarily unavailable. Please try again later or use email login."
+        }
+        
+        print("❌ Apple Sign In Error: \(error.localizedDescription)")
+        print("   Domain: \(nsError.domain)")
+        print("   Code: \(nsError.code)")
+        
+        showAlert(message: errorMessage)
     }
 }
 

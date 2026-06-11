@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3189F29C2FDB469600042B0B /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 3189F29B2FDB469600042B0B /* GoogleSignIn */; };
+		3189F29E2FDB469600042B0B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 3189F29D2FDB469600042B0B /* GoogleSignInSwift */; };
 		8E5A16822D6D8FAD00B10410 /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = 8E5A16812D6D8FAD00B10410 /* GoogleGenerativeAI */; };
 		8EBF6ECE2E337C0E00676D73 /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8EBF6ECD2E337C0E00676D73 /* SDWebImage */; };
 		8EBF6ED02E337C0E00676D73 /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8EBF6ECF2E337C0E00676D73 /* SDWebImageMapKit */; };
@@ -53,10 +55,12 @@
 				DBE9028F2D7602620083691A /* Storage in Frameworks */,
 				8EBF6ECE2E337C0E00676D73 /* SDWebImage in Frameworks */,
 				DBE9028B2D7602620083691A /* PostgREST in Frameworks */,
+				3189F29C2FDB469600042B0B /* GoogleSignIn in Frameworks */,
 				DBE902892D7602620083691A /* Functions in Frameworks */,
 				DBE902872D7602620083691A /* Auth in Frameworks */,
 				DBE9028D2D7602620083691A /* Realtime in Frameworks */,
 				8E5A16822D6D8FAD00B10410 /* GoogleGenerativeAI in Frameworks */,
+				3189F29E2FDB469600042B0B /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,6 +120,8 @@
 				DBE902912D7602750083691A /* Supabase */,
 				8EBF6ECD2E337C0E00676D73 /* SDWebImage */,
 				8EBF6ECF2E337C0E00676D73 /* SDWebImageMapKit */,
+				3189F29B2FDB469600042B0B /* GoogleSignIn */,
+				3189F29D2FDB469600042B0B /* GoogleSignInSwift */,
 			);
 			productName = GardenGuruXcode;
 			productReference = 8EB683392D311C110091572C /* GardenGuruXcode.app */;
@@ -149,6 +155,7 @@
 				8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */,
 				DBE902852D7602620083691A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				8EBF6ECC2E337C0E00676D73 /* XCRemoteSwiftPackageReference "SDWebImage" */,
+				3189F29A2FDB469600042B0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8EB6833A2D311C110091572C /* Products */;
@@ -394,6 +401,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		3189F29A2FDB469600042B0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
 		8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/generative-ai-swift";
@@ -421,6 +436,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		3189F29B2FDB469600042B0B /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3189F29A2FDB469600042B0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		3189F29D2FDB469600042B0B /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3189F29A2FDB469600042B0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
 		8E5A16812D6D8FAD00B10410 /* GoogleGenerativeAI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8E5A16802D6D8FAD00B10410 /* XCRemoteSwiftPackageReference "generative-ai-swift" */;
