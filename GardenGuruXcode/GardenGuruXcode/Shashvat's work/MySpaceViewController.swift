@@ -287,12 +287,49 @@ class MySpaceViewController: UIViewController, UICollectionViewDataSource, UICol
             return cell
         }
         let plants = isSearching ? filteredCategorizedPlants : categorizedPlants
-        let userPlant = plants[indexPath.section - 1][indexPath.item]
-        guard let plantID = userPlant.userplantID,
-              let plant = dataController.getPlantSync(by: plantID) else {
-            return UICollectionViewCell()
+        
+        // Safety check for array bounds
+        guard indexPath.section - 1 < plants.count else {
+            print("❌ ERROR: Invalid section index \(indexPath.section)")
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewSection1Cell
+            cell.section1NickNameLabel.text = "Error"
+            cell.section1PlantImageView.image = UIImage(named: "plant_placeholder")
+            return cell
         }
+        
+        guard indexPath.item < plants[indexPath.section - 1].count else {
+            print("❌ ERROR: Invalid item index \(indexPath.item)")
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewSection1Cell
+            cell.section1NickNameLabel.text = "Error"
+            cell.section1PlantImageView.image = UIImage(named: "plant_placeholder")
+            return cell
+        }
+        
+        let userPlant = plants[indexPath.section - 1][indexPath.item]
+        
+        // Dequeue cell first
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "first", for: indexPath) as! MySpaceCollectionViewSection1Cell
+        
+        // Try to get plant details - if fail, show basic info
+        guard let plantID = userPlant.userplantID else {
+            print("⚠️ WARNING: UserPlant has no plantID")
+            cell.section1NickNameLabel.text = userPlant.userPlantNickName ?? "Unknown Plant"
+            cell.section1PlantImageView.image = UIImage(named: "plant_placeholder")
+            return cell
+        }
+        
+        guard let plant = dataController.getPlantSync(by: plantID) else {
+            print("⚠️ WARNING: Could not find plant details for ID \(plantID)")
+            cell.section1NickNameLabel.text = userPlant.userPlantNickName ?? "Unknown Plant"
+            // Try to use userPlant image if available
+            if let userPlantImageURL = userPlant.userPlantImage, !userPlantImageURL.isEmpty, let url = URL(string: userPlantImageURL) {
+                cell.section1PlantImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "plant_placeholder"))
+            } else {
+                cell.section1PlantImageView.image = UIImage(named: "plant_placeholder")
+            }
+            return cell
+        }
+        
         // Set nickname
         cell.section1NickNameLabel.text = userPlant.userPlantNickName ?? ""
         // Set image: Prefer userPlant image, else plant image, else placeholder
