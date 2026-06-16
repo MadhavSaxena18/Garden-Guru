@@ -206,6 +206,7 @@ class LoginViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupActions()
+        addSkipButton()
         
         // Debug button setup
         signInWithAppleButton.addAction(UIAction { [weak self] _ in
@@ -218,6 +219,35 @@ class LoginViewController: UIViewController {
         print("Apple Button isUserInteractionEnabled: \(signInWithAppleButton.isUserInteractionEnabled)")
         print("Apple Button frame: \(signInWithAppleButton.frame)")
         print("Apple Button superview: \(String(describing: signInWithAppleButton.superview))")
+    }
+    
+    private func addSkipButton() {
+        // Add Skip button to navigation bar
+        let skipButton = UIBarButtonItem(title: "Skip", style: .plain, target: self, action: #selector(skipButtonTapped))
+        skipButton.tintColor = ThemeManager.Colors.primary
+        navigationItem.rightBarButtonItem = skipButton
+    }
+    
+    @objc private func skipButtonTapped() {
+        // Navigate to main app as guest
+        let mainStoryboard = UIStoryboard(name: "Main", bundle: nil)
+        if let tabBarController = mainStoryboard.instantiateViewController(withIdentifier: "TabBarController") as? UITabBarController {
+            tabBarController.modalPresentationStyle = .fullScreen
+            
+            // Make sure guest mode is set
+            UserDefaults.standard.set(false, forKey: "isLoggedIn")
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                UIView.transition(with: window,
+                              duration: 0.3,
+                              options: .transitionCrossDissolve,
+                              animations: {
+                    window.rootViewController = tabBarController
+                })
+                window.makeKeyAndVisible()
+            }
+        }
     }
     
     private func setupUI() {

@@ -3615,3 +3615,173 @@ enum CommunityError: Error {
     }
 }
 
+
+// MARK: - Account Deletion Extension
+extension DataControllerGG {
+    
+    /// Deletes user account and all associated data
+    /// This includes: user plants, care reminders, community posts, profile images, and user record
+    /// - Parameter userEmail: Email of the user account to delete
+    func deleteUserAccount(userEmail: String) async throws {
+        print("\n=== 🗑️ Starting Account Deletion Process ===")
+        print("Email: \(userEmail)")
+        
+        // 1. Get user ID from email
+        guard let user = try await initializeUser(email: userEmail) else {
+            print("❌ User not found")
+            throw NSError(domain: "AccountDeletion", code: 404, userInfo: [NSLocalizedDescriptionKey: "User not found"])
+        }
+        
+        let userID = user.id  // This is already a String
+        print("✅ Found user ID: \(userID)")
+        
+        // 2. Delete all user's community posts
+        print("\n📝 Deleting community posts...")
+        do {
+            let postsResponse = try await supabase
+                .database
+                .from("CommunityPost")
+                .select()
+                .eq("userID", value: userID)
+                .execute()
+            
+            if let jsonData = postsResponse.data as? Data {
+                let decoder = JSONDecoder()
+                let posts = try decoder.decode([CommunityPost].self, from: jsonData)
+                print("Found \(posts.count) posts to delete")
+                
+                for post in posts {
+                    try await deleteCommunityPost(postID: post.postID)
+                    print("✅ Deleted post: \(post.postID)")
+                }
+            }
+        } catch {
+            print("⚠️ Error deleting community posts: \(error)")
+            // Continue with deletion even if posts fail
+        }
+        
+        // 3. Get all user plants to delete their data
+        print("\n🌱 Deleting user plants and reminders...")
+        do {
+            let plantsResponse = try await supabase
+                .database
+                .from("UserPlant")
+                .select()
+                .eq("userId", value: userID)
+                .execute()
+            
+            if let jsonData = plantsResponse.data as? Data {
+                let decoder = JSONDecoder()
+                let userPlants = try decoder.decode([UserPlant].self, from: jsonData)
+                print("Found \(userPlants.count) plants to delete")
+                
+                for plant in userPlants {
+                    let relationID = plant.userPlantRelationID.uuidString
+                    
+                    // Delete from CareReminderOfUserPlant junction table first
+                    do {
+                        try await supabase
+                            .database
+                            .from("CareReminderOfUserPlant")
+                            .delete()
+                            .eq("userPlantRelationID", value: relationID)
+                            .execute()
+                        print("✅ Deleted care reminder junction for plant: \(relationID)")
+                    } catch {
+                        print("⚠️ Could not delete care reminder junction: \(error)")
+                    }
+                    
+                    // Delete from UsersPlantDisease junction table
+                    do {
+                        try await supabase
+                            .database
+                            .from("UsersPlantDisease")
+                            .delete()
+                            .eq("usersPlantRelationID", value: relationID)
+                            .execute()
+                        print("✅ Deleted disease associations for plant: \(relationID)")
+                    } catch {
+                        print("⚠️ Could not delete disease associations: \(error)")
+                    }
+                    
+                    // Delete plant image from storage if exists
+                    if let imageURL = plant.userPlantImage, !imageURL.isEmpty {
+                        do {
+                            try await deleteUserPlantImage(userPlantID: plant.userPlantRelationID)
+                            print("✅ Deleted image for plant: \(relationID)")
+                        } catch {
+                            print("⚠️ Could not delete image for plant: \(error)")
+                        }
+                    }
+                }
+                
+                // Now delete all UserPlant records at once (no more foreign key constraints)
+                print("\n🗑️ Deleting all user plant records...")
+                try await supabase
+                    .database
+                    .from("UserPlant")
+                    .delete()
+                    .eq("userId", value: userID)
+                    .execute()
+                print("✅ All user plants deleted")
+            }
+        } catch {
+            print("⚠️ Error deleting user plants: \(error)")
+            throw error // Re-throw to prevent partial deletion
+        }
+        
+        // 4. Cancel all pending notifications
+        print("\n🔔 Cancelling all notifications...")
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        print("✅ Notifications cancelled")
+        
+        // 5. Delete user profile image from storage if exists
+        print("\n📸 Deleting profile image...")
+        do {
+            let _ = try await supabase.storage
+                .from("profile-images")
+                .remove(paths: ["\(userID).jpg"])
+            print("✅ Profile image deleted")
+        } catch {
+            print("⚠️ No profile image to delete or error: \(error)")
+        }
+        
+        // 6. Delete user record from database
+        print("\n👤 Deleting user record...")
+        try await supabase
+            .database
+            .from("UserTable")
+            .delete()
+            .eq("id", value: userID)
+            .execute()
+        print("✅ User record deleted")
+        
+        // 7. Delete auth account
+        print("\n🔐 Deleting authentication account...")
+        do {
+            try await supabase.auth.admin.deleteUser(id: userID)
+            print("✅ Auth account deleted")
+        } catch {
+            print("⚠️ Error deleting auth account: \(error)")
+            // Auth deletion might fail if done from client side
+        }
+        
+        // 8. Sign out and clear session
+        print("\n🚪 Signing out...")
+        try await supabase.auth.signOut()
+        print("✅ Session cleared")
+        
+        // 9. Clear local data
+        print("\n🧹 Clearing local data...")
+        UserDefaults.standard.set(false, forKey: "isLoggedIn")
+        UserDefaults.standard.removeObject(forKey: "userEmail")
+        UserDefaults.standard.removeObject(forKey: "userName")
+        UserDefaults.standard.removeObject(forKey: "displayName")
+        UserDefaults.standard.removeObject(forKey: "profileImage")
+        UserDefaults.standard.removeObject(forKey: "userSession")
+        print("✅ Local data cleared")
+        
+        print("\n✅✅✅ Account Deletion Complete ✅✅✅\n")
+    }
+}

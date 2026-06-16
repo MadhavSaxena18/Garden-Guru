@@ -49,5 +49,11 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Garden Guru needs access to your camera to capture photos of your plants for identification and disease diagnosis. These photos help our AI analyze plant health and provide personalized care recommendations.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Garden Guru needs access to your photo library to save and retrieve plant photos for identification, diagnosis, and tracking your garden's progress over time.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Garden Guru would like to save photos of your plants to your photo library so you can keep a record of your garden's growth and health.</string>
 </dict>
 </plist>

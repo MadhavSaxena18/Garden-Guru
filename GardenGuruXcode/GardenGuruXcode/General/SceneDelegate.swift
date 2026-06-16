@@ -30,6 +30,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     private func checkAndHandleSession() async {
         print("\n=== Checking Session State ===")
         
+        // Check if user has completed onboarding
+        let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        
+        if !hasCompletedOnboarding {
+            // First time user - show onboarding
+            DispatchQueue.main.async {
+                self.showOnboarding()
+            }
+            return
+        }
+        
         // Check if user is logged in
         let isLoggedIn = UserDefaults.standard.bool(forKey: "isLoggedIn")
         let userEmail = UserDefaults.standard.string(forKey: "userEmail")
@@ -51,23 +62,28 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                     
                     // User is valid, show main interface
                     DispatchQueue.main.async {
-                        if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
-                            self.showOnboarding()
-                        } else {
-                            self.showMainInterface()
-                        }
+                        self.showMainInterface()
                     }
                 } else {
                     print("❌ User not found in database")
-                    handleInvalidSession()
+                    // Show main interface anyway - user can still browse without account features
+                    DispatchQueue.main.async {
+                        self.showMainInterface()
+                    }
                 }
             } catch {
                 print("❌ Error restoring session or checking user: \(error)")
-                handleInvalidSession()
+                // Show main interface anyway - user can still browse without account features
+                DispatchQueue.main.async {
+                    self.showMainInterface()
+                }
             }
         } else {
-            print("⚠️ User not logged in")
-            handleInvalidSession()
+            print("⚠️ User not logged in - allowing guest access")
+            // APPLE GUIDELINE FIX: Allow users to access non-account features without login
+            DispatchQueue.main.async {
+                self.showMainInterface()
+            }
         }
     }
     
@@ -77,11 +93,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         UserDefaults.standard.removeObject(forKey: "userEmail")
         UserDefaults.standard.removeObject(forKey: "userSession")
         
+        // APPLE GUIDELINE FIX: Don't force login - allow guest access to main features
         DispatchQueue.main.async {
             if !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
                 self.showOnboarding()
             } else {
-                self.showLoginScreen()
+                // Show main interface - user can access features without account
+                self.showMainInterface()
             }
         }
     }

@@ -125,6 +125,39 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
     }
     
     func setupCamera() {
+        // Check camera authorization first
+        let authStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        
+        switch authStatus {
+        case .notDetermined:
+            // Request authorization
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                if granted {
+                    DispatchQueue.main.async {
+                        self?.setupCamera()
+                    }
+                } else {
+                    print("❌ Camera access denied by user")
+                    DispatchQueue.main.async {
+                        self?.showAlert(message: "Camera access is required to identify plants. Please enable camera access in Settings.")
+                    }
+                }
+            }
+            return
+            
+        case .denied, .restricted:
+            print("❌ Camera access denied or restricted")
+            showAlert(message: "Camera access is required. Please enable camera access in Settings > Garden Guru > Camera.")
+            return
+            
+        case .authorized:
+            break
+            
+        @unknown default:
+            print("❌ Unknown camera authorization status")
+            return
+        }
+        
         // If session exists, stop it first
         if captureSession != nil {
             captureSession.stopRunning()
@@ -136,7 +169,8 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
         captureSession.sessionPreset = .high
         
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-            print("Error: No camera available.")
+            print("❌ Error: No camera available.")
+            showAlert(message: "Unable to access camera. Please check your device.")
             return
         }
         
@@ -144,11 +178,25 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             let input = try AVCaptureDeviceInput(device: camera)
             if captureSession.canAddInput(input) {
                 captureSession.addInput(input)
+            } else {
+                print("❌ Cannot add camera input to session")
+                showAlert(message: "Unable to configure camera. Please try again.")
+                return
             }
             
             photoOutput = AVCapturePhotoOutput()
+            
+            // Configure photo output settings
+            if #available(iOS 11.0, *) {
+                photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
+            }
+            
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
+            } else {
+                print("❌ Cannot add photo output to session")
+                showAlert(message: "Unable to configure camera. Please try again.")
+                return
             }
             
             // Setup preview layer
@@ -160,16 +208,77 @@ class scanAndDiagnoseViewController: UIViewController, AVCapturePhotoCaptureDele
             // Start running in background thread
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 self?.captureSession.startRunning()
+                print("✅ Camera session started successfully")
             }
         } catch {
-            print("Error setting up the camera: \(error.localizedDescription)")
+            print("❌ Error setting up the camera: \(error.localizedDescription)")
+            showAlert(message: "Failed to set up camera: \(error.localizedDescription)")
         }
     }
     
     @IBAction func captureImage(_ sender: UIButton) {
+        // Ensure photoOutput is initialized and session is running
+        guard photoOutput != nil else {
+            print("❌ Photo output not initialized")
+            showAlert(message: "Camera not ready. Please try again.")
+            return
+        }
+        
+        guard captureSession != nil && captureSession.isRunning else {
+            print("❌ Capture session not running")
+            showAlert(message: "Camera session not active. Please restart the camera.")
+            setupCamera()
+            return
+        }
+        
+        // Check camera authorization
+        let authStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        guard authStatus == .authorized else {
+            print("❌ Camera not authorized: \(authStatus.rawValue)")
+            if authStatus == .notDetermined {
+                AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                    if granted {
+                        DispatchQueue.main.async {
+                            self?.setupCamera()
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self?.showAlert(message: "Camera access is required to capture plant photos. Please enable camera access in Settings.")
+                        }
+                    }
+                }
+            } else {
+                showAlert(message: "Camera access denied. Please enable camera access in Settings > Garden Guru > Camera.")
+            }
+            return
+        }
+        
+        // Configure photo settings
         let settings = AVCapturePhotoSettings()
-        settings.flashMode = .auto
+        
+        // Check if flash is available before setting flash mode
+        if let photoOutputConnection = photoOutput.connection(with: .video),
+           photoOutputConnection.isActive {
+            settings.flashMode = .auto
+        } else {
+            settings.flashMode = .off
+        }
+        
+        // Ensure the format is supported
+        guard photoOutput.availablePhotoCodecTypes.contains(.jpeg) else {
+            print("❌ JPEG format not supported")
+            showAlert(message: "Camera format not supported. Please try again.")
+            return
+        }
+        
+        print("📸 Capturing photo with settings: \(settings)")
         photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: "Camera Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
     
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {

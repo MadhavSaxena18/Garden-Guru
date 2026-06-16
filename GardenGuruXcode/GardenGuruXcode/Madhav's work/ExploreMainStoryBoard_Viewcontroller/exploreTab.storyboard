@@ -526,6 +526,7 @@
                     </navigationItem>
                     <connections>
                         <outlet property="emailLabel" destination="hy6-iC-DXY" id="Doo-ek-Nt5"/>
+                        <outlet property="logoutButton" destination="wqL-51-qzi" id="Xyz-Ab-123"/>
                         <outlet property="profileImageView" destination="9kT-2C-oTf" id="0JL-E5-msE"/>
                         <outlet property="userLocationLabel" destination="SIx-vG-xGy" id="Dxt-BH-ZgW"/>
                         <outlet property="userNameLabel" destination="gYc-36-h1f" id="YPq-JU-KFg"/>

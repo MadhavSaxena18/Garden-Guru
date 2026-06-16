@@ -14,6 +14,7 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
     @IBOutlet weak var userLocationLabel: UILabel!
     @IBOutlet weak var emailLabel: UILabel!
     @IBOutlet weak var profileImageView: UIImageView!
+    @IBOutlet weak var logoutButton: UIButton!  // Add outlet for logout button
     
 
     private var userData: userInfo?
@@ -27,6 +28,9 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         
         setupUI()
         loadUserData()
+        
+        // Update UI for login state first before adding delete button
+        updateUIForLoginState()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -35,6 +39,9 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         // Always reload user data when view appears (handles user switching)
         loadUserData()
         
+        // Update UI based on login state
+        updateUIForLoginState()
+        
         tableView.reloadData()
         
         // Load saved profile image if exists
@@ -42,6 +49,54 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
            let savedImage = UIImage(data: imageData) {
             profileImageView.image = savedImage
         }
+    }
+    
+    private func updateUIForLoginState() {
+        let isLoggedIn = UserDefaults.standard.bool(forKey: "isLoggedIn")
+        
+        print("DEBUG: updateUIForLoginState - isLoggedIn: \(isLoggedIn)")
+        
+        if isLoggedIn {
+            // User is logged in - show delete button and "Sign Out" text
+            if tableView.tableFooterView == nil {
+                addDeleteAccountButton()
+            }
+            
+            // Update logout button for logged-in user
+            if let button = logoutButton {
+                button.setTitle("Sign Out", for: .normal)
+                button.setTitleColor(.systemRed, for: .normal)
+                button.tintColor = .systemRed
+                print("DEBUG: Set button to 'Sign Out' (red)")
+            } else {
+                print("DEBUG: logoutButton outlet is nil!")
+            }
+        } else {
+            // Guest user - hide delete button and show "Sign In" text
+            tableView.tableFooterView = nil
+            
+            // Update button for guest user
+            if let button = logoutButton {
+                button.setTitle("Sign In", for: .normal)
+                button.setTitleColor(.systemBlue, for: .normal)
+                button.tintColor = .systemBlue
+                print("DEBUG: Set button to 'Sign In' (blue)")
+            } else {
+                print("DEBUG: logoutButton outlet is nil!")
+            }
+            
+            // Update profile info for guest
+            userNameLabel?.text = "Guest"
+            emailLabel?.text = "Sign in to save your plants"
+            emailLabel?.textColor = .systemGray
+        }
+        
+        // Force layout update
+        logoutButton?.setNeedsLayout()
+        logoutButton?.layoutIfNeeded()
+        
+        // Reload table to update UI
+        tableView.reloadData()
     }
     
     private func setupUI() {
@@ -270,36 +325,204 @@ class ProfileTableViewController: UITableViewController, UIImagePickerController
         }
     }
     
-    // MARK: - Logout
+    // MARK: - Logout / Sign In
     
     @IBAction func logoutButtonTapped(_ sender: Any) {
-        let alert = UIAlertController(title: "Logout", message: "Are you sure you want to logout?", preferredStyle: .alert)
+        let isLoggedIn = UserDefaults.standard.bool(forKey: "isLoggedIn")
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
-            // Clear all user data
-            UserDefaults.standard.set(false, forKey: "isLoggedIn")
-            UserDefaults.standard.removeObject(forKey: "userEmail")
-            UserDefaults.standard.removeObject(forKey: "userName")
-            UserDefaults.standard.removeObject(forKey: "displayName")
-            UserDefaults.standard.removeObject(forKey: "profileImage")
+        if isLoggedIn {
+            // User is logged in - show logout confirmation
+            let alert = UIAlertController(title: "Sign Out", message: "Are you sure you want to sign out?", preferredStyle: .alert)
             
-            // Clear UI
-            self?.userNameLabel.text = "User"
-            self?.emailLabel.text = ""
-            self?.userLocationLabel.text = ""
-            self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Sign Out", style: .destructive) { [weak self] _ in
+                self?.performLogout()
+            })
             
-            if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
-                let loginVC = LoginViewController()
-                let window = sceneDelegate.window
-                window?.rootViewController = loginVC
-                window?.makeKeyAndVisible()
-            }
+            present(alert, animated: true)
+        } else {
+            // Guest user - redirect to login
+            redirectToLogin()
+        }
+    }
+    
+    private func performLogout() {
+        // Clear all user data
+        UserDefaults.standard.set(false, forKey: "isLoggedIn")
+        UserDefaults.standard.removeObject(forKey: "userEmail")
+        UserDefaults.standard.removeObject(forKey: "userName")
+        UserDefaults.standard.removeObject(forKey: "displayName")
+        UserDefaults.standard.removeObject(forKey: "profileImage")
         
+        // Clear UI
+        userNameLabel.text = "Guest"
+        emailLabel.text = "Sign in to save your plants"
+        userLocationLabel.text = ""
+        profileImageView.image = UIImage(systemName: "person.circle.fill")
+        
+        // Update UI for guest mode
+        updateUIForLoginState()
+        
+        // Show success message
+        let alert = UIAlertController(title: "Signed Out", message: "You have been signed out successfully. You can continue browsing as a guest.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func redirectToLogin() {
+        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
+            sceneDelegate.showLoginScreen()
+        }
+    }
+    
+    // MARK: - Delete Account
+    
+    @IBAction func deleteAccountButtonTapped(_ sender: Any) {
+        // First confirmation alert - following Apple HIG
+        let confirmAlert = UIAlertController(
+            title: "Delete Account?",
+            message: "This will permanently delete your account and all associated data, including:\n\n• Saved plants\n• Care reminders\n• Community posts\n• Profile and settings\n\nThis action cannot be undone.",
+            preferredStyle: .alert
+        )
+        
+        confirmAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        confirmAlert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.showFinalDeleteConfirmation()
         })
         
+        present(confirmAlert, animated: true)
+    }
+    
+    private func showFinalDeleteConfirmation() {
+        // Second confirmation with type-to-confirm
+        let finalAlert = UIAlertController(
+            title: "Confirm Deletion",
+            message: "To confirm, type DELETE in the field below.",
+            preferredStyle: .alert
+        )
+        
+        finalAlert.addTextField { textField in
+            textField.placeholder = "Type DELETE"
+            textField.autocapitalizationType = .allCharacters
+            textField.autocorrectionType = .no
+        }
+        
+        finalAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        finalAlert.addAction(UIAlertAction(title: "Delete Account", style: .destructive) { [weak self] _ in
+            guard let self = self,
+                  let textField = finalAlert.textFields?.first,
+                  let text = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  text.uppercased() == "DELETE" else {
+                // Show error if text doesn't match
+                self?.showAlert(title: "Verification Failed", message: "Please type DELETE to confirm account deletion.")
+                return
+            }
+            
+            // Proceed with deletion
+            self.performAccountDeletion()
+        })
+        
+        present(finalAlert, animated: true)
+    }
+    
+    private func performAccountDeletion() {
+        guard let userEmail = UserDefaults.standard.string(forKey: "userEmail") else {
+            showAlert(title: "Error", message: "Unable to verify account. Please try logging out and back in.")
+            return
+        }
+        
+        // Show loading indicator
+        let loadingAlert = UIAlertController(
+            title: "Deleting Account",
+            message: "\n\nPlease wait while we delete your account...",
+            preferredStyle: .alert
+        )
+        
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.startAnimating()
+        loadingAlert.view.addSubview(indicator)
+        
+        NSLayoutConstraint.activate([
+            indicator.centerXAnchor.constraint(equalTo: loadingAlert.view.centerXAnchor),
+            indicator.topAnchor.constraint(equalTo: loadingAlert.view.topAnchor, constant: 80)
+        ])
+        
+        present(loadingAlert, animated: true)
+        
+        // Perform deletion
+        Task {
+            do {
+                try await dataController.deleteUserAccount(userEmail: userEmail)
+                
+                // Dismiss loading alert
+                await MainActor.run {
+                    loadingAlert.dismiss(animated: true) {
+                        // Show success message
+                        let successAlert = UIAlertController(
+                            title: "Account Deleted",
+                            message: "Your account has been permanently deleted.",
+                            preferredStyle: .alert
+                        )
+                        successAlert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                            // Return to login screen
+                            if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
+                                sceneDelegate.showLoginScreen()
+                            }
+                        })
+                        self.present(successAlert, animated: true)
+                    }
+                }
+            } catch {
+                print("❌ Error deleting account: \(error)")
+                
+                // Dismiss loading and show error
+                await MainActor.run {
+                    loadingAlert.dismiss(animated: true) {
+                        self.showAlert(
+                            title: "Unable to Delete Account",
+                            message: "An error occurred while deleting your account. Please try again or contact support if the problem persists."
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+    
+    // MARK: - Add Delete Account Button
+    
+    private func addDeleteAccountButton() {
+        // Create footer view with delete button - following Apple HIG
+        let footerView = UIView(frame: CGRect(x: 0, y: 0, width: tableView.frame.width, height: 100))
+        footerView.backgroundColor = .clear
+        
+        // Create delete button with professional styling
+        let deleteButton = UIButton(type: .system)
+        deleteButton.setTitle("Delete Account", for: .normal)
+        deleteButton.setTitleColor(.systemRed, for: .normal)
+        deleteButton.titleLabel?.font = .systemFont(ofSize: 17)
+        deleteButton.backgroundColor = .secondarySystemGroupedBackground
+        deleteButton.layer.cornerRadius = 10
+        deleteButton.addTarget(self, action: #selector(deleteAccountButtonTapped(_:)), for: .touchUpInside)
+        
+        deleteButton.translatesAutoresizingMaskIntoConstraints = false
+        footerView.addSubview(deleteButton)
+        
+        NSLayoutConstraint.activate([
+            deleteButton.centerXAnchor.constraint(equalTo: footerView.centerXAnchor),
+            deleteButton.topAnchor.constraint(equalTo: footerView.topAnchor, constant: 24),
+            deleteButton.leadingAnchor.constraint(equalTo: footerView.leadingAnchor, constant: 16),
+            deleteButton.trailingAnchor.constraint(equalTo: footerView.trailingAnchor, constant: -16),
+            deleteButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        
+        tableView.tableFooterView = footerView
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
