@@ -574,6 +574,15 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate {
     
     // MARK: - Add Plant to My Space
     private func addPlantToMySpace(_ plant: Plant) {
+        // Check if user is logged in
+        let isLoggedIn = UserDefaults.standard.bool(forKey: "isLoggedIn")
+        
+        if !isLoggedIn {
+            // Guest user - show sign-in prompt
+            showSignInPrompt()
+            return
+        }
+        
         print("\n=== Adding Plant to My Space ===")
         print("Selected plant: \(plant.plantName)")
         
@@ -584,5 +593,29 @@ class AddPlantViewController: UIViewController, UISearchBarDelegate {
         let navController = UINavigationController(rootViewController: nicknameVC)
         navController.modalPresentationStyle = .formSheet
         present(navController, animated: true)
+    }
+    
+    // MARK: - Guest User Sign-In Prompt
+    
+    private func showSignInPrompt() {
+        let alert = UIAlertController(
+            title: "Sign In Required",
+            message: "Please sign in to save plants to your garden and set up care reminders.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Sign In", style: .default) { [weak self] _ in
+            self?.redirectToLogin()
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true)
+    }
+    
+    private func redirectToLogin() {
+        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
+            sceneDelegate.showLoginScreen()
+        }
     }
 }

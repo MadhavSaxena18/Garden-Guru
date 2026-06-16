@@ -428,6 +428,15 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
     }
     
     @objc func startCaringTapped() {
+        // Check if user is logged in
+        let isLoggedIn = UserDefaults.standard.bool(forKey: "isLoggedIn")
+        
+        if !isLoggedIn {
+            // Guest user - show sign-in prompt
+            showSignInPrompt()
+            return
+        }
+        
         guard let plantName = selectedPlant?.plantName else {
             print("❌ No plant name available")
             return
@@ -466,6 +475,30 @@ class DiagnosisViewController: UIViewController, UITableViewDelegate, UITableVie
         
         let navController = UINavigationController(rootViewController: reminderVC)
         present(navController, animated: true)
+    }
+    
+    // MARK: - Guest User Sign-In Prompt
+    
+    private func showSignInPrompt() {
+        let alert = UIAlertController(
+            title: "Sign In Required",
+            message: "Please sign in to save plants to your garden and set up care reminders.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Sign In", style: .default) { [weak self] _ in
+            self?.redirectToLogin()
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true)
+    }
+    
+    private func redirectToLogin() {
+        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
+            sceneDelegate.showLoginScreen()
+        }
     }
 
     // Update the disease details handling with symptom-first approach
