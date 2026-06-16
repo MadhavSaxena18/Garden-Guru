@@ -2,6 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.959918049125-2f2njn7iqq1gu1bm6q17aj1uh2tafrmp</string>
+			</array>
+		</dict>
+	</array>
+	<key>GIDClientID</key>
+	<string>959918049125-2f2njn7iqq1gu1bm6q17aj1uh2tafrmp.apps.googleusercontent.com</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -25,6 +38,12 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Garden Guru uses your camera to take photos of plants for identification and disease detection.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Garden Guru accesses your photo library to save plant photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Garden Guru saves plant photos to your library.</string>
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>
 	<key>UISupportedInterfaceOrientations</key>
@@ -36,24 +55,5 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
-	<key>GIDClientID</key>
-	<string>959918049125-2f2njn7iqq1gu1bm6q17aj1uh2tafrmp.apps.googleusercontent.com</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.959918049125-2f2njn7iqq1gu1bm6q17aj1uh2tafrmp</string>
-			</array>
-		</dict>
-	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>Garden Guru needs access to your camera to capture photos of your plants for identification and disease diagnosis. These photos help our AI analyze plant health and provide personalized care recommendations.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Garden Guru needs access to your photo library to save and retrieve plant photos for identification, diagnosis, and tracking your garden's progress over time.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Garden Guru would like to save photos of your plants to your photo library so you can keep a record of your garden's growth and health.</string>
 </dict>
 </plist>
